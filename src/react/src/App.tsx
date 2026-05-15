@@ -431,14 +431,16 @@ function App() {
                 steps={ConvertToTourStepProps(tourStepsRef.current)}
               />
             )}
-            <NavigationMenu
-              listeners={listeners.current}
-              config={config}
-              runReloadUI={runReloadUI}
-              addRequestItem={addRequestItem}
-              toggleRunTour={toggleRunTour}
-              tourStepsRef={tourStepsRef}
-            />
+            <div role="navigation">
+              <NavigationMenu
+                listeners={listeners.current}
+                config={config}
+                runReloadUI={runReloadUI}
+                addRequestItem={addRequestItem}
+                toggleRunTour={toggleRunTour}
+                tourStepsRef={tourStepsRef}
+              />
+            </div>
             {requestItem && (
               <Dialog
                 visible={requestItem !== undefined}
@@ -470,7 +472,7 @@ function App() {
                 </>
               </Dialog>
             )}
-            <div className="flex-grow-1" key={reloadUI}>
+            <div className="flex-grow-1" key={reloadUI} role="main">
               <Routes>
                 <Route
                   path="/dashboard"

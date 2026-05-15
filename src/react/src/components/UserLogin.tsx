@@ -1,4 +1,3 @@
-import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { Messages } from "primereact/messages";
@@ -7,6 +6,7 @@ import { classNames } from "primereact/utils";
 import { useRef, useState } from "react";
 
 import { UserLogin } from "../services/token_service";
+import AccessButton from "./AccessButton";
 
 const LoginDialog = ({
   visible,
@@ -42,13 +42,13 @@ const LoginDialog = ({
 
   const dialogFooter = (
     <div>
-      <Button
+      <AccessButton
         label="Cancel"
         icon="pi pi-times"
         onClick={() => setVisible(false)}
         className="p-button-text"
       />
-      <Button label="Login" icon="pi pi-check" onClick={handleLogin} />
+      <AccessButton label="Login" icon="pi pi-check" onClick={handleLogin} />
     </div>
   );
 

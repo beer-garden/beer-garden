@@ -1,6 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Avatar } from "primereact/avatar";
-import { Button } from "primereact/button";
 import { Divider } from "primereact/divider";
 import { Dropdown } from "primereact/dropdown";
 import { InputSwitch } from "primereact/inputswitch";
@@ -8,6 +7,7 @@ import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
 
 import { ChangeTheme, ThemeOptions } from "../services/util_service";
+import AccessButton from "./AccessButton";
 import UserChangePassword from "./UserChangePassword";
 
 function UserOverlay({
@@ -62,7 +62,7 @@ function UserOverlay({
                 className="mr-2"
               />
               <span>{username}</span>
-              <Button
+              <AccessButton
                 style={{ marginLeft: "auto" }}
                 size="small"
                 onClick={() => setShowPasswordDialog(true)}
@@ -70,7 +70,7 @@ function UserOverlay({
               >
                 <FontAwesomeIcon className="mr-2" icon="key" />
                 <span>Change Password</span>
-              </Button>
+              </AccessButton>
             </div>
             <Divider />
           </div>
@@ -118,7 +118,7 @@ function UserOverlay({
       {username && (
         <div>
           <Divider />
-          <Button
+          <AccessButton
             size="small"
             className="mr-2"
             onClick={onLogout}
@@ -126,7 +126,7 @@ function UserOverlay({
           >
             <FontAwesomeIcon className="mr-2" icon="sign-out" />
             <span>Logout</span>
-          </Button>
+          </AccessButton>
         </div>
       )}
     </>

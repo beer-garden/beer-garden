@@ -18,7 +18,7 @@ vi.mock("../services/user_service");
 vi.mock("../services/token_service");
 vi.mock("../services/permission_service");
 
-const mockConfig: Config = { auth_enabled: true } as Config;
+const mockConfig: Config = { auth_enabled: false } as Config;
 
 const mockUsers: User[] = [
   {
@@ -106,11 +106,19 @@ describe("UserIndex", () => {
   test("should revoke user token", async () => {
     render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
     await waitFor(() => {
-      expect(screen.getByTestId("revoke-user-1")).toBeInTheDocument();
+      expect(
+        screen.getByTestId(`revoke-user-${mockUsers[0].id}`),
+      ).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByTestId("revoke-user-1"));
+
+    fireEvent.click(
+      await screen.findByTestId(`revoke-user-${mockUsers[0].id}`),
+    );
+
     await waitFor(() => {
-      expect(tokenService.RevokeToken).toHaveBeenCalledWith("admin");
+      expect(tokenService.RevokeToken).toHaveBeenCalledWith(
+        mockUsers[0].username,
+      );
     });
   });
 

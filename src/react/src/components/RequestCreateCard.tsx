@@ -1,17 +1,16 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { InputSwitch } from "primereact/inputswitch";
 import { Skeleton } from "primereact/skeleton";
 import { useEffect, useState } from "react";
 
-import HasAccess from "../components/HasAccess";
 import { Job, Request } from "../models/brewtils-types";
 import { Config, RequestCommand, RequestItem } from "../models/models";
 import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
+import AccessButton from "./AccessButton";
 import CodeExample from "./CodeExample";
 import CommandCreate from "./CommandCreate";
 import SchedulerForm from "./SchedulerForm";
@@ -220,6 +219,15 @@ function RequestCreateCard({
     }
   }, []);
 
+  const permissions = {
+    config: config,
+    hasNamespace: requestItem.requestCommandInput?.namespace,
+    hasSystemName: requestItem.requestCommandInput?.systemName,
+    hasSystemVersion: requestItem.requestCommandInput?.version,
+    hasInstanceName: requestItem.requestCommandInput?.instance,
+    hasCommandName: requestItem.requestCommandInput?.command,
+  };
+
   return (
     <Card
       className="justify-content-center"
@@ -227,20 +235,21 @@ function RequestCreateCard({
       header={
         <div className="flex mb-2">
           {!isDialog && (
-            <Button
+            <AccessButton
               onClick={() => {
                 removeItem(requestItem.itemId);
               }}
               tooltip={`Close Request Creation for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
             >
               <FontAwesomeIcon icon="xmark" />
-            </Button>
+            </AccessButton>
           )}
           <div className="ml-4 mr-2 align-self-center">Scheduled</div>
           <InputSwitch
             checked={showScheduleJob}
             onChange={(e) => updateShowScheduleJob(e.value)}
             className="align-self-center"
+            aria-label="Toggle for creating Scheduled Job"
           />
         </div>
       }
@@ -248,7 +257,7 @@ function RequestCreateCard({
       footer={
         <div className="flex mt-2">
           <div>
-            <Button
+            <AccessButton
               label="Reset Form"
               severity="warning"
               icon="pi pi-arrow-right"
@@ -262,7 +271,7 @@ function RequestCreateCard({
               setVisibleCodeExample={setVisibleCodeExample}
               request={request}
             />
-            <Button
+            <AccessButton
               label="Code Examples"
               severity="info"
               icon="pi pi-arrow-right"
@@ -270,53 +279,50 @@ function RequestCreateCard({
               className="mr-2"
             />
           </div>
-          <HasAccess
-            config={config}
-            permission="OPERATOR"
-            hasNamespace={requestItem.requestCommandInput?.namespace}
-            hasSystemName={requestItem.requestCommandInput?.systemName}
-            hasSystemVersion={requestItem.requestCommandInput?.version}
-            hasInstanceName={requestItem.requestCommandInput?.instance}
-            hasCommandName={requestItem.requestCommandInput?.command}
-          >
-            <div style={{ marginLeft: "auto" }}>
-              {showCreateRequest && !showScheduleJob && (
-                <Button
-                  label="Submit"
-                  icon="pi pi-arrow-right"
-                  disabled={!isFormValid}
-                  onMouseDown={(event) => {
-                    if (event.button === 1) {
-                      // Middle mouse button click
-                      submitRequestAndOpen();
-                    } else {
-                      submitRequest();
-                    }
-                  }}
-                />
-              )}
-              {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
-                <Button
-                  label="Submit Job"
-                  severity="success"
-                  disabled={!isFormValid}
-                  icon="pi pi-arrow-right"
-                  iconPos="right"
-                  onClick={submitJob}
-                />
-              )}
-              {showCreateRequest && showScheduleJob && requestItem?.jobId && (
-                <Button
-                  label="Update Job"
-                  severity="success"
-                  disabled={!isFormValid}
-                  icon="pi pi-arrow-right"
-                  iconPos="right"
-                  onClick={updateJob}
-                />
-              )}
-            </div>
-          </HasAccess>
+
+          <div style={{ marginLeft: "auto" }}>
+            {showCreateRequest && !showScheduleJob && (
+              <AccessButton
+                label="Submit"
+                icon="pi pi-arrow-right"
+                disabled={!isFormValid}
+                onMouseDown={(event) => {
+                  if (event.button === 1) {
+                    // Middle mouse button click
+                    submitRequestAndOpen();
+                  } else {
+                    submitRequest();
+                  }
+                }}
+                {...permissions}
+                permission="OPERATOR"
+              />
+            )}
+            {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
+              <AccessButton
+                label="Submit Job"
+                severity="success"
+                disabled={!isFormValid}
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                onClick={submitJob}
+                {...permissions}
+                permission="OPERATOR"
+              />
+            )}
+            {showCreateRequest && showScheduleJob && requestItem?.jobId && (
+              <AccessButton
+                label="Update Job"
+                severity="success"
+                disabled={!isFormValid}
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                onClick={updateJob}
+                {...permissions}
+                permission="OPERATOR"
+              />
+            )}
+          </div>
         </div>
       }
     >

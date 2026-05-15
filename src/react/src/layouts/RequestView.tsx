@@ -1,6 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { BreadCrumb } from "primereact/breadcrumb";
-import { Button } from "primereact/button";
 import { Dropdown } from "primereact/dropdown";
 import { MenuItem } from "primereact/menuitem";
 import { Message } from "primereact/message";
@@ -11,6 +10,7 @@ import { StepperPanel } from "primereact/stepperpanel";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
+import AccessButton from "../components/AccessButton";
 import CommandForm from "../components/CommandForm";
 import RequestOutput from "../components/RequestOutput";
 import RequestTreeChart from "../components/RequestTreeChart";
@@ -168,7 +168,7 @@ function RequestOptions({
           />
         )}
         {!execute_authority && (
-          <Button
+          <AccessButton
             icon={<FontAwesomeIcon icon="download" />}
             label="Download Output"
             onClick={() => handleDownload(request)}
@@ -191,7 +191,7 @@ function RequestOptions({
               }}
               placeholder="Select a command to run next"
             />
-            <Button
+            <AccessButton
               label="Run"
               onClick={() => {
                 if (requestProjectionSelectedRef.current) {

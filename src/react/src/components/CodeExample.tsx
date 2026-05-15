@@ -1,8 +1,8 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 
 import { Request } from "../models/brewtils-types";
+import AccessButton from "./AccessButton";
 
 function CodeExample({
   request,
@@ -127,13 +127,14 @@ function CodeExample({
     return (
       <div style={{ position: "relative" }}>
         <h3>{codeType}</h3>
-        <Button
+        <AccessButton
           className="p-button-rounded p-button-text"
           onClick={copyToClipboard}
           style={{ position: "absolute", top: "0.5rem", right: "0.5rem" }}
+          tooltip={`Copy ${codeType} to clipboard`}
         >
           <FontAwesomeIcon icon="copy" />
-        </Button>
+        </AccessButton>
         <pre>
           <code
             style={{

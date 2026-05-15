@@ -270,7 +270,6 @@ function GardenDashboard({
     return {
       key: garden.id,
       label: garden.name,
-      icon: "pi pi-sitemap",
       statusCounts: generateStatusCounts(garden, systems),
       connectionCounts: generateConnectionStatus(garden),
       expanded: true,
@@ -413,6 +412,7 @@ function GardenDashboard({
               findSelectedGarden(e.value);
             }
           }}
+          togglerTemplate={<></>}
         />
       </div>
 
@@ -439,6 +439,7 @@ function GardenDashboard({
                 <UnassociatedRunnerCard
                   runnerGroup={runnerGroup}
                   toast={toast}
+                  config={config}
                 />
               </div>
             ))}

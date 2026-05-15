@@ -1,6 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { FilterMatchMode } from "primereact/api";
-import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
 import { Checkbox, CheckboxChangeEvent } from "primereact/checkbox";
 import { Column } from "primereact/column";
@@ -18,6 +17,7 @@ import {
 } from "react";
 import { Link } from "react-router-dom";
 
+import AccessButton from "../components/AccessButton";
 import { Request } from "../models/brewtils-types";
 import { RequestItem } from "../models/models";
 import { TourStepProps } from "../models/models";
@@ -27,6 +27,7 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
+import { GetBaseURL } from "../services/util_service";
 
 interface LazyParams {
   first: number;
@@ -395,7 +396,7 @@ function RequestIndex({
           />
           Show Children
         </label>
-        <Button
+        <AccessButton
           rounded
           raised
           onClick={lazyLoadData}
@@ -404,7 +405,7 @@ function RequestIndex({
         >
           {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
           <FontAwesomeIcon icon="refresh" />
-        </Button>
+        </AccessButton>
       </div>
     </div>
   );
@@ -453,28 +454,28 @@ function RequestIndex({
     return (
       <div>
         <Link to={`/request/${request.id}`}>
-          <Button
+          <AccessButton
             rounded
             raised
             link
-            tooltip={"Open Request " + request.command_display_name}
+            tooltip={`Open Request ${request.command_display_name ?? request.command} ${request.id}`}
             className="mr-2"
             {...GenerateTourProps(OpenRequestTourStep)}
           >
             <FontAwesomeIcon icon="arrow-up-right-from-square" />
-          </Button>
+          </AccessButton>
         </Link>
-        <Button
+        <AccessButton
           rounded
           raised
           link
           onClick={() => PeekRequestView(request)}
-          tooltip={"View " + request.command_display_name}
+          tooltip={`View Request ${request.command_display_name ?? request.command} ${request.id}`}
           className="mr-2"
           {...GenerateTourProps(ViewRequestTourStep)}
         >
           <FontAwesomeIcon icon="eye" />
-        </Button>
+        </AccessButton>
       </div>
     );
   };

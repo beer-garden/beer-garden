@@ -1,4 +1,3 @@
-import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
@@ -10,6 +9,7 @@ import { AliasUserMap, Garden, User } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { GetRootGarden } from "../services/garden_service";
 import { UpdateUserAliasMapping } from "../services/user_service";
+import AccessButton from "./AccessButton";
 
 function UserChangeAccountMapping({
   user,
@@ -228,14 +228,16 @@ function UserChangeAccountMapping({
       header={`Update Account Mapping for ${user.username}`}
       footer={
         <>
-          <Button onClick={handleAccountMappingDialogClose}>Close</Button>
-          <Button
+          <AccessButton
+            onClick={handleAccountMappingDialogClose}
+            label="Close"
+          />
+          <AccessButton
             data-testid={`submit-btn-dialog`}
             severity="danger"
             onClick={updateAccounts}
-          >
-            Submit
-          </Button>
+            label="Submit"
+          />
         </>
       }
       visible={showAccountMappingDialog}

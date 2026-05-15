@@ -17,6 +17,10 @@ const HasAccess = ({
   renderAuthFailed,
   children,
 }: PropsWithChildren<HasAccessProps>) => {
+  if (config === undefined || permission === undefined) {
+    return children;
+  }
+
   const [hasAccess, setHasAccess] = useState(
     config?.auth_enabled === undefined || config?.auth_enabled === false,
   );

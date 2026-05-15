@@ -1,10 +1,10 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { DataView } from "primereact/dataview";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
+import AccessButton from "../components/AccessButton";
 import RequestItemCard from "../components/RequestItemCard";
 import { Config, RequestItem, TourStepProps } from "../models/models";
 import {
@@ -190,13 +190,14 @@ function Workspace({
   return (
     <div>
       <h1>Workspace</h1>
-      <Button
+      <AccessButton
         onClick={() => addItem()}
+        aria-label="Add Request"
         tooltip="Add Request"
         {...GenerateTourProps(addRequestTourStep)}
       >
         <FontAwesomeIcon icon="file-pen" />
-      </Button>
+      </AccessButton>
 
       <DataView
         value={items}
