@@ -548,7 +548,7 @@ function RequestWizard({
               action: {
                 "aria-label": "Pick Command Step",
               },
-              header: stepperPanel1Options 
+              header: stepperPanel1Options,
             }}
           >
             <BreadCrumb model={breadcrumbs} className="mb-2" />
@@ -583,7 +583,7 @@ function RequestWizard({
               action: {
                 "aria-label": "Populate Create Request Form Step",
               },
-              header: stepperPanel2Options
+              header: stepperPanel2Options,
             }}
           >
             <BreadCrumb model={commandBreadcrumbs} className="mb-2" />
