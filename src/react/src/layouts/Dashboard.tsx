@@ -270,7 +270,6 @@ function GardenDashboard({
     return {
       key: garden.id,
       label: garden.name,
-      // icon: "pi pi-sitemap",
       statusCounts: generateStatusCounts(garden, systems),
       connectionCounts: generateConnectionStatus(garden),
       expanded: true,

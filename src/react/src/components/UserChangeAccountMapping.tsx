@@ -230,7 +230,7 @@ function UserChangeAccountMapping({
         <>
           <AccessButton
             onClick={handleAccountMappingDialogClose}
-            label="close"
+            label="Close"
           />
           <AccessButton
             data-testid={`submit-btn-dialog`}

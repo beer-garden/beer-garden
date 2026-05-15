@@ -210,9 +210,7 @@ function JobIndex({
           rounded
           raised
           link
-          onClick={() =>
-            addRequestItem({ jobId: job.id, type: "VIEW_JOB" })
-          }
+          onClick={() => addRequestItem({ jobId: job.id, type: "VIEW_JOB" })}
           title={"View Job " + job.name}
           className="mr-2"
           {...GenerateTourProps(viewJobTourStep)}
@@ -409,9 +407,8 @@ function JobIndex({
           {...GenerateTourProps(createJobTourStep)}
           config={config}
           permission="OPERATOR"
-        >
-          Create Job
-        </AccessButton>
+          label="Create Job"
+        />
 
         <FileUpload
           ref={jobImportFileRef}

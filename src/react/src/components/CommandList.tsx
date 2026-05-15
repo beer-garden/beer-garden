@@ -75,9 +75,8 @@ function CommandList({
           commandListButtonClick(command);
         }}
         tooltip={`Select Command ${command.name}`}
-      >
-        Select
-      </AccessButton>
+        label="Select"
+      />
     );
   }
 
