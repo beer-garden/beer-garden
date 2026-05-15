@@ -22,10 +22,27 @@ function CurrentRequestsTemplate({
   const altRequests = useRef<Array<Request>>([]);
 
   const setAllRequests = (requests: Array<Request>) => {
-    altRequests.current = requests.map((req) => ({
-      id: req.id,
-      status: req.status,
-    }));
+    altRequests.current = requests.map((req) => {
+      const request = {
+        id: req.id,
+        status: req.status,
+        updated_at: req.updated_at,
+        command: req.command,
+      };
+      if (config?.auth_enabled === true) {
+        return {
+          ...request,
+          ...{
+            target_garden: req.target_garden,
+            namespace: req.namespace,
+            system: req.system,
+            instance_name: req.instance_name,
+            system_version: req.system_version,
+          },
+        };
+      }
+      return request;
+    });
     setCurrentRequests(requests);
   };
 
@@ -34,7 +51,21 @@ function CurrentRequestsTemplate({
 
     if (sessionUUID) {
       const filterQuery: Record<string, any> = {};
-      filterQuery["include"] = ["id", "status", "command"];
+      if (config?.auth_enabled === true) {
+        filterQuery["include"] = [
+          "id",
+          "status",
+          "command",
+          "updated_at",
+          "target_garden",
+          "namespace",
+          "system",
+          "instance_name",
+          "system_version",
+        ];
+      } else {
+        filterQuery["include"] = ["id", "status", "command", "updated_at"];
+      }
       filterQuery["query"] = [
         JSON.stringify({
           field_name: "metadata__sessionUUID",
@@ -63,6 +94,14 @@ function CurrentRequestsTemplate({
     }
   }, []);
 
+  const requestStickyCheck = (request: Request) => {
+    const requestStickyLimit = 30; // Seconds
+    return (
+      new Date(request.updated_at) >
+      new Date(Date.now() - requestStickyLimit * 1000)
+    );
+  };
+
   const ProcessEventRequests = (message: any) => {
     if (message.payload_type === "Request") {
       const sessionUUID = localStorage.getItem("sessionUUID");
@@ -80,12 +119,7 @@ function CurrentRequestsTemplate({
         for (const request of altRequests.current) {
           if (message.payload.id === request.id) {
             updateList = true;
-            if (
-              message.payload.status &&
-              ["CREATED", "IN_PROGRESS"].includes(message.payload.status)
-            ) {
-              updatedRequests.push(message.payload);
-            }
+            updatedRequests.push(message.payload);
           } else {
             updatedRequests.push(request);
           }
@@ -93,7 +127,8 @@ function CurrentRequestsTemplate({
 
         if (
           !updateList &&
-          ["CREATED", "IN_PROGRESS"].includes(message.payload.status)
+          (["CREATED", "IN_PROGRESS"].includes(message.payload.status) ||
+            requestStickyCheck(message.payload))
         ) {
           updatedRequests.push(message.payload);
           updateList = true;
@@ -109,6 +144,29 @@ function CurrentRequestsTemplate({
   useEffect(() => {
     getCurrentRequests();
   }, [getCurrentRequests]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      let updateList = false;
+      const updatedRequests = [] as Array<Request>;
+      for (const request of altRequests.current) {
+        if (
+          !request.status ||
+          ["CREATED", "IN_PROGRESS"].includes(request.status) ||
+          requestStickyCheck(request)
+        ) {
+          updatedRequests.push(request);
+        } else {
+          updateList = true;
+        }
+        if (updateList) {
+          setAllRequests(updatedRequests);
+        }
+      }
+    }, 5000); // check every 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const SeverityCheck = (status?: string) => {
     if (!status) {
@@ -227,12 +285,30 @@ function CurrentRequestsTemplate({
       >
         <FontAwesomeIcon
           icon="envelope"
-          className={currentRequests.length > 0 ? "fa-shake" : ""}
+          className={
+            currentRequests.filter(
+              (request) =>
+                request.status &&
+                ["CREATED", "IN_PROGRESS"].includes(request.status),
+            ).length > 0
+              ? "fa-shake"
+              : ""
+          }
           style={{ "--fa-animation-duration": "3s" } as React.CSSProperties}
         />
-        {currentRequests.length > 0 && (
+        {currentRequests.filter(
+          (request) =>
+            request.status &&
+            ["CREATED", "IN_PROGRESS"].includes(request.status),
+        ).length > 0 && (
           <span className="fa-layers-counter" style={{ fontSize: "1.5em" }}>
-            {currentRequests.length}
+            {
+              currentRequests.filter(
+                (request) =>
+                  request.status &&
+                  ["CREATED", "IN_PROGRESS"].includes(request.status),
+              ).length
+            }
           </span>
         )}
       </AccessButton>
