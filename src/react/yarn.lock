@@ -4715,6 +4715,11 @@ primeflex@^4.0.0:
   resolved "https://registry.npmjs.org/primeflex/-/primeflex-4.0.0.tgz"
   integrity sha512-UOEZCRjR36+sm5bUpDhS1xbA068l9VC6y1aTNVqQPtXuKIdPTqAWHRUxj3mKAoPrQ9W373ooJJMgNVXfiaw04g==
 
+primeicons@^7.0.0:
+  version "7.0.0"
+  resolved "https://registry.npmjs.org/primeicons/-/primeicons-7.0.0.tgz"
+  integrity sha512-jK3Et9UzwzTsd6tzl2RmwrVY/b8raJ3QZLzoDACj+oTJ0oX7L9Hy+XnVwgo4QVKlKpnP/Ur13SXV/pVh4LzaDw==
+
 primereact@^10.9.7:
   version "10.9.7"
   resolved "https://registry.npmjs.org/primereact/-/primereact-10.9.7.tgz"

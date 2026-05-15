@@ -1,13 +1,13 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { Column } from "primereact/column";
+import { Tooltip } from "primereact/tooltip";
 import { TreeTable } from "primereact/treetable";
 import { Link } from "react-router-dom";
 
-import HasAccess from "../components/HasAccess";
 import { Request } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { DeleteRequest } from "../services/request_service";
+import AccessButton from "./AccessButton";
 
 function parseRequest(request: Request, config: Config) {
   const item = {
@@ -16,6 +16,8 @@ function parseRequest(request: Request, config: Config) {
       id: request.id,
       command: request.command,
       command_display_name: request.command_display_name,
+      command_type: request.command_type,
+      topic: request?.metadata?._topic,
       status: request.status,
       namespace: request.namespace,
       system: request.system,
@@ -62,79 +64,122 @@ function RequestTreeChart(props: RequestTreeChartProps) {
     return { "p-highlight": node.data.id === props.currentRequestId };
   };
 
+  const commandNameTemplate = (node: any) => {
+    return (
+      <div>
+        {node.data.topic && (
+          <>
+            <Tooltip
+              content={node.data.topic}
+              target={`#TOPIC_${node.data.id}`}
+            />
+            <FontAwesomeIcon
+              icon="envelope"
+              className="mr-2"
+              id={`TOPIC_${node.data.id}`}
+            />
+          </>
+        )}
+        <Tooltip
+          content={`${node.data.command_type} Command`}
+          target={`#ICON_${node.data.id}`}
+        />
+        {(node.data.command_type === undefined ||
+          node.data.command_type.length === 0 ||
+          node.data.command_type === "ACTION") && (
+          <FontAwesomeIcon
+            icon="a"
+            className="mr-2"
+            id={`ICON_${node.data.id}`}
+          />
+        )}
+        {node.data.command_type === "INFO" && (
+          <FontAwesomeIcon
+            icon="i"
+            className="mr-2"
+            id={`ICON_${node.data.id}`}
+          />
+        )}
+        {node.data.command_type === "TEMP" && (
+          <FontAwesomeIcon
+            icon="hourglass"
+            className="mr-2"
+            id={`ICON_${node.data.id}`}
+          />
+        )}
+        <span>{node.data.command}</span>
+      </div>
+    );
+  };
+
   const actionTemplate = (node: any, config: Config) => {
     if (node.data.id === props.currentRequestId) {
       return;
     }
+    const permissions = {
+      config: config,
+      hasNamespace: props?.rootRequest?.namespace,
+      hasSystemName: props?.rootRequest?.system,
+      hasSystemVersion: props?.rootRequest?.system_version,
+      hasInstanceName: props?.rootRequest?.instance_name,
+      hasCommandName: props?.rootRequest?.command,
+    };
     return (
       <div>
         <Link to={`/request/${node.data.id}`}>
-          <Button rounded raised link title="Open">
+          <AccessButton rounded raised link title="Open">
             <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
-          </Button>
+          </AccessButton>
         </Link>
         {!["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
           node.data.status,
         ) && (
-          <HasAccess
-            config={config}
+          <AccessButton
+            rounded
+            raised
+            link
+            onClick={() => {}}
+            title="Cancel"
             permission="OPERATOR"
-            hasNamespace={props?.rootRequest?.namespace}
-            hasSystemName={props?.rootRequest?.system}
-            hasSystemVersion={props?.rootRequest?.system_version}
-            hasInstanceName={props?.rootRequest?.instance_name}
-            hasCommandName={props?.rootRequest?.command}
+            {...permissions}
           >
-            <Button rounded raised link onClick={() => {}} title="Cancel">
-              <FontAwesomeIcon icon="ban" />{" "}
-            </Button>
-          </HasAccess>
+            <FontAwesomeIcon icon="ban" />{" "}
+          </AccessButton>
         )}
         {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
           node.data.status,
         ) && (
-          <HasAccess
-            config={config}
-            permission="PLUGIN_ADMIN"
-            hasNamespace={props?.rootRequest?.namespace}
-            hasSystemName={props?.rootRequest?.system}
-            hasSystemVersion={props?.rootRequest?.system_version}
-            hasInstanceName={props?.rootRequest?.instance_name}
-            hasCommandName={props?.rootRequest?.command}
+          <AccessButton
+            rounded
+            raised
+            link
+            onClick={() =>
+              DeleteRequest(node.data).catch((error) => {
+                console.error("Error deleting request:", error);
+              })
+            }
+            title="Delete"
+            {...permissions}
+            permission="OPERATOR"
           >
-            <Button
+            <FontAwesomeIcon icon="trash" />{" "}
+          </AccessButton>
+        )}
+        {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
+          node.data.status,
+        ) && (
+          <Link to={`/recreate/${node.data.id}`}>
+            <AccessButton
               rounded
               raised
               link
-              onClick={() =>
-                DeleteRequest(node.data).catch((error) => {
-                  console.error("Error deleting request:", error);
-                })
-              }
-              title="Delete"
+              title="Pour Again"
+              {...permissions}
+              permission="OPERATOR"
             >
-              <FontAwesomeIcon icon="trash" />{" "}
-            </Button>
-          </HasAccess>
-        )}
-        {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
-          node.data.status,
-        ) && (
-          <HasAccess
-            config={config}
-            permission="OPERATOR"
-            hasNamespace={props?.rootRequest?.namespace}
-            hasSystemName={props?.rootRequest?.system}
-            hasSystemVersion={props?.rootRequest?.system_version}
-            hasInstanceName={props?.rootRequest?.instance_name}
-            hasCommandName={props?.rootRequest?.command}
-          >
-            <Link to={`/recreate/${node.data.id}`}>
-              <Button rounded raised link title="Pour Again">
-                <FontAwesomeIcon icon="rotate" />{" "}
-              </Button>
-            </Link>
-          </HasAccess>
+              <FontAwesomeIcon icon="rotate" />{" "}
+            </AccessButton>
+          </Link>
         )}
       </div>
     );
@@ -146,7 +191,12 @@ function RequestTreeChart(props: RequestTreeChartProps) {
         rowClassName={rowClassName}
         tableStyle={{ minWidth: "50rem" }}
       >
-        <Column field="command" header="Command" expander></Column>
+        <Column
+          field="command"
+          header="Command"
+          expander
+          body={commandNameTemplate}
+        ></Column>
 
         <Column field="status" header="status"></Column>
         <Column field="namespace" header="Namespace"></Column>

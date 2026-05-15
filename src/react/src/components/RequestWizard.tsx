@@ -1,14 +1,12 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { BreadCrumb } from "primereact/breadcrumb";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { InputSwitch } from "primereact/inputswitch";
 import { Skeleton } from "primereact/skeleton";
-import { Stepper } from "primereact/stepper";
+import { Stepper, StepperChangeEvent } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { useEffect, useRef, useState } from "react";
 
-import HasAccess from "../components/HasAccess";
 import {
   Command,
   Instance,
@@ -22,6 +20,7 @@ import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
 import { GetBaseURL } from "../services/util_service";
+import AccessButton from "./AccessButton";
 import CodeExample from "./CodeExample";
 import CommandForm from "./CommandForm";
 import CommandList from "./CommandList";
@@ -43,6 +42,13 @@ function RequestWizard({
 }) {
   const stepperRef = useRef<Stepper>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const stepperPanelOptions: any = {
+    className: "p-stepper-header p-stepper-header-right p-disabled",
+  };
+  const [stepperPanel1Options, setStepperPanel1Options] =
+    useState<any>(stepperPanelOptions);
+  const [stepperPanel2Options, setStepperPanel2Options] =
+    useState<any>(stepperPanelOptions);
 
   const [selectedSystem, setSelectedSystem] = useState<System | undefined>(
     undefined,
@@ -463,6 +469,34 @@ function RequestWizard({
     },
   ];
 
+  const cleanForm = () => {
+    const newRequest = { ...request, command_type: "" };
+    delete newRequest.parameters;
+    delete newRequest.comment;
+    setRequest(newRequest);
+  };
+
+  const handleChangeStep = (e: StepperChangeEvent) => {
+    setActiveIndex(e.index);
+    if (e.index == 1) {
+      // Enable panel 1 & disable 2
+      setStepperPanel1Options({});
+      setStepperPanel2Options(stepperPanelOptions);
+      cleanForm();
+    } else if (e.index == 2) {
+      // Enable panel 1 & 2
+      setStepperPanel1Options({});
+      setStepperPanel2Options({});
+    } else {
+      // Disable panel 1 & 2
+      setStepperPanel1Options(stepperPanelOptions);
+      setStepperPanel2Options(stepperPanelOptions);
+      if (selectedInstance) {
+        setSelectedInstance(undefined);
+      }
+    }
+  };
+
   return (
     <Card
       className="justify-content-center"
@@ -470,14 +504,14 @@ function RequestWizard({
       header={
         !isDialog && (
           <div className="flex">
-            <Button
+            <AccessButton
               onClick={() => {
                 removeItem(requestItem.itemId);
               }}
               tooltip={`Close Request Creation for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
             >
               <FontAwesomeIcon icon="xmark" />
-            </Button>
+            </AccessButton>
           </div>
         )
       }
@@ -489,12 +523,34 @@ function RequestWizard({
           ref={stepperRef}
           activeStep={activeIndex}
           style={{ flexBasis: "50rem" }}
-          linear
+          pt={{
+            nav: {
+              "aria-label":
+                "Three step process of finding and executing create request",
+            },
+          }}
+          onChangeStep={handleChangeStep}
         >
-          <StepperPanel header="Pick System">
+          <StepperPanel
+            header="Pick System"
+            aria-label="Pick System Step"
+            pt={{
+              action: {
+                "aria-label": "Pick System Step",
+              },
+            }}
+          >
             <SystemList systemListButtonClick={systemListButtonClick} />
           </StepperPanel>
-          <StepperPanel header="Pick Command">
+          <StepperPanel
+            header="Pick Command"
+            pt={{
+              action: {
+                "aria-label": "Pick Command Step",
+              },
+              header: stepperPanel1Options,
+            }}
+          >
             <BreadCrumb model={breadcrumbs} className="mb-2" />
             <CommandList
               selectedSystem={selectedSystem}
@@ -511,7 +567,7 @@ function RequestWizard({
               setSelectedInstance={setSelectedInstance}
             />
             <div className="flex pt-4 justify-content-between">
-              <Button
+              <AccessButton
                 label="Back"
                 severity="secondary"
                 onClick={() => {
@@ -521,13 +577,22 @@ function RequestWizard({
               />
             </div>
           </StepperPanel>
-          <StepperPanel header="Form">
+          <StepperPanel
+            header="Form"
+            pt={{
+              action: {
+                "aria-label": "Populate Create Request Form Step",
+              },
+              header: stepperPanel2Options,
+            }}
+          >
             <BreadCrumb model={commandBreadcrumbs} className="mb-2" />
             <div className="flex ml-4">
               <span className="mr-2 align-self-center">Scheduled</span>
               <InputSwitch
                 checked={showScheduleJob}
                 onChange={(e) => updateShowScheduleJob(e.value)}
+                aria-label="Toggle for creating Scheduled Job"
               />
             </div>
             {showScheduleJob && (
@@ -546,19 +611,15 @@ function RequestWizard({
               setIsFormValid={setIsFormValid}
             />
             <div className="flex pt-4 justify-content-between">
-              <Button
+              <AccessButton
                 label="Back"
                 severity="secondary"
                 onClick={() => {
-                  if (request?.parameters) {
-                    const newRequest = { ...request };
-                    delete newRequest.parameters;
-                    setRequest(newRequest);
-                  }
+                  cleanForm();
                   stepperRef.current?.prevCallback();
                 }}
               />
-              <Button
+              <AccessButton
                 label="Reset Form"
                 severity="warning"
                 onClick={() => setResetForm(true)}
@@ -570,60 +631,69 @@ function RequestWizard({
                   setVisibleCodeExample={setVisibleCodeExample}
                   request={request}
                 />
-                <Button
+                <AccessButton
                   label="Code Examples"
                   severity="info"
                   onClick={() => setVisibleCodeExample(true)}
                   className="mr-2"
                 />
               </div>
-              <HasAccess
-                config={config}
-                permission="OPERATOR"
-                hasNamespace={requestItem.requestCommandInput?.namespace}
-                hasSystemName={requestItem.requestCommandInput?.systemName}
-                hasSystemVersion={requestItem.requestCommandInput?.version}
-                hasInstanceName={requestItem.requestCommandInput?.instance}
-                hasCommandName={requestItem.requestCommandInput?.command}
-              >
-                {showCreateRequest && !showScheduleJob && (
-                  <Button
-                    label="Submit"
-                    icon="pi pi-arrow-right"
-                    disabled={!isFormValid}
-                    onMouseDown={(event) => {
-                      if (event.button === 1) {
-                        // Middle mouse button click
-                        submitRequestAndOpen();
-                      } else {
-                        submitRequest();
-                      }
-                    }}
-                  />
-                )}
-                {showCreateRequest &&
-                  showScheduleJob &&
-                  !requestItem?.jobId && (
-                    <Button
-                      label="Submit Job"
-                      severity="success"
-                      icon="pi pi-arrow-right"
-                      disabled={!isFormValid}
-                      iconPos="right"
-                      onClick={submitJob}
-                    />
-                  )}
-                {showCreateRequest && showScheduleJob && requestItem?.jobId && (
-                  <Button
-                    label="Update Job"
-                    severity="success"
-                    icon="pi pi-arrow-right"
-                    disabled={!isFormValid}
-                    iconPos="right"
-                    onClick={updateJob}
-                  />
-                )}
-              </HasAccess>
+              {showCreateRequest && !showScheduleJob && (
+                <AccessButton
+                  label="Submit"
+                  icon="pi pi-arrow-right"
+                  disabled={!isFormValid}
+                  onMouseDown={(event) => {
+                    if (event.button === 1) {
+                      // Middle mouse button click
+                      submitRequestAndOpen();
+                    } else {
+                      submitRequest();
+                    }
+                  }}
+                  config={config}
+                  permission="OPERATOR"
+                  hasNamespace={requestItem.requestCommandInput?.namespace}
+                  hasSystemName={requestItem.requestCommandInput?.systemName}
+                  hasSystemVersion={requestItem.requestCommandInput?.version}
+                  hasInstanceName={requestItem.requestCommandInput?.instance}
+                  hasCommandName={requestItem.requestCommandInput?.command}
+                />
+              )}
+              {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
+                <AccessButton
+                  label="Submit Job"
+                  severity="success"
+                  icon="pi pi-arrow-right"
+                  disabled={!isFormValid}
+                  iconPos="right"
+                  onClick={submitJob}
+                  config={config}
+                  permission="OPERATOR"
+                  hasNamespace={requestItem.requestCommandInput?.namespace}
+                  hasSystemName={requestItem.requestCommandInput?.systemName}
+                  hasSystemVersion={requestItem.requestCommandInput?.version}
+                  hasInstanceName={requestItem.requestCommandInput?.instance}
+                  hasCommandName={requestItem.requestCommandInput?.command}
+                />
+              )}
+              {showCreateRequest && showScheduleJob && requestItem?.jobId && (
+                <AccessButton
+                  label="Update Job"
+                  severity="success"
+                  icon="pi pi-arrow-right"
+                  disabled={!isFormValid}
+                  iconPos="right"
+                  onClick={updateJob}
+                  config={config}
+                  permission="OPERATOR"
+                  hasNamespace={requestItem.requestCommandInput?.namespace}
+                  hasSystemName={requestItem.requestCommandInput?.systemName}
+                  hasSystemVersion={requestItem.requestCommandInput?.version}
+                  hasInstanceName={requestItem.requestCommandInput?.instance}
+                  hasCommandName={requestItem.requestCommandInput?.command}
+                />
+              )}
             </div>
           </StepperPanel>
         </Stepper>

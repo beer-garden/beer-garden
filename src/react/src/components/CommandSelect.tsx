@@ -292,6 +292,7 @@ function CommandSelect({
           filter
           optionLabel="Namespace"
           placeholder="Select Namespace"
+          aria-label="Select Namespace"
         />
         <Dropdown
           value={selectedSystemName}
@@ -302,6 +303,7 @@ function CommandSelect({
           filter
           optionLabel="System"
           placeholder="Select System"
+          aria-label="Select System"
         />
         <Dropdown
           value={selectedVersion}
@@ -312,6 +314,7 @@ function CommandSelect({
           filter
           optionLabel="Version"
           placeholder="Select Version"
+          aria-label="Select Version"
         />
         <Dropdown
           value={selectedInstance}
@@ -322,6 +325,7 @@ function CommandSelect({
           filter
           optionLabel="Instance"
           placeholder="Select Instance"
+          aria-label="Select Instance"
         />
         <Dropdown
           value={selectedCommand}
@@ -332,6 +336,7 @@ function CommandSelect({
           filter
           optionLabel="Command"
           placeholder="Select Command"
+          aria-label="Select Command"
         />
       </div>
     </div>

@@ -92,8 +92,8 @@ export interface PermissionCheck {
 }
 
 export interface HasAccessProps {
-  config: Config;
-  permission: "READ_ONLY" | "OPERATOR" | "PLUGIN_ADMIN" | "GARDEN_ADMIN";
+  config?: Config;
+  permission?: "READ_ONLY" | "OPERATOR" | "PLUGIN_ADMIN" | "GARDEN_ADMIN";
   isGlobal?: boolean;
   hasGardenName?: string;
   hasNamespace?: string;

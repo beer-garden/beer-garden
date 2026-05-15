@@ -1,6 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AutoComplete } from "primereact/autocomplete";
-import { Button } from "primereact/button";
 import { Calendar } from "primereact/calendar";
 import { Checkbox } from "primereact/checkbox";
 import { Dropdown } from "primereact/dropdown";
@@ -17,6 +16,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { InputParam } from "../models/models";
 import { uploadFile } from "../services/file_service";
+import AccessButton from "./AccessButton";
 
 interface CommandFormFieldParams {
   parameter: InputParam;
@@ -100,6 +100,12 @@ function CommandFormField({
     });
   };
 
+  const inputAreaAriaLabel = `Parameter Input ${parameter.display_name ?? parameter.key}`;
+
+  const addInputAriaLabel = `Add new value to List for Parameter ${parameter.display_name ?? parameter.key}`;
+
+  const removeInputAriaLabel = `Remove value from List for Parameter ${parameter.display_name ?? parameter.key}`;
+
   if (!parameter.key) return null;
 
   if (parameter.multi && !Array.isArray(parameter.default)) {
@@ -133,6 +139,8 @@ function CommandFormField({
             }
             onChange={(e) => handleChange(e.target.id, e.value)}
             placeholder={`Select ${parameter.key}`}
+            aria-label={`${inputAreaAriaLabel}: Multi Select`}
+            tooltip={`${inputAreaAriaLabel}: Multi Select`}
             disabled={
               disabled ||
               parameter.options === undefined ||
@@ -170,6 +178,8 @@ function CommandFormField({
           }
           onChange={(e) => handleChange(e.target.id, e.value)}
           placeholder={`Select ${parameter.key}`}
+          aria-label={`${inputAreaAriaLabel}: Dropdown Select`}
+          tooltip={`${inputAreaAriaLabel}: Dropdown Select`}
           disabled={
             disabled ||
             parameter.options === undefined ||
@@ -218,6 +228,8 @@ function CommandFormField({
           disabled={disabled}
           multiple={parameter.multi}
           dropdown
+          aria-label={`${inputAreaAriaLabel}: String with Typeahead`}
+          tooltip={`${inputAreaAriaLabel}: String with Typeahead`}
         />
         {loadingChoices &&
           loadingChoices.some((loading) => loading.key === parameter.key) && (
@@ -255,19 +267,23 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.target.value, index)
                     }
                     disabled={disabled}
+                    aria-label={`${inputAreaAriaLabel} Index ${index}}: String`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}}: String`}
                   />
-                  <Button
+                  <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
+                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
                   />
                 </div>
               ))}
-              <Button
+              <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
+                tooltip={addInputAriaLabel}
               />
             </div>
           </div>
@@ -288,6 +304,8 @@ function CommandFormField({
             }
             onChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
+            aria-label={`${inputAreaAriaLabel}: String`}
+            tooltip={`${inputAreaAriaLabel}: String`}
           />
         </div>
       );
@@ -312,19 +330,23 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.target.value, index)
                     }
                     disabled={disabled}
+                    aria-label={`${inputAreaAriaLabel} Index ${index}}: Dictionary`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}}: Dictionary`}
                   />
-                  <Button
+                  <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
+                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
                   />
                 </div>
               ))}
-              <Button
+              <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
+                tooltip={addInputAriaLabel}
               />
             </div>
           </div>
@@ -346,6 +368,8 @@ function CommandFormField({
             onChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
             className={classNames({ "p-invalid": parameter.isInvalid })}
+            aria-label={`${inputAreaAriaLabel}: Dictionary`}
+            tooltip={`${inputAreaAriaLabel}: Dictionary`}
           />
         </div>
       );
@@ -380,19 +404,23 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
+                    aria-label={`${inputAreaAriaLabel} Index ${index}}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                   />
-                  <Button
+                  <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
+                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
                   />
                 </div>
               ))}
-              <Button
+              <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
+                tooltip={addInputAriaLabel}
               />
             </div>
           </div>
@@ -419,6 +447,8 @@ function CommandFormField({
             }
             onValueChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
+            aria-label={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+            tooltip={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
           />
         </div>
       );
@@ -454,19 +484,23 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
+                    aria-label={`${inputAreaAriaLabel} Index ${index}}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                   />
-                  <Button
+                  <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
+                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
                   />
                 </div>
               ))}
-              <Button
+              <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
+                tooltip={addInputAriaLabel}
               />
             </div>
           </div>
@@ -494,6 +528,8 @@ function CommandFormField({
             minFractionDigits={2}
             onValueChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
+            aria-label={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+            tooltip={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
           />
         </div>
       );
@@ -525,20 +561,24 @@ function CommandFormField({
                         handleMultiChange(parameter.key, e.value, index)
                       }
                       disabled={disabled}
+                      aria-label={`${inputAreaAriaLabel} Index ${index}}: Boolean`}
+                      tooltip={`${inputAreaAriaLabel} Index ${index}}: Boolean`}
                     />
 
-                    <Button
+                    <AccessButton
                       label="Remove"
                       severity="danger"
                       onClick={() => removeMultiItem(parameter.key, index)}
                       disabled={disabled}
+                      tooltip={`${removeInputAriaLabel} Index ${index}}`}
                     />
                   </div>
                 ))}
-                <Button
+                <AccessButton
                   label="Add"
                   onClick={() => addMultiItem(parameter.key, parameter.default)}
                   disabled={disabled}
+                  tooltip={addInputAriaLabel}
                 />
               </div>
             </div>
@@ -563,20 +603,24 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.checked, index)
                     }
                     disabled={disabled}
+                    aria-label={`${inputAreaAriaLabel} Index ${index}}: Boolean`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}}: Boolean`}
                   />
 
-                  <Button
+                  <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
+                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
                   />
                 </div>
               ))}
-              <Button
+              <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
+                tooltip={addInputAriaLabel}
               />
             </div>
           </div>
@@ -599,6 +643,8 @@ function CommandFormField({
               value={parameter.value}
               onChange={(e) => handleChange(e.target.id, e.value)}
               disabled={disabled}
+              aria-label={`${inputAreaAriaLabel}: Boolean`}
+              tooltip={`${inputAreaAriaLabel}: Boolean`}
             />
           </div>
         );
@@ -619,6 +665,8 @@ function CommandFormField({
             checked={parameter.value}
             onChange={(e) => handleChange(e.target.id, e.checked)}
             disabled={disabled}
+            aria-label={`${inputAreaAriaLabel}: Boolean`}
+            tooltip={`${inputAreaAriaLabel}: Boolean`}
           />
         </div>
       );
@@ -644,19 +692,23 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
+                    aria-label={`${inputAreaAriaLabel} Index ${index}}: Date`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}}: Date`}
                   />
-                  <Button
+                  <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
+                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
                   />
                 </div>
               ))}
-              <Button
+              <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
+                tooltip={addInputAriaLabel}
               />
             </div>
           </div>
@@ -678,6 +730,8 @@ function CommandFormField({
             hourFormat="24"
             onChange={(e: any) => handleChange(e.target.id, e.value)}
             disabled={disabled}
+            aria-label={`${inputAreaAriaLabel}: Date`}
+            tooltip={`${inputAreaAriaLabel}: Date`}
           />
         </div>
       );
@@ -704,19 +758,23 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
+                    aria-label={`${inputAreaAriaLabel} Index ${index}}: DateTime`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}}: DateTime`}
                   />
-                  <Button
+                  <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
+                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
                   />
                 </div>
               ))}
-              <Button
+              <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
+                tooltip={addInputAriaLabel}
               />
             </div>
           </div>
@@ -739,6 +797,8 @@ function CommandFormField({
             }
             onChange={(e: any) => handleChange(e.target.id, e.value)}
             disabled={disabled}
+            aria-label={`${inputAreaAriaLabel}: DateTime`}
+            tooltip={`${inputAreaAriaLabel}: DateTime`}
           />
         </div>
       );
@@ -758,6 +818,7 @@ function CommandFormField({
             customUpload
             onSelect={customBytesUploader}
             disabled={disabled}
+            aria-label={`${inputAreaAriaLabel}: File Upload Bytes`}
           />
         </div>
       );
@@ -804,6 +865,7 @@ function CommandFormField({
                 displayValueTemplate={() => `${uploadPercentage}%`}
               />
             }
+            aria-label={`${inputAreaAriaLabel}: File Upload Base64`}
           />
         </div>
       );

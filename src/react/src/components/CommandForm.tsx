@@ -1,3 +1,5 @@
+import { Dropdown } from "primereact/dropdown";
+import { InputTextarea } from "primereact/inputtextarea";
 import { useEffect, useRef, useState } from "react";
 
 import { ChoicesValue, Request } from "../models/brewtils-types";
@@ -455,6 +457,22 @@ function CommandForm({
       return;
     }
     let updated = false;
+
+    if (
+      request &&
+      (request?.command_type === undefined || request.command_type.length === 0)
+    ) {
+      updated = true;
+      if (
+        command?.command_type === undefined ||
+        command?.command_type === null
+      ) {
+        request.command_type = "ACTION";
+      } else {
+        request.command_type = command?.command_type;
+      }
+    }
+
     const changedFields = [] as Array<string>;
     parametersFields.forEach((inputParameter) => {
       if (inputParameter.key === null || inputParameter.key === undefined) {
@@ -552,6 +570,26 @@ function CommandForm({
       key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}`}
       className="mt-4 mb-4"
     >
+      <div
+        className="flex justify-content-between mb-3"
+        key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMAND_TYPE`}
+      >
+        <div style={{ width: "20%" }}>
+          <label htmlFor="COMMAND_TYPE">Command Type</label>
+        </div>
+        <div style={{ width: "80%" }}>
+          <Dropdown
+            id="COMMAND_TYPE"
+            value={request?.command_type}
+            onChange={(e) =>
+              setRequest({ ...request, command_type: e.target.value })
+            }
+            options={["ACTION", "INFO", "TEMP"]}
+            disabled={disabled}
+            style={{ maxWidth: "75%" }}
+          />
+        </div>
+      </div>
       {parametersFields &&
         parametersFields?.map((parameter: InputParam) => (
           <div
@@ -574,6 +612,27 @@ function CommandForm({
             </div>
           </div>
         ))}
+      <div
+        className="flex justify-content-between mb-3"
+        key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMENT`}
+      >
+        <div style={{ width: "20%" }}>
+          <label htmlFor="COMMAND_COMMENT">Comment</label>
+        </div>
+        <div style={{ width: "80%" }}>
+          <InputTextarea
+            id="COMMAND_COMMENT"
+            value={request?.comment}
+            onChange={(e) =>
+              setRequest({ ...request, comment: e.target.value })
+            }
+            disabled={disabled}
+            style={{ maxWidth: "75%" }}
+            aria-label="Comment Field"
+            tooltip="Comment Field"
+          />
+        </div>
+      </div>
     </div>
   );
 }

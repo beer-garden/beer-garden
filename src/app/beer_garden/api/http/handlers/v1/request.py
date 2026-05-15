@@ -382,6 +382,11 @@ class RequestListAPI(AuthorizationHandler):
             required: false
             description: Datatables order object
             type: string
+          - name: order_by
+            in: query
+            required: false
+            description: Sort order
+            type: string
           - name: filter
             in: query
             required: false
@@ -463,6 +468,11 @@ class RequestListAPI(AuthorizationHandler):
             query_args["include_fields"].extend(self.get_arguments("include"))
         else:
             query_args["include_fields"] = self.get_arguments("include")
+
+        if not query_args.get("order_by"):
+            query_args["order_by"] = self.get_argument(
+                "order_by", default="-created_at"
+            )
 
         # There are also some sane parameters
         query_args["start"] = self.get_argument("start", default="0")

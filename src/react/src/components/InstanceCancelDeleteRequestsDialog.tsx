@@ -1,4 +1,3 @@
-import { Button } from "primereact/button";
 import { confirmDialog } from "primereact/confirmdialog";
 import { Dialog } from "primereact/dialog";
 import { Messages } from "primereact/messages";
@@ -7,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Request } from "../models/brewtils-types";
 import { InstanceDialogProps } from "../models/models";
 import { DeleteRequests, GetRequestList } from "../services/request_service";
+import AccessButton from "./AccessButton";
 
 function InstanceCancelDeleteRequestsDialog({
   instance,
@@ -290,7 +290,7 @@ function InstanceCancelDeleteRequestsDialog({
   return (
     <Dialog
       header={`Cancel/Delete Requests: ${system.name}[${system.version}]-${instance.name}`}
-      footer={<Button onClick={onClose}>Close</Button>}
+      footer={<AccessButton label="Close" onClick={onClose} />}
       visible={isVisible}
       style={{ width: "50vw" }}
       onHide={onClose}
@@ -312,55 +312,58 @@ function InstanceCancelDeleteRequestsDialog({
             <td>SUCCESS</td>
             <td>{successCount}</td>
             <td>
-              <Button
+              <AccessButton
                 onClick={() =>
                   deleteRequests(
                     "SUCCESS",
                     "Are you sure you want to delete Requests with status SUCCESS?",
                   )
                 }
+                tooltip={`Delete ${successCount} SUCCESS requests`}
               >
                 Delete SUCCESS
-              </Button>
+              </AccessButton>
             </td>
           </tr>
           <tr>
             <td>CANCELED</td>
             <td>{canceledCount}</td>
             <td>
-              <Button
+              <AccessButton
                 onClick={() =>
                   deleteRequests(
                     "CANCELED",
                     "Are you sure you want to delete Requests with status CANCELED?",
                   )
                 }
+                tooltip={`Delete ${canceledCount} CANCELED requests`}
               >
                 Delete CANCELED
-              </Button>
+              </AccessButton>
             </td>
           </tr>
           <tr>
             <td>ERROR</td>
             <td>{errorCount}</td>
             <td>
-              <Button
+              <AccessButton
                 onClick={() =>
                   deleteRequests(
                     "ERROR",
                     "Are you sure you want to delete Requests with status ERROR?",
                   )
                 }
+                tooltip={`Delete ${errorCount} ERROR requests`}
               >
                 Delete ERROR
-              </Button>
+              </AccessButton>
             </td>
           </tr>
           <tr>
             <td>IN PROGRESS</td>
             <td>{inProgressCount}</td>
             <td>
-              <Button
+              <AccessButton
                 onClick={() =>
                   deleteRequests(
                     "IN PROGRESS",
@@ -368,16 +371,17 @@ function InstanceCancelDeleteRequestsDialog({
                     true,
                   )
                 }
+                tooltip={`Delete ${inProgressCount} IN PROGRESS requests`}
               >
                 Cancel IN PROGRESS
-              </Button>
+              </AccessButton>
             </td>
           </tr>
           <tr>
             <td>RECEIVED</td>
             <td>{receivedCount}</td>
             <td>
-              <Button
+              <AccessButton
                 onClick={() =>
                   deleteRequests(
                     "RECEIVED",
@@ -385,16 +389,17 @@ function InstanceCancelDeleteRequestsDialog({
                     true,
                   )
                 }
+                tooltip={`Delete ${receivedCount} RECEIVED requests`}
               >
                 Cancel RECEIVED
-              </Button>
+              </AccessButton>
             </td>
           </tr>
           <tr>
             <td>CREATED</td>
             <td>{createdCount}</td>
             <td>
-              <Button
+              <AccessButton
                 onClick={() =>
                   deleteRequests(
                     "CREATED",
@@ -402,16 +407,17 @@ function InstanceCancelDeleteRequestsDialog({
                     true,
                   )
                 }
+                tooltip={`Delete ${createdCount} CREATED requests`}
               >
                 Cancel CREATED
-              </Button>
+              </AccessButton>
             </td>
           </tr>
           <tr>
             <td>Non-Completed (CREATED/RECEIVED/IN PROGRESS)</td>
             <td>{inProgressCount + receivedCount + createdCount}</td>
             <td>
-              <Button
+              <AccessButton
                 onClick={() =>
                   deleteRequests(
                     "ALL",
@@ -419,25 +425,27 @@ function InstanceCancelDeleteRequestsDialog({
                     true,
                   )
                 }
+                tooltip={`Delete ${inProgressCount + receivedCount + createdCount} Non-Completed requests`}
               >
                 Cancel Non-Completed
-              </Button>
+              </AccessButton>
             </td>
           </tr>
           <tr>
             <td>ALL</td>
             <td>{allCount}</td>
             <td>
-              <Button
+              <AccessButton
                 onClick={() =>
                   deleteRequests(
                     "ALL",
                     "Are you sure you want to delete all the Requests?",
                   )
                 }
+                tooltip={`Delete ${allCount} ALL requests`}
               >
                 Delete All
-              </Button>
+              </AccessButton>
             </td>
           </tr>
         </tbody>

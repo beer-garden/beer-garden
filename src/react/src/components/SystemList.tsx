@@ -1,11 +1,11 @@
 import { FilterMatchMode } from "primereact/api";
-import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { useEffect, useState } from "react";
 
 import { System } from "../models/brewtils-types";
 import { GetSystemList } from "../services/system_service";
+import AccessButton from "./AccessButton";
 
 function SystemList({ systemListButtonClick }: { systemListButtonClick: any }) {
   const [systems, setSystems] = useState<System[]>([]);
@@ -45,13 +45,13 @@ function SystemList({ systemListButtonClick }: { systemListButtonClick: any }) {
 
   function actionTemplate(system: System) {
     return (
-      <Button
+      <AccessButton
+        tooltip={`Select System ${system.namespace} ${system.name} ${system.version}`}
         onClick={() => {
           systemListButtonClick(system);
         }}
-      >
-        Select
-      </Button>
+        label="Select"
+      />
     );
   }
 

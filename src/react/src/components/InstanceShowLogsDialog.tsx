@@ -1,4 +1,3 @@
-import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { Messages } from "primereact/messages";
 import { useRef, useState } from "react";
@@ -6,6 +5,7 @@ import { useRef, useState } from "react";
 import { Instance } from "../models/brewtils-types";
 import { InstanceDialogProps } from "../models/models";
 import { GetInstanceLogs } from "../services/instance_service";
+import AccessButton from "./AccessButton";
 
 function InstanceShowLogsDialog({
   instance,
@@ -135,7 +135,14 @@ function InstanceShowLogsDialog({
   return (
     <Dialog
       header={`Log File: ${system.name}[${system.version}]-${instance.name}`}
-      footer={<Button onClick={onClose}>Close Logs</Button>}
+      footer={
+        <AccessButton
+          onClick={onClose}
+          tooltip="Close Instance Show Logs Dialog"
+        >
+          Close Logs
+        </AccessButton>
+      }
       visible={isVisible}
       style={{ width: "50vw" }}
       onShow={() => {
@@ -151,20 +158,22 @@ function InstanceShowLogsDialog({
       <Messages ref={msgs} />
       <div>
         <div>
-          <Button
+          <AccessButton
             name="start"
             value="Get Tail Logs"
+            tooltip="Get Tail logs"
             onClick={() => getLogsTail(instance)}
           >
             Get Tail Logs
-          </Button>
-          <Button
+          </AccessButton>
+          <AccessButton
             name="stop"
             value="Stop Tail Logs"
+            tooltip="Stop Tail Logs"
             onClick={() => stopLogsTail()}
           >
             Stop Tail Logs
-          </Button>
+          </AccessButton>
           <label htmlFor="tail_line_start">Tail Lines</label>
           <input
             type="number"
@@ -173,6 +182,7 @@ function InstanceShowLogsDialog({
             defaultValue={20}
             name="tail_line_start"
             onChange={updateTailLineStart}
+            aria-label="Input Tail line start"
           />
         </div>
         <div>
@@ -180,7 +190,10 @@ function InstanceShowLogsDialog({
             href={`api/v1/instances/${instance.id}/logs/?logs_only=true`}
             download={filename}
           >
-            <Button>Get Full Logs</Button>
+            <AccessButton
+              aria-label="Download Full Logs File"
+              label="Get Full Logs"
+            />
           </a>
         </div>
         {loadingLogs && (
@@ -201,6 +214,7 @@ function InstanceShowLogsDialog({
                 className="fa fa-download pull-right"
                 href={downloadHref.current}
                 download={filename}
+                aria-label="Download Current Logs Displayed"
               >
                 Download
               </a>

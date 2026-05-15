@@ -1,8 +1,8 @@
-import { Button } from "primereact/button";
 import { Skeleton } from "primereact/skeleton";
 import { useState } from "react";
 
 import { Request } from "../models/brewtils-types";
+import AccessButton from "./AccessButton";
 
 function largeOutputCheck(request: Request): boolean {
   const blob = new Blob([request.output ?? ""]);
@@ -63,7 +63,7 @@ function displayOutput(request: Request) {
       {hideOutput && (
         <div>
           <div>Output is too large</div>
-          <Button
+          <AccessButton
             label="Show Output"
             severity="warning"
             icon="pi pi-arrow-right"

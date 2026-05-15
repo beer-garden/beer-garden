@@ -1,4 +1,3 @@
-import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { Messages } from "primereact/messages";
 import { Password } from "primereact/password";
@@ -9,6 +8,7 @@ import {
   AdminUpdatePassword,
   UserUpdatePassword,
 } from "../services/user_service";
+import AccessButton from "./AccessButton";
 
 function UserChangePassword({
   username,
@@ -127,14 +127,13 @@ function UserChangePassword({
       header={`Change Password for ${username}`}
       footer={
         <>
-          <Button onClick={handleUserPasswordDialogClose}>Close</Button>
-          <Button
+          <AccessButton onClick={handleUserPasswordDialogClose} label="Close" />
+          <AccessButton
             data-testid={`submit-btn-dialog`}
             severity="danger"
             onClick={setPassword}
-          >
-            Submit
-          </Button>
+            label="Submit"
+          />
         </>
       }
       visible={showPasswordDialog}

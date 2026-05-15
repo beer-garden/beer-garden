@@ -1,6 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
@@ -19,6 +18,7 @@ import { Config, PermissionCheck, RequestItem } from "../models/models";
 import { checkPermission } from "../services/permission_service";
 import { GetRequest, PostRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
+import AccessButton from "./AccessButton";
 import RequestOutput from "./RequestOutput";
 
 function UnformattedInput(request: Request) {
@@ -253,14 +253,14 @@ function RequestViewCard({
       unstyled={isDialog}
       header={
         !isDialog && (
-          <Button
+          <AccessButton
             onClick={() => {
               removeItem(requestItem.itemId);
             }}
             tooltip={`Close Request View for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
           >
             <FontAwesomeIcon icon="xmark" />
-          </Button>
+          </AccessButton>
         )
       }
     >
@@ -303,6 +303,9 @@ function RequestViewCard({
             icon="pi pi-plus"
             onClick={() => {
               void navigate(`/request/${request.id}`);
+              if (isDialog) {
+                removeItem(requestItem.itemId);
+              }
             }}
             model={
               request &&

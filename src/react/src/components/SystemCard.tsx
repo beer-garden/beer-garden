@@ -1,5 +1,4 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { ButtonGroup } from "primereact/buttongroup";
 import { confirmDialog } from "primereact/confirmdialog";
 import { Divider } from "primereact/divider";
@@ -10,6 +9,7 @@ import { Toast } from "primereact/toast";
 import { Tooltip } from "primereact/tooltip";
 import { RefObject, useEffect, useRef, useState } from "react";
 
+import AccessButton from "../components/AccessButton";
 import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteRequestsDialog";
 import InstanceManageQueueDialog from "../components/InstanceManageQueueDialog";
 import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
@@ -24,7 +24,6 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import HasAccess from "./HasAccess";
 
 interface SystemCardProps {
   system: System;
@@ -438,77 +437,75 @@ function SystemCard({
       });
     }
 
+    const permissions = {
+      config: config,
+      hasGardenName: system.garden_name,
+      hasSystemName: system.name,
+      hasSystemVersion: system.version,
+      hasNamespace: system.namespace,
+      hasInstanceName: instance.name,
+    };
+
     return (
       <div>
         <ButtonGroup>
-          <HasAccess
-            config={config}
+          <AccessButton
+            severity="success"
+            size="small"
+            onClick={() => handleStartInstance(instance, system)}
+            title={`Start Instance ${instance.name} in ${system.namespace}.${system.name}.${system.version}`}
+            {...GenerateTourProps(startInstanceTourStep)}
+            {...permissions}
             permission="PLUGIN_ADMIN"
-            hasGardenName={system.garden_name}
-            hasSystemName={system.name}
-            hasSystemVersion={system.version}
-            hasNamespace={system.namespace}
-            hasInstanceName={instance.name}
           >
-            <Button
-              severity="success"
-              size="small"
-              onClick={() => handleStartInstance(instance, system)}
-              {...GenerateTourProps(startInstanceTourStep)}
-            >
-              <FontAwesomeIcon icon="play" />
-            </Button>
-            <Button
-              severity="warning"
-              size="small"
-              onClick={() => handleStopInstance(instance, system)}
-              {...GenerateTourProps(stopInstanceTourStep)}
-            >
-              <FontAwesomeIcon icon="stop" />
-            </Button>
-          </HasAccess>
-          <HasAccess
-            config={config}
+            <FontAwesomeIcon icon="play" />
+          </AccessButton>
+          <AccessButton
+            severity="warning"
+            size="small"
+            onClick={() => handleStopInstance(instance, system)}
+            title={`Stop Instance ${instance.name} in ${system.namespace}.${system.name}.${system.version}`}
+            {...GenerateTourProps(stopInstanceTourStep)}
+            {...permissions}
+            permission="PLUGIN_ADMIN"
+          >
+            <FontAwesomeIcon icon="stop" />
+          </AccessButton>
+
+          <Menu
+            model={instanceMenuItems}
+            popup
+            ref={instanceConfigMenu}
+            id="instance_menu"
+          />
+          <InstanceShowLogsDialog
+            instance={instance}
+            system={system}
+            isVisible={logsVisible}
+            onClose={closeLogsDialog}
+          />
+          <InstanceManageQueueDialog
+            instance={instance}
+            system={system}
+            isVisible={queueVisible}
+            onClose={closeQueueDialog}
+          />
+          <InstanceCancelDeleteDialog
+            instance={instance}
+            system={system}
+            isVisible={cancelDeleteVisible}
+            onClose={closeCancelDeleteDialog}
+          />
+          <AccessButton
+            severity="info"
+            size="small"
+            title={`Admin Tools for ${instance.name}`}
+            onClick={(e) => instanceConfigMenu?.current?.toggle(e)}
+            {...permissions}
             permission="OPERATOR"
-            hasGardenName={system.garden_name}
-            hasSystemName={system.name}
-            hasSystemVersion={system.version}
-            hasNamespace={system.namespace}
-            hasInstanceName={instance.name}
           >
-            <Menu
-              model={instanceMenuItems}
-              popup
-              ref={instanceConfigMenu}
-              id="instance_menu"
-            />
-            <InstanceShowLogsDialog
-              instance={instance}
-              system={system}
-              isVisible={logsVisible}
-              onClose={closeLogsDialog}
-            />
-            <InstanceManageQueueDialog
-              instance={instance}
-              system={system}
-              isVisible={queueVisible}
-              onClose={closeQueueDialog}
-            />
-            <InstanceCancelDeleteDialog
-              instance={instance}
-              system={system}
-              isVisible={cancelDeleteVisible}
-              onClose={closeCancelDeleteDialog}
-            />
-            <Button
-              severity="info"
-              size="small"
-              title={`Admin Tools for ${instance.name}`}
-              onClick={(e) => instanceConfigMenu?.current?.toggle(e)}
-            >
-              <FontAwesomeIcon icon="bars" />
-            </Button>
-          </HasAccess>
+            <FontAwesomeIcon icon="bars" />
+          </AccessButton>
         </ButtonGroup>
       </div>
     );
@@ -534,60 +531,67 @@ function SystemCard({
     );
   };
 
+  const permissions = {
+    config: config,
+    hasGardenName: system.garden_name,
+    hasSystemName: system.name,
+    hasSystemVersion: system.version,
+    hasNamespace: system.namespace,
+  };
   return (
     <>
       <Panel key={system.id} headerTemplate={headerTemplate}>
         <div className="mb-3">
-          <HasAccess
-            config={config}
-            permission="PLUGIN_ADMIN"
-            hasGardenName={system.garden_name}
-            hasSystemName={system.name}
-            hasSystemVersion={system.version}
-            hasNamespace={system.namespace}
-          >
-            <div style={{ float: "right", marginLeft: "2px" }}>
-              <ButtonGroup>
-                <Button
-                  severity="success"
-                  size="small"
-                  title="Start"
-                  onClick={() => startSystem(system)}
-                  {...GenerateTourProps(startInstancesTourStep)}
-                >
-                  <FontAwesomeIcon icon="play" />
-                </Button>
-                <Button
-                  severity="warning"
-                  size="small"
-                  title="Stop"
-                  onClick={() => stopSystem(system)}
-                  {...GenerateTourProps(stopInstancesTourStep)}
-                >
-                  <FontAwesomeIcon icon="stop" />
-                </Button>
-                <Button
-                  severity="info"
-                  size="small"
-                  title="Refresh"
-                  onClick={() => reloadSystem(system)}
-                  className="mr-2"
-                  {...GenerateTourProps(restartSystemTourStep)}
-                >
-                  <FontAwesomeIcon icon="refresh" />
-                </Button>
-              </ButtonGroup>
-              <Button
-                severity="danger"
+          <div style={{ float: "right", marginLeft: "2px" }}>
+            <ButtonGroup>
+              <AccessButton
+                severity="success"
                 size="small"
-                title="Delete"
-                onClick={() => deleteSystem(system)}
-                {...GenerateTourProps(deleteSystemTourStep)}
+                title={`Start System ${system.namespace}.${system.name}.${system.version}`}
+                onClick={() => startSystem(system)}
+                {...GenerateTourProps(startInstancesTourStep)}
+                {...permissions}
+                permission="PLUGIN_ADMIN"
               >
-                <FontAwesomeIcon icon="trash" />
-              </Button>
-            </div>
-          </HasAccess>
+                <FontAwesomeIcon icon="play" />
+              </AccessButton>
+              <AccessButton
+                severity="warning"
+                size="small"
+                title={`Stop System ${system.namespace}.${system.name}.${system.version}`}
+                onClick={() => stopSystem(system)}
+                {...GenerateTourProps(stopInstancesTourStep)}
+                {...permissions}
+                permission="PLUGIN_ADMIN"
+              >
+                <FontAwesomeIcon icon="stop" />
+              </AccessButton>
+              <AccessButton
+                severity="info"
+                size="small"
+                title={`Refresh System ${system.namespace}.${system.name}.${system.version}`}
+                onClick={() => reloadSystem(system)}
+                className="mr-2"
+                {...GenerateTourProps(restartSystemTourStep)}
+                {...permissions}
+                permission="PLUGIN_ADMIN"
+              >
+                <FontAwesomeIcon icon="refresh" />
+              </AccessButton>
+            </ButtonGroup>
+            <AccessButton
+              severity="danger"
+              size="small"
+              title={`Delete System ${system.namespace}.${system.name}.${system.version}`}
+              onClick={() => deleteSystem(system)}
+              {...GenerateTourProps(deleteSystemTourStep)}
+              {...permissions}
+              permission="PLUGIN_ADMIN"
+            >
+              <FontAwesomeIcon icon="trash" />
+            </AccessButton>
+          </div>
+
           <div style={{ minHeight: "40px" }}>{system.description}</div>
           <Divider className="my-2" style={{ clear: "right" }} />
         </div>

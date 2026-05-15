@@ -1,5 +1,6 @@
 import "primereact/resources/primereact.min.css"; // Core CSS
 import "primeflex/primeflex.css";
+import "primeicons/primeicons.css";
 import "./App.css";
 
 import { PrimeReactProvider } from "primereact/api";
@@ -409,7 +410,9 @@ function App() {
     if (action === ACTIONS.CLOSE) {
       runTourRef.current = false;
       setRunTour(false);
-    } else if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+    } else if (
+      ([STATUS.FINISHED, STATUS.SKIPPED] as string[]).includes(status)
+    ) {
       runTourRef.current = false;
       setRunTour(false);
     }
@@ -428,14 +431,16 @@ function App() {
                 steps={ConvertToTourStepProps(tourStepsRef.current)}
               />
             )}
-            <NavigationMenu
-              listeners={listeners.current}
-              config={config}
-              runReloadUI={runReloadUI}
-              addRequestItem={addRequestItem}
-              toggleRunTour={toggleRunTour}
-              tourStepsRef={tourStepsRef}
-            />
+            <div role="navigation">
+              <NavigationMenu
+                listeners={listeners.current}
+                config={config}
+                runReloadUI={runReloadUI}
+                addRequestItem={addRequestItem}
+                toggleRunTour={toggleRunTour}
+                tourStepsRef={tourStepsRef}
+              />
+            </div>
             {requestItem && (
               <Dialog
                 visible={requestItem !== undefined}
@@ -467,7 +472,7 @@ function App() {
                 </>
               </Dialog>
             )}
-            <div className="flex-grow-1" key={reloadUI}>
+            <div className="flex-grow-1" key={reloadUI} role="main">
               <Routes>
                 <Route
                   path="/dashboard"
@@ -511,6 +516,7 @@ function App() {
                       listeners={listeners.current}
                       display={false}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
@@ -521,6 +527,7 @@ function App() {
                       listeners={listeners.current}
                       display={false}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
@@ -530,6 +537,7 @@ function App() {
                     <Workspace
                       listeners={listeners.current}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
@@ -540,6 +548,7 @@ function App() {
                       listeners={listeners.current}
                       display={true}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
@@ -550,6 +559,7 @@ function App() {
                       listeners={listeners.current}
                       display={true}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
@@ -571,6 +581,7 @@ function App() {
                       listeners={listeners.current}
                       display={false}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />

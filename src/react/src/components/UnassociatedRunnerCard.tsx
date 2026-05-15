@@ -1,5 +1,4 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { ButtonGroup } from "primereact/buttongroup";
 import { Divider } from "primereact/divider";
 import { Panel } from "primereact/panel";
@@ -8,20 +7,23 @@ import { Toast } from "primereact/toast";
 import { RefObject, useEffect, useState } from "react";
 
 import { Runner } from "../models/brewtils-types";
-import { RunnerGroup } from "../models/models";
+import { Config, RunnerGroup } from "../models/models";
 import {
   ReloadRunner,
   RemoveRunner,
   StartRunner,
   StopRunner,
 } from "../services/runner_service";
+import AccessButton from "./AccessButton";
 
 function UnassociatedRunnerCard({
   runnerGroup,
   toast,
+  config,
 }: {
   runnerGroup: RunnerGroup;
   toast?: RefObject<Toast | null>;
+  config: Config;
 }) {
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem("theme_dark") === "true",
@@ -156,7 +158,7 @@ function UnassociatedRunnerCard({
     return (
       <div className="flex">
         <ButtonGroup>
-          <Button
+          <AccessButton
             severity="success"
             size="small"
             title={`Start Runner ${runner.id}`}
@@ -164,10 +166,12 @@ function UnassociatedRunnerCard({
               startRunner(runner);
             }}
             data-testid={`START_${runner.id}`}
+            config={config}
+            permission="PLUGIN_ADMIN"
           >
             <FontAwesomeIcon icon="play" />
-          </Button>
-          <Button
+          </AccessButton>
+          <AccessButton
             severity="warning"
             size="small"
             title={`Stop Runner ${runner.id}`}
@@ -175,18 +179,22 @@ function UnassociatedRunnerCard({
               stopRunner(runner);
             }}
             data-testid={`STOP_${runner.id}`}
+            config={config}
+            permission="PLUGIN_ADMIN"
           >
             <FontAwesomeIcon icon="stop" />
-          </Button>
-          <Button
+          </AccessButton>
+          <AccessButton
             severity="danger"
             size="small"
             title={`Delete Runner ${runner.id}`}
             onClick={() => deleteRunner(runner)}
             data-testid={`DELETE_${runner.id}`}
+            config={config}
+            permission="PLUGIN_ADMIN"
           >
             <FontAwesomeIcon icon="trash" />
-          </Button>
+          </AccessButton>
         </ButtonGroup>
       </div>
     );
@@ -198,44 +206,52 @@ function UnassociatedRunnerCard({
         <div className="mb-3">
           <div style={{ float: "right", marginLeft: "2px" }}>
             <ButtonGroup>
-              <Button
+              <AccessButton
                 severity="success"
                 size="small"
                 title={`Start runners in ../${runnerGroup.path}`}
                 onClick={() => startRunnerGroup()}
                 data-testid="START_GROUP"
+                config={config}
+                permission="PLUGIN_ADMIN"
               >
                 <FontAwesomeIcon icon="play" />
-              </Button>
-              <Button
+              </AccessButton>
+              <AccessButton
                 severity="warning"
                 size="small"
                 title={`Stop runners in ../${runnerGroup.path}`}
                 onClick={() => stopRunnerGroup()}
                 data-testid="STOP_GROUP"
+                config={config}
+                permission="PLUGIN_ADMIN"
               >
                 <FontAwesomeIcon icon="stop" />
-              </Button>
-              <Button
+              </AccessButton>
+              <AccessButton
                 severity="info"
                 size="small"
                 title={`Reload runners in ../${runnerGroup.path}`}
                 onClick={() => reloadPath()}
                 className="mr-2"
                 data-testid="RELOAD_GROUP"
+                config={config}
+                permission="PLUGIN_ADMIN"
               >
                 <FontAwesomeIcon icon="refresh" />
-              </Button>
+              </AccessButton>
             </ButtonGroup>
-            <Button
+            <AccessButton
               severity="danger"
               size="small"
               title={`Delete runners in ../${runnerGroup.path}`}
               onClick={() => deleteRunnerGroup()}
               data-testid="DELETE_GROUP"
+              config={config}
+              permission="PLUGIN_ADMIN"
             >
               <FontAwesomeIcon icon="trash" />
-            </Button>
+            </AccessButton>
           </div>
           <div style={{ minHeight: "40px" }}>../{runnerGroup.path}</div>
           <Divider className="my-2" style={{ clear: "right" }} />
