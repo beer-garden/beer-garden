@@ -6,7 +6,7 @@ import { useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
 import RequestItemCard from "../components/RequestItemCard";
-import { RequestItem, TourStepProps } from "../models/models";
+import { Config, RequestItem, TourStepProps } from "../models/models";
 import {
   AddTourStep,
   ClearTourSteps,
@@ -17,10 +17,12 @@ function Workspace({
   listeners,
   display,
   tourStepsRef,
+  config,
 }: {
   listeners: Record<string, any>;
   display?: boolean;
   tourStepsRef: RefObject<Array<TourStepProps>>;
+  config: Config;
 }) {
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
@@ -162,7 +164,11 @@ function Workspace({
 
     items.forEach((value: RequestItem) => {
       list.push(
-        <div className="mr-2 mb-2 mt-2" style={{ minWidth: "49%" }}>
+        <div
+          key={value.itemId}
+          className="mr-2 mb-2 mt-2"
+          style={{ minWidth: "49%" }}
+        >
           <RequestItemCard
             removeItem={deleteItem}
             updateRequestItem={updateItem}
@@ -170,6 +176,7 @@ function Workspace({
             listeners={listeners}
             addItem={addItem}
             isDialog={false}
+            config={config}
           />
         </div>,
       );

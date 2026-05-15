@@ -410,7 +410,9 @@ function App() {
     if (action === ACTIONS.CLOSE) {
       runTourRef.current = false;
       setRunTour(false);
-    } else if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+    } else if (
+      ([STATUS.FINISHED, STATUS.SKIPPED] as string[]).includes(status)
+    ) {
       runTourRef.current = false;
       setRunTour(false);
     }
@@ -512,6 +514,7 @@ function App() {
                       listeners={listeners.current}
                       display={false}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
@@ -522,6 +525,7 @@ function App() {
                       listeners={listeners.current}
                       display={false}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
@@ -531,6 +535,7 @@ function App() {
                     <Workspace
                       listeners={listeners.current}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
@@ -541,6 +546,7 @@ function App() {
                       listeners={listeners.current}
                       display={true}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
@@ -551,6 +557,7 @@ function App() {
                       listeners={listeners.current}
                       display={true}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
@@ -572,6 +579,7 @@ function App() {
                       listeners={listeners.current}
                       display={false}
                       tourStepsRef={tourStepsRef}
+                      config={config}
                     />
                   }
                 />
