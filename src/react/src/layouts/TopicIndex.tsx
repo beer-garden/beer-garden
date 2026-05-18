@@ -88,7 +88,7 @@ function TopicIndex({
       command: "",
     } as Subscriber,
   ]);
-  // const [viewTopic, setViewTopic] = useState<Topic | undefined>(undefined);
+
   const msgs = useRef<Messages>(null);
   const loadTopics = useCallback(() => {
     setLoading(true);
