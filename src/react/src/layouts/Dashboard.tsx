@@ -401,7 +401,7 @@ function GardenDashboard({
   return (
     <>
       {error ? (
-        <ErrorPage errorCode={error?.code} errorMsg={error.toString()}/>
+        <ErrorPage errorCode={error?.code} errorMsg={error.toString()} />
       ) : (
         <div className="grid h-screen">
           <Toast ref={toast} />
