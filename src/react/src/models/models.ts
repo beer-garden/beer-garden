@@ -6,6 +6,7 @@ import {
   Request,
   Runner,
   System,
+  Topic,
 } from "../models/brewtils-types";
 
 export interface Config {
@@ -58,6 +59,8 @@ export interface RequestItem {
   showSchedule?: boolean;
   jobId?: string;
   job?: Job;
+
+  topic?: Topic;
 
   itemId: string;
   type: string;
