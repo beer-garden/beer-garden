@@ -1,6 +1,8 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
 import { ConfirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
+import { Tooltip } from "primereact/tooltip";
 import { Tree } from "primereact/tree";
 import { RefObject, useEffect, useRef, useState } from "react";
 
@@ -266,68 +268,176 @@ function GardenDashboard({
     }
   };
 
-  const generateMenu = (garden: Garden, systems: System[] | undefined) => {
+  const generateMenu = (
+    garden: Garden,
+    systems: System[] | undefined,
+    upstreamRouting: boolean = true,
+  ) => {
+    const receiving = receivingStatus(garden);
+    const publishing = publishingStatus(garden);
     return {
       key: garden.id,
       label: garden.name,
       statusCounts: generateStatusCounts(garden, systems),
-      connectionCounts: generateConnectionStatus(garden),
+      gardenIcon: gardenIcon(garden, receiving, publishing, upstreamRouting),
       expanded: true,
       children:
         garden?.children && garden.children.length > 0
-          ? garden.children.map((child: Garden) => generateMenu(child, systems))
+          ? garden.children.map((child: Garden) =>
+              generateMenu(
+                child,
+                systems,
+                upstreamRouting && receiving && publishing,
+              ),
+            )
           : [],
     };
   };
 
-  const generateConnectionStatus = (garden: Garden) => {
-    const statusCounts = new Map();
-
-    const mapStatus = (status: string) => {
-      if (status === "NOT_CONFIGURED") {
-        return;
-      } else if (["PUBLISHING", "RECEIVING"].includes(status)) {
-        statusCounts.set("HEALTHY", (statusCounts.get("HEALTHY") || 0) + 1);
-      } else {
-        statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
-      }
-    };
-
+  const receivingStatus = (garden: Garden) => {
     if (
       garden.receiving_connections &&
       garden.receiving_connections.length > 0
     ) {
       for (const connection of garden.receiving_connections) {
-        mapStatus(connection.status);
+        if (
+          connection.status !== "NOT_CONFIGURED" &&
+          !["NOT_CONFIGURED", "PUBLISHING", "RECEIVING"].includes(
+            connection.status,
+          )
+        ) {
+          return false;
+        }
       }
     }
+    return true;
+  };
 
+  const publishingStatus = (garden: Garden) => {
     if (
       garden.publishing_connections &&
       garden.publishing_connections.length > 0
     ) {
       for (const connection of garden.publishing_connections) {
-        mapStatus(connection.status);
+        if (
+          connection.status !== "NOT_CONFIGURED" &&
+          !["NOT_CONFIGURED", "PUBLISHING", "RECEIVING"].includes(
+            connection.status,
+          )
+        ) {
+          return false;
+        }
       }
     }
-    if (statusCounts.size === 0) {
-      return undefined;
-    }
+    return true;
+  };
 
-    return Array.from(statusCounts, ([status, count]) => {
-      if (count && count > 0) {
-        const statusSeverity = GetSeverity(status);
-        return (
-          <Badge
-            value={count}
-            severity={statusSeverity}
-            key={status}
-            title={status}
+  const gardenIcon = (
+    garden: Garden,
+    receiving: boolean,
+    publishing: boolean,
+    parentRouting: boolean = true,
+  ) => {
+    if (!parentRouting) {
+      return (
+        <>
+          <Tooltip
+            content="Upstream Routing Error"
+            target={`#GARDEN_MENU_${garden.id}`}
+            position="bottom"
           />
-        );
-      }
-      return null;
-    });
+          <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
+            <FontAwesomeIcon
+              icon="play"
+              style={{ color: "var(--warning-color)" }}
+              rotation={270}
+            />
+            <FontAwesomeIcon
+              icon="triangle-exclamation"
+              style={{ color: "var(--warning-background-color)" }}
+            />
+          </span>
+        </>
+      );
+    } else if (publishing && receiving) {
+      // Ideal scenario is to get this icon from the Garden model, but we
+      // don't currently have access to the downstream icons
+      return (
+        <FontAwesomeIcon icon={config?.icon_default ?? "beer-mug-empty"} />
+      );
+    } else if (!publishing && !receiving) {
+      return (
+        <>
+          <Tooltip
+            content="Routing Error"
+            target={`#GARDEN_MENU_${garden.id}`}
+            position="bottom"
+          />
+          <span
+            className="fa-layers"
+            id={`GARDEN_MENU_${garden.id}`}
+            aria-label={`Routing Error for ${garden.name}`}
+          >
+            <FontAwesomeIcon
+              icon="circle"
+              style={{ color: "var(--danger-color)" }}
+            />
+            <FontAwesomeIcon
+              icon="circle-exclamation"
+              style={{ color: "var(--danger-background-color)" }}
+            />
+          </span>
+        </>
+      );
+    } else if (!publishing) {
+      return (
+        <>
+          <Tooltip
+            content="Publishing Error"
+            target={`#GARDEN_MENU_${garden.id}`}
+            position="bottom"
+          />
+          <span
+            className="fa-layers"
+            id={`GARDEN_MENU_${garden.id}`}
+            aria-label={`Publishing Connection Error for ${garden.name}`}
+          >
+            <FontAwesomeIcon
+              icon="circle"
+              style={{ color: "var(--danger-color)" }}
+            />
+            <FontAwesomeIcon
+              icon="circle-exclamation"
+              style={{ color: "var(--danger-background-color)" }}
+            />
+          </span>
+        </>
+      );
+    } else if (!receiving) {
+      return (
+        <>
+          <Tooltip
+            content="Receiving Error"
+            target={`#GARDEN_MENU_${garden.id}`}
+            position="bottom"
+          />
+          <span
+            className="fa-layers"
+            id={`GARDEN_MENU_${garden.id}`}
+            aria-label={`Receiving Connection Error for ${garden.name}`}
+          >
+            <FontAwesomeIcon
+              icon="circle"
+              style={{ color: "var(--danger-color)" }}
+            />
+            <FontAwesomeIcon
+              icon="circle-exclamation"
+              style={{ color: "var(--danger-background-color)" }}
+            />
+          </span>
+        </>
+      );
+    }
   };
 
   const generateStatusCounts = (
@@ -377,18 +487,15 @@ function GardenDashboard({
 
   const gardenTreeNode = (node: any, options: any) => {
     return (
-      <span className={options.className}>
-        <div className="flex gap-1">
-          <b className="flex-1">{node.label}</b>
-          <div style={{ width: "30%" }}>
-            {"Systems"} {node.statusCounts}
-          </div>
-
-          <div style={{ width: "25%" }}>
-            {"Connections"} {node.connectionCounts}
-          </div>
+      <div className={options.className}>
+        <div>
+          {node.gardenIcon}
+          <b className="ml-1">{node.label}</b>
         </div>
-      </span>
+        <div style={{ flexWrap: "wrap" }} className="flex ml-4">
+          {node.statusCounts}
+        </div>
+      </div>
     );
   };
 
@@ -397,7 +504,7 @@ function GardenDashboard({
       <Toast ref={toast} />
       <ConfirmDialog />
       {/* LEFT NAV TREE */}
-      <div className="col-3 surface-border p-3">
+      <div className="col-2 surface-border p-3">
         <Tree
           {...GenerateTourProps(gardenTreeTourStep)}
           loading={loading}
@@ -417,7 +524,7 @@ function GardenDashboard({
       </div>
 
       {/* MAIN WORKSPACE */}
-      <div className="col-9">
+      <div className="col-10">
         {/* Garden Summary */}
         <GardenSummary
           gardenRef={gardenRef}
