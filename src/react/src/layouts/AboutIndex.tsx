@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Config, Version } from "../models/models";
-import { GetBaseURL, GetVersion } from "../services/util_service";
+import { GetVersion } from "../services/util_service";
 function AboutIndex({ config }: { config: Config }) {
   const [version, setVersion] = useState<Version | null>(null);
 
@@ -30,7 +30,7 @@ function AboutIndex({ config }: { config: Config }) {
     return (
       <ul>
         <li>
-          <Link to={`${GetBaseURL()}/swagger`}>Open API documentation</Link>-{" "}
+          <Link to={`/swagger`}>Open API documentation</Link>-{" "}
           {config.application_name} uses OpenAPI Documentation for our ReST
           Interface.
         </li>

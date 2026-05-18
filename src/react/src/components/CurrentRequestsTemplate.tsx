@@ -1,6 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
-import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { ConfirmPopup, confirmPopup } from "primereact/confirmpopup";
 import { DataTable } from "primereact/datatable";
@@ -8,18 +7,42 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
+import { Config } from "../models/models";
 import { DeleteRequest, GetRequestList } from "../services/request_service";
-import { GetBaseURL } from "../services/util_service";
+import AccessButton from "./AccessButton";
 
-function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
+function CurrentRequestsTemplate({
+  listeners,
+  config,
+}: {
+  listeners: any;
+  config: Config;
+}) {
   const [currentRequests, setCurrentRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
 
   const setAllRequests = (requests: Array<Request>) => {
-    altRequests.current = requests.map((req) => ({
-      id: req.id,
-      status: req.status,
-    }));
+    altRequests.current = requests.map((req) => {
+      const request = {
+        id: req.id,
+        status: req.status,
+        updated_at: req.updated_at,
+        command: req.command,
+      };
+      if (config?.auth_enabled === true) {
+        return {
+          ...request,
+          ...{
+            target_garden: req.target_garden,
+            namespace: req.namespace,
+            system: req.system,
+            instance_name: req.instance_name,
+            system_version: req.system_version,
+          },
+        };
+      }
+      return request;
+    });
     setCurrentRequests(requests);
   };
 
@@ -28,7 +51,21 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
 
     if (sessionUUID) {
       const filterQuery: Record<string, any> = {};
-      filterQuery["include"] = ["id", "status", "command"];
+      if (config?.auth_enabled === true) {
+        filterQuery["include"] = [
+          "id",
+          "status",
+          "command",
+          "updated_at",
+          "target_garden",
+          "namespace",
+          "system",
+          "instance_name",
+          "system_version",
+        ];
+      } else {
+        filterQuery["include"] = ["id", "status", "command", "updated_at"];
+      }
       filterQuery["query"] = [
         JSON.stringify({
           field_name: "metadata__sessionUUID",
@@ -57,6 +94,14 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
     }
   }, []);
 
+  const requestStickyCheck = (request: Request) => {
+    const requestStickyLimit = 30; // Seconds
+    return (
+      new Date(request.updated_at) >
+      new Date(Date.now() - requestStickyLimit * 1000)
+    );
+  };
+
   const ProcessEventRequests = (message: any) => {
     if (message.payload_type === "Request") {
       const sessionUUID = localStorage.getItem("sessionUUID");
@@ -74,12 +119,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
         for (const request of altRequests.current) {
           if (message.payload.id === request.id) {
             updateList = true;
-            if (
-              message.payload.status &&
-              ["CREATED", "IN_PROGRESS"].includes(message.payload.status)
-            ) {
-              updatedRequests.push(message.payload);
-            }
+            updatedRequests.push(message.payload);
           } else {
             updatedRequests.push(request);
           }
@@ -87,7 +127,8 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
 
         if (
           !updateList &&
-          ["CREATED", "IN_PROGRESS"].includes(message.payload.status)
+          (["CREATED", "IN_PROGRESS"].includes(message.payload.status) ||
+            requestStickyCheck(message.payload))
         ) {
           updatedRequests.push(message.payload);
           updateList = true;
@@ -103,6 +144,29 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
   useEffect(() => {
     getCurrentRequests();
   }, [getCurrentRequests]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      let updateList = false;
+      const updatedRequests = [] as Array<Request>;
+      for (const request of altRequests.current) {
+        if (
+          !request.status ||
+          ["CREATED", "IN_PROGRESS"].includes(request.status) ||
+          requestStickyCheck(request)
+        ) {
+          updatedRequests.push(request);
+        } else {
+          updateList = true;
+        }
+        if (updateList) {
+          setAllRequests(updatedRequests);
+        }
+      }
+    }, 5000); // check every 5 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const SeverityCheck = (status?: string) => {
     if (!status) {
@@ -129,12 +193,18 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
   const optionsTemplate = (request: Request) => {
     return (
       <div>
-        <Link to={`${GetBaseURL()}/request/${request.id}`}>
-          <Button rounded raised link>
+        <Link to={`/request/${request.id}`}>
+          <AccessButton
+            rounded
+            raised
+            link
+            tooltip={`Open Request ${request.id}`}
+          >
             <FontAwesomeIcon icon="arrow-up-right-from-square" />
-          </Button>
+          </AccessButton>
         </Link>
-        <Button
+
+        <AccessButton
           rounded
           raised
           link
@@ -144,9 +214,17 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
             });
           }}
           tooltip={`Delete Request for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
+          config={config}
+          permission="PLUGIN_ADMIN"
+          hasGardenName={request?.target_garden}
+          hasNamespace={request?.namespace}
+          hasSystemName={request?.system}
+          hasInstanceName={request?.instance_name}
+          hasSystemVersion={request?.system_version}
+          hasCommandName={request?.command}
         >
           <FontAwesomeIcon icon="xmark" />
-        </Button>
+        </AccessButton>
       </div>
     );
   };
@@ -167,7 +245,7 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
   };
 
   return (
-    <div>
+    <div className="flex align-items-center mr-2">
       <ConfirmPopup
         dismissable={true}
         content={({ acceptBtnRef, hide }: { acceptBtnRef: any; hide: any }) => (
@@ -186,30 +264,54 @@ function CurrentRequestsTemplate({ listeners }: { listeners: any }) {
               </DataTable>
             </div>
             <div className="flex align-items-center gap-2 mt-3">
-              <Button
+              <AccessButton
                 ref={acceptBtnRef}
                 label="Close"
                 onClick={() => {
                   hide();
                 }}
                 className="p-button-sm p-button-outlined"
-              ></Button>
+                tooltip="Close Current Requests"
+              />
             </div>
           </div>
         )}
       />
-      <button className="fa-layers fa-fw fa-2x" onClick={confirm}>
+      <AccessButton
+        className="fa-layers fa-fw fa-2x"
+        onClick={confirm}
+        tooltip="Show Current Requests"
+        text
+      >
         <FontAwesomeIcon
           icon="envelope"
-          className={currentRequests.length > 0 ? "fa-shake" : ""}
+          className={
+            currentRequests.filter(
+              (request) =>
+                request.status &&
+                ["CREATED", "IN_PROGRESS"].includes(request.status),
+            ).length > 0
+              ? "fa-shake"
+              : ""
+          }
           style={{ "--fa-animation-duration": "3s" } as React.CSSProperties}
         />
-        {currentRequests.length > 0 && (
+        {currentRequests.filter(
+          (request) =>
+            request.status &&
+            ["CREATED", "IN_PROGRESS"].includes(request.status),
+        ).length > 0 && (
           <span className="fa-layers-counter" style={{ fontSize: "1.5em" }}>
-            {currentRequests.length}
+            {
+              currentRequests.filter(
+                (request) =>
+                  request.status &&
+                  ["CREATED", "IN_PROGRESS"].includes(request.status),
+              ).length
+            }
           </span>
         )}
-      </button>
+      </AccessButton>
     </div>
   );
 }

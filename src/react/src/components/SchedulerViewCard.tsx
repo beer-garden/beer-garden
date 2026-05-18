@@ -1,9 +1,9 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
   CronTrigger,
@@ -13,6 +13,7 @@ import {
   Job,
   Request,
 } from "../models/brewtils-types";
+import { Config } from "../models/models";
 import {
   GetJob,
   PauseJob,
@@ -20,7 +21,8 @@ import {
   RunAdhocJob,
 } from "../services/job_service";
 import { GetRequestList } from "../services/request_service";
-import { GetBaseURL } from "../services/util_service";
+// import HasAccess from "./HasAccess";
+import AccessButton from "./AccessButton";
 
 function SchedulerViewCard({
   jobId,
@@ -28,12 +30,16 @@ function SchedulerViewCard({
   removeItem,
   editJob,
   deleteJob,
+  isDialog,
+  config,
 }: {
   jobId: string;
   listeners: Record<string, any>;
   removeItem: (id: string) => void;
   editJob: () => void;
   deleteJob: () => void;
+  isDialog: boolean;
+  config: Config;
 }) {
   const [job, setJob] = useState<Job | undefined>(undefined);
 
@@ -45,6 +51,8 @@ function SchedulerViewCard({
   const [totalRecords, setTotalRecords] = useState(0);
   const [lazyParams, setLazyParams] = useState({ first: 0, rows: 5, page: 0 });
   const [recordsUpdated, setRecordsUpdated] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (job === undefined && jobId !== undefined) {
@@ -193,13 +201,11 @@ function SchedulerViewCard({
   const commandNameTemplate = (request: Request) => {
     return (
       <div>
-        <Button
+        <AccessButton
           rounded
           raised
           link
-          onClick={() =>
-            window.open(`${GetBaseURL()}/request/${request.id}`, "_self")
-          }
+          onClick={() => void navigate(`/request/${request.id}`)}
           title={
             "Open Request " +
             (request.command_display_name ?? request.command ?? request.id)
@@ -207,7 +213,7 @@ function SchedulerViewCard({
           className="mr-2"
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />
-        </Button>{" "}
+        </AccessButton>
         {request.command_display_name ?? request.command ?? request.id}
       </div>
     );
@@ -216,7 +222,7 @@ function SchedulerViewCard({
   const tableHeader = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <span className="text-xl text-900 font-bold">Associated Requests</span>
-      <Button
+      <AccessButton
         rounded
         raised
         onClick={queryJobRequests}
@@ -224,32 +230,45 @@ function SchedulerViewCard({
       >
         {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
         <FontAwesomeIcon icon="refresh" />
-      </Button>
+      </AccessButton>
     </div>
   );
 
+  const permissions = {
+    config: config,
+    hasNamespace: job?.request_template?.namespace,
+    hasSystemName: job?.request_template?.system,
+    hasSystemVersion: job?.request_template?.system_version,
+    hasInstanceName: job?.request_template?.instance_name,
+    hasCommandName: job?.request_template?.command,
+  };
+
   return (
     <Card
-      className="justify-content-center mr-2 mb-2 mt-2"
+      className="justify-content-center"
+      unstyled={isDialog}
       style={{ maxHeight: "80vh", overflowY: "auto" }}
       header={
-        <Button
-          onClick={() => {
-            removeItem(jobId);
-          }}
-          className="mr-2 ml-2 mt-2"
-          tooltip={"Close Job " + job?.name}
-        >
-          <FontAwesomeIcon icon="xmark" />
-        </Button>
+        !isDialog && (
+          <AccessButton
+            onClick={() => {
+              removeItem(jobId);
+            }}
+            className="mr-2 ml-2 mt-2"
+            tooltip={"Close Job " + job?.name}
+            data-testid={"CLOSE_JOB_" + job?.name}
+          >
+            <FontAwesomeIcon icon="xmark" />
+          </AccessButton>
+        )
       }
       title={
-        <div className="flex">
+        <div className="flex mb-2">
           <div className="flex-1 flex">
             <div className="mr-2">{job ? job.name : "Loading..."}</div>
           </div>
 
-          <Button
+          <AccessButton
             rounded
             raised
             link
@@ -262,11 +281,13 @@ function SchedulerViewCard({
             }}
             title={"Run Now " + job?.name}
             className="mr-2"
+            {...permissions}
+            permission="OPERATOR"
           >
             <FontAwesomeIcon icon="forward" />
-          </Button>
+          </AccessButton>
 
-          <Button
+          <AccessButton
             rounded
             raised
             link
@@ -275,11 +296,13 @@ function SchedulerViewCard({
             }}
             title={"Update Job " + job?.name}
             className="mr-2"
+            {...permissions}
+            permission="OPERATOR"
           >
             <FontAwesomeIcon icon="edit" />
-          </Button>
+          </AccessButton>
           {job?.status === "RUNNING" && (
-            <Button
+            <AccessButton
               rounded
               raised
               link
@@ -294,12 +317,14 @@ function SchedulerViewCard({
               }}
               title={"Pause Job " + job?.name}
               className="mr-2"
+              {...permissions}
+              permission="OPERATOR"
             >
               <FontAwesomeIcon icon="pause" />
-            </Button>
+            </AccessButton>
           )}
           {job?.status === "PAUSED" && (
-            <Button
+            <AccessButton
               rounded
               raised
               link
@@ -314,20 +339,24 @@ function SchedulerViewCard({
               }}
               title={"Resume Job " + job?.name}
               className="mr-2"
+              {...permissions}
+              permission="OPERATOR"
             >
               <FontAwesomeIcon icon="play" />
-            </Button>
+            </AccessButton>
           )}
-          <Button
+          <AccessButton
             rounded
             raised
             link
             onClick={() => deleteJob()}
             title={"Delete Job " + job?.name}
             className="mr-2"
+            {...permissions}
+            permission="OPERATOR"
           >
             <FontAwesomeIcon icon="trash" />
-          </Button>
+          </AccessButton>
         </div>
       }
     >

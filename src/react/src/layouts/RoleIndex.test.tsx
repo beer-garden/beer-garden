@@ -8,10 +8,20 @@ import {
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+import { TourStepProps } from "../models/models";
+import * as permissionService from "../services/permission_service";
 import * as roleService from "../services/role_service";
 import RoleIndex from "./RoleIndex";
 
 vi.mock("../services/role_service");
+vi.mock("../services/permission_service");
+
+const mockTourSteps = () => {
+  const mockRef = {
+    current: [] as TourStepProps[], // Mocking the value property
+  };
+  return mockRef as React.RefObject<TourStepProps[]>;
+};
 
 const mockRoles = [
   {
@@ -46,6 +56,7 @@ describe("RoleIndex", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cleanup();
+    vi.mocked(permissionService.checkPermission).mockResolvedValue(true);
   });
 
   // Test role page render
@@ -54,7 +65,7 @@ describe("RoleIndex", () => {
 
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} tourStepsRef={mockTourSteps()} />);
 
     await waitFor(() => {
       expect(screen.getByText("Role Management")).toBeInTheDocument();
@@ -68,7 +79,7 @@ describe("RoleIndex", () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
     vi.mocked(roleService.Rescan).mockResolvedValue();
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} tourStepsRef={mockTourSteps()} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("role-datatable")).toBeInTheDocument();
@@ -88,7 +99,7 @@ describe("RoleIndex", () => {
 
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} tourStepsRef={mockTourSteps()} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("role-datatable")).toBeInTheDocument();
@@ -104,7 +115,7 @@ describe("RoleIndex", () => {
   test("renders role page with 2 roles", async () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} tourStepsRef={mockTourSteps()} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("role-datatable")).toBeInTheDocument();
@@ -119,7 +130,7 @@ describe("RoleIndex", () => {
   test("Test for row buttons", async () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} tourStepsRef={mockTourSteps()} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("role-datatable")).toBeInTheDocument();
@@ -146,7 +157,7 @@ describe("RoleIndex", () => {
   test("Test duplicate button", async () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} tourStepsRef={mockTourSteps()} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("role-datatable")).toBeInTheDocument();
@@ -175,7 +186,7 @@ describe("RoleIndex", () => {
   test("Test edit button", async () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} tourStepsRef={mockTourSteps()} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("role-datatable")).toBeInTheDocument();
@@ -202,7 +213,7 @@ describe("RoleIndex", () => {
   test("Test delete button", async () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
-    render(<RoleIndex />);
+    render(<RoleIndex config={{}} tourStepsRef={mockTourSteps()} />);
 
     await waitFor(() => {
       expect(screen.getByTestId("role-datatable")).toBeInTheDocument();

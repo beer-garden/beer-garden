@@ -1,4 +1,4 @@
-import { PropsWithChildren, useEffect, useState } from "react";
+import { PropsWithChildren, useCallback, useEffect, useState } from "react";
 
 import { HasAccessProps, PermissionCheck } from "../models/models";
 import { checkPermission } from "../services/permission_service";
@@ -17,12 +17,16 @@ const HasAccess = ({
   renderAuthFailed,
   children,
 }: PropsWithChildren<HasAccessProps>) => {
-  const [hasAccess, setHasAccess] = useState(false);
-  const [checking, setChecking] = useState(false);
+  if (config === undefined || permission === undefined) {
+    return children;
+  }
 
-  useEffect(() => {
-    setChecking(true);
+  const [hasAccess, setHasAccess] = useState(
+    config?.auth_enabled === undefined || config?.auth_enabled === false,
+  );
+  const [checking, setChecking] = useState(config?.auth_enabled === true);
 
+  const validatePermissions = useCallback(() => {
     const check = {
       global: isGlobal,
       gardenName: hasGardenName,
@@ -33,10 +37,9 @@ const HasAccess = ({
       instanceName: hasInstanceName,
     } as PermissionCheck;
 
-    setHasAccess(checkPermission(config, permission, check));
-
-    setChecking(false);
+    return checkPermission(config, permission, check);
   }, [
+    config,
     permission,
     isGlobal,
     hasGardenName,
@@ -47,19 +50,32 @@ const HasAccess = ({
     hasInstanceName,
   ]);
 
-  if (!hasAccess && checking) {
-    return isLoading;
-  }
+  useEffect(() => {
+    if (hasAccess && checking) {
+      setChecking(false);
+    } else if (checking) {
+      setHasAccess(validatePermissions());
+      setChecking(false);
+    }
+  }, [
+    checking,
+    permission,
+    isGlobal,
+    hasGardenName,
+    hasNamespace,
+    hasSystemName,
+    hasSystemVersion,
+    hasCommandName,
+    hasInstanceName,
+  ]);
 
-  if (hasAccess) {
-    return children;
-  }
-
-  if (renderAuthFailed) {
-    return renderAuthFailed;
-  }
-
-  return null;
+  return (
+    <>
+      {!hasAccess && checking && isLoading}
+      {hasAccess && children}
+      {!hasAccess && !checking && renderAuthFailed}
+    </>
+  );
 };
 
 export default HasAccess;

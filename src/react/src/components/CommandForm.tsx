@@ -1,3 +1,5 @@
+import { Dropdown } from "primereact/dropdown";
+import { InputTextarea } from "primereact/inputtextarea";
 import { useEffect, useRef, useState } from "react";
 
 import { ChoicesValue, Request } from "../models/brewtils-types";
@@ -12,6 +14,7 @@ function CommandForm({
   setRequest,
   resetForm,
   setResetForm,
+  setIsFormValid,
 }: CommandFormProps) {
   disabled = disabled === undefined ? true : disabled;
   const [parametersFields, setParameterFields] = useState(
@@ -306,7 +309,7 @@ function CommandForm({
   const buildDefaults = (mapRequest = true) => {
     const prepareDefaultValues = Array<InputParam>();
 
-    if (command !== null) {
+    if (command && command !== null) {
       for (const param of command.parameters || []) {
         const newParam = { ...param } as InputParam;
         if (
@@ -365,6 +368,19 @@ function CommandForm({
           }
         }
 
+        if (param.type === "Boolean" && !param.nullable && !param.optional) {
+          if (param.multi) {
+            newParam.value = (newParam.value as Array<any>).map((value) => {
+              return value === undefined || value === null ? false : value;
+            });
+          } else {
+            newParam.value =
+              newParam.value === undefined || newParam.value === null
+                ? false
+                : newParam.value;
+          }
+        }
+
         prepareDefaultValues.push(newParam);
       }
     }
@@ -404,6 +420,32 @@ function CommandForm({
     setLoadingChoices([...altLoadingChoices.current]);
   };
 
+  const isMissingValue = (value: any) => {
+    if (Array.isArray(value)) {
+      return (
+        value.length === 0 ||
+        value.some(
+          (entry) => entry === null || entry === undefined || entry === "",
+        )
+      );
+    }
+    return value === null || value === undefined || value === "";
+  };
+
+  const validateForm = () => {
+    let valid = true;
+    for (const parameter of altParametersFields.current) {
+      if (
+        isMissingValue(parameter.value) &&
+        (parameter.optional === undefined || !parameter.optional)
+      ) {
+        valid = false;
+        break;
+      }
+    }
+    setIsFormValid(valid);
+  };
+
   useEffect(() => {
     if (!initialized) {
       buildDefaults();
@@ -415,6 +457,22 @@ function CommandForm({
       return;
     }
     let updated = false;
+
+    if (
+      request &&
+      (request?.command_type === undefined || request.command_type.length === 0)
+    ) {
+      updated = true;
+      if (
+        command?.command_type === undefined ||
+        command?.command_type === null
+      ) {
+        request.command_type = "ACTION";
+      } else {
+        request.command_type = command?.command_type;
+      }
+    }
+
     const changedFields = [] as Array<string>;
     parametersFields.forEach((inputParameter) => {
       if (inputParameter.key === null || inputParameter.key === undefined) {
@@ -490,6 +548,8 @@ function CommandForm({
         }
       });
     }
+
+    validateForm();
   }, [parametersFields, initialized, request, setRequest, resetForm]);
 
   const handleChange = (name: any, value: any) => {
@@ -510,6 +570,26 @@ function CommandForm({
       key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}`}
       className="mt-4 mb-4"
     >
+      <div
+        className="flex justify-content-between mb-3"
+        key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMAND_TYPE`}
+      >
+        <div style={{ width: "20%" }}>
+          <label htmlFor="COMMAND_TYPE">Command Type</label>
+        </div>
+        <div style={{ width: "80%" }}>
+          <Dropdown
+            id="COMMAND_TYPE"
+            value={request?.command_type}
+            onChange={(e) =>
+              setRequest({ ...request, command_type: e.target.value })
+            }
+            options={["ACTION", "INFO", "TEMP"]}
+            disabled={disabled}
+            style={{ maxWidth: "75%" }}
+          />
+        </div>
+      </div>
       {parametersFields &&
         parametersFields?.map((parameter: InputParam) => (
           <div
@@ -532,6 +612,27 @@ function CommandForm({
             </div>
           </div>
         ))}
+      <div
+        className="flex justify-content-between mb-3"
+        key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMENT`}
+      >
+        <div style={{ width: "20%" }}>
+          <label htmlFor="COMMAND_COMMENT">Comment</label>
+        </div>
+        <div style={{ width: "80%" }}>
+          <InputTextarea
+            id="COMMAND_COMMENT"
+            value={request?.comment}
+            onChange={(e) =>
+              setRequest({ ...request, comment: e.target.value })
+            }
+            disabled={disabled}
+            style={{ maxWidth: "75%" }}
+            aria-label="Comment Field"
+            tooltip="Comment Field"
+          />
+        </div>
+      </div>
     </div>
   );
 }

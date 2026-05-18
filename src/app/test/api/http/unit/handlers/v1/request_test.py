@@ -66,7 +66,7 @@ def common_mocks(monkeypatch, local_system):
     def mock_determine_target(operation):
         return local_system.namespace
 
-    def mock_validate(request):
+    def mock_validate(request, choice_validation_enabled=True):
         return request
 
     def generic_mock(*args, **kwargs):

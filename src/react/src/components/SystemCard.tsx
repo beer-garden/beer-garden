@@ -1,28 +1,145 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
-import { Column } from "primereact/column";
+import { ButtonGroup } from "primereact/buttongroup";
 import { confirmDialog } from "primereact/confirmdialog";
-import { DataTable } from "primereact/datatable";
+import { Divider } from "primereact/divider";
 import { Menu } from "primereact/menu";
 import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
-import { RefObject, useRef, useState } from "react";
+import { Tooltip } from "primereact/tooltip";
+import { RefObject, useEffect, useRef, useState } from "react";
 
+import AccessButton from "../components/AccessButton";
 import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteRequestsDialog";
 import InstanceManageQueueDialog from "../components/InstanceManageQueueDialog";
 import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
-import { Instance, System } from "../models/brewtils-types";
+import { Instance, Runner, System } from "../models/brewtils-types";
+import { Config, PermissionCheck } from "../models/models";
+import { RequestCommand, RequestItem, TourStepProps } from "../models/models";
 import { StartInstance, StopInstance } from "../services/instance_service";
+import { checkPermission } from "../services/permission_service";
 import { DeleteSystem, ReloadSystem } from "../services/system_service";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
 
 interface SystemCardProps {
   system: System;
   selectedGarden?: string;
   toast?: RefObject<Toast | null>;
+  config: Config;
+  tourStepsRef?: RefObject<Array<TourStepProps>>;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+  associatedRunners: Runner[];
 }
 
-function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
+function SystemCard({
+  system,
+  selectedGarden,
+  toast,
+  config,
+  tourStepsRef,
+  addRequestItem,
+  associatedRunners,
+}: SystemCardProps) {
+  const tourUuid = system.id;
+  const tourPrefix = "system_summary";
+
+  const startInstancesTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Start All Instances",
+    content: "Start all instances for the selected system",
+    layer: "COMPONENT",
+    pos: 0,
+  };
+
+  const stopInstancesTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Stop All Instances",
+    content: "Stop all instances for the selected system",
+    layer: "COMPONENT",
+    pos: 1,
+  };
+
+  const restartSystemTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Restart System",
+    content: "Restart the selected system",
+    layer: "COMPONENT",
+    pos: 2,
+  };
+
+  const deleteSystemTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Delete System",
+    content: "Delete the selected system",
+    layer: "COMPONENT",
+    pos: 3,
+  };
+
+  const statusInstanceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: `Instance Status`,
+    content: `Status of individual instance`,
+    layer: "COMPONENT",
+    pos: 4,
+  };
+
+  const nameInstanceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: `Instance Name`,
+    content: `Name of individual instance`,
+    layer: "COMPONENT",
+    pos: 5,
+  };
+
+  const startInstanceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: `Instance Start`,
+    content: `Start individual instance`,
+    layer: "COMPONENT",
+    pos: 6,
+  };
+  const stopInstanceTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: `Instance Stop`,
+    content: `Stop individual instance`,
+    layer: "COMPONENT",
+    pos: 7,
+  };
+
+  useEffect(() => {
+    if (tourStepsRef === undefined) {
+      return;
+    }
+    ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+
+    AddTourStep(tourStepsRef, startInstancesTourStep);
+    AddTourStep(tourStepsRef, stopInstancesTourStep);
+    AddTourStep(tourStepsRef, restartSystemTourStep);
+    AddTourStep(tourStepsRef, deleteSystemTourStep);
+
+    if (system?.instances && system.instances.length > 0) {
+      AddTourStep(tourStepsRef, statusInstanceTourStep);
+      AddTourStep(tourStepsRef, nameInstanceTourStep);
+      AddTourStep(tourStepsRef, startInstanceTourStep);
+      AddTourStep(tourStepsRef, stopInstanceTourStep);
+    }
+    return () => {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    };
+  }, [system]);
+
   const getSeverity = (
     status?: string,
   ):
@@ -193,10 +310,85 @@ function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
   function statusTemplate(instance: Instance) {
     const statusSeverity = getSeverity(instance.status);
 
-    return <Tag value={instance.status} severity={statusSeverity} />;
+    return (
+      <Tag
+        value={instance.status}
+        severity={statusSeverity}
+        {...GenerateTourProps(statusInstanceTourStep)}
+      />
+    );
+  }
+
+  function instanceNameTemplate(instance: Instance) {
+    return (
+      <div
+        style={{ overflowWrap: "break-word", width: "100%" }}
+        {...GenerateTourProps(nameInstanceTourStep)}
+      >
+        {instance.name}
+      </div>
+    );
+  }
+
+  function instanceIconTemplate(instance: Instance) {
+    let label = undefined;
+    let icon = undefined;
+
+    if (
+      instance?.metadata?.runner_id &&
+      instance?.metadata?.runner_id.length > 0
+    ) {
+      for (const runner of associatedRunners) {
+        if (runner.id === instance?.metadata?.runner_id) {
+          label = `../${runner.path}`;
+          if (runner.dead) {
+            label = `Subprocess dead: ../${runner.path}`;
+            icon = "skull";
+          }
+        }
+      }
+      if (system.local && label === undefined) {
+        label = "Unable to find Local Runner";
+      }
+    }
+
+    if (label === undefined) {
+      label = "Externally Managed";
+    }
+
+    if (icon === undefined) {
+      if (instance.status == "UNRESPONSIVE") {
+        icon = "triangle-exclamation";
+      } else if (instance.status == "AWAITING_SYSTEM") {
+        icon = "hourglass";
+      } else if (system.local) {
+        icon = "folder-open";
+      } else {
+        icon = "rss";
+      }
+    }
+
+    return (
+      <>
+        {label && <Tooltip content={label} target={`#ICON_${instance.id}`} />}
+        {icon && <FontAwesomeIcon id={`ICON_${instance.id}`} icon={icon} />}
+      </>
+    );
   }
 
   const instanceActions = (instance: Instance) => {
+    if (
+      !checkPermission(config, "OPERATOR", {
+        gardenName: system.garden_name,
+        namespace: system.namespace,
+        systemName: system.name,
+        systemVersion: system.version,
+        instanceName: instance.name,
+      } as PermissionCheck)
+    ) {
+      return <></>;
+    }
+
     const instanceConfigMenu = useRef<Menu>(null);
 
     const [logsVisible, setLogsVisible] = useState(false);
@@ -208,36 +400,78 @@ function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
 
     const instanceMenuItems = [
       {
-        label: "Show Logs",
-        command: () => setLogsVisible(true),
-      },
-      {
-        label: "Manage Queue",
-        command: () => setQueueVisible(true),
-      },
-      {
-        label: "Cancel/Delete Requests",
-        command: () => setCancelDeleteVisible(true),
+        label: "Create Requests",
+        command: () => {
+          addRequestItem({
+            type: "REQUEST",
+            requestCommandInput: {
+              namespace: system.namespace,
+              systemName: system.name,
+              version: system.version,
+              instance: instance.name,
+            } as RequestCommand,
+          });
+        },
       },
     ];
+    if (
+      checkPermission(config, "PLUGIN_ADMIN", {
+        gardenName: system.garden_name,
+        namespace: system.namespace,
+        systemName: system.name,
+        systemVersion: system.version,
+        instanceName: instance.name,
+      } as PermissionCheck)
+    ) {
+      instanceMenuItems.push({
+        label: "Show Logs",
+        command: () => setLogsVisible(true),
+      });
+      instanceMenuItems.push({
+        label: "Manage Queue",
+        command: () => setQueueVisible(true),
+      });
+      instanceMenuItems.push({
+        label: "Cancel/Delete Requests",
+        command: () => setCancelDeleteVisible(true),
+      });
+    }
+
+    const permissions = {
+      config: config,
+      hasGardenName: system.garden_name,
+      hasSystemName: system.name,
+      hasSystemVersion: system.version,
+      hasNamespace: system.namespace,
+      hasInstanceName: instance.name,
+    };
 
     return (
       <div>
-        <Button
-          severity="success"
-          size="small"
-          onClick={() => handleStartInstance(instance, system)}
-        >
-          <FontAwesomeIcon icon="play" />
-        </Button>
-        <Button
-          severity="warning"
-          size="small"
-          onClick={() => handleStopInstance(instance, system)}
-        >
-          <FontAwesomeIcon icon="stop" />
-        </Button>
-        <>
+        <ButtonGroup>
+          <AccessButton
+            severity="success"
+            size="small"
+            onClick={() => handleStartInstance(instance, system)}
+            title={`Start Instance ${instance.name} in ${system.namespace}.${system.name}.${system.version}`}
+            {...GenerateTourProps(startInstanceTourStep)}
+            {...permissions}
+            permission="PLUGIN_ADMIN"
+          >
+            <FontAwesomeIcon icon="play" />
+          </AccessButton>
+          <AccessButton
+            severity="warning"
+            size="small"
+            onClick={() => handleStopInstance(instance, system)}
+            title={`Stop Instance ${instance.name} in ${system.namespace}.${system.name}.${system.version}`}
+            {...GenerateTourProps(stopInstanceTourStep)}
+            {...permissions}
+            permission="PLUGIN_ADMIN"
+          >
+            <FontAwesomeIcon icon="stop" />
+          </AccessButton>
+
           <Menu
             model={instanceMenuItems}
             popup
@@ -262,15 +496,17 @@ function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
             isVisible={cancelDeleteVisible}
             onClose={closeCancelDeleteDialog}
           />
-          <Button
+          <AccessButton
             severity="info"
             size="small"
             title={`Admin Tools for ${instance.name}`}
             onClick={(e) => instanceConfigMenu?.current?.toggle(e)}
+            {...permissions}
+            permission="OPERATOR"
           >
             <FontAwesomeIcon icon="bars" />
-          </Button>
-        </>
+          </AccessButton>
+        </ButtonGroup>
       </div>
     );
   };
@@ -281,6 +517,9 @@ function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
     return (
       <div className={className}>
         <div className="flex align-items-center gap-2">
+          <FontAwesomeIcon
+            icon={system.icon_name ? system.icon_name : "gears"}
+          />
           <label className="max-w-20rem font-semibold">
             {selectedGarden === system.namespace
               ? ""
@@ -292,82 +531,83 @@ function SystemCard({ system, selectedGarden, toast }: SystemCardProps) {
     );
   };
 
+  const permissions = {
+    config: config,
+    hasGardenName: system.garden_name,
+    hasSystemName: system.name,
+    hasSystemVersion: system.version,
+    hasNamespace: system.namespace,
+  };
   return (
     <>
       <Panel key={system.id} headerTemplate={headerTemplate}>
-        <div className="flex justify-content-between mb-3">
-          <div
-            className="flex-1 mr-2"
-            style={{ overflowWrap: "break-word", width: "80%" }}
-          >
-            {system.description}
-          </div>
-          <div>
-            <Button
-              severity="success"
-              size="small"
-              title="Start"
-              onClick={() => startSystem(system)}
-            >
-              <FontAwesomeIcon icon="play" />
-            </Button>
-            <Button
-              severity="warning"
-              size="small"
-              title="Stop"
-              onClick={() => stopSystem(system)}
-            >
-              <FontAwesomeIcon icon="stop" />
-            </Button>
-            <Button
-              severity="info"
-              size="small"
-              title="Refresh"
-              onClick={() => reloadSystem(system)}
-              className="mr-2"
-            >
-              <FontAwesomeIcon icon="refresh" />
-            </Button>
-            <Button
+        <div className="mb-3">
+          <div style={{ float: "right", marginLeft: "2px" }}>
+            <ButtonGroup>
+              <AccessButton
+                severity="success"
+                size="small"
+                title={`Start System ${system.namespace}.${system.name}.${system.version}`}
+                onClick={() => startSystem(system)}
+                {...GenerateTourProps(startInstancesTourStep)}
+                {...permissions}
+                permission="PLUGIN_ADMIN"
+              >
+                <FontAwesomeIcon icon="play" />
+              </AccessButton>
+              <AccessButton
+                severity="warning"
+                size="small"
+                title={`Stop System ${system.namespace}.${system.name}.${system.version}`}
+                onClick={() => stopSystem(system)}
+                {...GenerateTourProps(stopInstancesTourStep)}
+                {...permissions}
+                permission="PLUGIN_ADMIN"
+              >
+                <FontAwesomeIcon icon="stop" />
+              </AccessButton>
+              <AccessButton
+                severity="info"
+                size="small"
+                title={`Refresh System ${system.namespace}.${system.name}.${system.version}`}
+                onClick={() => reloadSystem(system)}
+                className="mr-2"
+                {...GenerateTourProps(restartSystemTourStep)}
+                {...permissions}
+                permission="PLUGIN_ADMIN"
+              >
+                <FontAwesomeIcon icon="refresh" />
+              </AccessButton>
+            </ButtonGroup>
+            <AccessButton
               severity="danger"
               size="small"
-              title="Delete"
+              title={`Delete System ${system.namespace}.${system.name}.${system.version}`}
               onClick={() => deleteSystem(system)}
+              {...GenerateTourProps(deleteSystemTourStep)}
+              {...permissions}
+              permission="PLUGIN_ADMIN"
             >
               <FontAwesomeIcon icon="trash" />
-            </Button>
+            </AccessButton>
           </div>
+
+          <div style={{ minHeight: "40px" }}>{system.description}</div>
+          <Divider className="my-2" style={{ clear: "right" }} />
         </div>
-        <DataTable
-          value={system.instances}
-          key={JSON.stringify(system.instances)}
-          size="small"
-          className="flex-1"
-        >
-          <Column
-            field="icon"
-            header="Icon"
-            headerStyle={{ display: "none" }}
-            body={<FontAwesomeIcon icon="folder" />}
-          />
-          <Column
-            field="status"
-            header="Status"
-            headerStyle={{ display: "none" }}
-            body={statusTemplate}
-          />
-          <Column
-            field="name"
-            header="Instance"
-            headerStyle={{ display: "none" }}
-          />
-          <Column
-            header="Actions"
-            headerStyle={{ display: "none" }}
-            style={{ textAlign: "right" }}
-            body={instanceActions}
-          />
-        </DataTable>
+        {system.instances?.map((instance: Instance, index: number) => (
+          <div key={JSON.stringify(instance)}>
+            <div className="flex flex-wrap justify-content-between align-items-center">
+              <div>{instanceIconTemplate(instance)}</div>
+              <div>{statusTemplate(instance)}</div>
+              <div>{instanceNameTemplate(instance)}</div>
+              <div>{instanceActions(instance)}</div>
+            </div>
+            {index < system.instances!.length - 1 && (
+              <Divider className="my-2" />
+            )}
+          </div>
+        ))}
       </Panel>
     </>
   );

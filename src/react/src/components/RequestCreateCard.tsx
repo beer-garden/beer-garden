@@ -1,16 +1,16 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { InputSwitch } from "primereact/inputswitch";
 import { Skeleton } from "primereact/skeleton";
 import { useEffect, useState } from "react";
 
 import { Job, Request } from "../models/brewtils-types";
-import { RequestCommand, RequestItem } from "../models/models";
+import { Config, RequestCommand, RequestItem } from "../models/models";
 import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
+import AccessButton from "./AccessButton";
 import CodeExample from "./CodeExample";
 import CommandCreate from "./CommandCreate";
 import SchedulerForm from "./SchedulerForm";
@@ -19,10 +19,14 @@ function RequestCreateCard({
   requestItem,
   updateRequestItem,
   removeItem,
+  config,
+  isDialog,
 }: {
   requestItem: RequestItem;
   updateRequestItem: (item: RequestItem) => void;
   removeItem: (id: string) => void;
+  config: Config;
+  isDialog: boolean;
 }) {
   // Input Request
   const [request, setRequest] = useState<Request | undefined>(
@@ -82,6 +86,7 @@ function RequestCreateCard({
 
   const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
   const [resetForm, setResetForm] = useState<boolean>(false);
+  const [isFormValid, setIsFormValid] = useState<boolean>(false);
 
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
     (requestItem?.requestId === undefined || requestItem?.requestId === null) &&
@@ -175,6 +180,7 @@ function RequestCreateCard({
             instance_name: responseRequest.instance_name,
             command: responseRequest.command,
             parameters: responseRequest.parameters,
+            command_type: responseRequest.command_type,
           });
           updateRequestCommand({
             namespace: responseRequest?.namespace ?? undefined,
@@ -213,32 +219,45 @@ function RequestCreateCard({
     }
   }, []);
 
+  const permissions = {
+    config: config,
+    hasNamespace: requestItem.requestCommandInput?.namespace,
+    hasSystemName: requestItem.requestCommandInput?.systemName,
+    hasSystemVersion: requestItem.requestCommandInput?.version,
+    hasInstanceName: requestItem.requestCommandInput?.instance,
+    hasCommandName: requestItem.requestCommandInput?.command,
+  };
+
   return (
     <Card
       className="justify-content-center"
+      unstyled={isDialog}
       header={
-        <div className="flex">
-          <Button
-            onClick={() => {
-              removeItem(requestItem.itemId);
-            }}
-            tooltip={`Close Request Creation for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
-          >
-            <FontAwesomeIcon icon="xmark" />
-          </Button>
+        <div className="flex mb-2">
+          {!isDialog && (
+            <AccessButton
+              onClick={() => {
+                removeItem(requestItem.itemId);
+              }}
+              tooltip={`Close Request Creation for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
+            >
+              <FontAwesomeIcon icon="xmark" />
+            </AccessButton>
+          )}
           <div className="ml-4 mr-2 align-self-center">Scheduled</div>
           <InputSwitch
             checked={showScheduleJob}
             onChange={(e) => updateShowScheduleJob(e.value)}
             className="align-self-center"
+            aria-label="Toggle for creating Scheduled Job"
           />
         </div>
       }
       key={requestItem.itemId}
       footer={
-        <div className="flex">
+        <div className="flex mt-2">
           <div>
-            <Button
+            <AccessButton
               label="Reset Form"
               severity="warning"
               icon="pi pi-arrow-right"
@@ -252,7 +271,7 @@ function RequestCreateCard({
               setVisibleCodeExample={setVisibleCodeExample}
               request={request}
             />
-            <Button
+            <AccessButton
               label="Code Examples"
               severity="info"
               icon="pi pi-arrow-right"
@@ -260,11 +279,13 @@ function RequestCreateCard({
               className="mr-2"
             />
           </div>
+
           <div style={{ marginLeft: "auto" }}>
             {showCreateRequest && !showScheduleJob && (
-              <Button
+              <AccessButton
                 label="Submit"
                 icon="pi pi-arrow-right"
+                disabled={!isFormValid}
                 onMouseDown={(event) => {
                   if (event.button === 1) {
                     // Middle mouse button click
@@ -273,24 +294,32 @@ function RequestCreateCard({
                     submitRequest();
                   }
                 }}
+                {...permissions}
+                permission="OPERATOR"
               />
             )}
             {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
-              <Button
+              <AccessButton
                 label="Submit Job"
                 severity="success"
+                disabled={!isFormValid}
                 icon="pi pi-arrow-right"
                 iconPos="right"
                 onClick={submitJob}
+                {...permissions}
+                permission="OPERATOR"
               />
             )}
             {showCreateRequest && showScheduleJob && requestItem?.jobId && (
-              <Button
+              <AccessButton
                 label="Update Job"
                 severity="success"
+                disabled={!isFormValid}
                 icon="pi pi-arrow-right"
                 iconPos="right"
                 onClick={updateJob}
+                {...permissions}
+                permission="OPERATOR"
               />
             )}
           </div>
@@ -314,6 +343,7 @@ function RequestCreateCard({
                 setRequestCommand={updateRequestCommand}
                 resetForm={resetForm}
                 setResetForm={setResetForm}
+                setIsFormValid={setIsFormValid}
               />
             )}
             {!showCreateRequest && (

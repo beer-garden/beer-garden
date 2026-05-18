@@ -22,6 +22,14 @@ describe("SchedulerViewCard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     cleanup();
+
+    vi.mock("react-router-dom", async () => {
+      const actual = await vi.importActual("react-router-dom");
+      return {
+        ...actual,
+        useNavigate: () => vi.fn(),
+      };
+    });
   });
 
   test("renders Cron Scheduler View Card", async () => {
@@ -60,6 +68,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -242,6 +252,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -288,6 +300,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -387,6 +401,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -430,6 +446,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -497,6 +515,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -586,10 +606,14 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
-    const pauseButton = await screen.findByTitle("Pause Job " + mockJob?.name);
+    const pauseButton = await screen.findByRole("button", {
+      name: /Pause Job/i,
+    });
     await userEvent.click(pauseButton);
 
     await waitFor(() => {
@@ -642,12 +666,15 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
-    const resumeButton = await screen.findByTitle(
-      "Resume Job " + mockJob?.name,
-    );
+    const resumeButton = await screen.findByRole("button", {
+      name: /Resume Job/i,
+    });
+
     await userEvent.click(resumeButton);
 
     await waitFor(() => {
@@ -697,12 +724,14 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={deleteJobMock}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
-    const deleteButton = await screen.findByTitle(
-      "Delete Job " + mockJob?.name,
-    );
+    const deleteButton = await screen.findByRole("button", {
+      name: /Delete Job/i,
+    });
     await userEvent.click(deleteButton);
 
     await waitFor(() => {
@@ -749,10 +778,14 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
-    const runNowButton = await screen.findByTitle("Run Now " + mockJob?.name);
+    const runNowButton = await screen.findByRole("button", {
+      name: /Run Now/i,
+    });
     await userEvent.click(runNowButton);
 
     await waitFor(() => {
@@ -799,10 +832,12 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={closeJobMock}
+        config={{}}
+        isDialog={false}
       />,
     );
 
-    const closeButton = await screen.findByTitle("Close Job " + mockJob?.name);
+    const closeButton = await screen.findByTestId("CLOSE_JOB_" + mockJob?.name);
     await userEvent.click(closeButton);
 
     await waitFor(() => {
@@ -857,6 +892,8 @@ describe("SchedulerViewCard", () => {
         editJob={() => {}}
         deleteJob={() => {}}
         removeItem={() => {}}
+        config={{}}
+        isDialog={true}
       />,
     );
 
@@ -865,7 +902,7 @@ describe("SchedulerViewCard", () => {
       expect(screen.getByText("example_command")).toBeInTheDocument();
       expect(screen.getByText("SUCCESS")).toBeInTheDocument();
       expect(
-        screen.getByTitle("Open Request " + mockRequest.command),
+        screen.getByRole("button", { name: /Open Request/i }),
       ).toBeInTheDocument();
     });
   });

@@ -1,11 +1,12 @@
-import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
+import { Messages } from "primereact/messages";
 import { Password } from "primereact/password";
 import { classNames } from "primereact/utils";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { UserLogin } from "../services/token_service";
+import AccessButton from "./AccessButton";
 
 const LoginDialog = ({
   visible,
@@ -18,8 +19,10 @@ const LoginDialog = ({
 }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const msgs = useRef<Messages>(null);
 
   const handleLogin = () => {
+    msgs.current?.clear();
     UserLogin(username, password)
       .then(() => {
         setVisible(false);
@@ -28,20 +31,24 @@ const LoginDialog = ({
         setPassword("");
       })
       .catch((error) => {
-        // should throw an alert for the user
-        console.log(`Error Logging in ${error}`);
+        console.error(`Error Logging in ${error}`);
+        msgs.current?.show({
+          severity: "error",
+          detail: "Incorrect username or password",
+          sticky: true,
+        });
       });
   };
 
   const dialogFooter = (
     <div>
-      <Button
+      <AccessButton
         label="Cancel"
         icon="pi pi-times"
         onClick={() => setVisible(false)}
         className="p-button-text"
       />
-      <Button label="Login" icon="pi pi-check" onClick={handleLogin} />
+      <AccessButton label="Login" icon="pi pi-check" onClick={handleLogin} />
     </div>
   );
 
@@ -54,6 +61,7 @@ const LoginDialog = ({
       onHide={() => setVisible(false)}
       footer={dialogFooter}
     >
+      <Messages ref={msgs} />
       <div className="flex flex-column gap-3 p-input-filled">
         <div className="flex flex-column gap-2">
           <label htmlFor="username">Username</label>
@@ -61,7 +69,7 @@ const LoginDialog = ({
             id="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className={classNames({ "p-invalid": !username && visible })} // Example validation styling
+            className={classNames({ "p-invalid": !username && visible })}
             aria-describedby="username-help"
           />
         </div>
@@ -77,7 +85,6 @@ const LoginDialog = ({
         </div>
       </div>
     </Dialog>
-    // </div>
   );
 };
 

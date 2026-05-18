@@ -1,22 +1,28 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { DataView } from "primereact/dataview";
-import { useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
-import RequestCreateCard from "../components/RequestCreateCard";
-import RequestViewCard from "../components/RequestViewCard";
-import SchedulerViewCard from "../components/SchedulerViewCard";
-import { RequestItem } from "../models/models";
-import { DeleteJob } from "../services/job_service";
+import AccessButton from "../components/AccessButton";
+import RequestItemCard from "../components/RequestItemCard";
+import { Config, RequestItem, TourStepProps } from "../models/models";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
 
 function Workspace({
   listeners,
   display,
+  tourStepsRef,
+  config,
 }: {
   listeners: Record<string, any>;
   display?: boolean;
+  tourStepsRef: RefObject<Array<TourStepProps>>;
+  config: Config;
 }) {
   const { requestId } = useParams<{ requestId: string }>();
   const { jobId } = useParams<{ jobId: string }>();
@@ -33,6 +39,18 @@ function Workspace({
   const requestItemsRef = useRef<RequestItem[] | undefined>(undefined);
 
   const [requestItemsKey, setRequestItemsKey] = useState("0");
+
+  const tourUuid = "workspace_tour";
+  const tourPrefix = "workspace";
+
+  const addRequestTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Add Request",
+    content: "Create a new scheduled job to run requests on a schedule.",
+    layer: "LAYOUT",
+    pos: 0,
+  };
 
   useEffect(() => {
     if (requestItemsRef.current === undefined) {
@@ -83,6 +101,12 @@ function Workspace({
         updateItems(loadedItems);
       }
     }
+
+    AddTourStep(tourStepsRef, addRequestTourStep);
+
+    return () => {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    };
   });
 
   const updateItems = (updatedItems: RequestItem[]) => {
@@ -139,58 +163,23 @@ function Workspace({
     const list = [] as Array<any>;
 
     items.forEach((value: RequestItem) => {
-      if (value !== null && value !== undefined) {
-        if (value.type === "REQUEST") {
-          list.push(
-            <div className="mr-2 mb-2 mt-2" style={{ minWidth: "49%" }}>
-              <RequestCreateCard
-                requestItem={value}
-                updateRequestItem={updateItem}
-                removeItem={deleteItem}
-              />
-            </div>,
-          );
-        } else if (value.type === "VIEW_REQUEST") {
-          list.push(
-            <div className="mr-2 mb-2 mt-2" style={{ minWidth: "49%" }}>
-              <RequestViewCard
-                requestItem={value}
-                updateRequestItem={updateItem}
-                removeItem={deleteItem}
-                listeners={listeners}
-                addItem={addItem}
-              />
-            </div>,
-          );
-        } else if (value.type === "VIEW_JOB" && value?.jobId !== undefined) {
-          list.push(
-            <div className="mr-2 mb-2 mt-2" style={{ minWidth: "49%" }}>
-              <SchedulerViewCard
-                jobId={value.jobId}
-                removeItem={() => deleteItem(value.itemId)}
-                listeners={listeners}
-                editJob={() => {
-                  updateItem({
-                    ...value,
-                    type: "REQUEST",
-                  });
-                }}
-                deleteJob={() => {
-                  if (value.jobId) {
-                    DeleteJob({ id: value.jobId } as any)
-                      .then(() => {
-                        deleteItem(value.itemId);
-                      })
-                      .catch((error) => {
-                        console.error("Error deleting job:", error);
-                      });
-                  }
-                }}
-              />
-            </div>,
-          );
-        }
-      }
+      list.push(
+        <div
+          key={value.itemId}
+          className="mr-2 mb-2 mt-2"
+          style={{ minWidth: "49%" }}
+        >
+          <RequestItemCard
+            removeItem={deleteItem}
+            updateRequestItem={updateItem}
+            requestItem={value}
+            listeners={listeners}
+            addItem={addItem}
+            isDialog={false}
+            config={config}
+          />
+        </div>,
+      );
     });
 
     return (
@@ -201,9 +190,14 @@ function Workspace({
   return (
     <div>
       <h1>Workspace</h1>
-      <Button onClick={() => addItem()}>
+      <AccessButton
+        onClick={() => addItem()}
+        aria-label="Add Request"
+        tooltip="Add Request"
+        {...GenerateTourProps(addRequestTourStep)}
+      >
         <FontAwesomeIcon icon="file-pen" />
-      </Button>
+      </AccessButton>
 
       <DataView
         value={items}

@@ -113,9 +113,12 @@ export const DeleteGarden = async (
 
 export const GetRootGarden = async (
   config: Config,
-  headerData: any,
+  headerData?: any,
 ): Promise<Garden> => {
-  return GetGarden(config.garden_name, headerData);
+  if (config?.garden_name) {
+    return GetGarden(config.garden_name, headerData);
+  }
+  throw new Error("Root garden not defined in config");
 };
 
 export const GetGardenList = async (

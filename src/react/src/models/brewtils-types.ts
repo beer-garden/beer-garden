@@ -13,7 +13,7 @@ type parameter_types =
 type output_types = "STRING" | "JSON" | "XML" | "HTML" | "JS" | "CSS";
 
 export interface AliasUserMap {
-  targetGarden?: string;
+  target_garden?: string;
   username?: string;
 }
 
@@ -66,7 +66,7 @@ export interface Connection {
   api?: string;
   status?: string;
   status_info?: any;
-  config?: object;
+  config?: any;
 }
 
 export interface CronTrigger {
@@ -186,7 +186,11 @@ export interface Instance {
   queueType?: string;
   queueInfo?: object;
   icon_name?: string;
-  metadata?: object;
+  metadata?: InstanceMetadata;
+}
+
+export interface InstanceMetadata {
+  runner_id?: string;
 }
 
 export interface IntervalTrigger {
@@ -233,7 +237,7 @@ export interface Job {
   name?: string;
   trigger_type?: string;
   trigger?: CronTrigger | DateTrigger | IntervalTrigger | FileTrigger;
-  request_template?: any;
+  request_template?: RequestTemplate;
   misfire_grace_time?: number | null;
   coalesce?: boolean;
   next_run_time?: any;
@@ -319,7 +323,7 @@ export interface Request {
   command_type?: string;
   parameters?: Record<string, any>;
   comment?: string;
-  metadata?: object;
+  metadata?: RequestMetadata;
   output_type?: output_types;
   id?: string;
   is_event?: boolean;
@@ -339,18 +343,22 @@ export interface Request {
   parent_id?: string;
 }
 
+export interface RequestMetadata {
+  _topic?: string;
+}
+
 export interface RequestTemplate {
   system?: string;
-  systemVersion?: string;
-  instanceName?: string;
+  system_version?: string;
+  instance_name?: string;
   namespace?: string;
   command?: string;
-  commandDisplayName?: string;
-  commandType?: string;
+  command_display_name?: string;
+  command_type?: string;
   parameters?: object;
   comment?: string;
   metadata?: object;
-  outputType?: string;
+  output_type?: string;
 }
 
 export interface Resolvable {
@@ -379,7 +387,7 @@ export interface Runner {
   id?: string;
   name?: string;
   path?: string;
-  instanceId?: string;
+  instance_id?: string;
   stopped?: boolean;
   dead?: boolean;
   restart?: boolean;
@@ -402,8 +410,8 @@ export interface Subscriber {
   version?: string;
   instance?: string;
   command?: string;
-  subscriberType?: string;
-  consumerCount?: number;
+  subscriber_type?: string;
+  consumer_count?: number;
 }
 
 export interface SystemDomainIdentifier {
@@ -437,7 +445,7 @@ export interface Topic {
   id?: string;
   name?: string;
   subscribers?: any[];
-  publisherCount?: number;
+  publisher_count?: number;
 }
 
 export interface UpstreamRole {
@@ -455,18 +463,23 @@ export interface UpstreamRole {
   file_generated?: boolean;
 }
 
+export interface UserMetadata {
+  last_authentication?: any;
+  has_token?: boolean;
+}
+
 export interface User {
   id?: string;
   username?: string;
   password?: string;
-  roles?: any[];
-  localRoles?: any[];
-  upstreamRoles?: any[];
-  userAliasMapping?: any[];
-  isRemote?: boolean;
-  metadata?: object;
+  roles?: Role[];
+  local_roles?: Role[];
+  upstream_roles?: Role[];
+  user_alias_mapping?: AliasUserMap[];
+  is_remote?: boolean;
+  metadata?: UserMetadata;
   protected?: boolean;
-  fileGenerated?: boolean;
+  file_generated?: boolean;
 }
 
 export interface UserToken {

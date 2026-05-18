@@ -1,3 +1,6 @@
+import { RefObject } from "react";
+
+import { Garden, Instance, Runner, System } from "../models/brewtils-types";
 import { Version } from "../models/models";
 
 export const CompareObjects = (obj1: any, obj2: any) => {
@@ -70,6 +73,8 @@ export const GetSeverity = (
     case "DISABLED": // Connection
       return "warning";
     case "DEAD": // Instance
+    case "MISSING_RUNNER": // Conditional Instance Runner Status
+    case "UNASSOCIATED_RUNNER": // Runner Status
     case "UNRESPONSIVE": // Connection, Instance
     case "UNKNOWN": // Connection, Instance
     case "ERROR": // Connection, Instance, Request
@@ -83,4 +88,117 @@ export const GetSeverity = (
     default:
       return "danger";
   }
+};
+
+export const ThemeOptions = () => [
+  "amber",
+  "blue",
+  "cyan",
+  "green",
+  "indigo",
+  "pink",
+  "purple",
+];
+
+export const ChangeTheme = (color?: string, dark?: boolean) => {
+  if (color === undefined) {
+    color = localStorage.getItem("theme_color") || "blue";
+  } else {
+    localStorage.setItem("theme_color", color);
+  }
+
+  if (!ThemeOptions().includes(color)) {
+    color = "blue";
+    localStorage.setItem("theme_color", color);
+  }
+
+  if (dark === undefined) {
+    dark = localStorage.getItem("theme_dark") === "true";
+  } else {
+    localStorage.setItem("theme_dark", dark.toString());
+  }
+
+  const themeLink = document.getElementById("theme-link");
+  if (themeLink) {
+    themeLink.href = `${GetBaseURL()}/themes/lara-${dark ? "dark" : "light"}-${color}/theme.css`;
+  }
+};
+
+const getInstanceStatus = (
+  instance: Instance,
+  associatedRunners: RefObject<Runner[] | undefined>,
+) => {
+  if (instance.metadata?.runner_id && associatedRunners.current) {
+    for (const runner of associatedRunners.current) {
+      if (runner.id === instance.metadata?.runner_id) {
+        if (runner.dead) {
+          return "DEAD";
+        }
+        return instance.status;
+      }
+    }
+  }
+  return "MISSING_RUNNER";
+};
+
+export const GenerateStatusCounts = (
+  gardenRef: RefObject<Garden | undefined>,
+  associatedRunners: RefObject<Runner[] | undefined>,
+  garden: Garden,
+  systems: System[] | undefined,
+) => {
+  const statusCounts = new Map();
+
+  if (systems && systems.length > 0) {
+    for (const system of systems.filter(
+      (sys) => sys.garden_name === garden.name,
+    )) {
+      system?.instances?.forEach((instance: Instance) => {
+        if (instance.status) {
+          if (!system.local || associatedRunners?.current === undefined) {
+            statusCounts.set(
+              instance.status,
+              (statusCounts.get(instance.status) || 0) + 1,
+            );
+          } else {
+            const status = getInstanceStatus(instance, associatedRunners);
+            statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
+          }
+        }
+      });
+    }
+  }
+
+  if (
+    gardenRef?.current &&
+    garden.name === gardenRef.current.name &&
+    associatedRunners?.current &&
+    associatedRunners.current.length > 0
+  ) {
+    for (const runner of associatedRunners.current) {
+      let isUnassociated = true;
+      if (systems) {
+        if (
+          systems.some((system) => {
+            if (system.instances) {
+              return system.instances.some(
+                (instance) => instance?.metadata?.runner_id === runner.id,
+              );
+            }
+            return false;
+          })
+        ) {
+          isUnassociated = false;
+        }
+      }
+      if (isUnassociated) {
+        statusCounts.set(
+          "UNASSOCIATED_RUNNER",
+          (statusCounts.get("UNASSOCIATED_RUNNER") || 0) + 1,
+        );
+      }
+    }
+  }
+
+  return statusCounts;
 };

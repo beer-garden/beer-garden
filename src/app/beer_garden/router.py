@@ -27,6 +27,7 @@ from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import Events, Garden, Operation, System
 from mongoengine import DoesNotExist
+from packaging.version import InvalidVersion, parse
 
 # from packaging.version import parse
 from stomp.exception import ConnectFailedException
@@ -167,6 +168,7 @@ route_functions = {
     "TOPIC_DELETE": beer_garden.topic.remove_topic,
     "TOPIC_ADD_SUBSCRIBER": beer_garden.topic.topic_add_subscriber,
     "TOPIC_REMOVE_SUBSCRIBER": beer_garden.topic.topic_remove_subscriber,
+    "TOPIC_RESET_COUNT": beer_garden.topic.reset_count,
     "TOPIC_SYNC": beer_garden.topic.sync_topics,
     "TOKEN_USER_DELETE": beer_garden.user.revoke_tokens,
     "ROLE_CREATE": beer_garden.role.create_role,
@@ -861,6 +863,19 @@ def _pre_forward(operation: Operation) -> Operation:
             operation.model.command_type = "INFO"
 
         beer_garden.files.forward_file(operation)
+
+        try:
+            # Removed non legacy support values
+            if (
+                operation.model.target_garden not in gardens
+                or gardens[operation.model.target_garden].version is None
+                or gardens[operation.model.target_garden].version.upper() == "UNKNOWN"
+                or parse(gardens[operation.model.target_garden].version)
+                < parse("3.33.1")
+            ):
+                operation.kwargs.pop("choice_validation_enabled", None)
+        except InvalidVersion:
+            operation.kwargs.pop("choice_validation_enabled", None)
 
         # Clear parent before forwarding so the child doesn't freak out about an
         # unknown request

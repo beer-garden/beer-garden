@@ -1,6 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
@@ -11,13 +10,15 @@ import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
 import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import CommandForm from "../components/CommandForm";
 import { Command, Request, System } from "../models/brewtils-types";
-import { RequestItem } from "../models/models";
+import { Config, PermissionCheck, RequestItem } from "../models/models";
+import { checkPermission } from "../services/permission_service";
 import { GetRequest, PostRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
-import { GetBaseURL } from "../services/util_service";
+import AccessButton from "./AccessButton";
 import RequestOutput from "./RequestOutput";
 
 function UnformattedInput(request: Request) {
@@ -35,12 +36,16 @@ function RequestViewCard({
   removeItem,
   addItem,
   listeners,
+  config,
+  isDialog,
 }: {
   requestItem: RequestItem;
   updateRequestItem: (item: RequestItem) => void;
   removeItem: (id: string) => void;
   addItem: (itemParams?: Partial<RequestItem>) => void;
   listeners: Record<string, any>;
+  config: Config;
+  isDialog: boolean;
 }) {
   const requestId = useRef<string | null | undefined>(
     requestItem?.requestId ?? null,
@@ -55,6 +60,8 @@ function RequestViewCard({
   const [command, setCommand] = useState<Command | any>(null);
 
   const [showCommandForm, setShowCommandForm] = useState(false);
+
+  const navigate = useNavigate();
 
   const SeverityCheck = (status?: string) => {
     if (!status) {
@@ -108,10 +115,7 @@ function RequestViewCard({
       } as Request)
         .then((response_request: any) => {
           if (openRequest) {
-            window.open(
-              `${GetBaseURL()}/request/${response_request.id}`,
-              "_self",
-            );
+            void navigate(`/request/${response_request.id}`);
           } else {
             toast?.current?.show({
               severity: "info",
@@ -246,17 +250,18 @@ function RequestViewCard({
   return (
     <Card
       title={CardTitle()}
-      className="mr-2 mb-2 mt-2"
-      style={{ minWidth: "49%" }}
+      unstyled={isDialog}
       header={
-        <Button
-          onClick={() => {
-            removeItem(requestItem.itemId);
-          }}
-          tooltip={`Close Request View for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
-        >
-          <FontAwesomeIcon icon="xmark" />
-        </Button>
+        !isDialog && (
+          <AccessButton
+            onClick={() => {
+              removeItem(requestItem.itemId);
+            }}
+            tooltip={`Close Request View for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
+          >
+            <FontAwesomeIcon icon="xmark" />
+          </AccessButton>
+        )
       }
     >
       <Toast ref={toast} />
@@ -281,6 +286,7 @@ function RequestViewCard({
                     setRequest: setRequest,
                     resetForm: false,
                     setResetForm: () => {},
+                    setIsFormValid: () => {},
                   }}
                 />
               )}
@@ -296,27 +302,50 @@ function RequestViewCard({
             label="Open"
             icon="pi pi-plus"
             onClick={() => {
-              window.open(`${GetBaseURL()}/request/${request.id}`, "_self");
+              void navigate(`/request/${request.id}`);
+              if (isDialog) {
+                removeItem(requestItem.itemId);
+              }
             }}
-            model={[
-              {
-                label: "Run Again Now",
-                // icon: <FontAwesomeIcon icon="arrow-up-right-from-square" />,
-                command: () => {
-                  submitRequest(false);
-                },
-              },
-              {
-                label: "Pour Again",
-                // icon: <FontAwesomeIcon icon="arrow-up-from-bracket" />,
-                command: () => {
-                  addItem({
-                    requestId: request.id,
-                    type: "REQUEST",
-                  } as RequestItem);
-                },
-              },
-            ]}
+            model={
+              request &&
+              request.status &&
+              !["CREATED", "IN_PROGRESS"].includes(request.status) &&
+              checkPermission(config, "OPERATOR", {
+                global: false,
+                gardenName: request?.target_garden,
+                namespace: request?.namespace,
+                systemName: request?.system,
+                systemVersion: request?.system_version,
+                instanceName: request?.instance_name,
+                commandName: request?.command,
+              } as PermissionCheck)
+                ? [
+                    {
+                      label: "Run Again Now",
+                      command: () => {
+                        submitRequest(false);
+                      },
+                    },
+                    {
+                      label: "Pour Again",
+                      command: () => {
+                        addItem({
+                          requestId: request.id,
+                          type: "REQUEST",
+                        } as RequestItem);
+                      },
+                    },
+                  ]
+                : [
+                    {
+                      label: "Reload Request",
+                      command: () => {
+                        setRequest(null);
+                      },
+                    },
+                  ]
+            }
           />
         </div>
       )}

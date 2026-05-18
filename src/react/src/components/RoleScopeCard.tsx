@@ -1,10 +1,10 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AutoComplete } from "primereact/autocomplete";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import React, { useEffect, useRef, useState } from "react";
 
 import { GetSystemList } from "../services/system_service";
+import AccessButton from "./AccessButton";
 
 interface RoleScopeCardProps {
   scopeName: string;
@@ -78,9 +78,9 @@ function RoleScopeCard({
     return (
       <div className="flex justify-content-between p-3 pb-0 items-end">
         <div className="flex flex-1"></div>
-        <Button tooltip="Remove" onClick={() => handleClose(index)}>
+        <AccessButton tooltip="Remove" onClick={() => handleClose(index)}>
           <FontAwesomeIcon icon="close" />
-        </Button>
+        </AccessButton>
       </div>
     );
   }
@@ -148,7 +148,7 @@ function RoleScopeCard({
           </Card>
         ))}
         <div className="flex">
-          <Button
+          <AccessButton
             className="mt-1 mb-3"
             label={`Add ${scopeName}`}
             onClick={handleAddScope}

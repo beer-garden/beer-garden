@@ -1,47 +1,165 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
-import { Dialog } from "primereact/dialog";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { FileUpload } from "primereact/fileupload";
+import { Toast } from "primereact/toast";
+import { RefObject, useEffect, useRef, useState } from "react";
 
-import SchedulerViewCard from "../components/SchedulerViewCard";
+import AccessButton from "../components/AccessButton";
 import { Job } from "../models/brewtils-types";
+import { Config, RequestItem, TourStepProps } from "../models/models";
 import {
   DeleteJob,
+  ExportJobs,
   GetJobList,
+  ImportJobs,
   PauseJob,
   ResumeJob,
   RunAdhocJob,
 } from "../services/job_service";
-import { GetBaseURL } from "../services/util_service";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
 import HttpError from "../types/errors";
 import ErrorPage from "./ErrorPage";
 
-function JobIndex({ listeners }: { listeners: Record<string, any> }) {
-  const [error, setError] = useState<HttpError>();
+function JobIndex({
+  listeners,
+  tourStepsRef,
+  addRequestItem,
+  config,
+}: {
+  listeners: Record<string, any>;
+  tourStepsRef: RefObject<Array<TourStepProps>>;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+  config: Config;
+}) {
   const [jobs, setJobs] = useState<Array<Job>>([]);
-  const [selectedJob, setSelectedJob] = useState<Job | undefined>(undefined);
-  const navigate = useNavigate();
+  const [error, setError] = useState<HttpError>();
+  const tourUuid = "job_index_tour";
+  const tourPrefix = "job_index";
+
+  const createJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Create Job",
+    content: "Create a new scheduled job to run requests on a schedule.",
+    layer: "LAYOUT",
+    pos: 0,
+  };
+
+  const importJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Import Jobs",
+    content: "Import jobs from a file.",
+    layer: "LAYOUT",
+    pos: 1,
+  };
+
+  const exportJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Export Jobs",
+    content: "Export jobs to a file.",
+    layer: "LAYOUT",
+    pos: 2,
+  };
+
+  const runNowTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Run Now",
+    content: "Run the job immediately.",
+    layer: "LAYOUT",
+    pos: 3,
+  };
+
+  const viewJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "View Job",
+    content: "View details about the job and see past runs.",
+    layer: "LAYOUT",
+    pos: 4,
+  };
+
+  const editJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Edit Job",
+    content: "Edit the job's schedule and request template.",
+    layer: "LAYOUT",
+    pos: 5,
+  };
+
+  const pauseResumeJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Pause/Resume Job",
+    content:
+      "Pause a running job or resume a paused job to control when it runs.",
+    layer: "LAYOUT",
+    pos: 6,
+  };
+
+  const deleteJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Delete Job",
+    content: "Delete a job that is no longer needed.",
+    layer: "LAYOUT",
+    pos: 7,
+  };
+
+  useEffect(() => {
+    ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    AddTourStep(tourStepsRef, createJobTourStep);
+    AddTourStep(tourStepsRef, importJobTourStep);
+    AddTourStep(tourStepsRef, exportJobTourStep);
+
+    if (jobs.length > 0) {
+      AddTourStep(tourStepsRef, runNowTourStep);
+      AddTourStep(tourStepsRef, viewJobTourStep);
+      AddTourStep(tourStepsRef, editJobTourStep);
+      AddTourStep(tourStepsRef, pauseResumeJobTourStep);
+      AddTourStep(tourStepsRef, deleteJobTourStep);
+    }
+
+    return () => {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    };
+  }, [jobs]);
+  const toast = useRef(null as null | Toast);
+  const jobImportFileRef = useRef<FileUpload | null>(null);
 
   useEffect(() => {
     const MonitorJobs = (message: any) => {
       if (message.payload_type === "Job") {
-        let updateList = false;
-        const updatedJobs = [] as Array<Job>;
-
-        for (const job of jobs) {
-          if (message.payload.id === job.id) {
-            updateList = true;
-            updatedJobs.push(message.payload);
-          } else {
-            updatedJobs.push(job);
-          }
-        }
-
-        if (updateList) {
-          setJobs(updatedJobs);
+        if (message.name == "JOB_CREATED") {
+          setJobs((prevJobs: Job[]) => {
+            return [...prevJobs, message.payload];
+          });
+        } else if (message.name == "JOB_DELETED") {
+          setJobs((prevJobs: Job[]) => {
+            return prevJobs.filter((job: Job) => job.id != message.payload.id);
+          });
+        } else if (
+          ["JOB_UPDATED", "JOB_PAUSED", "JOB_RESUMED"].includes(message.name)
+        ) {
+          setJobs((prevJobs: Job[]) => {
+            return prevJobs.map((job: Job) => {
+              if (job.id === message.payload.id) {
+                return {
+                  ...job,
+                  ...message.payload,
+                };
+              }
+              return job;
+            });
+          });
         }
       }
     };
@@ -78,139 +196,252 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
   };
 
   const editJob = (jobId: string) => {
-    void navigate(`${GetBaseURL()}/job/${jobId}`);
+    addRequestItem({ jobId: jobId, type: "REQUEST" });
   };
 
   const actionTemplate = (job: Job) => {
+    const permissions = {
+      config: config,
+      hasNamespace: job.request_template?.namespace,
+      hasSystemName: job.request_template?.system,
+      hasInstanceName: job.request_template?.instance_name,
+      hasSystemVersion: job.request_template?.system_version,
+      hasCommandName: job.request_template?.command,
+    };
     return (
       <div>
-        <Button
+        <AccessButton
           rounded
           raised
           link
-          onClick={() => {
-            if (job.id) {
-              RunAdhocJob(job.id).catch((error) => {
-                console.error("Error running job:", error);
-              });
-            }
-          }}
-          title={"Run Now " + job.name}
-          className="mr-2"
-        >
-          <FontAwesomeIcon icon="forward" />
-        </Button>
-        <Button
-          rounded
-          raised
-          link
-          onClick={() => setSelectedJob(job)}
+          onClick={() => addRequestItem({ jobId: job.id, type: "VIEW_JOB" })}
           title={"View Job " + job.name}
           className="mr-2"
+          {...GenerateTourProps(viewJobTourStep)}
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />
-        </Button>
-        <Button
-          rounded
-          raised
-          link
-          onClick={() => {
-            if (job.id) {
-              editJob(job.id);
-            }
-          }}
-          title={"Update Job " + job.name}
-          className="mr-2"
-        >
-          <FontAwesomeIcon icon="edit" />
-        </Button>
-        {job.status === "RUNNING" && (
-          <Button
+        </AccessButton>
+        <>
+          <AccessButton
             rounded
             raised
             link
             onClick={() => {
-              PauseJob(job)
-                .then((updatedJob) => {
-                  setJobs((prevJobs) =>
-                    prevJobs.map((j) =>
-                      j.id === updatedJob.id ? updatedJob : j,
-                    ),
-                  );
-                })
-                .catch((error) => {
-                  console.error("Error pausing job:", error);
+              if (job.id) {
+                RunAdhocJob(job.id).catch((error) => {
+                  console.error("Error running job:", error);
                 });
+              }
             }}
-            title={"Pause Job " + job.name}
+            title={"Run Now " + job.name}
             className="mr-2"
+            {...GenerateTourProps(runNowTourStep)}
+            {...permissions}
+            permission="OPERATOR"
           >
-            <FontAwesomeIcon icon="pause" />
-          </Button>
-        )}
-        {job.status === "PAUSED" && (
-          <Button
+            <FontAwesomeIcon icon="forward" />
+          </AccessButton>
+
+          <AccessButton
             rounded
             raised
             link
             onClick={() => {
-              ResumeJob(job)
-                .then((updatedJob) => {
+              if (job.id) {
+                editJob(job.id);
+              }
+            }}
+            title={"Update Job " + job.name}
+            className="mr-2"
+            {...GenerateTourProps(editJobTourStep)}
+            {...permissions}
+            permission="OPERATOR"
+          >
+            <FontAwesomeIcon icon="edit" />
+          </AccessButton>
+          {job.status === "RUNNING" && (
+            <AccessButton
+              rounded
+              raised
+              link
+              onClick={() => {
+                PauseJob(job)
+                  .then((updatedJob) => {
+                    setJobs((prevJobs) =>
+                      prevJobs.map((j) =>
+                        j.id === updatedJob.id ? updatedJob : j,
+                      ),
+                    );
+                  })
+                  .catch((error) => {
+                    console.error("Error pausing job:", error);
+                  });
+              }}
+              title={"Pause Job " + job.name}
+              className="mr-2"
+              {...GenerateTourProps(pauseResumeJobTourStep)}
+              {...permissions}
+              permission="OPERATOR"
+            >
+              <FontAwesomeIcon icon="pause" />
+            </AccessButton>
+          )}
+          {job.status === "PAUSED" && (
+            <AccessButton
+              rounded
+              raised
+              link
+              onClick={() => {
+                ResumeJob(job)
+                  .then((updatedJob) => {
+                    setJobs((prevJobs) =>
+                      prevJobs.map((j) =>
+                        j.id === updatedJob.id ? updatedJob : j,
+                      ),
+                    );
+                  })
+                  .catch((error) => {
+                    console.error("Error resuming job:", error);
+                  });
+              }}
+              title={"Resume Job " + job.name}
+              className="mr-2"
+              {...GenerateTourProps(pauseResumeJobTourStep)}
+              {...permissions}
+              permission="OPERATOR"
+            >
+              <FontAwesomeIcon icon="play" />
+            </AccessButton>
+          )}
+          <AccessButton
+            rounded
+            raised
+            link
+            onClick={() => {
+              DeleteJob(job)
+                .then(() => {
                   setJobs((prevJobs) =>
-                    prevJobs.map((j) =>
-                      j.id === updatedJob.id ? updatedJob : j,
-                    ),
+                    prevJobs.filter((j) => j.id !== job.id),
                   );
                 })
                 .catch((error) => {
-                  console.error("Error resuming job:", error);
+                  console.error("Error deleting job:", error);
                 });
             }}
-            title={"Resume Job " + job.name}
+            title={"Delete Job " + job.name}
             className="mr-2"
+            {...GenerateTourProps(deleteJobTourStep)}
+            {...permissions}
+            permission="OPERATOR"
           >
-            <FontAwesomeIcon icon="play" />
-          </Button>
-        )}
-        <Button
-          rounded
-          raised
-          link
-          onClick={() => {
-            DeleteJob(job)
-              .then(() => {
-                setJobs((prevJobs) => prevJobs.filter((j) => j.id !== job.id));
-              })
-              .catch((error) => {
-                console.error("Error deleting job:", error);
-              });
-          }}
-          title={"Delete Job " + job.name}
-          className="mr-2"
-        >
-          <FontAwesomeIcon icon="trash" />
-        </Button>
+            <FontAwesomeIcon icon="trash" />
+          </AccessButton>
+        </>
       </div>
     );
   };
 
   const createJob = () => {
-    void navigate(`${GetBaseURL()}/create/job`);
+    addRequestItem({ type: "REQUEST", showSchedule: true });
+  };
+
+  const customJobImporter = (event: any) => {
+    const file = event?.files?.[0];
+
+    if (!file) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Error",
+        detail: "No file selected for import",
+        life: 3000,
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const contents = e.target?.result;
+      if (typeof contents === "string") {
+        try {
+          await ImportJobs(JSON.parse(contents));
+          toast.current?.show({
+            severity: "success",
+            summary: "Success",
+            detail: "Jobs imported successfully",
+            life: 3000,
+          });
+
+          if (jobImportFileRef.current) {
+            jobImportFileRef.current.clear();
+          }
+
+          // Refresh the job list after successful import
+          GetJobList()
+            .then((data: [Array<Job>, Headers]) => {
+              const [responseJobs] = data;
+              setJobs(responseJobs);
+            })
+            .catch((error) => {
+              console.error("Error fetching jobs:", error);
+            });
+        } catch (error) {
+          console.error("Error importing jobs:", error);
+          toast.current?.show({
+            severity: "error",
+            summary: "Error",
+            detail: "Failed to import jobs",
+            life: 3000,
+          });
+        }
+      }
+    };
+    reader.readAsText(file);
   };
 
   const header = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <span className="text-xl text-900 font-bold">Requests Scheduler</span>
-      <div>
-        <Button rounded raised onClick={createJob}>
-          Create Job
-        </Button>
-        <Button rounded raised onClick={createJob}>
-          Import Jobs
-        </Button>
-        <Button rounded raised onClick={createJob}>
+      <Toast ref={toast} />
+
+      <div className="flex">
+        <AccessButton
+          className="mr-2"
+          raised
+          onClick={createJob}
+          {...GenerateTourProps(createJobTourStep)}
+          config={config}
+          permission="OPERATOR"
+          label="Create Job"
+        />
+
+        <FileUpload
+          ref={jobImportFileRef}
+          className="mr-2"
+          mode="basic"
+          name="file"
+          accept=".json"
+          maxFileSize={1000000}
+          chooseLabel="Import Jobs"
+          customUpload
+          auto
+          uploadHandler={customJobImporter}
+          {...GenerateTourProps(importJobTourStep)}
+        />
+
+        <AccessButton
+          className="mr-2"
+          raised
+          onClick={() =>
+            ExportJobs().catch((error) =>
+              console.error("Error exporting jobs:", error),
+            )
+          }
+          {...GenerateTourProps(exportJobTourStep)}
+          config={config}
+          permission="OPERATOR"
+        >
           Export Jobs
-        </Button>
+        </AccessButton>
       </div>
     </div>
   );
@@ -218,50 +449,9 @@ function JobIndex({ listeners }: { listeners: Record<string, any> }) {
   return (
     <>
       {error ? (
-        <ErrorPage errorNum={error?.code} />
+        <ErrorPage errorCode={error?.code} errorMsg={error.toString()} />
       ) : (
         <div>
-          <Dialog
-            visible={selectedJob !== undefined}
-            style={{ width: "50vw" }}
-            modal
-            onHide={() => {
-              if (!selectedJob) return;
-              setSelectedJob(undefined);
-            }}
-            content={() => (
-              <div>
-                {selectedJob && selectedJob.id && (
-                  <SchedulerViewCard
-                    jobId={selectedJob.id}
-                    listeners={listeners}
-                    removeItem={() => {
-                      if (!selectedJob) return;
-                      setSelectedJob(undefined);
-                    }}
-                    editJob={() => {
-                      if (selectedJob && selectedJob.id) {
-                        editJob(selectedJob.id);
-                      }
-                    }}
-                    deleteJob={() => {
-                      if (selectedJob && selectedJob.id) {
-                        DeleteJob(selectedJob)
-                          .then(() => {
-                            if (!selectedJob) return;
-                            setSelectedJob(undefined);
-                          })
-                          .catch((error) => {
-                            console.error("Error deleting job:", error);
-                          });
-                      }
-                    }}
-                  />
-                )}
-              </div>
-            )}
-          />
-
           <DataTable
             value={jobs}
             header={header}

@@ -2,294 +2,233 @@ import { Badge } from "primereact/badge";
 import { ConfirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 import { Tree } from "primereact/tree";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 
 import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
-import { Garden, Instance, System } from "../models/brewtils-types";
-import { GetConfig } from "../services/config_service";
-import { GetRootGarden } from "../services/garden_service";
-import { GetSeverity } from "../services/util_service";
+import UnassociatedRunnerCard from "../components/UnassociatedRunnerCard";
+import { Garden, Runner, System } from "../models/brewtils-types";
+import { Config } from "../models/models";
+import { RequestItem, RunnerGroup, TourStepProps } from "../models/models";
+import { GetRunnerList } from "../services/runner_service";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
+import { GenerateStatusCounts, GetSeverity } from "../services/util_service";
 import HttpError from "../types/errors";
 import ErrorPage from "./ErrorPage";
 
-function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
+function GardenDashboard({
+  gardenRef,
+  systemsRef,
+  gardenState,
+  systemState,
+  tourStepsRef,
+  addRequestItem,
+  config,
+  listeners,
+}: {
+  gardenRef: RefObject<Garden | undefined>;
+  systemsRef: RefObject<System[] | undefined>;
+  gardenState: number;
+  systemState: number;
+  tourStepsRef: RefObject<Array<TourStepProps>>;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+  config: Config;
+  listeners: Record<string, any>;
+}) {
   const [error, setError] = useState<HttpError>();
-  const gardenRef = useRef<Garden>(null);
-  const selectedGardenRef = useRef<Garden>(null);
+  const tourUuid = "garden_dashboard_tour";
+  const tourPrefix = "garden_dashboard";
+  const selectedGardenRef = useRef<Garden | undefined>(undefined);
+  const associatedRunnersRef = useRef<Runner[] | undefined>(undefined);
+  const [associatedRunners, setAssociatedRunners] = useState<Runner[]>([]);
 
-  const [selectedGarden, setSelectedGarden] = useState<Garden>();
+  const [selectedGarden, setSelectedGarden] = useState<Garden | undefined>();
+  const [selectedSystems, setSelectedSystems] = useState<System[]>([]);
+  const [unassociatedRunners, setUnassociatedRunners] = useState<RunnerGroup[]>(
+    [],
+  );
 
   const [gardenMenu, setGardenMenu] = useState<Array<any>>();
   const toast = useRef<Toast>(null);
 
+  const [loading, setLoading] = useState<boolean>(true);
+
   const updateSelectedGarden = (garden?: Garden) => {
     if (garden) {
-      selectedGardenRef.current = { ...sortSystems(garden) };
-      setSelectedGarden({ ...selectedGardenRef.current });
+      const matchedSystems = getSelectedSystems(garden);
+      setSelectedSystems(matchedSystems);
+      setSelectedGarden({ ...garden });
+      selectedGardenRef.current = { ...garden };
+      setUnassociatedRunners(getUnassociatedRunners());
     } else {
-      selectedGardenRef.current = null;
+      selectedGardenRef.current = undefined;
       setSelectedGarden(undefined);
+      setSelectedSystems([]);
     }
   };
 
-  const MonitorGardenEvents = useCallback(
-    (message: any) => {
-      let updatedRef = false;
-      if (message.name === "GARDEN_REMOVED") {
-        const removeGarden = (
-          gardenId: string,
-          compareGarden: Garden,
-        ): Garden | null => {
-          if (gardenId === compareGarden.id) {
-            return null;
-          } else {
-            compareGarden.children = compareGarden.children
-              .map((child: Garden) => removeGarden(gardenId, child))
-              .filter(
-                (child: Garden | null) => child !== null,
-              ) as Array<Garden>;
-          }
-          return compareGarden;
-        };
-        if (message.payload.id === selectedGardenRef.current?.id) {
-          updateSelectedGarden();
-        }
-        gardenRef.current = removeGarden(
-          message.payload.id,
-          gardenRef.current as Garden,
-        );
-        updatedRef = true;
-      } else if (
-        ["GARDEN_CONFIGURED", "GARDEN_UPDATED", "GARDEN_CREATED"].includes(
-          message.name,
-        )
-      ) {
-        const upsertGarden = (
-          updatedGarden: Garden,
-          compareGarden: Garden,
-        ): Garden => {
-          if (updatedGarden.id === compareGarden.id) {
-            compareGarden = {
-              ...compareGarden,
-              receiving_connections: updatedGarden.receiving_connections,
-              publishing_connections: updatedGarden.publishing_connections,
-              metadata: updatedGarden.metadata,
-            };
-          } else {
-            compareGarden.children = compareGarden.children.map(
-              (child: Garden) => upsertGarden(updatedGarden, child),
-            );
-            // New one hop Garden
-            if (
-              !updatedGarden.has_parent &&
-              updatedGarden.connection_type === "Remote" &&
-              compareGarden.connection_type !== "Remote"
-            ) {
-              if (
-                !compareGarden.children.some(
-                  (child: Garden) => child.id === updatedGarden.id,
-                )
-              ) {
-                compareGarden.children.push(updatedGarden);
+  const getUnassociatedRunners = (): RunnerGroup[] => {
+    const instanceMissingCheck = (runner: Runner): boolean => {
+      if (selectedGardenRef.current && systemsRef.current) {
+        for (const system of systemsRef.current) {
+          if (
+            system?.garden_name === selectedGardenRef.current?.name &&
+            system.instances
+          ) {
+            for (const instance of system.instances) {
+              if (instance?.metadata?.runner_id === runner.id) {
+                return false;
               }
             }
           }
-          return compareGarden;
-        };
-        gardenRef.current = upsertGarden(
-          message.payload,
-          gardenRef.current as Garden,
-        );
-        if (message.payload.id === selectedGardenRef.current?.id) {
-          updateSelectedGarden(message.payload);
         }
-        updatedRef = true;
-      } else if (
-        ["SYSTEM_CREATED", "SYSTEM_UPDATED", "SYSTEM_REMOVED"].includes(
-          message.name,
-        )
-      ) {
-        let matchedGarden = undefined;
+      }
 
-        if (message.name === "SYSTEM_REMOVED") {
-          const removeSystem = (systemId: string, garden: Garden): Garden => {
+      return true;
+    };
+
+    if (
+      selectedGardenRef.current?.name === gardenRef.current?.name &&
+      associatedRunnersRef.current
+    ) {
+      const unassociated = associatedRunnersRef.current.filter((runner) => {
+        return (
+          runner.instance_id === undefined ||
+          runner.instance_id === null ||
+          runner.instance_id.length === 0 ||
+          instanceMissingCheck(runner)
+        );
+      });
+
+      const grouped = Object.groupBy(
+        unassociated,
+        (item) => item.path ?? "unknown",
+      );
+
+      return Object.keys(grouped).map(
+        (key) => ({ path: key, runners: grouped[key] }) as RunnerGroup,
+      );
+    }
+
+    return [];
+  };
+
+  useEffect(() => {
+    const MonitorRunners = (message: any) => {
+      if (message.payload_type === "Runner") {
+        if (message.name === "RUNNER_REMOVED") {
+          if (associatedRunnersRef.current) {
+            associatedRunnersRef.current = associatedRunnersRef.current.filter(
+              (runner) => runner.id !== message.payload.id,
+            );
+            setAssociatedRunners(associatedRunnersRef.current);
+          }
+        } else {
+          if (associatedRunnersRef.current) {
             if (
-              garden.systems &&
-              garden.systems.some((system: System) => system.id === systemId)
-            ) {
-              garden.systems = garden.systems.filter(
-                (system: System) => system.id !== systemId,
-              );
-              matchedGarden = garden;
-              return garden;
-            }
-            if (garden.children) {
-              garden.children = garden.children.map((child: Garden) =>
-                removeSystem(systemId, child),
-              );
-            }
-            return garden;
-          };
-          gardenRef.current = removeSystem(
-            message.payload.id,
-            gardenRef.current as Garden,
-          );
-        } else if (message.name === "SYSTEM_UPDATED") {
-          const updateSystem = (
-            updatedSystem: System,
-            garden: Garden,
-          ): Garden => {
-            if (
-              garden.systems &&
-              garden.systems.some(
-                (system: System) => system.id === updatedSystem.id,
+              associatedRunnersRef.current.some(
+                (runner) => runner.id === message.payload.id,
               )
             ) {
-              garden.systems = garden.systems.map((system: System) => {
-                if (system.id === updatedSystem.id) {
-                  return updatedSystem;
-                }
-                return system;
-              });
-              matchedGarden = garden;
-              return garden;
-            }
-            if (garden.children) {
-              garden.children = garden.children.map((child: Garden) =>
-                updateSystem(updatedSystem, child),
+              associatedRunnersRef.current = associatedRunnersRef.current.map(
+                (runner) => {
+                  if (runner.id === message.payload.id) {
+                    return message.payload;
+                  }
+                  return runner;
+                },
               );
+              setAssociatedRunners(associatedRunnersRef.current);
+            } else {
+              associatedRunnersRef.current = [
+                ...associatedRunnersRef.current,
+                message.payload,
+              ];
+              setAssociatedRunners(associatedRunnersRef.current);
             }
-            return garden;
-          };
-          gardenRef.current = updateSystem(
-            message.payload,
-            gardenRef.current as Garden,
-          );
-        } else if (message.name === "SYSTEM_CREATED") {
-          const addSystem = (newSystem: System, garden: Garden): Garden => {
-            if (
-              garden.name === newSystem.garden_name ||
-              (newSystem.garden_name === undefined &&
-                garden.name === newSystem.namespace)
-            ) {
-              if (garden.systems) {
-                if (
-                  !garden.systems.some(
-                    (system: System) => system.id === newSystem.id,
-                  )
-                ) {
-                  garden.systems.push(newSystem);
-                } else {
-                  garden.systems = garden.systems.map((system: System) => {
-                    if (system.id === newSystem.id) {
-                      return newSystem;
-                    }
-                    return system;
-                  });
-                }
-              } else {
-                garden.systems = [newSystem];
-              }
-              matchedGarden = garden;
-              return garden;
-            }
-            if (garden.children) {
-              garden.children = garden.children.map((child: Garden) =>
-                addSystem(newSystem, child),
-              );
-            }
-            return garden;
-          };
-          gardenRef.current = addSystem(
-            message.payload,
-            gardenRef.current as Garden,
-          );
+          } else {
+            associatedRunnersRef.current = [message.payload];
+            setAssociatedRunners(associatedRunnersRef.current);
+          }
         }
+      }
+      getUnassociatedRunners();
+    };
 
-        if (matchedGarden !== undefined) {
-          updateSelectedGarden(matchedGarden);
-          updatedRef = true;
-        }
-      } else if (
-        [
-          "INSTANCE_STARTED",
-          "INSTANCE_STOPPED",
-          "INSTANCE_UPDATED",
-          "INSTANCE_INITIALIZED",
-        ].includes(message.name)
-      ) {
-        let matchedGarden = undefined;
-        const updateInstance = (
-          updatedInstance: Instance,
-          garden: Garden,
-        ): Garden => {
-          if (
-            garden.systems &&
-            garden.systems.some((system: System) =>
-              system.instances?.some(
-                (instance: Instance) => instance.id === updatedInstance.id,
-              ),
-            )
-          ) {
-            garden.systems = garden.systems.map((system: System) => {
-              if (
-                system.instances &&
-                system.instances.some(
-                  (instance: Instance) => instance.id === updatedInstance.id,
-                )
-              ) {
-                system.instances = system.instances.map(
-                  (instance: Instance) => {
-                    if (instance.id === updatedInstance.id) {
-                      return {
-                        ...instance,
-                        ...{ status: updatedInstance.status },
-                      };
-                    }
-                    return instance;
-                  },
-                );
-              }
-              return system;
-            });
-            matchedGarden = garden;
-            return garden;
-          }
-          if (garden.children) {
-            garden.children = garden.children.map((child: Garden) =>
-              updateInstance(updatedInstance, child),
-            );
-          }
+    listeners["dashboard"] = {
+      listener: MonitorRunners,
+    };
+
+    return () => {
+      delete listeners["dashboard"];
+    };
+  });
+
+  useEffect(() => {
+    if (associatedRunnersRef.current === undefined) {
+      GetRunnerList()
+        .then((runners) => {
+          associatedRunnersRef.current = runners;
+          setAssociatedRunners(associatedRunnersRef.current);
+          setUnassociatedRunners(getUnassociatedRunners());
+        })
+        .catch((error) => {
+          console.error("Error loading runners", error);
+          setError(error);
+        });
+    } else {
+      getUnassociatedRunners();
+    }
+  }, [selectedSystems]);
+
+  useEffect(() => {
+    if (gardenRef?.current) {
+      setGardenMenu([generateMenu(gardenRef.current, systemsRef.current)]);
+    } else {
+      setGardenMenu([]);
+    }
+    setLoading(false);
+
+    if (selectedGardenRef.current?.id && gardenRef?.current) {
+      const findSelectedGarden = (
+        garden_id: string,
+        garden: Garden,
+      ): Garden | undefined => {
+        if (garden.id === garden_id) {
           return garden;
-        };
-
-        gardenRef.current = updateInstance(
-          message.payload,
-          gardenRef.current as Garden,
-        );
-
-        if (matchedGarden !== undefined) {
-          updateSelectedGarden(matchedGarden);
-          updatedRef = true;
         }
-      }
-
-      if (updatedRef) {
-        if (gardenRef.current) {
-          setGardenMenu([generateMenu(gardenRef.current)]);
-        } else {
-          setGardenMenu([]);
+        if (garden?.children && garden.children.length > 0) {
+          for (const child of garden.children) {
+            const foundGarden = findSelectedGarden(garden_id, child);
+            if (foundGarden) {
+              return foundGarden;
+            }
+          }
         }
-      }
-    },
-    [gardenRef],
-  );
 
-  const sortSystems = (garden: Garden) => {
-    if (garden.systems && garden.systems.length > 0) {
-      garden.systems = [
-        ...garden.systems.sort((a: System, b: System) => {
+        return undefined;
+      };
+      updateSelectedGarden(
+        findSelectedGarden(selectedGardenRef.current.id, gardenRef.current),
+      );
+    } else if (selectedGardenRef.current === undefined && gardenRef?.current) {
+      updateSelectedGarden(gardenRef?.current);
+    } else {
+      updateSelectedGarden(undefined);
+    }
+
+    getUnassociatedRunners();
+  }, [gardenState, systemState]);
+
+  const getSelectedSystems = (garden: Garden): System[] => {
+    if (systemsRef.current && systemsRef.current.length > 0) {
+      return systemsRef.current
+        .filter((sys) => sys.garden_name === garden.name)
+        .sort((a: System, b: System) => {
           if (a?.name && b?.name) {
             const nameComparison = a.name.localeCompare(b.name);
 
@@ -310,10 +249,9 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
             return -1;
           }
           return 1;
-        }),
-      ];
+        });
     }
-    return garden;
+    return [];
   };
 
   const findSelectedGarden = (garden_id: string, gardens?: Array<Garden>) => {
@@ -334,17 +272,16 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
     }
   };
 
-  const generateMenu = (garden: Garden) => {
+  const generateMenu = (garden: Garden, systems: System[] | undefined) => {
     return {
       key: garden.id,
       label: garden.name,
-      icon: "pi pi-sitemap",
-      statusCounts: generateStatusCounts(garden),
+      statusCounts: generateStatusCounts(garden, systems),
       connectionCounts: generateConnectionStatus(garden),
       expanded: true,
       children:
         garden?.children && garden.children.length > 0
-          ? garden.children.map((child: Garden) => generateMenu(child))
+          ? garden.children.map((child: Garden) => generateMenu(child, systems))
           : [],
     };
   };
@@ -399,25 +336,16 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
     });
   };
 
-  const generateStatusCounts = (garden: Garden) => {
-    const statusCounts = new Map();
-
-    if (garden?.systems && garden.systems.length > 0) {
-      for (const system of garden.systems) {
-        system?.instances?.forEach((instance: Instance) => {
-          if (instance.status) {
-            statusCounts.set(
-              instance.status,
-              (statusCounts.get(instance.status) || 0) + 1,
-            );
-          }
-        });
-      }
-    }
-
-    if (statusCounts.size === 0) {
-      return undefined;
-    }
+  const generateStatusCounts = (
+    garden: Garden,
+    systems: System[] | undefined,
+  ) => {
+    const statusCounts = GenerateStatusCounts(
+      gardenRef,
+      associatedRunnersRef,
+      garden,
+      systems,
+    );
 
     return Array.from(statusCounts, ([status, count]) => {
       if (count && count > 0) {
@@ -435,33 +363,21 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
     });
   };
 
+  const gardenTreeTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Garden Tree Menu",
+    content: "Select a Garden to view its Status, Systems and Instances",
+    layer: "LAYOUT",
+    pos: 0,
+  };
+
   useEffect(() => {
-    if (gardenRef.current === null || gardenRef.current === undefined) {
-      GetConfig()
-        .then((config) => {
-          GetRootGarden(config, {})
-            .then((response_garden: Garden) => {
-              gardenRef.current = response_garden;
-              updateSelectedGarden(gardenRef.current);
-              setGardenMenu([generateMenu(response_garden)]);
-              listeners["DASHBOARD"] = {
-                listener: MonitorGardenEvents,
-              };
-            })
-            .catch((error) => {
-              console.error("Error fetching root garden:", error);
-              setError(error);
-            });
-        })
-        .catch((error) => {
-          console.error("Error fetching root garden:", error);
-        });
-      return () => {
-        // Cleanup function for when component unmounts
-        delete listeners["DASHBOARD"];
-      };
-    }
-  }, [MonitorGardenEvents, listeners]);
+    AddTourStep(tourStepsRef, gardenTreeTourStep);
+    return () => {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+    };
+  }, []);
 
   const [selectedKey, setSelectedKey] = useState<any | null>("");
 
@@ -485,16 +401,18 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
   return (
     <>
       {error ? (
-        <ErrorPage errorNum={error?.code} />
+        <ErrorPage errorCode={error?.code} errorMsg={error.toString()}/>
       ) : (
         <div className="grid h-screen">
           <Toast ref={toast} />
           <ConfirmDialog />
           {/* LEFT NAV TREE */}
           <div className="col-3 surface-border p-3">
-            <h3>Select Garden</h3>
             <Tree
+              {...GenerateTourProps(gardenTreeTourStep)}
+              loading={loading}
               value={gardenMenu}
+              emptyMessage={"No gardens found"}
               nodeTemplate={gardenTreeNode}
               selectionMode="single"
               selectionKeys={selectedKey}
@@ -504,36 +422,56 @@ function GardenDashboard({ listeners }: { listeners: Record<string, any> }) {
                   findSelectedGarden(e.value);
                 }
               }}
+              togglerTemplate={<></>}
             />
           </div>
 
           {/* MAIN WORKSPACE */}
-          <div
-            className="col-9 p-4 grid grid-nogutter"
-            style={{
-              gridTemplateColumns: `repeat(auto-fit, minmax(250px, 1fr))`,
-            }}
-          >
+          <div className="col-9">
             {/* Garden Summary */}
-            {selectedGarden && (
-              <GardenSummary
-                gardenRef={gardenRef}
-                selectedGarden={selectedGarden}
-              />
-            )}
-            {selectedGarden?.systems?.map((system: System) => (
-              <div
-                key={system.id}
-                className="mb-4 mr-2"
-                style={{ width: "32%" }}
-              >
-                <SystemCard
-                  system={system}
-                  toast={toast}
-                  selectedGarden={selectedGarden.name}
-                />
+            <GardenSummary
+              gardenRef={gardenRef}
+              selectedGarden={selectedGarden}
+              config={config}
+              tourStepsRef={tourStepsRef}
+              associatedRunners={associatedRunnersRef}
+              selectedSystems={selectedSystems}
+            />
+
+            <div className="flex justify-content-center">
+              <div className="grid grid-nogutter gap-2">
+                {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
+                  <div
+                    key={runnerGroup.path}
+                    className="mb-4 mr-2"
+                    style={{ width: "32%", minWidth: "250px" }}
+                  >
+                    <UnassociatedRunnerCard
+                      runnerGroup={runnerGroup}
+                      toast={toast}
+                      config={config}
+                    />
+                  </div>
+                ))}
+                {selectedSystems?.map((system: System) => (
+                  <div
+                    key={system.id}
+                    className="mr-2 mb-2"
+                    style={{ width: "32%", minWidth: "250px" }}
+                  >
+                    <SystemCard
+                      system={system}
+                      toast={toast}
+                      tourStepsRef={tourStepsRef}
+                      selectedGarden={selectedGarden?.name}
+                      addRequestItem={addRequestItem}
+                      config={config}
+                      associatedRunners={associatedRunners}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
       )}
