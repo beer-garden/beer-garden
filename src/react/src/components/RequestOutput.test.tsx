@@ -12,10 +12,12 @@ describe("RequestOutput", () => {
   test("renders skeleton when status is CREATED", async () => {
     const page = render(
       <RequestOutput
-        id="123"
-        status="CREATED"
-        output=""
-        output_type="STRING"
+        request={{
+          id: "123",
+          status: "CREATED",
+          output: "",
+          output_type: "STRING",
+        }}
       />,
     );
 
@@ -29,10 +31,12 @@ describe("RequestOutput", () => {
   test("renders skeleton when status is IN_PROGRESS", async () => {
     const page = render(
       <RequestOutput
-        id="123"
-        status="IN_PROGRESS"
-        output=""
-        output_type="STRING"
+        request={{
+          id: "123",
+          status: "IN_PROGRESS",
+          output: "",
+          output_type: "STRING",
+        }}
       />,
     );
 
@@ -45,7 +49,9 @@ describe("RequestOutput", () => {
 
   test("renders undefined output when status is SUCCESS", async () => {
     const page = render(
-      <RequestOutput id="123" status="SUCCESS" output="Test output" />,
+      <RequestOutput
+        request={{ id: "123", status: "SUCCESS", output: "Test output" }}
+      />,
     );
     await waitFor(() => {
       expect(page.container.querySelector("#request-output")).toBeVisible();
@@ -56,10 +62,12 @@ describe("RequestOutput", () => {
   test("renders STRING output when status is SUCCESS", async () => {
     const page = render(
       <RequestOutput
-        id="123"
-        status="SUCCESS"
-        output="Test output"
-        output_type="STRING"
+        request={{
+          id: "123",
+          status: "SUCCESS",
+          output: "Test output",
+          output_type: "STRING",
+        }}
       />,
     );
     await waitFor(() => {
@@ -71,10 +79,12 @@ describe("RequestOutput", () => {
   test("renders parsed JSON output", async () => {
     const page = render(
       <RequestOutput
-        id="123"
-        status="SUCCESS"
-        output='{"key":"value"}'
-        output_type="JSON"
+        request={{
+          id: "123",
+          status: "SUCCESS",
+          output: '{"key":"value"}',
+          output_type: "JSON",
+        }}
       />,
     );
     await waitFor(() => {
@@ -86,10 +96,12 @@ describe("RequestOutput", () => {
   test("renders error message for invalid JSON", async () => {
     const page = render(
       <RequestOutput
-        id="123"
-        status="SUCCESS"
-        output="invalid json"
-        output_type="JSON"
+        request={{
+          id: "123",
+          status: "SUCCESS",
+          output: "invalid json",
+          output_type: "JSON",
+        }}
       />,
     );
     await waitFor(() => {
@@ -101,10 +113,12 @@ describe("RequestOutput", () => {
   test("renders HTML output with dangerouslySetInnerHTML", async () => {
     const page = render(
       <RequestOutput
-        id="123"
-        status="SUCCESS"
-        output="<p>HTML content</p>"
-        output_type="HTML"
+        request={{
+          id: "123",
+          status: "SUCCESS",
+          output: "<p>HTML content</p>",
+          output_type: "HTML",
+        }}
       />,
     );
     await waitFor(() => {
@@ -130,10 +144,12 @@ describe("RequestOutput", () => {
 
     const page = render(
       <RequestOutput
-        id="123"
-        status="SUCCESS"
-        output={JSON.stringify(jsonOutput)}
-        output_type="JSON"
+        request={{
+          id: "123",
+          status: "SUCCESS",
+          output: JSON.stringify(jsonOutput),
+          output_type: "JSON",
+        }}
       />,
     );
     await waitFor(() => {
@@ -157,10 +173,12 @@ describe("RequestOutput", () => {
     vi.stubGlobal("Blob", MockBlobClass);
     const page = render(
       <RequestOutput
-        id="123"
-        status="SUCCESS"
-        output={JSON.stringify(jsonOutput)}
-        output_type="JSON"
+        request={{
+          id: "123",
+          status: "SUCCESS",
+          output: JSON.stringify(jsonOutput),
+          output_type: "JSON",
+        }}
       />,
     );
 
