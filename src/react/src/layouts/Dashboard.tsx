@@ -428,13 +428,13 @@ function GardenDashboard({
           selectedSystems={selectedSystems}
         />
 
-        <div className="flex justify-content-center">
+        <div className="flex justify-content-left">
           <div className="grid grid-nogutter gap-2">
             {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
               <div
                 key={runnerGroup.path}
                 className="mb-4 mr-2"
-                style={{ width: "32%", minWidth: "250px" }}
+                style={{ width: "26.5vw", minWidth: "250px" }}
               >
                 <UnassociatedRunnerCard
                   runnerGroup={runnerGroup}
@@ -447,7 +447,7 @@ function GardenDashboard({
               <div
                 key={system.id}
                 className="mr-2 mb-2"
-                style={{ width: "32%", minWidth: "250px" }}
+                style={{ width: "26.5vw", minWidth: "250px" }}
               >
                 <SystemCard
                   system={system}
