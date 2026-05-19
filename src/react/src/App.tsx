@@ -466,10 +466,9 @@ function App() {
                     removeItem={() => {
                       setRequestItem(undefined);
                     }}
-                    updateRequestItem={setRequestItem}
+                    updateRequestItem={addRequestItem}
                     requestItem={requestItem}
                     listeners={listeners}
-                    addItem={addRequestItem}
                     config={config}
                     isDialog={true}
                   />
