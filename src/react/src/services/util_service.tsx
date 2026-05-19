@@ -147,7 +147,26 @@ export const GenerateStatusCounts = (
   garden: Garden,
   systems: System[] | undefined,
 ) => {
-  const statusCounts = new Map();
+
+  // Pre Sort statuses to ensure consistent ordering in the UI
+  const statusCounts = new Map([
+    // Severity success
+    ["RUNNING", 0],
+    // Severity info
+    ["PAUSED", 0],
+    ["STOPPED", 0],
+    // Severity warning
+    ["INITIALIZING", 0],
+    ["STARTING", 0],
+    ["STOPPING", 0],
+    ["AWAITING_SYSTEM", 0],
+    // Severity danger
+    ["DEAD", 0],
+    ["UNRESPONSIVE", 0],
+    ["UNKNOWN", 0],
+    ["ERROR", 0],
+    ["UNASSOCIATED_RUNNER", 0],
+  ]);
 
   if (systems && systems.length > 0) {
     for (const system of systems.filter(
