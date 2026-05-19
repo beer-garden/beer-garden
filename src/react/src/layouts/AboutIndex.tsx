@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 
 import { Config, Version } from "../models/models";
 import { GetVersion } from "../services/util_service";
+
 function AboutIndex({ config }: { config: Config }) {
   const [version, setVersion] = useState<Version | null>(null);
 

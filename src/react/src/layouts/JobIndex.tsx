@@ -22,8 +22,6 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import HttpError from "../types/errors";
-import ErrorPage from "./ErrorPage";
 
 function JobIndex({
   listeners,
@@ -37,7 +35,6 @@ function JobIndex({
   config: Config;
 }) {
   const [jobs, setJobs] = useState<Array<Job>>([]);
-  const [error, setError] = useState<HttpError>();
   const tourUuid = "job_index_tour";
   const tourPrefix = "job_index";
 
@@ -179,8 +176,12 @@ function JobIndex({
         setJobs(responseJobs);
       })
       .catch((error) => {
-        console.error("Error fetching jobs:", error);
-        setError(error);
+        toast.current?.show({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching jobs: ${error}`,
+          life: 3000,
+        });
       });
   }, []);
 
@@ -229,7 +230,12 @@ function JobIndex({
             onClick={() => {
               if (job.id) {
                 RunAdhocJob(job.id).catch((error) => {
-                  console.error("Error running job:", error);
+                  toast.current?.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Error running job: ${error}`,
+                    life: 3000,
+                  });
                 });
               }
             }}
@@ -274,7 +280,12 @@ function JobIndex({
                     );
                   })
                   .catch((error) => {
-                    console.error("Error pausing job:", error);
+                    toast.current?.show({
+                      severity: "error",
+                      summary: "Error",
+                      detail: `Error pausing job: ${error}`,
+                      life: 3000,
+                    });
                   });
               }}
               title={"Pause Job " + job.name}
@@ -301,7 +312,12 @@ function JobIndex({
                     );
                   })
                   .catch((error) => {
-                    console.error("Error resuming job:", error);
+                    toast.current?.show({
+                      severity: "error",
+                      summary: "Error",
+                      detail: `Error resuming job: ${error}`,
+                      life: 3000,
+                    });
                   });
               }}
               title={"Resume Job " + job.name}
@@ -325,7 +341,12 @@ function JobIndex({
                   );
                 })
                 .catch((error) => {
-                  console.error("Error deleting job:", error);
+                  toast.current?.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Error deleting job: ${error}`,
+                    life: 3000,
+                  });
                 });
             }}
             title={"Delete Job " + job.name}
@@ -382,16 +403,24 @@ function JobIndex({
               setJobs(responseJobs);
             })
             .catch((error) => {
-              console.error("Error fetching jobs:", error);
+              toast.current?.show({
+                severity: "error",
+                summary: "Error",
+                detail: `Error fetching jobs: ${error}`,
+                life: 3000,
+              });
             });
         } catch (error) {
-          console.error("Error importing jobs:", error);
-          toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: "Failed to import jobs",
-            life: 3000,
-          });
+          if (error instanceof Error) {
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Failed to import jobs: ${error}`,
+              life: 3000,
+            });
+          } else {
+            console.error("Error importing jobs:", error);
+          }
         }
       }
     };
@@ -433,7 +462,12 @@ function JobIndex({
           raised
           onClick={() =>
             ExportJobs().catch((error) =>
-              console.error("Error exporting jobs:", error),
+              toast.current?.show({
+                severity: "error",
+                summary: "Error",
+                detail: `Error exporting jobs: ${error}`,
+                life: 3000,
+              }),
             )
           }
           {...GenerateTourProps(exportJobTourStep)}
@@ -447,45 +481,35 @@ function JobIndex({
   );
 
   return (
-    <>
-      {error ? (
-        <ErrorPage errorCode={error?.code} errorMsg={error.toString()} />
-      ) : (
-        <div>
-          <DataTable
-            value={jobs}
-            header={header}
-            paginator
-            rows={5}
-            rowsPerPageOptions={[5, 10, 25, 50]}
-            tableStyle={{ minWidth: "50rem" }}
-          >
-            <Column
-              field="name"
-              header="Actions"
-              body={actionTemplate}
-            ></Column>
-            <Column field="name" header="Name"></Column>
-            <Column field="status" header="Status"></Column>
-            <Column field="request_template.system" header="System"></Column>
-            <Column
-              field="request_template.instance_name"
-              header="Instance"
-            ></Column>
-            <Column field="request_template.command" header="Command"></Column>
-            <Column
-              field="next_run_time"
-              header="Next Run Time"
-              body={runTimeTemplate}
-            ></Column>
-            <Column field="success_count" header="Success Count"></Column>
-            <Column field="error_count" header="Error Count"></Column>
-            <Column field="canceled_count" header="Canceled Count"></Column>
-            <Column field="skip_count" header="Skip Count"></Column>
-          </DataTable>
-        </div>
-      )}
-    </>
+    <div>
+      <DataTable
+        value={jobs}
+        header={header}
+        paginator
+        rows={5}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+        tableStyle={{ minWidth: "50rem" }}
+      >
+        <Column field="name" header="Actions" body={actionTemplate}></Column>
+        <Column field="name" header="Name"></Column>
+        <Column field="status" header="Status"></Column>
+        <Column field="request_template.system" header="System"></Column>
+        <Column
+          field="request_template.instance_name"
+          header="Instance"
+        ></Column>
+        <Column field="request_template.command" header="Command"></Column>
+        <Column
+          field="next_run_time"
+          header="Next Run Time"
+          body={runTimeTemplate}
+        ></Column>
+        <Column field="success_count" header="Success Count"></Column>
+        <Column field="error_count" header="Error Count"></Column>
+        <Column field="canceled_count" header="Canceled Count"></Column>
+        <Column field="skip_count" header="Skip Count"></Column>
+      </DataTable>
+    </div>
   );
 }
 

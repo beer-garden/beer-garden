@@ -6,6 +6,7 @@ import { Column } from "primereact/column";
 import { DataTable, SortOrder } from "primereact/datatable";
 import { Divider } from "primereact/divider";
 import { MultiSelect } from "primereact/multiselect";
+import { Toast } from "primereact/toast";
 import { Tooltip } from "primereact/tooltip";
 import {
   RefObject,
@@ -28,8 +29,6 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { GetBaseURL } from "../services/util_service";
-import HttpError from "../types/errors";
-import ErrorPage from "./ErrorPage";
 
 interface LazyParams {
   first: number;
@@ -49,8 +48,8 @@ function RequestIndex({
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
   const [requests, setRequests] = useState<Array<Request>>([]);
-  const [error, setError] = useState<HttpError>();
   const altRequests = useRef<Array<Request>>([]);
+  const toast = useRef<Toast>(null);
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [filteredRecords, setFilteredRecords] = useState<number>(0);
@@ -297,9 +296,13 @@ function RequestIndex({
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Error fetching request list:", error);
         setLoading(false);
-        setError(error);
+        toast.current?.show({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching request list: ${error}`,
+          life: 3000,
+        });
       });
   }, [lazyParams, filters, showHidden, showChildren]);
 
@@ -588,66 +591,61 @@ function RequestIndex({
   };
 
   return (
-    <>
-      {error ? (
-        <ErrorPage errorCode={error?.code} errorMsg={error.toString()} />
-      ) : (
-        <div>
-          <DataTable
-            value={requests}
-            loading={loading}
-            lazy
-            paginator
-            header={header}
-            rows={lazyParams.rows}
-            first={lazyParams.first}
-            sortField={lazyParams.sortField}
-            sortOrder={lazyParams.sortOrder}
-            totalRecords={totalRecords}
-            onPage={onPage}
-            onSort={onSort}
-            filters={filters}
-            onFilter={(e) => setFilters(e.filters as typeof filters)}
-            rowsPerPageOptions={[5, 10, 20, 50]}
-            paginatorTemplate={paginatorTemplate}
-          >
-            <Column header="Actions" body={commandActionTemplate} />
-            <Column
-              field="command_display_name"
-              filter
-              sortable
-              header="Command"
-              body={commandNameTemplate}
-            />
-            <Column field="namespace" filter sortable header="Namespace" />
-            <Column field="system" filter sortable header="System" />
-            <Column field="system_version" filter sortable header="Version" />
-            <Column field="instance_name" filter sortable header="Instance" />
-            <Column
-              field="status"
-              filter
-              sortable
-              header="Status"
-              filterElement={statusFilterTemplate}
-              filterMatchModeOptions={[
-                { label: "In", value: FilterMatchMode.IN },
-                { label: "Not In", value: FilterMatchMode.NOT_IN },
-              ]}
-            />
-            <Column
-              field="created_at"
-              filter
-              sortable
-              dataType="date"
-              header="Created"
-              body={(rowData) => formatDate(rowData.created_at)}
-              filterElement={dateTimeFilterTemplate}
-            />
-            <Column field="comment" filter sortable header="Comment" />
-          </DataTable>
-        </div>
-      )}
-    </>
+    <div>
+      <Toast ref={toast} />
+      <DataTable
+        value={requests}
+        loading={loading}
+        lazy
+        paginator
+        header={header}
+        rows={lazyParams.rows}
+        first={lazyParams.first}
+        sortField={lazyParams.sortField}
+        sortOrder={lazyParams.sortOrder}
+        totalRecords={totalRecords}
+        onPage={onPage}
+        onSort={onSort}
+        filters={filters}
+        onFilter={(e) => setFilters(e.filters as typeof filters)}
+        rowsPerPageOptions={[5, 10, 20, 50]}
+        paginatorTemplate={paginatorTemplate}
+      >
+        <Column header="Actions" body={commandActionTemplate} />
+        <Column
+          field="command_display_name"
+          filter
+          sortable
+          header="Command"
+          body={commandNameTemplate}
+        />
+        <Column field="namespace" filter sortable header="Namespace" />
+        <Column field="system" filter sortable header="System" />
+        <Column field="system_version" filter sortable header="Version" />
+        <Column field="instance_name" filter sortable header="Instance" />
+        <Column
+          field="status"
+          filter
+          sortable
+          header="Status"
+          filterElement={statusFilterTemplate}
+          filterMatchModeOptions={[
+            { label: "In", value: FilterMatchMode.IN },
+            { label: "Not In", value: FilterMatchMode.NOT_IN },
+          ]}
+        />
+        <Column
+          field="created_at"
+          filter
+          sortable
+          dataType="date"
+          header="Created"
+          body={(rowData) => formatDate(rowData.created_at)}
+          filterElement={dateTimeFilterTemplate}
+        />
+        <Column field="comment" filter sortable header="Comment" />
+      </DataTable>
+    </div>
   );
 }
 

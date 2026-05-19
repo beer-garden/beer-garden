@@ -17,8 +17,6 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { GenerateStatusCounts, GetSeverity } from "../services/util_service";
-import HttpError from "../types/errors";
-import ErrorPage from "./ErrorPage";
 
 function GardenDashboard({
   gardenRef,
@@ -39,7 +37,6 @@ function GardenDashboard({
   config: Config;
   listeners: Record<string, any>;
 }) {
-  const [error, setError] = useState<HttpError>();
   const tourUuid = "garden_dashboard_tour";
   const tourPrefix = "garden_dashboard";
   const selectedGardenRef = useRef<Garden | undefined>(undefined);
@@ -177,8 +174,12 @@ function GardenDashboard({
           setUnassociatedRunners(getUnassociatedRunners());
         })
         .catch((error) => {
-          console.error("Error loading runners", error);
-          setError(error);
+          toast.current?.show({
+            severity: "error",
+            summary: "Error",
+            detail: `Error loading runners: ${error}`,
+            life: 3000,
+          });
         });
     } else {
       getUnassociatedRunners();
@@ -399,83 +400,77 @@ function GardenDashboard({
   };
 
   return (
-    <>
-      {error ? (
-        <ErrorPage errorCode={error?.code} errorMsg={error.toString()} />
-      ) : (
-        <div className="grid h-screen">
-          <Toast ref={toast} />
-          <ConfirmDialog />
-          {/* LEFT NAV TREE */}
-          <div className="col-3 surface-border p-3">
-            <Tree
-              {...GenerateTourProps(gardenTreeTourStep)}
-              loading={loading}
-              value={gardenMenu}
-              emptyMessage={"No gardens found"}
-              nodeTemplate={gardenTreeNode}
-              selectionMode="single"
-              selectionKeys={selectedKey}
-              onSelectionChange={(e) => {
-                setSelectedKey(e.value);
-                if (typeof e.value === "string") {
-                  findSelectedGarden(e.value);
-                }
-              }}
-              togglerTemplate={<></>}
-            />
-          </div>
+    <div className="grid h-screen">
+      <Toast ref={toast} />
+      <ConfirmDialog />
+      {/* LEFT NAV TREE */}
+      <div className="col-3 surface-border p-3">
+        <Tree
+          {...GenerateTourProps(gardenTreeTourStep)}
+          loading={loading}
+          value={gardenMenu}
+          emptyMessage={"No gardens found"}
+          nodeTemplate={gardenTreeNode}
+          selectionMode="single"
+          selectionKeys={selectedKey}
+          onSelectionChange={(e) => {
+            setSelectedKey(e.value);
+            if (typeof e.value === "string") {
+              findSelectedGarden(e.value);
+            }
+          }}
+          togglerTemplate={<></>}
+        />
+      </div>
 
-          {/* MAIN WORKSPACE */}
-          <div className="col-9">
-            {/* Garden Summary */}
-            <GardenSummary
-              gardenRef={gardenRef}
-              selectedGarden={selectedGarden}
-              config={config}
-              tourStepsRef={tourStepsRef}
-              associatedRunners={associatedRunnersRef}
-              selectedSystems={selectedSystems}
-            />
+      {/* MAIN WORKSPACE */}
+      <div className="col-9">
+        {/* Garden Summary */}
+        <GardenSummary
+          gardenRef={gardenRef}
+          selectedGarden={selectedGarden}
+          config={config}
+          tourStepsRef={tourStepsRef}
+          associatedRunners={associatedRunnersRef}
+          selectedSystems={selectedSystems}
+        />
 
-            <div className="flex justify-content-center">
-              <div className="grid grid-nogutter gap-2">
-                {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
-                  <div
-                    key={runnerGroup.path}
-                    className="mb-4 mr-2"
-                    style={{ width: "32%", minWidth: "250px" }}
-                  >
-                    <UnassociatedRunnerCard
-                      runnerGroup={runnerGroup}
-                      toast={toast}
-                      config={config}
-                    />
-                  </div>
-                ))}
-                {selectedSystems?.map((system: System) => (
-                  <div
-                    key={system.id}
-                    className="mr-2 mb-2"
-                    style={{ width: "32%", minWidth: "250px" }}
-                  >
-                    <SystemCard
-                      system={system}
-                      toast={toast}
-                      tourStepsRef={tourStepsRef}
-                      selectedGarden={selectedGarden?.name}
-                      addRequestItem={addRequestItem}
-                      config={config}
-                      associatedRunners={associatedRunners}
-                    />
-                  </div>
-                ))}
+        <div className="flex justify-content-center">
+          <div className="grid grid-nogutter gap-2">
+            {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
+              <div
+                key={runnerGroup.path}
+                className="mb-4 mr-2"
+                style={{ width: "32%", minWidth: "250px" }}
+              >
+                <UnassociatedRunnerCard
+                  runnerGroup={runnerGroup}
+                  toast={toast}
+                  config={config}
+                />
               </div>
-            </div>
+            ))}
+            {selectedSystems?.map((system: System) => (
+              <div
+                key={system.id}
+                className="mr-2 mb-2"
+                style={{ width: "32%", minWidth: "250px" }}
+              >
+                <SystemCard
+                  system={system}
+                  toast={toast}
+                  tourStepsRef={tourStepsRef}
+                  selectedGarden={selectedGarden?.name}
+                  addRequestItem={addRequestItem}
+                  config={config}
+                  associatedRunners={associatedRunners}
+                />
+              </div>
+            ))}
           </div>
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 }
 
