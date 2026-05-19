@@ -1,6 +1,8 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
 import { ConfirmDialog } from "primereact/confirmdialog";
+import { MultiSelect } from "primereact/multiselect";
+import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
 import { Tooltip } from "primereact/tooltip";
 import { Tree } from "primereact/tree";
@@ -47,6 +49,8 @@ function GardenDashboard({
 
   const [selectedGarden, setSelectedGarden] = useState<Garden | undefined>();
   const [selectedSystems, setSelectedSystems] = useState<System[]>([]);
+  const [filteredSystems, setFilteredSystems] = useState<System[]>([]);
+  const [filteredStatuses, setFilteredStatuses] = useState<Array<string>>([]);
   const [unassociatedRunners, setUnassociatedRunners] = useState<RunnerGroup[]>(
     [],
   );
@@ -56,13 +60,36 @@ function GardenDashboard({
 
   const [loading, setLoading] = useState<boolean>(true);
 
+  const instanceStatuses = [
+    "RUNNING",
+    "INITIALIZING",
+    "STARTING",
+    "STOPPING",
+    "AWAITING_SYSTEM",
+    "PAUSED",
+    "STOPPED",
+    "UNRESPONSIVE",
+    "DEAD",
+    "ERROR",
+    "UNKNOWN",
+  ];
+
+  const instanceStatusTemplate = (option: string) => {
+    const statusSeverity = GetSeverity(option);
+
+    return <Tag value={option} severity={statusSeverity} />;
+  };
+
   const updateSelectedGarden = (garden?: Garden) => {
     if (garden) {
-      const matchedSystems = getSelectedSystems(garden);
-      setSelectedSystems(matchedSystems);
-      setSelectedGarden({ ...garden });
-      selectedGardenRef.current = { ...garden };
-      setUnassociatedRunners(getUnassociatedRunners());
+      if (garden.name !== selectedGardenRef.current?.name) {
+        const matchedSystems = getSelectedSystems(garden);
+        setSelectedSystems(matchedSystems);
+        setFilteredStatuses([]);
+        setSelectedGarden({ ...garden });
+        selectedGardenRef.current = { ...garden };
+        setUnassociatedRunners(getUnassociatedRunners());
+      }
     } else {
       selectedGardenRef.current = undefined;
       setSelectedGarden(undefined);
@@ -179,7 +206,19 @@ function GardenDashboard({
     } else {
       getUnassociatedRunners();
     }
-  }, [selectedSystems]);
+    setFilteredSystems(
+      selectedSystems.filter(
+        (system) =>
+          filteredStatuses.length === 0 ||
+          !system.instances ||
+          system.instances.length === 0 ||
+          system.instances.some(
+            (instance) =>
+              instance.status && filteredStatuses.includes(instance.status),
+          ),
+      ),
+    );
+  }, [selectedSystems, filteredStatuses]);
 
   useEffect(() => {
     if (gardenRef?.current) {
@@ -535,6 +574,14 @@ function GardenDashboard({
           selectedSystems={selectedSystems}
         />
 
+        <MultiSelect
+          value={filteredStatuses}
+          onChange={(e) => setFilteredStatuses(e.value)}
+          options={instanceStatuses}
+          itemTemplate={instanceStatusTemplate}
+          placeholder="Filter by Instance Status"
+          className="mb-3"
+        />
         <div className="flex justify-content-center">
           <div className="grid grid-nogutter gap-2">
             {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
@@ -550,7 +597,7 @@ function GardenDashboard({
                 />
               </div>
             ))}
-            {selectedSystems?.map((system: System) => (
+            {filteredSystems?.map((system: System) => (
               <div
                 key={system.id}
                 className="mr-2 mb-2"

@@ -147,7 +147,6 @@ export const GenerateStatusCounts = (
   garden: Garden,
   systems: System[] | undefined,
 ) => {
-
   // Pre Sort statuses to ensure consistent ordering in the UI
   const statusCounts = new Map([
     // Severity success
