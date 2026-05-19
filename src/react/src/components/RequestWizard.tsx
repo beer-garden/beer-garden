@@ -241,12 +241,11 @@ function RequestWizard({
 
   useEffect(() => {
     if (selectedSystem) {
-      setRequest((prevReq) => ({
-        ...prevReq,
+      setRequest({
         namespace: selectedSystem?.namespace,
         system: selectedSystem?.name,
         system_version: selectedSystem?.version,
-      }));
+      });
       if (selectedSystem.instances) {
         selectedSystem.instances.forEach((instance: Instance) => {
           if (instance.name && !instanceList.includes(instance)) {
@@ -266,19 +265,24 @@ function RequestWizard({
 
   useEffect(() => {
     if (selectedInstance) {
-      setRequest((prevReq) => ({
-        ...prevReq,
+      setRequest({
+        namespace: selectedSystem?.namespace,
+        system: selectedSystem?.name,
+        system_version: selectedSystem?.version,
         instance_name: selectedInstance?.name,
-      }));
+      });
     }
   }, [selectedInstance, setSelectedInstance]);
 
   useEffect(() => {
     if (selectedCommand) {
-      setRequest((prevReq) => ({
-        ...prevReq,
+      setRequest({
+        namespace: selectedSystem?.namespace,
+        system: selectedSystem?.name,
+        system_version: selectedSystem?.version,
+        instance_name: selectedInstance?.name,
         command: selectedCommand?.name,
-      }));
+      });
     }
   }, [selectedCommand]);
 
@@ -299,15 +303,15 @@ function RequestWizard({
             responseRequest.command_display_name,
           );
 
-          setRequest((prevReq) => ({
-            ...prevReq,
+          setRequest({
+            ...request,
             namespace: responseRequest.namespace,
             system: responseRequest.system,
             system_version: responseRequest.system_version,
             instance_name: responseRequest.instance_name,
             command_display_name: responseRequest.command_display_name,
             parameters: responseRequest.parameters,
-          }));
+          });
           updateRequestValue({
             namespace: responseRequest.namespace,
             system: responseRequest.system,
