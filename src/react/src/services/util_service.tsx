@@ -205,11 +205,11 @@ export const GenerateStatusCounts = (
 
 export const getErrorCode = (errorMsg: string) => {
   if (errorMsg) {
-    const regex = /HTTP error: Status (\d+)/
+    const regex = /HTTP error: Status (\d+)/;
     if (regex.test(errorMsg)) {
-      const match = errorMsg.match(regex)
+      const match = errorMsg.match(regex);
       if (match) {
-        return parseInt(match[1])
+        return parseInt(match[1]);
       }
     }
   }

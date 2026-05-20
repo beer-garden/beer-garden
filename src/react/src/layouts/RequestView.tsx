@@ -456,7 +456,10 @@ function RequestView({
   return (
     <>
       {error ? (
-        <ErrorPage errorCode={getErrorCode(error?.message)} errorMsg={`Request ${requestId} was not found`} />
+        <ErrorPage
+          errorCode={getErrorCode(error?.message)}
+          errorMsg={`Request ${requestId} was not found`}
+        />
       ) : (
         <div>
           <Toast ref={toast} />

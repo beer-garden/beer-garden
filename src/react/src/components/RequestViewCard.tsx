@@ -19,9 +19,9 @@ import { Config, PermissionCheck, RequestItem } from "../models/models";
 import { checkPermission } from "../services/permission_service";
 import { GetRequest, PostRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
+import { getErrorCode } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import RequestOutput from "./RequestOutput";
-import { getErrorCode } from "../services/util_service";
 
 function UnformattedInput(request: Request) {
   return (
