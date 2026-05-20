@@ -72,12 +72,10 @@ export default function userService($http, GardenService, SystemService) {
     loadUser: (token) => {
       return service.getUser(token ? jwtDecode(token).username : 'anonymous');
     },
-    setTheme: (userName, theme) => {
-      return $http.patch('api/v1/users/' + userName, {operation: 'set', path: '/preferences/theme', value: theme},);
-
-    },
-    setHome: (userName, home) => {
-      return $http.patch('api/v1/users/' + userName, {operation: 'set', path: '/preferences/home', value: home},);
+    setTheme: (userId, theme) => {
+      return service.updateUser(userId, [
+        {operation: 'set', path: '/preferences/theme', value: theme},
+      ]);
     },
   });
 

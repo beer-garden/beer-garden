@@ -1,19 +1,19 @@
 import _ from 'lodash';
 import jwtDecode from 'jwt-decode';
 
-tokenService.$inject = ['$http', 'storageService', 'EventService'];
+tokenService.$inject = ['$http', 'localStorageService', 'EventService'];
 
 /**
  * tokenService - Service for interacting with the token API.
  * @param  {Object} $http               Angular's $http Object.
- * @param  {Object} storageService      Storage service
- * @param  {Object} EventService        Websocket event handling service
+ * @param  {Object} localStorageService Storage service
+ * @param  {Object} EventService Websocket event handling service
  * @return {Object}       Service for interacting with the token API.
  */
-export default function tokenService($http, storageService, EventService) {
+export default function tokenService($http, localStorageService, EventService) {
   const service = {
     getToken: () => {
-      return storageService.get('token', null);
+      return localStorageService.get('token');
     },
     preemptiveRefresh: () => {
       const token = service.getToken();
@@ -30,28 +30,28 @@ export default function tokenService($http, storageService, EventService) {
       }
     },
     handleToken: (token) => {
-      storageService.set('token', token);
+      localStorageService.set('token', token);
       $http.defaults.headers.common.Authorization = 'Bearer ' + token;
     },
     clearToken: () => {
-      storageService.remove('token');
+      localStorageService.remove('token');
       $http.defaults.headers.common.Authorization = undefined;
     },
     revokeUserToken: (userName) => {
       return $http.delete('api/v1/tokens/' + userName);
     },
     getRefresh: () => {
-      return storageService.get('refresh', null);
+      return localStorageService.get('refresh');
     },
     handleRefresh: (refreshToken) => {
-      storageService.set('refresh', refreshToken);
+      localStorageService.set('refresh', refreshToken);
     },
     clearRefresh: () => {
-      const refreshToken = storageService.get('refresh', null);
+      const refreshToken = localStorageService.get('refresh');
       if (refreshToken) {
         // It's possible the refresh token was already removed from the database
         // We usually don't care if that's the case, so set a noop error handler
-        storageService.remove('refresh');
+        localStorageService.remove('refresh');
         return $http
             .post('api/v1/token/revoke', {refresh: refreshToken})
             .catch(() => {});
@@ -61,18 +61,11 @@ export default function tokenService($http, storageService, EventService) {
 
   _.assign(service, {
     doLogin: (username, password) => {
-
-      let headers = {};
-      
-      if (username !== null && password !== null) {
-        headers = {
-          username: username,
-          password: password,
-        };
-      }
-      
       return $http
-          .post('api/v1/token', headers)
+          .post('/api/v1/token', {
+            username: username,
+            password: password,
+          })
           .then((response) => {
             service.handleRefresh(response.data.refresh);
             service.handleToken(response.data.access);
@@ -80,7 +73,7 @@ export default function tokenService($http, storageService, EventService) {
     },
     doRefresh: (refreshToken) => {
       return $http
-          .post('api/v1/token/refresh', {refresh: refreshToken})
+          .post('/api/v1/token/refresh', {refresh: refreshToken})
           .then(
               (response) => {
                 service.handleRefresh(response.data.refresh);

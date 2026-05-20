@@ -17,13 +17,9 @@
   </div>
 </div>
 
-<fetch-data response="response" ng-if="hasPermission('READ_ONLY')"></fetch-data>
+<fetch-data response="response"></fetch-data>
 
-<div ng-if="!hasPermission('READ_ONLY')">
-  <unauthorized-message/>
-</div>
-
-<div id="gardens-container" class="animate-if" ng-if="responseState(response) === 'success' && hasPermission('READ_ONLY')">
+<div id="gardens-container" class="animate-if" ng-if="responseState(response) === 'success'">
   <div class="container-item panel panel-danger" style="display: block" ng-if="showUnconfigured(data)">
 
     <div class="panel-heading" style="font-size: 22px">

@@ -19,13 +19,10 @@
     </button>
   </div>
 </h1>
-<div>
-  <unauthorized-message ng-if="authEnabled() && !isUser(user)"/>
-</div>
 
 <div
   class="container-fluid animate-if"
-  ng-show="responseState(response) === 'success' && (!authEnabled() || isUser(user))"
+  ng-show="responseState(response) === 'success'"
 >
   <div ng-show="!authEnabled()" uib-alert class="alert alert-danger">
     Warning - Beergarden authorization is currently disabled. Changes made here

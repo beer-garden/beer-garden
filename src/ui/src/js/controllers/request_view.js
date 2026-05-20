@@ -10,7 +10,7 @@ requestViewController.$inject = [
   '$timeout',
   '$animate',
   '$sce',
-  'storageService',
+  'localStorageService',
   'RequestService',
   'SystemService',
   'EventService',
@@ -24,8 +24,8 @@ requestViewController.$inject = [
  * @param  {$stateParams} $stateParams Angular's $stateParams object.
  * @param  {$timeout} $timeout         Angular's $timeout object.
  * @param  {$animate} $animate         Angular's $animate object.
- * @param  {Object} $sce               Angular's $sce object.
- * @param  {Object} storageService     Storage service
+ * @param  {Object} $sce              Angular's $sce object.
+ * @param  {Object} localStorageService  Storage service
  * @param  {Object} RequestService     Beer-Garden Request Service.
  * @param  {Object} SystemService      Beer-Garden's System Service.
  * @param  {Object} EventService       Beer-Garden's Event Service.
@@ -38,7 +38,7 @@ export default function requestViewController(
     $timeout,
     $animate,
     $sce,
-    storageService,
+    localStorageService,
     RequestService,
     SystemService,
     EventService,
@@ -63,10 +63,18 @@ export default function requestViewController(
   $scope.disabledPourItAgain = true;
   $scope.msgPourItAgain = 'Loading System Info';
 
-  $scope.isMaximized = storageService.get('isMaximized', false);
-  $scope.displayOutput = storageService.get('displayOutput', true);
-  $scope.displayParameter = storageService.get('displayParameter', true);
-
+  $scope.isMaximized = localStorageService.get('isMaximized');
+  if ($scope.isMaximized === null) {
+    $scope.isMaximized = false;
+  }
+  $scope.displayOutput = localStorageService.get('displayOutput');
+  if ($scope.displayOutput === null) {
+    $scope.displayOutput = true;
+  }
+  $scope.displayParameter = localStorageService.get('displayParameter');
+  if ($scope.displayParameter === null) {
+    $scope.displayParameter = true;
+  }
 
   $scope.statusDescriptions = {
     CREATED:
@@ -103,9 +111,9 @@ export default function requestViewController(
       $scope.displayParameter = !$scope.displayParameter;
     }
 
-    storageService.set('isMaximized', $scope.isMaximized);
-    storageService.set('displayOutput', $scope.displayOutput);
-    storageService.set('displayParameter', $scope.displayParameter);
+    localStorageService.set('isMaximized', $scope.isMaximized);
+    localStorageService.set('displayOutput', $scope.displayOutput);
+    localStorageService.set('displayParameter', $scope.displayParameter);
   };
 
   $scope.getTopic = function(request) {
@@ -390,20 +398,16 @@ export default function requestViewController(
       if (event.payload.id == $stateParams.requestId) {       
         $scope.successCallback(event.payload);        
       } else if (_.get(event, 'payload.parent.id') == $stateParams.requestId) {       
-        if (event.name == 'REQUEST_CREATED') {
+        const child = _.find($scope.children, {id: event.payload.id});
+
+        if (!child) {
           $scope.children.push(event.payload);
         } else {
-          const child = _.find($scope.children, {id: event.payload.id});
-
-          if (!child) {
-            // If we missed the REQUEST_CREATED just push this one in there
-            $scope.children.push(event.payload);
-          } else {
-            child.status = event.payload.status;
-            child.updated_at = event.payload.updated_at;
-            child.error_class = event.payload.error_class;
-          }
-        }        
+          child.status = event.payload.status;
+          child.updated_at = event.payload.updated_at;
+          child.status_updated_at = event.payload.status_updated_at;
+          child.error_class = event.payload.error_class;
+        }      
 
         if (!$scope.childrenCollapsed) {
           $scope.childrenDisplay = $scope.children;

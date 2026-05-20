@@ -3,7 +3,7 @@ commandIndexController.$inject = [
   '$scope',
   '$stateParams',
   '$sce',
-  'storageService',
+  'localStorageService',
   'DTOptionsBuilder',
   'SystemService',
 ];
@@ -14,7 +14,7 @@ commandIndexController.$inject = [
  * @param  {Object} $scope           Angular's $scope object.
  * @param  {Object} $stateParams
  * @param  {Object} $sce             Angular's $sce object.
- * @param  {Object} storageService  Storage service
+ * @param  {Object} localStorageService  Storage service
  * @param  {Object} DTOptionsBuilder Data-tables' builder for options.
  * @param  {Object} SystemService
  */
@@ -23,7 +23,7 @@ export default function commandIndexController(
     $scope,
     $stateParams,
     $sce,
-    storageService,
+    localStorageService,
     DTOptionsBuilder,
     SystemService,
 ) {
@@ -35,7 +35,7 @@ export default function commandIndexController(
       .withOption('autoWidth', false)
       .withOption(
           'pageLength',
-          storageService.get('_command_index_length',  10),
+          localStorageService.get('_command_index_length') || 10,
       )
       .withOption('hiddenContainer', true)
       .withOption('order', [
@@ -64,7 +64,7 @@ export default function commandIndexController(
     $scope.dtInstance = _instance;
 
     $('#commandIndexTable').on('length.dt', (event, settings, len) => {
-      storageService.set('_command_index_length', len);
+      localStorageService.set('_command_index_length', len);
     });
   }; 
 

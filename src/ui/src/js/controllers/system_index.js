@@ -1,7 +1,7 @@
 systemIndexController.$inject = [
   '$scope',
   '$rootScope',
-  'storageService',
+  'localStorageService',
   'UtilityService',
   'DTOptionsBuilder',
 ];
@@ -10,14 +10,14 @@ systemIndexController.$inject = [
  * systemIndexController - Controller for the system index page.
  * @param  {Object} $scope         Angular's $scope object.
  * @param  {Object} $rootScope     Angular's $rootScope object.
- * @param  {Object} storageService Storage service
+ * @param  {Object} localStorageService  Storage service
  * @param  {Object} UtilityService Beer-Garden's utility service.
  * @param  {Object} DTOptionsBuilder
  */
 export default function systemIndexController(
     $scope,
     $rootScope,
-    storageService,
+    localStorageService,
     UtilityService,
     DTOptionsBuilder,
 ) {
@@ -67,7 +67,7 @@ export default function systemIndexController(
       .withOption('autoWidth', false)
       .withOption(
           'pageLength',
-          storageService.get('_system_index_length', 10),
+          localStorageService.get('_system_index_length') || 10,
       )
       .withOption('order', [
         [0, 'asc'],
@@ -82,7 +82,7 @@ export default function systemIndexController(
     $scope.dtInstance = _instance;
 
     $('#systemIndexTable').on('length.dt', (event, settings, len) => {
-      storageService.set('_system_index_length', len);
+      localStorageService.set('_system_index_length', len);
     });
   };
 
@@ -110,7 +110,7 @@ export default function systemIndexController(
 
   $scope.successCallback = function(response) {
     $scope.response = response;
-    $scope.data = response.data;
+    $scope.data = response.data.filter($rootScope.isSystemRoutable);
     $scope.checkGroups();
   };
 
@@ -123,7 +123,7 @@ export default function systemIndexController(
   var filterSystems = function () {
     if ($rootScope.systems !== undefined) {
       $scope.response = $rootScope.gardensResponse;
-      $scope.data = $rootScope.systems;
+      $scope.data = $rootScope.systems.filter($rootScope.isSystemRoutable);
       $scope.checkGroups();
     }
   }

@@ -1,7 +1,6 @@
 <h1 class="page-header">
   <span>Request View</span>
-  
-  <span ng-if="hasPermission('READ_ONLY') && responseState(response) === 'success'">
+  <span ng-if="responseState(response) === 'success'">
     <small>{{request.id}}</small>
     <span class="pull-right" ng-if="!complete && hasRequestPermission('OPERATOR', request)">
       <button
@@ -61,13 +60,9 @@
   </span>
 </h1>
 
-<fetch-data response="response" ng-if="hasPermission('READ_ONLY')"></fetch-data>
+<fetch-data response="response"></fetch-data>
 
-<div ng-if="!hasPermission('READ_ONLY')">
-  <unauthorized-message/>
-</div>
-
-<div ng-if="hasPermission('READ_ONLY') && responseState(response) === 'success'">
+<div ng-if="responseState(response) === 'success'">
   <ol class="tagline breadcrumb" ng-show="request_tree.length > 1">
     <li
       ng-repeat="request in request_tree = getParentTree(request)"
