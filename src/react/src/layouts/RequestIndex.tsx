@@ -419,7 +419,7 @@ function RequestIndex({
 
   const PeekRequestView = (request: Request) => {
     if (request.id) {
-      addRequestItem({ requestId: "273546", type: "VIEW_REQUEST" });
+      addRequestItem({ requestId: request.id, type: "VIEW_REQUEST" });
     }
   };
 
