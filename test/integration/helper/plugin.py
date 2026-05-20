@@ -73,7 +73,7 @@ def create_plugin(name, version, clazz, **kwargs):
         bg_host=config.bg_host,
         bg_port=config.bg_port,
         ssl_enabled=config.ssl_enabled,
-        **kwargs
+        **kwargs,
     )
 
 

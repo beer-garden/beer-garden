@@ -1,10 +1,27 @@
 # Beer Garden Changelog
 
-# 3.33.0rc0
+# Auth
 
 TBD
 
 - Changes from 3.32.0rc0
+
+# 3.33.1
+4/27/2026
+
+- Fixed bug where Choice Validation was added to Forward Operation when set to None (#2126)
+
+# 3.33.0
+4/21/2026
+
+- Added Choice Validation logic supported by Request Creation API calls. Default behavior is to skip
+  choice validation for child requests. (#2113)
+- Updated Request Output to format JSON output files (#2098)
+- Updating NGINX config timeout for receiving Request responses to 10 minutes (#2099)
+- Fixed Request View issue where duplicate requests shown in Children Tree and Status_Updated_At 
+  not updating (#2109)
+- Fixed issue where TEMP requests did not spawn TEMP children (#2115)
+- Fixed issue where root_command_type was not set properly (#2115)
 
 # 3.32.0
 3/4/2026

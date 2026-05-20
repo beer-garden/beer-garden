@@ -218,7 +218,13 @@ class RequestOutputAPI(AuthorizationHandler):
                 None: "text/plain; charset=UTF-8",
             }
             self.set_header("Content-Type", content_types[response["output_type"]])
-            self.write(response["output"])
+            if response["output_type"] == "JSON":
+                try:
+                    self.write(json.dumps(json.loads(response["output"]), indent=4))
+                except json.JSONDecodeError:
+                    self.write(response["output"])
+            else:
+                self.write(response["output"])
         else:
             self.set_status(204)
 
@@ -488,6 +494,14 @@ class RequestListAPI(AuthorizationHandler):
             description: Max seconds to wait for request completion. (-1 = wait forever)
             type: float
             default: -1
+          - name: choice_validation_enabled
+            in: query
+            required: false
+            type: boolean
+            description: |
+              Whether choice validation is enabled for the request. For root requests
+              choice validation is enabled by default. Child requests are disabled by
+              default. This flag overrides the default validation logic
           - name: request
             in: formData
             required: false
@@ -563,6 +577,17 @@ class RequestListAPI(AuthorizationHandler):
         ):
             request_model.requester = self.current_user.username
 
+        operation_kwargs = {}
+
+        choice_validation_enabled = self.get_argument(
+            "choice_validation_enabled", default=None
+        )
+
+        if choice_validation_enabled is not None:
+            if isinstance(choice_validation_enabled, str):
+                choice_validation_enabled = choice_validation_enabled.lower() == "true"
+            operation_kwargs["choice_validation_enabled"] = choice_validation_enabled
+
         wait_future = None
         if self.get_argument("blocking", default="").lower() == "true":
             wait_future = Future()
@@ -570,13 +595,15 @@ class RequestListAPI(AuthorizationHandler):
             # Also don't publish latency measurements
             self.request.ignore_latency = True
 
+        operation_kwargs["wait_event"] = wait_future
+
         try:
             created_request = await self.process_operation(
                 Operation(
                     operation_type="REQUEST_CREATE",
                     model=request_model,
                     model_type="Request",
-                    kwargs={"wait_event": wait_future},
+                    kwargs=operation_kwargs,
                     target_garden_name=request_model.target_garden,
                     source_garden_name=request_model.source_garden,
                 ),
