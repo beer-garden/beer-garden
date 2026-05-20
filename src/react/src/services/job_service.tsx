@@ -1,5 +1,4 @@
 import { Job, Operation } from "../models/brewtils-types";
-import HttpError from "../types/errors";
 import { GetAuthHeaders } from "./token_service";
 import { GetBaseURL } from "./util_service";
 
@@ -19,10 +18,7 @@ export const GetJobList = async (
     });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
-      throw new HttpError(
-        `HTTP error: Status ${response.status}`,
-        response.status,
-      );
+      throw new Error(`HTTP error: Status ${response.status}`);
     }
     const data = (await response.json()) as Job[];
     const responseHeaders = response.headers;
@@ -46,10 +42,7 @@ export const GetJob = async (jobId: string, headerData: any): Promise<Job> => {
     });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
-      throw new HttpError(
-        `HTTP error: Status ${response.status}`,
-        response.status,
-      );
+      throw new Error(`HTTP error: Status ${response.status}`);
     }
     const data = (await response.json()) as Job;
 
@@ -81,10 +74,7 @@ export const RunAdhocJob = async (
     );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
-      throw new HttpError(
-        `HTTP error: Status ${response.status}`,
-        response.status,
-      );
+      throw new Error(`HTTP error: Status ${response.status}`);
     }
     return;
   } catch (error) {
@@ -111,10 +101,7 @@ export const CreateJob = async (job: Job, headerData?: any): Promise<Job> => {
     });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
-      throw new HttpError(
-        `HTTP error: Status ${response.status}`,
-        response.status,
-      );
+      throw new Error(`HTTP error: Status ${response.status}`);
     }
     const data = (await response.json()) as Job;
 
@@ -185,10 +172,7 @@ export const PatchJob = async (
     });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
-      throw new HttpError(
-        `HTTP error: Status ${response.status}`,
-        response.status,
-      );
+      throw new Error(`HTTP error: Status ${response.status}`);
     }
     const data = (await response.json()) as Job;
 
@@ -214,10 +198,7 @@ export const DeleteJob = async (job: Job, headerData?: any) => {
     });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
-      throw new HttpError(
-        `HTTP error: Status ${response.status}`,
-        response.status,
-      );
+      throw new Error(`HTTP error: Status ${response.status}`);
     }
 
     return;

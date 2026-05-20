@@ -31,8 +31,7 @@ import {
   GetRequestProjections,
 } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
-import { GetBaseURL } from "../services/util_service";
-import HttpError from "../types/errors";
+import { GetBaseURL, getErrorCode } from "../services/util_service";
 
 function UnformattedInput(request: Request) {
   return (
@@ -284,7 +283,7 @@ function RequestView({
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
   const toast = useRef<Toast>(null);
-  const [error, setError] = useState<HttpError>();
+  const [error, setError] = useState<Error>();
   const { requestId } = useParams<{ requestId: string }>();
   const [request, setRequest] = useState<Request | null>(null);
   const [system, setSystem] = useState<System | null>(null);
@@ -457,10 +456,7 @@ function RequestView({
   return (
     <>
       {error ? (
-        <ErrorPage
-          errorCode={error?.code}
-          errorMsg={`Request ${requestId} was not found`}
-        />
+        <ErrorPage errorCode={getErrorCode(error?.message)} errorMsg={`Request ${requestId} was not found`} />
       ) : (
         <div>
           <Toast ref={toast} />

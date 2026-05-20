@@ -19,9 +19,9 @@ import { Config, PermissionCheck, RequestItem } from "../models/models";
 import { checkPermission } from "../services/permission_service";
 import { GetRequest, PostRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
-import HttpError from "../types/errors";
 import AccessButton from "./AccessButton";
 import RequestOutput from "./RequestOutput";
+import { getErrorCode } from "../services/util_service";
 
 function UnformattedInput(request: Request) {
   return (
@@ -49,7 +49,7 @@ function RequestViewCard({
   config: Config;
   isDialog: boolean;
 }) {
-  const [error, setError] = useState<HttpError>();
+  const [error, setError] = useState<Error>();
   const requestId = useRef<string | null | undefined>(
     requestItem?.requestId ?? null,
   );
@@ -280,7 +280,7 @@ function RequestViewCard({
       <Toast ref={toast} />
       {error ? (
         <ErrorPage
-          errorCode={error?.code}
+          errorCode={getErrorCode(error?.message)}
           errorMsg={`Request ${requestId.current} was not found`}
           isCard={true}
         />

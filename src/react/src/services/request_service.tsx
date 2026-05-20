@@ -2,7 +2,6 @@ import { v4 as uuidv4 } from "uuid";
 
 import { Request } from "../models/brewtils-types";
 import { RequestCommand } from "../models/models";
-import HttpError from "../types/errors";
 import { GetAuthHeaders } from "./token_service";
 import { GetBaseURL } from "./util_service";
 
@@ -49,10 +48,7 @@ export const GetRequestList = async (
     );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
-      throw new HttpError(
-        `HTTP error: Status ${response.status}`,
-        response.status,
-      );
+      throw new Error(`HTTP error: Status ${response.status}`);
     }
     const data = (await response.json()) as Request[];
     const responseHeaders = response.headers;
@@ -81,10 +77,7 @@ export const GetRequest = async (
     );
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
-      throw new HttpError(
-        `HTTP error: Status ${response.status}`,
-        response.status,
-      );
+      throw new Error(`HTTP error: Status ${response.status}`);
     }
     const data = (await response.json()) as Request;
 
