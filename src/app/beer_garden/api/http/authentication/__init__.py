@@ -231,6 +231,7 @@ def _generate_access_token(user: User, identifier: UUID, max_permission: str) ->
         "type": "access",
         "username": user.username,
         "roles": roles,
+        "preferences": user.preferences,
     }
 
     access_token = jwt.encode(jwt_payload, key=secret_key, headers=jwt_headers)

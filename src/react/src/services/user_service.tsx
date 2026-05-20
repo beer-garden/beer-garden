@@ -1,13 +1,9 @@
-import { jwtDecode, JwtPayload } from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
 import { AliasUserMap, Role, User } from "../models/brewtils-types";
+import { CustomJwtPayload } from "../models/models";
 import { GetAuthHeaders, GetToken } from "./token_service";
 import { GetBaseURL } from "./util_service";
-
-interface CustomJwtPayload extends JwtPayload {
-  username?: string;
-  roles?: string[];
-}
 
 export const GetCurrentUser = () => {
   const token = GetToken();
@@ -38,6 +34,77 @@ export const GetCurrentRoles = (): Array<Role> | undefined => {
     }
   }
   return undefined;
+};
+
+export const GetUserTheme = (): string | undefined => {
+  const token = GetToken();
+  if (token !== null) {
+    const decode = jwtDecode<CustomJwtPayload>(token);
+    if (decode.preferences && decode.preferences.theme) {
+      return decode.preferences.theme;
+    }
+  }
+  return undefined;
+};
+
+export const UpdateUserTheme = async (theme: string): Promise<void> => {
+  const headers = GetAuthHeaders();
+  const username = GetCurrentUser();
+  if (!username) {
+    return;
+  }
+  headers.append("Content-Type", "application/json");
+  const fetch_url = `${GetBaseURL()}/api/v1/users/${username}`;
+  const response = await fetch(fetch_url, {
+    headers: headers,
+    method: "PATCH",
+    body: JSON.stringify({
+      operation: "set",
+      path: "/preferences/theme",
+      value: theme,
+    }),
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
+
+export const GetUserDarkMode = (): boolean | undefined => {
+  const token = GetToken();
+  if (token !== null) {
+    const decode = jwtDecode<CustomJwtPayload>(token);
+    if (
+      decode.preferences &&
+      typeof decode.preferences.dark_mode === "boolean"
+    ) {
+      return decode.preferences.dark_mode;
+    }
+  }
+  return undefined;
+};
+
+export const UpdateUserDarkMode = async (darkMode: boolean): Promise<void> => {
+  const headers = GetAuthHeaders();
+  const username = GetCurrentUser();
+  if (!username) {
+    return;
+  }
+  headers.append("Content-Type", "application/json");
+  const fetch_url = `${GetBaseURL()}/api/v1/users/${username}`;
+  const response = await fetch(fetch_url, {
+    headers: headers,
+    method: "PATCH",
+    body: JSON.stringify({
+      operation: "set",
+      path: "/preferences/dark_mode",
+      value: darkMode,
+    }),
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
 };
 
 export const GetUsers = async (): Promise<Array<User>> => {

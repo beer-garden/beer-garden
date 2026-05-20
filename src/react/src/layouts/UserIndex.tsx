@@ -274,7 +274,7 @@ function UserIndex({
 
   function lastAuthenticatedTemplate(rowData: User) {
     if (rowData?.metadata?.last_authentication) {
-      const date = new Date(rowData.metadata.last_authentication * 1000);
+      const date = new Date(rowData.metadata.last_authentication);
       return (
         <span {...GenerateTourProps(lastAuthenticatedUserTourStep)}>
           {date.toUTCString()}
