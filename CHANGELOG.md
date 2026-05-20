@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# Auth
+
+TBD
+
+- Changes from 3.32.0rc0
+
 # 3.33.1
 4/27/2026
 
@@ -38,6 +44,23 @@
 - Fixed UI Request Create with unicode garden names not supported via headers (#2035) 
 - Fixed error comparing timezone-aware and timezone-naive datetimes. (#2038)
 - Fixed Migration script logic for MongoDB (#2034)
+
+# ~~3.32.0rc0~~ (Pushed to 3.33.0rc0)
+
+12/17/2025
+
+- Update API Token verification to only call database to verify Token, instead of User (#2029)
+- Fixed user login to first check for User Authorization Token, then login credentials
+- Fixed model filtering to include missing namespace properties (#1848)
+- Updated model filtering, if query filters are generated pre-query then skip filtering records when returning API models (#1848)
+- Updated User Model to support Preference tracking and reflect updates in the UI (#1955)
+- Fixed how array headers are parsed to support JSON and comma separated lists (#1982)
+- Fixed UI handling Auth Header login where user was not loaded into memory of browser (#1982)
+- Fixed user mapping forwarding to downstream Gardens (#1982)
+- Fixed Global Admin permission check in UI (#1982)
+- Fixed Role Rescan to remove missing roles from database (#1982)
+- Fixed Role Delete to removes role from Users and forces Token refresh (#1982)
+- Updated UI pages to display 401 error if user does not have access to view the contents of the page (#1987,#2013)
 
 # 3.31.0
 

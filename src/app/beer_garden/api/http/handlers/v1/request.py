@@ -447,6 +447,7 @@ class RequestListAPI(AuthorizationHandler):
         requests = await self.process_operation(
             Operation(operation_type="REQUEST_READ_ALL", kwargs=query_args),
             serialize_kwargs=serialize_kwargs,
+            filter_results=False,
         )
 
         response_headers = {
