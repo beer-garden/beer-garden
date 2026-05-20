@@ -12,13 +12,15 @@ function ErrorPage({
   function errorType(errorCode: number | undefined) {
     switch (errorCode) {
       case 400:
-        return "Bad Request";
+        return "400 Bad Request";
       case 401:
-        return "Unauthorized";
+        return "401 Unauthorized";
       case 404:
-        return "Not Found";
-      default:
+        return "404 Not Found";
+      case undefined:
         return "Error";
+      default:
+        return `${errorCode} Error`;
     }
   }
 
