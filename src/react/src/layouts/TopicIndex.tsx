@@ -14,7 +14,7 @@ import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import AccessButton from "../components/AccessButton";
 import SubscriberItem from "../components/SubscriberItem";
 import { Subscriber, Topic } from "../models/brewtils-types";
-import { Config } from "../models/models";
+import { Config, RequestItem } from "../models/models";
 import {
   AddSubscriber,
   CreateTopic,
@@ -30,7 +30,14 @@ interface TopicSubscriber {
   subscriber?: Subscriber;
 }
 
-function TopicIndex({ config }: { config: Config }) {
+function TopicIndex({
+  config,
+  addRequestItem,
+}: {
+  config: Config;
+  listeners: Record<string, any>;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+}) {
   const toast = useRef<Toast>(null);
   const [topicSubscribers, setTopicSubscribers] = useState<
     Array<TopicSubscriber>
@@ -81,6 +88,7 @@ function TopicIndex({ config }: { config: Config }) {
       command: "",
     } as Subscriber,
   ]);
+
   const msgs = useRef<Messages>(null);
   const loadTopics = useCallback(() => {
     setLoading(true);
@@ -466,6 +474,20 @@ function TopicIndex({ config }: { config: Config }) {
       return (
         <div className="flex">
           <AccessButton
+            onClick={() =>
+              addRequestItem({
+                topic: topicSubscriber.topic,
+                type: "VIEW_TOPIC",
+              })
+            }
+            tooltip="View Topic"
+            aria-label={`ViewTopic ${topicSubscriber.topic?.name}`}
+            config={config}
+            permission="PLUGIN_ADMIN"
+          >
+            <FontAwesomeIcon icon="eye" />
+          </AccessButton>
+          <AccessButton
             onClick={() => addSubscriber(topicSubscriber.topic!)}
             aria-label={`Add Subscriber to Topic ${topicSubscriber.topic?.name}`}
             tooltip="Add Subscriber"
@@ -732,6 +754,7 @@ function TopicIndex({ config }: { config: Config }) {
   return (
     <div>
       <Toast ref={toast} />
+
       <Dialog
         data-testid="topic-dialog"
         appendTo={"self"}
@@ -748,7 +771,6 @@ function TopicIndex({ config }: { config: Config }) {
           </>
         }
         visible={dialogVisible}
-        style={{ width: "50vw" }}
         onHide={() => {
           handleDialogClose();
         }}

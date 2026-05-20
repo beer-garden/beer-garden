@@ -459,23 +459,26 @@ function App() {
                 onHide={() => {
                   setRequestItem(undefined);
                 }}
-                header={
-                  requestItem.type === "REQUEST"
-                    ? "Create Request"
-                    : requestItem.type === "VIEW_REQUEST"
-                      ? `View Request: ${requestItem?.requestId}`
-                      : `View Scheduled Job: ${requestItem?.jobId}`
-                }
+                header={() => {
+                  if (requestItem.type === "REQUEST") {
+                    return "Create Request";
+                  } else if (requestItem.type === "VIEW_REQUEST") {
+                    return `View Request: ${requestItem?.requestId}`;
+                  } else if (requestItem.type === "VIEW_JOB") {
+                    return `View Scheduled Job: ${requestItem?.jobId}`;
+                  } else if (requestItem.type === "VIEW_TOPIC") {
+                    return `View Topic: ${requestItem?.topic?.name}`;
+                  }
+                }}
               >
                 <>
                   <RequestItemCard
                     removeItem={() => {
                       setRequestItem(undefined);
                     }}
-                    updateRequestItem={setRequestItem}
+                    updateRequestItem={addRequestItem}
                     requestItem={requestItem}
                     listeners={listeners}
-                    addItem={addRequestItem}
                     config={config}
                     isDialog={true}
                   />
@@ -608,7 +611,13 @@ function App() {
                   />
                   <Route
                     path="/topics"
-                    element={<TopicIndex config={config} />}
+                    element={
+                      <TopicIndex
+                        config={config}
+                        listeners={listeners}
+                        addRequestItem={addRequestItem}
+                      />
+                    }
                   />
                   <Route
                     path="/users"

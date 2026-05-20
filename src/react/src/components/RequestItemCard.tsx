@@ -6,21 +6,20 @@ import RequestCreateCard from "./RequestCreateCard";
 import RequestViewCard from "./RequestViewCard";
 import RequestWizard from "./RequestWizard";
 import SchedulerViewCard from "./SchedulerViewCard";
+import TopicCard from "./TopicCard";
 
 function RequestItemCard({
   requestItem,
   listeners,
   updateRequestItem,
   removeItem,
-  addItem,
   isDialog,
   config,
 }: {
   requestItem: RequestItem;
   listeners: Record<string, any>;
-  updateRequestItem: (item: RequestItem) => void;
+  updateRequestItem: (itemParams?: Partial<RequestItem>) => void;
   removeItem: (id: string) => void;
-  addItem: (itemParams?: Partial<RequestItem>) => void;
   isDialog: boolean;
   config: Config;
 }) {
@@ -54,7 +53,6 @@ function RequestItemCard({
           updateRequestItem={updateRequestItem}
           removeItem={removeItem}
           listeners={listeners}
-          addItem={addItem}
           isDialog={isDialog}
           config={config}
         />
@@ -84,6 +82,14 @@ function RequestItemCard({
                 });
             }
           }}
+        />
+      )}
+      {requestItem?.type === "VIEW_TOPIC" && requestItem?.topic && (
+        <TopicCard
+          requestItem={requestItem}
+          removeItem={removeItem}
+          listeners={listeners}
+          isDialog={isDialog}
         />
       )}
     </>

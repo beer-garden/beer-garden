@@ -3,48 +3,29 @@ import { Badge } from "primereact/badge";
 import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
-import { Message } from "primereact/message";
-import { Skeleton } from "primereact/skeleton";
-import { SplitButton } from "primereact/splitbutton";
-import { Stepper } from "primereact/stepper";
-import { StepperPanel } from "primereact/stepperpanel";
 import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import CommandForm from "../components/CommandForm";
 import ErrorPage from "../components/ErrorPage";
-import { Command, Request, System } from "../models/brewtils-types";
-import { Config, PermissionCheck, RequestItem } from "../models/models";
-import { checkPermission } from "../services/permission_service";
-import { GetRequest, PostRequest } from "../services/request_service";
-import { GetSystemList } from "../services/system_service";
+import RequestViewMain from "../components/RequestViewMain";
+import { Request } from "../models/brewtils-types";
+import { Config, RequestItem } from "../models/models";
+import { GetRequest } from "../services/request_service";
 import { getErrorCode } from "../services/util_service";
 import AccessButton from "./AccessButton";
-import RequestOutput from "./RequestOutput";
-
-function UnformattedInput(request: Request) {
-  return (
-    <div>
-      <Message severity="warn" text="Unable to find source System/Command" />
-      <pre>{JSON.stringify(request.parameters, null, 2)}</pre>
-    </div>
-  );
-}
 
 function RequestViewCard({
   requestItem,
   updateRequestItem,
   removeItem,
-  addItem,
   listeners,
   config,
   isDialog,
 }: {
   requestItem: RequestItem;
-  updateRequestItem: (item: RequestItem) => void;
+  updateRequestItem: (itemParams?: Partial<RequestItem>) => void;
   removeItem: (id: string) => void;
-  addItem: (itemParams?: Partial<RequestItem>) => void;
   listeners: Record<string, any>;
   config: Config;
   isDialog: boolean;
@@ -56,13 +37,8 @@ function RequestViewCard({
   const [request, setRequest] = useState<Request | null>(
     requestItem?.request ?? null,
   );
-  const [system, setSystem] = useState<System | null>(null);
 
   const toast = useRef(null as null | any);
-
-  const [command, setCommand] = useState<Command | any>(null);
-
-  const [showCommandForm, setShowCommandForm] = useState(false);
 
   const navigate = useNavigate();
 
@@ -106,35 +82,12 @@ function RequestViewCard({
     return title;
   };
 
-  const submitRequest = (openRequest: boolean) => {
+  const openRequest = () => {
     if (request) {
-      PostRequest({
-        namespace: request?.namespace || undefined,
-        system: request?.system || undefined,
-        system_version: request?.system_version || undefined,
-        instance_name: request?.instance_name || undefined,
-        command: request?.command || undefined,
-        parameters: request?.parameters || {},
-      } as Request)
-        .then((response_request: any) => {
-          if (openRequest) {
-            void navigate(`/request/${response_request.id}`);
-          } else {
-            toast?.current?.show({
-              severity: "info",
-              summary: "Info",
-              detail: "Request Created: " + response_request.id,
-            });
-          }
-        })
-        .catch((error) => {
-          toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: `Error creating request: ${error}`,
-            life: 3000,
-          });
-        });
+      void navigate(`/request/${request.id}`);
+      if (isDialog) {
+        removeItem(requestItem.itemId);
+      }
     }
   };
 
@@ -169,8 +122,8 @@ function RequestViewCard({
       }
     }
 
-    if (!request && requestId.current) {
-      GetRequest(requestId.current, {})
+    const loadRequest = (loadRequestId: string) => {
+      GetRequest(loadRequestId, {})
         .then((data: Request) => {
           setRequest(data);
           updateRequestItem({
@@ -192,6 +145,10 @@ function RequestViewCard({
         .catch((error) => {
           setError(error);
         });
+    };
+
+    if (!request && requestId.current) {
+      loadRequest(requestId.current);
     }
 
     if (
@@ -215,50 +172,27 @@ function RequestViewCard({
       delete listeners[requestId.current];
     }
 
-    if (request && !system) {
-      GetSystemList({
-        name: request.system,
-        version: request.system_version,
-        namespace: request.namespace,
-        garden_name: request.target_garden,
-      })
-        .then((data) => {
-          if (data.length > 0) {
-            setSystem(data[0]);
-          } else {
-            setShowCommandForm(true);
-          }
-        })
-        .catch((error) => {
-          toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: `Error fetching system list: ${error}`,
-            life: 3000,
-          });
-          setShowCommandForm(true);
-        });
-    }
-
-    if (system && !command) {
-      if (system && system.commands && request) {
-        const commandData = system.commands.find(
-          (cmd) => cmd.name === request.command,
-        );
-        setCommand(commandData);
-        setShowCommandForm(true);
+    const reloadRequestTimer = setTimeout(() => {
+      // Wait 5 seconds and reload if not completed
+      // Sometimes the event comes in before the handler is registered
+      if (
+        requestId.current &&
+        request &&
+        ((request.status &&
+          ["CREATED", "IN_PROGRESS"].includes(request.status)) ||
+          request.status === undefined)
+      ) {
+        loadRequest(requestId.current);
       }
-    }
+    }, 5000);
 
     return () => {
       if (requestId.current) {
         delete listeners[requestId.current];
       }
+      clearTimeout(reloadRequestTimer);
     };
-  }, [request, system, command, listeners]);
-
-  const stepperRef = useRef(null);
-  const [activeIndex] = useState(1);
+  }, [request, listeners]);
 
   return (
     <Card
@@ -291,84 +225,18 @@ function RequestViewCard({
               <Column field="command" header="Command"></Column>
               <Column header="Status" body={statusTemplate}></Column>
             </DataTable>
-            <Stepper
-              ref={stepperRef}
-              activeStep={activeIndex}
-              style={{ flexBasis: "50rem" }}
-            >
-              <StepperPanel header="Parameters">
-                {!showCommandForm && <Skeleton width="100%" height="10rem" />}
-                {showCommandForm && command && (
-                  <CommandForm
-                    {...{
-                      command: command,
-                      request: request,
-                      setRequest: setRequest,
-                      resetForm: false,
-                      setResetForm: () => {},
-                      setIsFormValid: () => {},
-                    }}
-                  />
-                )}
-                {showCommandForm && !command && (
-                  <UnformattedInput {...request} />
-                )}
-              </StepperPanel>
 
-              <StepperPanel header="Output">
-                <RequestOutput {...request} />
-              </StepperPanel>
-            </Stepper>
-
-            <SplitButton
-              label="Open"
-              icon="pi pi-plus"
-              onClick={() => {
-                void navigate(`/request/${request.id}`);
-                if (isDialog) {
-                  removeItem(requestItem.itemId);
-                }
-              }}
-              model={
-                request &&
-                request.status &&
-                !["CREATED", "IN_PROGRESS"].includes(request.status) &&
-                checkPermission(config, "OPERATOR", {
-                  global: false,
-                  gardenName: request?.target_garden,
-                  namespace: request?.namespace,
-                  systemName: request?.system,
-                  systemVersion: request?.system_version,
-                  instanceName: request?.instance_name,
-                  commandName: request?.command,
-                } as PermissionCheck)
-                  ? [
-                      {
-                        label: "Run Again Now",
-                        command: () => {
-                          submitRequest(false);
-                        },
-                      },
-                      {
-                        label: "Pour Again",
-                        command: () => {
-                          addItem({
-                            requestId: request.id,
-                            type: "REQUEST",
-                          } as RequestItem);
-                        },
-                      },
-                    ]
-                  : [
-                      {
-                        label: "Reload Request",
-                        command: () => {
-                          setRequest(null);
-                        },
-                      },
-                    ]
-              }
-            />
+            {request && (
+              <RequestViewMain
+                request={request}
+                setRequest={setRequest}
+                addRequestItem={updateRequestItem}
+                showProjections={false}
+                isCard={true}
+                config={config}
+                openRequest={openRequest}
+              />
+            )}
           </div>
         )
       )}
