@@ -13,11 +13,13 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import CommandForm from "../components/CommandForm";
+import ErrorPage from "../components/ErrorPage";
 import { Command, Request, System } from "../models/brewtils-types";
 import { Config, PermissionCheck, RequestItem } from "../models/models";
 import { checkPermission } from "../services/permission_service";
 import { GetRequest, PostRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
+import HttpError from "../types/errors";
 import AccessButton from "./AccessButton";
 import RequestOutput from "./RequestOutput";
 
@@ -47,6 +49,7 @@ function RequestViewCard({
   config: Config;
   isDialog: boolean;
 }) {
+  const [error, setError] = useState<HttpError>();
   const requestId = useRef<string | null | undefined>(
     requestItem?.requestId ?? null,
   );
@@ -125,7 +128,12 @@ function RequestViewCard({
           }
         })
         .catch((error) => {
-          console.error("Error creating request:", error);
+          toast.current?.show({
+            severity: "error",
+            summary: "Error",
+            detail: `Error creating request: ${error}`,
+            life: 3000,
+          });
         });
     }
   };
@@ -182,7 +190,7 @@ function RequestViewCard({
           }
         })
         .catch((error) => {
-          console.error("Error fetching request:", error);
+          setError(error);
         });
     }
 
@@ -222,7 +230,12 @@ function RequestViewCard({
           }
         })
         .catch((error) => {
-          console.error("Error fetching system list:", error);
+          toast.current?.show({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching system list: ${error}`,
+            life: 3000,
+          });
           setShowCommandForm(true);
         });
     }
@@ -265,89 +278,99 @@ function RequestViewCard({
       }
     >
       <Toast ref={toast} />
-      {request && (
-        <div>
-          <DataTable value={[request]}>
-            <Column field="command" header="Command"></Column>
-            <Column header="Status" body={statusTemplate}></Column>
-          </DataTable>
-          <Stepper
-            ref={stepperRef}
-            activeStep={activeIndex}
-            style={{ flexBasis: "50rem" }}
-          >
-            <StepperPanel header="Parameters">
-              {!showCommandForm && <Skeleton width="100%" height="10rem" />}
-              {showCommandForm && command && (
-                <CommandForm
-                  {...{
-                    command: command,
-                    request: request,
-                    setRequest: setRequest,
-                    resetForm: false,
-                    setResetForm: () => {},
-                    setIsFormValid: () => {},
-                  }}
-                />
-              )}
-              {showCommandForm && !command && <UnformattedInput {...request} />}
-            </StepperPanel>
+      {error ? (
+        <ErrorPage
+          errorCode={error?.code}
+          errorMsg={`Request ${requestId.current} was not found`}
+          isCard={true}
+        />
+      ) : (
+        request && (
+          <div>
+            <DataTable value={[request]}>
+              <Column field="command" header="Command"></Column>
+              <Column header="Status" body={statusTemplate}></Column>
+            </DataTable>
+            <Stepper
+              ref={stepperRef}
+              activeStep={activeIndex}
+              style={{ flexBasis: "50rem" }}
+            >
+              <StepperPanel header="Parameters">
+                {!showCommandForm && <Skeleton width="100%" height="10rem" />}
+                {showCommandForm && command && (
+                  <CommandForm
+                    {...{
+                      command: command,
+                      request: request,
+                      setRequest: setRequest,
+                      resetForm: false,
+                      setResetForm: () => {},
+                      setIsFormValid: () => {},
+                    }}
+                  />
+                )}
+                {showCommandForm && !command && (
+                  <UnformattedInput {...request} />
+                )}
+              </StepperPanel>
 
-            <StepperPanel header="Output">
-              <RequestOutput {...request} />
-            </StepperPanel>
-          </Stepper>
+              <StepperPanel header="Output">
+                <RequestOutput {...request} />
+              </StepperPanel>
+            </Stepper>
 
-          <SplitButton
-            label="Open"
-            icon="pi pi-plus"
-            onClick={() => {
-              void navigate(`/request/${request.id}`);
-              if (isDialog) {
-                removeItem(requestItem.itemId);
+            <SplitButton
+              label="Open"
+              icon="pi pi-plus"
+              onClick={() => {
+                void navigate(`/request/${request.id}`);
+                if (isDialog) {
+                  removeItem(requestItem.itemId);
+                }
+              }}
+              model={
+                request &&
+                request.status &&
+                !["CREATED", "IN_PROGRESS"].includes(request.status) &&
+                checkPermission(config, "OPERATOR", {
+                  global: false,
+                  gardenName: request?.target_garden,
+                  namespace: request?.namespace,
+                  systemName: request?.system,
+                  systemVersion: request?.system_version,
+                  instanceName: request?.instance_name,
+                  commandName: request?.command,
+                } as PermissionCheck)
+                  ? [
+                      {
+                        label: "Run Again Now",
+                        command: () => {
+                          submitRequest(false);
+                        },
+                      },
+                      {
+                        label: "Pour Again",
+                        command: () => {
+                          addItem({
+                            requestId: request.id,
+                            type: "REQUEST",
+                          } as RequestItem);
+                        },
+                      },
+                    ]
+                  : [
+                      {
+                        label: "Reload Request",
+                        command: () => {
+                          setRequest(null);
+                        },
+                      },
+                    ]
               }
-            }}
-            model={
-              request &&
-              request.status &&
-              !["CREATED", "IN_PROGRESS"].includes(request.status) &&
-              checkPermission(config, "OPERATOR", {
-                global: false,
-                gardenName: request?.target_garden,
-                namespace: request?.namespace,
-                systemName: request?.system,
-                systemVersion: request?.system_version,
-                instanceName: request?.instance_name,
-                commandName: request?.command,
-              } as PermissionCheck)
-                ? [
-                    {
-                      label: "Run Again Now",
-                      command: () => {
-                        submitRequest(false);
-                      },
-                    },
-                    {
-                      label: "Pour Again",
-                      command: () => {
-                        addItem({
-                          requestId: request.id,
-                          type: "REQUEST",
-                        } as RequestItem);
-                      },
-                    },
-                  ]
-                : [
-                    {
-                      label: "Reload Request",
-                      command: () => {
-                        setRequest(null);
-                      },
-                    },
-                  ]
-            }
-          />
-        </div>
+            />
+          </div>
+        )
       )}
     </Card>
   );

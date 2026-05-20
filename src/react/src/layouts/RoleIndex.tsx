@@ -34,8 +34,6 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import HttpError from "../types/errors";
-import ErrorPage from "./ErrorPage";
 
 const permissions = [
   { label: "GARDEN_ADMIN", value: "GARDEN_ADMIN" },
@@ -51,7 +49,6 @@ function RoleIndex({
   config: Config;
   tourStepsRef: RefObject<Array<TourStepProps>>;
 }) {
-  const [error, setError] = useState<HttpError>();
   const toast = useRef<Toast>(null);
   const [roles, setRoles] = useState<Array<Role>>([]);
   const [loading, setLoading] = useState(false);
@@ -140,9 +137,13 @@ function RoleIndex({
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Error fetching roles:", error);
         setLoading(false);
-        setError(error);
+        toast.current?.show({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching roles: ${error}`,
+          life: 3000,
+        });
       });
   }, [roles]);
 
@@ -219,7 +220,12 @@ function RoleIndex({
             });
           })
           .catch((error) => {
-            console.error("Error editing the role:", error);
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Error editing the role: ${error}`,
+              life: 3000,
+            });
           });
       } else {
         // Create new role
@@ -236,7 +242,12 @@ function RoleIndex({
             });
           })
           .catch((error) => {
-            console.error("Error creating the role:", error);
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Error creating the role: ${error}`,
+              life: 3000,
+            });
           });
       }
       setRoleName("");
@@ -277,7 +288,12 @@ function RoleIndex({
           });
         })
         .catch((error) => {
-          console.error("Error deleting system:", error);
+          toast.current?.show({
+            severity: "error",
+            summary: "Error",
+            detail: `Error rescanning roles: ${error}`,
+            life: 3000,
+          });
         });
     }
     function openRoleDialog() {
@@ -328,7 +344,12 @@ function RoleIndex({
             });
           })
           .catch((error) => {
-            console.error("Error deleting the role:", error);
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Error deleting the role: ${error}`,
+              life: 3000,
+            });
           });
       }
     }
@@ -499,117 +520,111 @@ function RoleIndex({
   }
 
   return (
-    <>
-      {error ? (
-        <ErrorPage errorCode={error?.code} errorMsg={error.toString()} />
-      ) : (
-        <div>
-          <Toast ref={toast} />
-          <Dialog
-            data-testid="role-dialog"
-            appendTo={"self"}
-            header={isEdit.current ? "Edit Role" : "Create Role"}
-            footer={
-              <>
-                <AccessButton onClick={handleDialogClose} label="Close" />
-                <AccessButton
-                  data-testid={`submit-btn-dialog`}
-                  severity="danger"
-                  onClick={handleDialogSubmit}
-                  label="Submit"
-                />
-              </>
+    <div>
+      <Toast ref={toast} />
+      <Dialog
+        data-testid="role-dialog"
+        appendTo={"self"}
+        header={isEdit.current ? "Edit Role" : "Create Role"}
+        footer={
+          <>
+            <AccessButton onClick={handleDialogClose} label="Close" />
+            <AccessButton
+              data-testid={`submit-btn-dialog`}
+              severity="danger"
+              onClick={handleDialogSubmit}
+              label="Submit"
+            />
+          </>
+        }
+        visible={dialogVisible}
+        style={{ width: "50vw" }}
+        onHide={() => {
+          handleDialogClose();
+        }}
+      >
+        <Messages ref={msgs} />
+        <div className="flex flex-column gap-2">
+          <label htmlFor="roleName" className="font-bold">
+            Name
+          </label>
+          <InputText
+            required
+            id="roleName"
+            type="text"
+            className="mb-2"
+            value={roleName}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setRoleName(e.target.value)
             }
-            visible={dialogVisible}
-            style={{ width: "50vw" }}
-            onHide={() => {
-              handleDialogClose();
-            }}
-          >
-            <Messages ref={msgs} />
-            <div className="flex flex-column gap-2">
-              <label htmlFor="roleName" className="font-bold">
-                Name
-              </label>
-              <InputText
-                required
-                id="roleName"
-                type="text"
-                className="mb-2"
-                value={roleName}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setRoleName(e.target.value)
-                }
-              />
-            </div>
-            <div className="flex flex-column gap-2">
-              <label htmlFor="roleDescription" className="font-bold">
-                Description
-              </label>
-              <InputText
-                id="roleDescription"
-                type="text"
-                className="mb-2"
-                value={roleDescription}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setRoleDescription(e.target.value)
-                }
-              />
-            </div>
-            <div className="flex flex-column gap-2">
-              <label htmlFor="rolePermission" className="font-bold">
-                Permission
-              </label>
-              <Dropdown
-                required
-                id="rolePermission"
-                className="mb-2"
-                options={permissions}
-                value={rolePermission}
-                optionLabel="label"
-                placeholder="Select One"
-                onChange={(e) => {
-                  setRolePermission(e.value);
-                }}
-              />
-            </div>
-            <Divider />
-            <RoleScopeCard
-              scopeName="garden"
-              scopeList={gardenScopeList}
-              setScopeList={setGardenScopeList}
-            />
-            <RoleScopeCard
-              scopeName="namespace"
-              scopeList={namespaceScopeList}
-              setScopeList={setNamespaceScopeList}
-            />
-            <RoleScopeCard
-              scopeName="system"
-              scopeList={systemScopeList}
-              setScopeList={setSystemScopeList}
-            />
-            <RoleScopeCard
-              scopeName="version"
-              scopeList={versionScopeList}
-              setScopeList={setVersionScopeList}
-            />
-            <RoleScopeCard
-              scopeName="instance"
-              scopeList={instanceScopeList}
-              setScopeList={setInstanceScopeList}
-            />
-            <RoleScopeCard
-              scopeName="command"
-              scopeList={commandScopeList}
-              setScopeList={setCommandScopeList}
-            />
-          </Dialog>
-          <RoleHeader />
-          <RoleTable />
+          />
         </div>
-      )}
-    </>
+        <div className="flex flex-column gap-2">
+          <label htmlFor="roleDescription" className="font-bold">
+            Description
+          </label>
+          <InputText
+            id="roleDescription"
+            type="text"
+            className="mb-2"
+            value={roleDescription}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setRoleDescription(e.target.value)
+            }
+          />
+        </div>
+        <div className="flex flex-column gap-2">
+          <label htmlFor="rolePermission" className="font-bold">
+            Permission
+          </label>
+          <Dropdown
+            required
+            id="rolePermission"
+            className="mb-2"
+            options={permissions}
+            value={rolePermission}
+            optionLabel="label"
+            placeholder="Select One"
+            onChange={(e) => {
+              setRolePermission(e.value);
+            }}
+          />
+        </div>
+        <Divider />
+        <RoleScopeCard
+          scopeName="garden"
+          scopeList={gardenScopeList}
+          setScopeList={setGardenScopeList}
+        />
+        <RoleScopeCard
+          scopeName="namespace"
+          scopeList={namespaceScopeList}
+          setScopeList={setNamespaceScopeList}
+        />
+        <RoleScopeCard
+          scopeName="system"
+          scopeList={systemScopeList}
+          setScopeList={setSystemScopeList}
+        />
+        <RoleScopeCard
+          scopeName="version"
+          scopeList={versionScopeList}
+          setScopeList={setVersionScopeList}
+        />
+        <RoleScopeCard
+          scopeName="instance"
+          scopeList={instanceScopeList}
+          setScopeList={setInstanceScopeList}
+        />
+        <RoleScopeCard
+          scopeName="command"
+          scopeList={commandScopeList}
+          setScopeList={setCommandScopeList}
+        />
+      </Dialog>
+      <RoleHeader />
+      <RoleTable />
+    </div>
   );
 }
 

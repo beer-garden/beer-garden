@@ -3,11 +3,13 @@ import { Panel } from "primereact/panel";
 function ErrorPage({
   errorCode,
   errorMsg,
+  isCard,
 }: {
   errorCode?: number;
   errorMsg?: string;
+  isCard?: boolean;
 }) {
-  function errorType(errorCode: number) {
+  function errorType(errorCode: number | undefined) {
     switch (errorCode) {
       case 400:
         return "Bad Request";
@@ -22,9 +24,12 @@ function ErrorPage({
 
   return (
     <div>
-      <h1 className="flex m-2">{errorType(errorCode)}</h1>
+      {!isCard && <h1 className="flex m-2">{errorType(errorCode)}</h1>}
       <div className="flex">
-        <Panel header="Details" className="m-2 flex-1">
+        <Panel
+          header={isCard ? errorType(errorCode) : "Details"}
+          className="m-2 flex-1"
+        >
           {errorMsg ? (
             <p className="al">{errorMsg}</p>
           ) : (

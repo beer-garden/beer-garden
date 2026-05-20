@@ -7,11 +7,13 @@ import { Skeleton } from "primereact/skeleton";
 import { SplitButton } from "primereact/splitbutton";
 import { Stepper } from "primereact/stepper";
 import { StepperPanel } from "primereact/stepperpanel";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Toast } from "primereact/toast";
+import { RefObject, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import AccessButton from "../components/AccessButton";
 import CommandForm from "../components/CommandForm";
+import ErrorPage from "../components/ErrorPage";
 import RequestOutput from "../components/RequestOutput";
 import RequestTreeChart from "../components/RequestTreeChart";
 import { Request, System } from "../models/brewtils-types";
@@ -31,7 +33,6 @@ import {
 import { GetSystemList } from "../services/system_service";
 import { GetBaseURL } from "../services/util_service";
 import HttpError from "../types/errors";
-import ErrorPage from "./ErrorPage";
 
 function UnformattedInput(request: Request) {
   return (
@@ -42,34 +43,6 @@ function UnformattedInput(request: Request) {
   );
 }
 
-const handleDownload = (request: Request) => {
-  // Example: fetch a file from a URL
-  const fileUrl = `${GetBaseURL()}/api/v1/requests/output/${request.id}`;
-  let filename = `${request.id}.txt`;
-  if (request.output_type == "HTML") {
-    filename = `${request.id}.html`;
-  } else if (request.output_type == "JSON") {
-    filename = `${request.id}.json`;
-  }
-
-  fetch(fileUrl)
-    .then((response) => response.blob())
-    .then((blob) => {
-      // Create blob link to download
-      const url = window.URL.createObjectURL(new Blob([blob]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", filename); // Set the custom download name
-      document.body.appendChild(link);
-      link.click(); // Trigger the download
-      link?.parentNode?.removeChild(link); // Clean up the link
-      window.URL.revokeObjectURL(url); // Free up the memory
-    })
-    .catch((error) => {
-      console.error("Error fetching the file:", error);
-    });
-};
-
 function RequestOptions({
   request,
   requestProjections,
@@ -78,6 +51,7 @@ function RequestOptions({
   requestProjectionSelectedRef,
   addRequestItem,
   config,
+  toast,
 }: {
   request: Request;
   requestProjections?: RequestCommand[];
@@ -86,6 +60,7 @@ function RequestOptions({
   requestProjectionSelectedRef: React.RefObject<RequestCommand | undefined>;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
   config: Config;
+  toast: RefObject<Toast | null>;
 }) {
   const navigate = useNavigate();
   const items: MenuItem[] = [];
@@ -93,6 +68,39 @@ function RequestOptions({
   const execute_authority = checkPermission(config, "OPERATOR", {
     gardenName: request?.target_garden,
   } as PermissionCheck);
+
+  const handleDownload = (request: Request) => {
+    // Example: fetch a file from a URL
+    const fileUrl = `${GetBaseURL()}/api/v1/requests/output/${request.id}`;
+    let filename = `${request.id}.txt`;
+    if (request.output_type == "HTML") {
+      filename = `${request.id}.html`;
+    } else if (request.output_type == "JSON") {
+      filename = `${request.id}.json`;
+    }
+
+    fetch(fileUrl)
+      .then((response) => response.blob())
+      .then((blob) => {
+        // Create blob link to download
+        const url = window.URL.createObjectURL(new Blob([blob]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", filename); // Set the custom download name
+        document.body.appendChild(link);
+        link.click(); // Trigger the download
+        link?.parentNode?.removeChild(link); // Clean up the link
+        window.URL.revokeObjectURL(url); // Free up the memory
+      })
+      .catch((error) => {
+        toast.current?.show({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching the file: ${error}`,
+          life: 3000,
+        });
+      });
+  };
 
   if (execute_authority) {
     if (
@@ -104,7 +112,12 @@ function RequestOptions({
         icon: <FontAwesomeIcon icon="xmark" />,
         command: () => {
           CancelRequest(request).catch((error) => {
-            console.error("Error canceling request:", error);
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Error canceling request: ${error}`,
+              life: 3000,
+            });
           });
         },
       });
@@ -131,7 +144,12 @@ function RequestOptions({
                 void navigate(`/requests`);
               })
               .catch((error) => {
-                console.error("Error deleting request:", error);
+                toast.current?.show({
+                  severity: "error",
+                  summary: "Error",
+                  detail: `Error deleting request: ${error}`,
+                  life: 3000,
+                });
               });
           },
         });
@@ -265,6 +283,7 @@ function RequestView({
   config: Config;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
+  const toast = useRef<Toast>(null);
   const [error, setError] = useState<HttpError>();
   const { requestId } = useParams<{ requestId: string }>();
   const [request, setRequest] = useState<Request | null>(null);
@@ -324,7 +343,12 @@ function RequestView({
             }
           })
           .catch((error) => {
-            console.error("Error fetching request:", error);
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Error fetching request: ${error}`,
+              life: 3000,
+            });
             setError(error);
           });
       }
@@ -336,7 +360,12 @@ function RequestView({
           requestProjectionSelectedRef.current = projections[0];
         })
         .catch((error) => {
-          console.error("Error fetching request projections:", error);
+          toast.current?.show({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching request projections: ${error}`,
+            life: 3000,
+          });
         });
       if (
         request.status &&
@@ -360,7 +389,12 @@ function RequestView({
               loadRootRequest(root_request);
             })
             .catch((error) => {
-              console.error("Error fetching parent request:", error);
+              toast.current?.show({
+                severity: "error",
+                summary: "Error",
+                detail: `Error fetching parent request: ${error}`,
+                life: 3000,
+              });
             });
         } else {
           setRootRequest(check_request);
@@ -390,7 +424,12 @@ function RequestView({
             }
           })
           .catch((error) => {
-            console.error("Error fetching system list:", error);
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Error fetching system list: ${error}`,
+              life: 3000,
+            });
             setShowCommandForm(true);
           });
       } else if (system.commands) {
@@ -418,9 +457,13 @@ function RequestView({
   return (
     <>
       {error ? (
-        <ErrorPage errorCode={error?.code} errorMsg={error.toString()} />
+        <ErrorPage
+          errorCode={error?.code}
+          errorMsg={`Request ${requestId} was not found`}
+        />
       ) : (
         <div>
+          <Toast ref={toast} />
           {request && <RequestHeader {...request} />}
 
           {rootRequest && (
@@ -464,6 +507,7 @@ function RequestView({
                       <RequestOptions
                         request={request}
                         config={config}
+                        toast={toast}
                         addRequestItem={addRequestItem}
                         requestProjections={requestProjections}
                         requestProjectionSelected={requestProjectionSelected}
@@ -486,6 +530,7 @@ function RequestView({
                       <RequestOptions
                         request={request}
                         config={config}
+                        toast={toast}
                         addRequestItem={addRequestItem}
                         requestProjections={requestProjections}
                         requestProjectionSelected={requestProjectionSelected}
