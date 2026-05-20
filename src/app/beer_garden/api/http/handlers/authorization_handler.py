@@ -56,10 +56,14 @@ class AuthorizationHandler(BaseHandler):
                     raise AuthorizationRequired(reason="Authorization token expired")
             except AuthorizationRequired as e:
                 # Check and see if this has the login request information provided.
-                user = user_login(self.request)
-                if user:
-                    return user
-                raise e
+                try:
+                    user = user_login(self.request)
+                    if user:
+                        return user
+                    else:
+                        raise e
+                except Exception:
+                    raise e
         else:
             return self._anonymous_superuser()
 
