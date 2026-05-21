@@ -1,6 +1,8 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
 import { ConfirmDialog } from "primereact/confirmdialog";
+import { MultiSelect } from "primereact/multiselect";
+import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
 import { Tooltip } from "primereact/tooltip";
 import { Tree } from "primereact/tree";
@@ -47,6 +49,8 @@ function GardenDashboard({
 
   const [selectedGarden, setSelectedGarden] = useState<Garden | undefined>();
   const [selectedSystems, setSelectedSystems] = useState<System[]>([]);
+  const [filteredSystems, setFilteredSystems] = useState<System[]>([]);
+  const [filteredStatuses, setFilteredStatuses] = useState<Array<string>>([]);
   const [unassociatedRunners, setUnassociatedRunners] = useState<RunnerGroup[]>(
     [],
   );
@@ -56,17 +60,63 @@ function GardenDashboard({
 
   const [loading, setLoading] = useState<boolean>(true);
 
+  const instanceStatuses = [
+    "RUNNING",
+    "INITIALIZING",
+    "STARTING",
+    "STOPPING",
+    "AWAITING_SYSTEM",
+    "PAUSED",
+    "STOPPED",
+    "UNRESPONSIVE",
+    "DEAD",
+    "ERROR",
+    "UNKNOWN",
+  ];
+
+  const instanceStatusTemplate = (option: string) => {
+    const statusSeverity = GetSeverity(option);
+
+    return <Tag value={option} severity={statusSeverity} />;
+  };
+
+  const updateFilteredSystems = () => {
+    if (selectedGardenRef?.current) {
+      const matchedSystems = getSelectedSystems(selectedGardenRef?.current);
+      setFilteredSystems(
+        matchedSystems.filter(
+          (system) =>
+            filteredStatuses.length === 0 ||
+            !system.instances ||
+            system.instances.length === 0 ||
+            system.instances.some(
+              (instance) =>
+                instance.status && filteredStatuses.includes(instance.status),
+            ),
+        ),
+      );
+    } else {
+      setFilteredSystems([]);
+    }
+  };
+
   const updateSelectedGarden = (garden?: Garden) => {
     if (garden) {
+      if (garden.name !== selectedGardenRef.current?.name) {
+        setFilteredStatuses([]);
+        setSelectedGarden({ ...garden });
+        selectedGardenRef.current = { ...garden };
+      }
       const matchedSystems = getSelectedSystems(garden);
       setSelectedSystems(matchedSystems);
-      setSelectedGarden({ ...garden });
-      selectedGardenRef.current = { ...garden };
+      updateFilteredSystems();
       setUnassociatedRunners(getUnassociatedRunners());
     } else {
       selectedGardenRef.current = undefined;
+      console.log("Updating selected garden");
       setSelectedGarden(undefined);
       setSelectedSystems([]);
+      updateFilteredSystems();
     }
   };
 
@@ -116,78 +166,7 @@ function GardenDashboard({
     return [];
   };
 
-  useEffect(() => {
-    const MonitorRunners = (message: any) => {
-      if (message.payload_type === "Runner") {
-        if (message.name === "RUNNER_REMOVED") {
-          if (associatedRunnersRef.current) {
-            associatedRunnersRef.current = associatedRunnersRef.current.filter(
-              (runner) => runner.id !== message.payload.id,
-            );
-            setAssociatedRunners(associatedRunnersRef.current);
-          }
-        } else {
-          if (associatedRunnersRef.current) {
-            if (
-              associatedRunnersRef.current.some(
-                (runner) => runner.id === message.payload.id,
-              )
-            ) {
-              associatedRunnersRef.current = associatedRunnersRef.current.map(
-                (runner) => {
-                  if (runner.id === message.payload.id) {
-                    return message.payload;
-                  }
-                  return runner;
-                },
-              );
-              setAssociatedRunners(associatedRunnersRef.current);
-            } else {
-              associatedRunnersRef.current = [
-                ...associatedRunnersRef.current,
-                message.payload,
-              ];
-              setAssociatedRunners(associatedRunnersRef.current);
-            }
-          } else {
-            associatedRunnersRef.current = [message.payload];
-            setAssociatedRunners(associatedRunnersRef.current);
-          }
-        }
-      }
-      getUnassociatedRunners();
-    };
-
-    listeners["dashboard"] = {
-      listener: MonitorRunners,
-    };
-
-    return () => {
-      delete listeners["dashboard"];
-    };
-  });
-
-  useEffect(() => {
-    if (associatedRunnersRef.current === undefined) {
-      GetRunnerList()
-        .then((runners) => {
-          associatedRunnersRef.current = runners;
-          setAssociatedRunners(associatedRunnersRef.current);
-          setUnassociatedRunners(getUnassociatedRunners());
-        })
-        .catch((error) => {
-          toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: `Error loading runners: ${error}`,
-            life: 3000,
-          });
-        });
-    } else {
-      getUnassociatedRunners();
-    }
-  }, [selectedSystems]);
-
+  // Root Level Updates
   useEffect(() => {
     if (gardenRef?.current) {
       setGardenMenu([generateMenu(gardenRef.current, systemsRef.current)]);
@@ -224,8 +203,13 @@ function GardenDashboard({
       updateSelectedGarden(undefined);
     }
 
-    getUnassociatedRunners();
-  }, [gardenState, systemState]);
+    if (associatedRunnersRef.current) {
+      setUnassociatedRunners(getUnassociatedRunners());
+    }
+    if (selectedSystems) {
+      updateFilteredSystems();
+    }
+  }, [gardenState, systemState, filteredStatuses, selectedGarden]);
 
   const getSelectedSystems = (garden: Garden): System[] => {
     if (systemsRef.current && systemsRef.current.length > 0) {
@@ -483,10 +467,68 @@ function GardenDashboard({
     pos: 0,
   };
 
+  // Sets up one time run values
   useEffect(() => {
     AddTourStep(tourStepsRef, gardenTreeTourStep);
+
+    const MonitorRunners = (message: any) => {
+      if (message.payload_type === "Runner") {
+        if (message.name === "RUNNER_REMOVED") {
+          if (associatedRunnersRef.current) {
+            associatedRunnersRef.current = associatedRunnersRef.current.filter(
+              (runner) => runner.id !== message.payload.id,
+            );
+            setAssociatedRunners(associatedRunnersRef.current);
+          }
+        } else {
+          if (associatedRunnersRef.current) {
+            if (
+              associatedRunnersRef.current.some(
+                (runner) => runner.id === message.payload.id,
+              )
+            ) {
+              associatedRunnersRef.current = associatedRunnersRef.current.map(
+                (runner) => {
+                  if (runner.id === message.payload.id) {
+                    return message.payload;
+                  }
+                  return runner;
+                },
+              );
+              setAssociatedRunners(associatedRunnersRef.current);
+            } else {
+              associatedRunnersRef.current = [
+                ...associatedRunnersRef.current,
+                message.payload,
+              ];
+              setAssociatedRunners(associatedRunnersRef.current);
+            }
+          } else {
+            associatedRunnersRef.current = [message.payload];
+            setAssociatedRunners(associatedRunnersRef.current);
+          }
+        }
+      }
+      setUnassociatedRunners(getUnassociatedRunners());
+    };
+
+    listeners["dashboard"] = {
+      listener: MonitorRunners,
+    };
+
+    if (associatedRunnersRef.current === undefined) {
+      GetRunnerList()
+        .then((runners) => {
+          associatedRunnersRef.current = runners;
+          setAssociatedRunners(associatedRunnersRef.current);
+          setUnassociatedRunners(getUnassociatedRunners());
+        })
+        .catch((error) => console.error("Error loading runners", error));
+    }
+
     return () => {
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+      delete listeners["dashboard"];
     };
   }, []);
 
@@ -546,6 +588,16 @@ function GardenDashboard({
             selectedSystems={selectedSystems}
           />
 
+          <MultiSelect
+            value={filteredStatuses}
+            onChange={(e) => setFilteredStatuses(e.value)}
+            options={instanceStatuses}
+            itemTemplate={instanceStatusTemplate}
+            placeholder="Filter by Instance Status"
+            className="mb-3"
+            filter
+          />
+
           <div className="flex justify-content-left">
             <div className="grid grid-nogutter gap-2">
               {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
@@ -561,7 +613,7 @@ function GardenDashboard({
                   />
                 </div>
               ))}
-              {selectedSystems?.map((system: System) => (
+              {filteredSystems?.map((system: System) => (
                 <div
                   key={system.id}
                   className="mr-2 mb-2"
