@@ -241,7 +241,8 @@ function RequestWizard({
 
   useEffect(() => {
     if (selectedSystem) {
-      setRequest({
+      setRequest(({
+        ...request,
         namespace: selectedSystem?.namespace,
         system: selectedSystem?.name,
         system_version: selectedSystem?.version,
@@ -265,10 +266,8 @@ function RequestWizard({
 
   useEffect(() => {
     if (selectedInstance) {
-      setRequest({
-        namespace: selectedSystem?.namespace,
-        system: selectedSystem?.name,
-        system_version: selectedSystem?.version,
+      setRequest(({
+        ...request,
         instance_name: selectedInstance?.name,
       });
     }
@@ -276,11 +275,8 @@ function RequestWizard({
 
   useEffect(() => {
     if (selectedCommand) {
-      setRequest({
-        namespace: selectedSystem?.namespace,
-        system: selectedSystem?.name,
-        system_version: selectedSystem?.version,
-        instance_name: selectedInstance?.name,
+      setRequest(({
+        ...request,
         command: selectedCommand?.name,
       });
     }
@@ -303,7 +299,7 @@ function RequestWizard({
             responseRequest.command_display_name,
           );
 
-          setRequest({
+          setRequest(({
             ...request,
             namespace: responseRequest.namespace,
             system: responseRequest.system,
@@ -311,7 +307,9 @@ function RequestWizard({
             instance_name: responseRequest.instance_name,
             command_display_name: responseRequest.command_display_name,
             parameters: responseRequest.parameters,
-          });
+            command_type: responseRequest.command_type,
+            comment: responseRequest.comment,
+          }));
           updateRequestValue({
             namespace: responseRequest.namespace,
             system: responseRequest.system,
@@ -319,6 +317,8 @@ function RequestWizard({
             instance_name: responseRequest.instance_name,
             command: responseRequest.command,
             parameters: responseRequest.parameters,
+            command_type: responseRequest.command_type,
+            comment: responseRequest.comment,
           });
           updateRequestCommand({
             namespace: responseRequest?.namespace ?? undefined,
@@ -348,6 +348,27 @@ function RequestWizard({
           );
 
           updateJobValue(responseJob);
+          setRequest(({
+            ...request,
+            namespace: responseJob?.request_template?.namespace,
+            system: responseJob?.request_template?.system,
+            system_version: responseJob?.request_template?.system_version,
+            instance_name: responseJob?.request_template?.instance_name,
+            command: responseJob?.request_template?.command,
+            parameters: responseJob?.request_template?.parameters,
+            command_type: responseJob?.request_template?.command_type,
+            comment: responseJob?.request_template?.comment,
+          }));
+          updateRequestValue({
+            namespace: responseJob?.request_template?.namespace,
+            system: responseJob?.request_template?.system,
+            system_version: responseJob?.request_template?.system_version,
+            instance_name: responseJob?.request_template?.instance_name,
+            command: responseJob?.request_template?.command,
+            parameters: responseJob?.request_template?.parameters,
+            command_type: responseJob?.request_template?.command_type,
+            comment: responseJob?.request_template?.comment,
+          });
           updateRequestCommand({
             namespace: responseJob?.request_template?.namespace ?? undefined,
             systemName: responseJob?.request_template?.system ?? undefined,
@@ -370,6 +391,27 @@ function RequestWizard({
         job.request_template?.command_display_name,
       );
       updateJobValue(job);
+      setRequest(({
+        ...request,
+        namespace: job.request_template?.namespace,
+        system: job.request_template?.system,
+        system_version: job.request_template?.system_version,
+        instance_name: job.request_template?.instance_name,
+        command: job.request_template?.command,
+        parameters: job.request_template?.parameters,
+        command_type: job.request_template?.command_type,
+        comment: job.request_template?.comment,
+      }));
+      updateRequestValue({
+        namespace: job.request_template?.namespace,
+        system: job.request_template?.system,
+        system_version: job.request_template?.system_version,
+        instance_name: job.request_template?.instance_name,
+        command: job.request_template?.command,
+        parameters: job.request_template?.parameters,
+        command_type: job.request_template?.command_type,
+        comment: job.request_template?.comment,
+      });
       updateRequestCommand({
         namespace: job.request_template?.namespace ?? undefined,
         systemName: job.request_template?.system ?? undefined,

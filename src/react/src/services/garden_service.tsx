@@ -2,6 +2,7 @@ import { Garden, Patch } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { GetAuthHeaders } from "./token_service";
 import { GetBaseURL } from "./util_service";
+
 export const GetGarden = async (
   garden_name: string,
   headerData?: any,

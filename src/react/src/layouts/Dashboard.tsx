@@ -175,7 +175,14 @@ function GardenDashboard({
           setAssociatedRunners(associatedRunnersRef.current);
           setUnassociatedRunners(getUnassociatedRunners());
         })
-        .catch((error) => console.error("Error loading runners", error));
+        .catch((error) => {
+          toast.current?.show({
+            severity: "error",
+            summary: "Error",
+            detail: `Error loading runners: ${error}`,
+            life: 3000,
+          });
+        });
     } else {
       getUnassociatedRunners();
     }
@@ -500,73 +507,78 @@ function GardenDashboard({
   };
 
   return (
-    <div className="grid h-screen">
+    <div>
       <Toast ref={toast} />
       <ConfirmDialog />
       {/* LEFT NAV TREE */}
-      <div className="col-2 surface-border p-3">
-        <Tree
-          {...GenerateTourProps(gardenTreeTourStep)}
-          loading={loading}
-          value={gardenMenu}
-          emptyMessage={"No gardens found"}
-          nodeTemplate={gardenTreeNode}
-          selectionMode="single"
-          selectionKeys={selectedKey}
-          onSelectionChange={(e) => {
-            setSelectedKey(e.value);
-            if (typeof e.value === "string") {
-              findSelectedGarden(e.value);
-            }
-          }}
-          togglerTemplate={<></>}
-        />
-      </div>
+      <div className="flex flex-wrap">
+        <div
+          style={{ width: "16%", minWidth: "250px" }}
+          className="surface-border p-3"
+        >
+          <Tree
+            {...GenerateTourProps(gardenTreeTourStep)}
+            loading={loading}
+            value={gardenMenu}
+            emptyMessage={"No gardens found"}
+            nodeTemplate={gardenTreeNode}
+            selectionMode="single"
+            selectionKeys={selectedKey}
+            onSelectionChange={(e) => {
+              setSelectedKey(e.value);
+              if (typeof e.value === "string") {
+                findSelectedGarden(e.value);
+              }
+            }}
+            togglerTemplate={<></>}
+          />
+        </div>
 
-      {/* MAIN WORKSPACE */}
-      <div className="col-10">
-        {/* Garden Summary */}
-        <GardenSummary
-          gardenRef={gardenRef}
-          selectedGarden={selectedGarden}
-          config={config}
-          tourStepsRef={tourStepsRef}
-          associatedRunners={associatedRunnersRef}
-          selectedSystems={selectedSystems}
-        />
+        {/* MAIN WORKSPACE */}
+        <div style={{ width: "84%", minWidth: "250px" }}>
+          {/* Garden Summary */}
+          <GardenSummary
+            gardenRef={gardenRef}
+            selectedGarden={selectedGarden}
+            config={config}
+            tourStepsRef={tourStepsRef}
+            associatedRunners={associatedRunnersRef}
+            selectedSystems={selectedSystems}
+          />
 
-        <div className="flex justify-content-left">
-          <div className="grid grid-nogutter gap-2">
-            {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
-              <div
-                key={runnerGroup.path}
-                className="mb-4 mr-2"
-                style={{ width: "26.5vw", minWidth: "250px" }}
-              >
-                <UnassociatedRunnerCard
-                  runnerGroup={runnerGroup}
-                  toast={toast}
-                  config={config}
-                />
-              </div>
-            ))}
-            {selectedSystems?.map((system: System) => (
-              <div
-                key={system.id}
-                className="mr-2 mb-2"
-                style={{ width: "26.5vw", minWidth: "250px" }}
-              >
-                <SystemCard
-                  system={system}
-                  toast={toast}
-                  tourStepsRef={tourStepsRef}
-                  selectedGarden={selectedGarden?.name}
-                  addRequestItem={addRequestItem}
-                  config={config}
-                  associatedRunners={associatedRunners}
-                />
-              </div>
-            ))}
+          <div className="flex justify-content-left">
+            <div className="grid grid-nogutter gap-2">
+              {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
+                <div
+                  key={runnerGroup.path}
+                  className="mb-4 mr-2"
+                  style={{ width: "26.5vw", minWidth: "250px" }}
+                >
+                  <UnassociatedRunnerCard
+                    runnerGroup={runnerGroup}
+                    toast={toast}
+                    config={config}
+                  />
+                </div>
+              ))}
+              {selectedSystems?.map((system: System) => (
+                <div
+                  key={system.id}
+                  className="mr-2 mb-2"
+                  style={{ width: "26.5vw", minWidth: "250px" }}
+                >
+                  <SystemCard
+                    system={system}
+                    toast={toast}
+                    tourStepsRef={tourStepsRef}
+                    selectedGarden={selectedGarden?.name}
+                    addRequestItem={addRequestItem}
+                    config={config}
+                    associatedRunners={associatedRunners}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

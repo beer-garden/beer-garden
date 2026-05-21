@@ -147,7 +147,6 @@ export const GenerateStatusCounts = (
   garden: Garden,
   systems: System[] | undefined,
 ) => {
-
   // Pre Sort statuses to ensure consistent ordering in the UI
   const statusCounts = new Map([
     // Severity success
@@ -220,4 +219,16 @@ export const GenerateStatusCounts = (
   }
 
   return statusCounts;
+};
+
+export const getErrorCode = (errorMsg: string) => {
+  if (errorMsg) {
+    const regex = /HTTP error: Status (\d+)/;
+    if (regex.test(errorMsg)) {
+      const match = errorMsg.match(regex);
+      if (match) {
+        return parseInt(match[1]);
+      }
+    }
+  }
 };

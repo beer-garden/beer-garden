@@ -6,6 +6,7 @@ import { Column } from "primereact/column";
 import { DataTable, SortOrder } from "primereact/datatable";
 import { Divider } from "primereact/divider";
 import { MultiSelect } from "primereact/multiselect";
+import { Toast } from "primereact/toast";
 import { Tooltip } from "primereact/tooltip";
 import {
   RefObject,
@@ -48,6 +49,7 @@ function RequestIndex({
 }) {
   const [requests, setRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
+  const toast = useRef<Toast>(null);
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [filteredRecords, setFilteredRecords] = useState<number>(0);
@@ -294,8 +296,13 @@ function RequestIndex({
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Error fetching request list:", error);
         setLoading(false);
+        toast.current?.show({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching request list: ${error}`,
+          life: 3000,
+        });
       });
   }, [lazyParams, filters, showHidden, showChildren]);
 
@@ -585,6 +592,7 @@ function RequestIndex({
 
   return (
     <div>
+      <Toast ref={toast} />
       <DataTable
         value={requests}
         loading={loading}
