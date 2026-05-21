@@ -203,7 +203,7 @@ function RequestCreateCard({
       GetJob(requestItem.jobId, {})
         .then((responseJob) => {
           updateJobValue(responseJob);
-          setRequest(({
+          setRequest({
             ...request,
             namespace: responseJob?.request_template?.namespace,
             system: responseJob?.request_template?.system,
@@ -213,7 +213,7 @@ function RequestCreateCard({
             parameters: responseJob?.request_template?.parameters,
             command_type: responseJob?.request_template?.command_type,
             comment: responseJob?.request_template?.comment,
-          }));
+          });
           updateRequestValue({
             namespace: responseJob?.request_template?.namespace,
             system: responseJob?.request_template?.system,
