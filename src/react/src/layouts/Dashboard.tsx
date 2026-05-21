@@ -103,15 +103,14 @@ function GardenDashboard({
   const updateSelectedGarden = (garden?: Garden) => {
     if (garden) {
       if (garden.name !== selectedGardenRef.current?.name) {
-        setFilteredStatuses([]);   
+        setFilteredStatuses([]);
         setSelectedGarden({ ...garden });
-        selectedGardenRef.current = { ...garden };       
-      } 
-        const matchedSystems = getSelectedSystems(garden);
-        setSelectedSystems(matchedSystems);
-        updateFilteredSystems();
-        setUnassociatedRunners(getUnassociatedRunners());
-      
+        selectedGardenRef.current = { ...garden };
+      }
+      const matchedSystems = getSelectedSystems(garden);
+      setSelectedSystems(matchedSystems);
+      updateFilteredSystems();
+      setUnassociatedRunners(getUnassociatedRunners());
     } else {
       selectedGardenRef.current = undefined;
       console.log("Updating selected garden");
@@ -210,9 +209,6 @@ function GardenDashboard({
     if (selectedSystems) {
       updateFilteredSystems();
     }
-
-    
-    
   }, [gardenState, systemState, filteredStatuses, selectedGarden]);
 
   const getSelectedSystems = (garden: Garden): System[] => {
@@ -593,14 +589,14 @@ function GardenDashboard({
           />
 
           <MultiSelect
-          value={filteredStatuses}
-          onChange={(e) => setFilteredStatuses(e.value)}
-          options={instanceStatuses}
-          itemTemplate={instanceStatusTemplate}
-          placeholder="Filter by Instance Status"
-          className="mb-3"
-          filter
-        />
+            value={filteredStatuses}
+            onChange={(e) => setFilteredStatuses(e.value)}
+            options={instanceStatuses}
+            itemTemplate={instanceStatusTemplate}
+            placeholder="Filter by Instance Status"
+            className="mb-3"
+            filter
+          />
 
           <div className="flex justify-content-left">
             <div className="grid grid-nogutter gap-2">

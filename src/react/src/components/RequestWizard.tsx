@@ -241,12 +241,12 @@ function RequestWizard({
 
   useEffect(() => {
     if (selectedSystem) {
-      setRequest(({
+      setRequest({
         ...request,
         namespace: selectedSystem?.namespace,
         system: selectedSystem?.name,
         system_version: selectedSystem?.version,
-      }));
+      });
       if (selectedSystem.instances) {
         selectedSystem.instances.forEach((instance: Instance) => {
           if (instance.name && !instanceList.includes(instance)) {
@@ -266,19 +266,19 @@ function RequestWizard({
 
   useEffect(() => {
     if (selectedInstance) {
-      setRequest(({
+      setRequest({
         ...request,
         instance_name: selectedInstance?.name,
-      }));
+      });
     }
   }, [selectedInstance, setSelectedInstance]);
 
   useEffect(() => {
     if (selectedCommand) {
-      setRequest(({
+      setRequest({
         ...request,
         command: selectedCommand?.name,
-      }));
+      });
     }
   }, [selectedCommand]);
 
@@ -299,7 +299,7 @@ function RequestWizard({
             responseRequest.command_display_name,
           );
 
-          setRequest(({
+          setRequest({
             ...request,
             namespace: responseRequest.namespace,
             system: responseRequest.system,
@@ -309,7 +309,7 @@ function RequestWizard({
             parameters: responseRequest.parameters,
             command_type: responseRequest.command_type,
             comment: responseRequest.comment,
-          }));
+          });
           updateRequestValue({
             namespace: responseRequest.namespace,
             system: responseRequest.system,
@@ -348,7 +348,7 @@ function RequestWizard({
           );
 
           updateJobValue(responseJob);
-          setRequest(({
+          setRequest({
             ...request,
             namespace: responseJob?.request_template?.namespace,
             system: responseJob?.request_template?.system,
@@ -358,7 +358,7 @@ function RequestWizard({
             parameters: responseJob?.request_template?.parameters,
             command_type: responseJob?.request_template?.command_type,
             comment: responseJob?.request_template?.comment,
-          }));
+          });
           updateRequestValue({
             namespace: responseJob?.request_template?.namespace,
             system: responseJob?.request_template?.system,
@@ -391,7 +391,7 @@ function RequestWizard({
         job.request_template?.command_display_name,
       );
       updateJobValue(job);
-      setRequest(({
+      setRequest({
         ...request,
         namespace: job.request_template?.namespace,
         system: job.request_template?.system,
@@ -401,7 +401,7 @@ function RequestWizard({
         parameters: job.request_template?.parameters,
         command_type: job.request_template?.command_type,
         comment: job.request_template?.comment,
-      }));
+      });
       updateRequestValue({
         namespace: job.request_template?.namespace,
         system: job.request_template?.system,
