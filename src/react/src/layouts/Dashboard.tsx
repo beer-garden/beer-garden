@@ -80,6 +80,26 @@ function GardenDashboard({
     return <Tag value={option} severity={statusSeverity} />;
   };
 
+  const updateFilteredSystems = () => {
+    if (selectedGardenRef?.current) {
+      const matchedSystems = getSelectedSystems(selectedGardenRef?.current);
+      setFilteredSystems(
+        matchedSystems.filter(
+          (system) =>
+            filteredStatuses.length === 0 ||
+            !system.instances ||
+            system.instances.length === 0 ||
+            system.instances.some(
+              (instance) =>
+                instance.status && filteredStatuses.includes(instance.status),
+            ),
+        ),
+      );
+    } else {
+      setFilteredSystems([]);
+    }
+  };
+
   const updateSelectedGarden = (garden?: Garden) => {
     if (garden) {
       if (garden.name !== selectedGardenRef.current?.name) {
@@ -89,11 +109,13 @@ function GardenDashboard({
         setSelectedGarden({ ...garden });
         selectedGardenRef.current = { ...garden };
         setUnassociatedRunners(getUnassociatedRunners());
+        updateFilteredSystems();
       }
     } else {
       selectedGardenRef.current = undefined;
       setSelectedGarden(undefined);
       setSelectedSystems([]);
+      updateFilteredSystems();
     }
   };
 
@@ -206,19 +228,8 @@ function GardenDashboard({
     } else {
       getUnassociatedRunners();
     }
-    setFilteredSystems(
-      selectedSystems.filter(
-        (system) =>
-          filteredStatuses.length === 0 ||
-          !system.instances ||
-          system.instances.length === 0 ||
-          system.instances.some(
-            (instance) =>
-              instance.status && filteredStatuses.includes(instance.status),
-          ),
-      ),
-    );
-  }, [selectedSystems, filteredStatuses]);
+    updateFilteredSystems();
+  }, [systemState, filteredStatuses]);
 
   useEffect(() => {
     if (gardenRef?.current) {
@@ -565,6 +576,7 @@ function GardenDashboard({
       {/* MAIN WORKSPACE */}
       <div className="col-10">
         {/* Garden Summary */}
+        (
         <GardenSummary
           gardenRef={gardenRef}
           selectedGarden={selectedGarden}
@@ -573,7 +585,7 @@ function GardenDashboard({
           associatedRunners={associatedRunnersRef}
           selectedSystems={selectedSystems}
         />
-
+        )
         <MultiSelect
           value={filteredStatuses}
           onChange={(e) => setFilteredStatuses(e.value)}
