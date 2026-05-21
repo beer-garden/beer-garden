@@ -500,13 +500,13 @@ function GardenDashboard({
   };
 
   return (
-    <div className="grid h-screen">
+    <div>
       <Toast ref={toast} />
       <ConfirmDialog />
       {/* LEFT NAV TREE */}
-      <div className="flex">
+      <div className="flex flex-wrap">
         <div
-          style={{ width: "16vw", minWidth: "250px" }}
+          style={{ width: "16%", minWidth: "250px" }}
           className="surface-border p-3"
         >
           <Tree
@@ -528,7 +528,7 @@ function GardenDashboard({
         </div>
 
         {/* MAIN WORKSPACE */}
-        <div style={{ width: "82vw", minWidth: "250px" }}>
+        <div style={{ width: "84%", minWidth: "250px" }}>
           {/* Garden Summary */}
           <GardenSummary
             gardenRef={gardenRef}
