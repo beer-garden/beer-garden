@@ -6,10 +6,12 @@ import "./App.css";
 import { PrimeReactProvider } from "primereact/api";
 import { Dialog } from "primereact/dialog";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import { ACTIONS, type EventData, Joyride, STATUS } from "react-joyride";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
+import ErrorPage from "./components/ErrorPage";
 import NavigationMenu from "./components/Navigation";
 import RequestItemCard from "./components/RequestItemCard";
 import AboutIndex from "./layouts/AboutIndex";
@@ -418,6 +420,14 @@ function App() {
     }
   };
 
+  function ErrorFallback({ error }: { error: unknown }) {
+    let errorMsg = "";
+    if (error instanceof Error) {
+      errorMsg = error.toString();
+    }
+    return <ErrorPage errorMsg={errorMsg} />;
+  }
+
   return (
     <PrimeReactProvider value={primeValue}>
       <div className="flex">
@@ -466,10 +476,9 @@ function App() {
                     removeItem={() => {
                       setRequestItem(undefined);
                     }}
-                    updateRequestItem={setRequestItem}
+                    updateRequestItem={addRequestItem}
                     requestItem={requestItem}
                     listeners={listeners}
-                    addItem={addRequestItem}
                     config={config}
                     isDialog={true}
                   />
@@ -477,158 +486,164 @@ function App() {
               </Dialog>
             )}
             <div className="flex-grow-1" key={reloadUI} role="main">
-              <Routes>
-                <Route
-                  path="/dashboard"
-                  element={
-                    <GardenDashboard
-                      tourStepsRef={tourStepsRef}
-                      gardenRef={rootGardenRef}
-                      systemsRef={systemsRef}
-                      gardenState={gardenState}
-                      systemState={systemState}
-                      addRequestItem={addRequestItem}
-                      config={config}
-                      listeners={listeners.current}
-                    />
-                  }
-                />
-                <Route
-                  path="/request/:requestId"
-                  element={
-                    <RequestView
-                      listeners={listeners.current}
-                      config={config}
-                      addRequestItem={addRequestItem}
-                    />
-                  }
-                />
-                <Route
-                  path="/requests"
-                  element={
-                    <RequestIndex
-                      listeners={listeners.current}
-                      tourStepsRef={tourStepsRef}
-                      addRequestItem={addRequestItem}
-                    />
-                  }
-                />
-                <Route
-                  path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
-                  element={
-                    <Workspace
-                      listeners={listeners.current}
-                      display={false}
-                      tourStepsRef={tourStepsRef}
-                      config={config}
-                    />
-                  }
-                />
-                <Route
-                  path="/recreate/:requestId"
-                  element={
-                    <Workspace
-                      listeners={listeners.current}
-                      display={false}
-                      tourStepsRef={tourStepsRef}
-                      config={config}
-                    />
-                  }
-                />
-                <Route
-                  path="/workspace"
-                  element={
-                    <Workspace
-                      listeners={listeners.current}
-                      tourStepsRef={tourStepsRef}
-                      config={config}
-                    />
-                  }
-                />
-                <Route
-                  path="/workspace/request/:requestId"
-                  element={
-                    <Workspace
-                      listeners={listeners.current}
-                      display={true}
-                      tourStepsRef={tourStepsRef}
-                      config={config}
-                    />
-                  }
-                />
-                <Route
-                  path="/workspace/job/:jobId"
-                  element={
-                    <Workspace
-                      listeners={listeners.current}
-                      display={true}
-                      tourStepsRef={tourStepsRef}
-                      config={config}
-                    />
-                  }
-                />
-                <Route
-                  path="/jobs"
-                  element={
-                    <JobIndex
-                      listeners={listeners.current}
-                      tourStepsRef={tourStepsRef}
-                      addRequestItem={addRequestItem}
-                      config={config}
-                    />
-                  }
-                />
-                <Route
-                  path="/job/:jobId"
-                  element={
-                    <Workspace
-                      listeners={listeners.current}
-                      display={false}
-                      tourStepsRef={tourStepsRef}
-                      config={config}
-                    />
-                  }
-                />
-                <Route path="/about" element={<AboutIndex config={config} />} />
-                <Route
-                  path="/roles"
-                  element={
-                    <RoleIndex config={config} tourStepsRef={tourStepsRef} />
-                  }
-                />
-                <Route
-                  path="/topics"
-                  element={
-                    <TopicIndex
-                      config={config}
-                      listeners={listeners}
-                      addRequestItem={addRequestItem}
-                    />
-                  }
-                />
-                <Route
-                  path="/users"
-                  element={
-                    <UserIndex config={config} tourStepsRef={tourStepsRef} />
-                  }
-                />
-                <Route path="/swagger" element={<Swagger />} />
-                <Route
-                  path="/"
-                  element={
-                    <GardenDashboard
-                      tourStepsRef={tourStepsRef}
-                      gardenRef={rootGardenRef}
-                      systemsRef={systemsRef}
-                      gardenState={gardenState}
-                      systemState={systemState}
-                      addRequestItem={addRequestItem}
-                      config={config}
-                      listeners={listeners.current}
-                    />
-                  }
-                />
-              </Routes>
+              <ErrorBoundary FallbackComponent={ErrorFallback}>
+                <Routes>
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <GardenDashboard
+                        tourStepsRef={tourStepsRef}
+                        gardenRef={rootGardenRef}
+                        systemsRef={systemsRef}
+                        gardenState={gardenState}
+                        systemState={systemState}
+                        addRequestItem={addRequestItem}
+                        config={config}
+                        listeners={listeners.current}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/request/:requestId"
+                    element={
+                      <RequestView
+                        listeners={listeners.current}
+                        config={config}
+                        addRequestItem={addRequestItem}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/requests"
+                    element={
+                      <RequestIndex
+                        listeners={listeners.current}
+                        tourStepsRef={tourStepsRef}
+                        addRequestItem={addRequestItem}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
+                    element={
+                      <Workspace
+                        listeners={listeners.current}
+                        display={false}
+                        tourStepsRef={tourStepsRef}
+                        config={config}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/recreate/:requestId"
+                    element={
+                      <Workspace
+                        listeners={listeners.current}
+                        display={false}
+                        tourStepsRef={tourStepsRef}
+                        config={config}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/workspace"
+                    element={
+                      <Workspace
+                        listeners={listeners.current}
+                        tourStepsRef={tourStepsRef}
+                        config={config}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/workspace/request/:requestId"
+                    element={
+                      <Workspace
+                        listeners={listeners.current}
+                        display={true}
+                        tourStepsRef={tourStepsRef}
+                        config={config}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/workspace/job/:jobId"
+                    element={
+                      <Workspace
+                        listeners={listeners.current}
+                        display={true}
+                        tourStepsRef={tourStepsRef}
+                        config={config}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/jobs"
+                    element={
+                      <JobIndex
+                        listeners={listeners.current}
+                        tourStepsRef={tourStepsRef}
+                        addRequestItem={addRequestItem}
+                        config={config}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/job/:jobId"
+                    element={
+                      <Workspace
+                        listeners={listeners.current}
+                        display={false}
+                        tourStepsRef={tourStepsRef}
+                        config={config}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/about"
+                    element={<AboutIndex config={config} />}
+                  />
+                  <Route
+                    path="/roles"
+                    element={
+                      <RoleIndex config={config} tourStepsRef={tourStepsRef} />
+                    }
+                  />
+                  <Route
+                    path="/topics"
+                    element={
+                      <TopicIndex
+                        config={config}
+                        listeners={listeners}
+                        addRequestItem={addRequestItem}
+                      />
+                    }
+                  />
+                  <Route
+                    path="/users"
+                    element={
+                      <UserIndex config={config} tourStepsRef={tourStepsRef} />
+                    }
+                  />
+                  <Route path="/swagger" element={<Swagger />} />
+                  <Route
+                    path="/"
+                    element={
+                      <GardenDashboard
+                        tourStepsRef={tourStepsRef}
+                        gardenRef={rootGardenRef}
+                        systemsRef={systemsRef}
+                        gardenState={gardenState}
+                        systemState={systemState}
+                        addRequestItem={addRequestItem}
+                        config={config}
+                        listeners={listeners.current}
+                      />
+                    }
+                  />
+                  <Route path="*" element={<ErrorPage errorCode={404} />} />
+                </Routes>
+              </ErrorBoundary>
             </div>
           </BrowserRouter>
         </div>

@@ -137,8 +137,13 @@ function RoleIndex({
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Error fetching roles:", error);
         setLoading(false);
+        toast.current?.show({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching roles: ${error}`,
+          life: 3000,
+        });
       });
   }, [roles]);
 
@@ -215,7 +220,12 @@ function RoleIndex({
             });
           })
           .catch((error) => {
-            console.error("Error editing the role:", error);
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Error editing the role: ${error}`,
+              life: 3000,
+            });
           });
       } else {
         // Create new role
@@ -232,7 +242,12 @@ function RoleIndex({
             });
           })
           .catch((error) => {
-            console.error("Error creating the role:", error);
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Error creating the role: ${error}`,
+              life: 3000,
+            });
           });
       }
       setRoleName("");
@@ -273,7 +288,12 @@ function RoleIndex({
           });
         })
         .catch((error) => {
-          console.error("Error deleting system:", error);
+          toast.current?.show({
+            severity: "error",
+            summary: "Error",
+            detail: `Error rescanning roles: ${error}`,
+            life: 3000,
+          });
         });
     }
     function openRoleDialog() {
@@ -324,7 +344,12 @@ function RoleIndex({
             });
           })
           .catch((error) => {
-            console.error("Error deleting the role:", error);
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Error deleting the role: ${error}`,
+              life: 3000,
+            });
           });
       }
     }

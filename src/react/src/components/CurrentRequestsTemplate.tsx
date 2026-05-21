@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { Request } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { DeleteRequest, GetRequestList } from "../services/request_service";
+import { GetCurrentUser } from "../services/user_service";
 import AccessButton from "./AccessButton";
 
 function CurrentRequestsTemplate({
@@ -48,10 +49,17 @@ function CurrentRequestsTemplate({
 
   const getCurrentRequests = useCallback(() => {
     const sessionUUID = localStorage.getItem("sessionUUID");
+    const username =
+      config?.auth_enabled === true ? GetCurrentUser() : undefined;
 
-    if (sessionUUID) {
+    if (config?.auth_enabled === true && !username) {
+      setAllRequests([] as Array<Request>);
+      return;
+    }
+
+    if (sessionUUID || username) {
       const filterQuery: Record<string, any> = {};
-      if (config?.auth_enabled === true) {
+      if (config?.auth_enabled === true && username) {
         filterQuery["include"] = [
           "id",
           "status",
@@ -63,21 +71,35 @@ function CurrentRequestsTemplate({
           "instance_name",
           "system_version",
         ];
-      } else {
+        filterQuery["query"] = [
+          JSON.stringify({
+            field_name: "requester",
+            modifier: "",
+            value: username,
+          }),
+        ];
+      } else if (sessionUUID) {
         filterQuery["include"] = ["id", "status", "command", "updated_at"];
+        filterQuery["query"] = [
+          JSON.stringify({
+            field_name: "metadata__sessionUUID",
+            modifier: "",
+            value: sessionUUID,
+          }),
+        ];
+      } else {
+        setAllRequests([] as Array<Request>);
+        return;
       }
-      filterQuery["query"] = [
-        JSON.stringify({
-          field_name: "metadata__sessionUUID",
-          modifier: "",
-          value: sessionUUID,
-        }),
+
+      filterQuery["query"].push(
         JSON.stringify({
           field_name: "status",
           modifier: "in",
           value: ["CREATED", "IN_PROGRESS"],
         }),
-      ];
+      );
+
       GetRequestList(filterQuery)
         .then((data: [Array<Request>, Headers]) => {
           const [requests] = data;
@@ -92,7 +114,7 @@ function CurrentRequestsTemplate({
     } else {
       setAllRequests([] as Array<Request>);
     }
-  }, []);
+  }, [config]);
 
   const requestStickyCheck = (request: Request) => {
     const requestStickyLimit = 30; // Seconds
@@ -105,13 +127,16 @@ function CurrentRequestsTemplate({
   const ProcessEventRequests = (message: any) => {
     if (message.payload_type === "Request") {
       const sessionUUID = localStorage.getItem("sessionUUID");
-
+      const username =
+        config?.auth_enabled === true ? GetCurrentUser() : undefined;
       if (
-        sessionUUID &&
-        message.payload &&
-        message.payload.metadata &&
-        message.payload.metadata.sessionUUID &&
-        message.payload.metadata.sessionUUID === sessionUUID
+        (message.payload &&
+          config?.auth_enabled === true &&
+          username &&
+          message.payload?.requester === username) ||
+        (config?.auth_enabled !== true &&
+          sessionUUID &&
+          message.payload?.metadata?.sessionUUID === sessionUUID)
       ) {
         let updateList = false;
         const updatedRequests = [] as Array<Request>;

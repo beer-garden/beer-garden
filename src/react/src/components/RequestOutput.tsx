@@ -78,7 +78,7 @@ function displayOutput(request: Request) {
   );
 }
 
-function RequestOutput(request: Request) {
+function RequestOutput({ request }: { request: Request }) {
   if (
     request.status &&
     ["CREATED", "RECEIVED", "IN_PROGRESS"].includes(request.status)

@@ -131,13 +131,20 @@ function Workspace({
     }
   };
 
-  const updateItem = (updated: RequestItem) => {
+  const updateItem = (updated?: Partial<RequestItem>) => {
     if (requestItemsRef.current) {
-      updateItems(
-        requestItemsRef.current.map((item) =>
-          item.itemId === updated.itemId ? updated : item,
-        ),
-      );
+      if (
+        updated?.itemId &&
+        requestItemsRef.current.some((item) => item.itemId === updated.itemId)
+      ) {
+        updateItems(
+          requestItemsRef.current.map((item) =>
+            item.itemId === updated?.itemId ? { ...item, ...updated } : item,
+          ),
+        );
+      } else {
+        addItem(updated);
+      }
     }
   };
 
@@ -174,7 +181,6 @@ function Workspace({
             updateRequestItem={updateItem}
             requestItem={value}
             listeners={listeners}
-            addItem={addItem}
             isDialog={false}
             config={config}
           />

@@ -1,11 +1,14 @@
 import { Panel } from "primereact/panel";
-import { useEffect, useState } from "react";
+import { Toast } from "primereact/toast";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Config, Version } from "../models/models";
 import { GetVersion } from "../services/util_service";
+
 function AboutIndex({ config }: { config: Config }) {
   const [version, setVersion] = useState<Version | null>(null);
+  const toast = useRef<Toast>(null);
 
   useEffect(() => {
     GetVersion()
@@ -13,7 +16,12 @@ function AboutIndex({ config }: { config: Config }) {
         setVersion(version);
       })
       .catch((error) => {
-        console.error("Error fetching the version:", error);
+        toast.current?.show({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching the version: ${error}`,
+          life: 3000,
+        });
       });
   }, []);
 
@@ -93,6 +101,7 @@ function AboutIndex({ config }: { config: Config }) {
 
   return (
     <div>
+      <Toast ref={toast} />
       <AboutHeader config={config} />
       <div className="flex">
         <Panel header="Helpful Links" className="m-2 flex-1">
