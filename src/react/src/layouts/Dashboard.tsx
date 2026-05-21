@@ -175,7 +175,14 @@ function GardenDashboard({
           setAssociatedRunners(associatedRunnersRef.current);
           setUnassociatedRunners(getUnassociatedRunners());
         })
-        .catch((error) => console.error("Error loading runners", error));
+        .catch((error) => {
+          toast.current?.show({
+            severity: "error",
+            summary: "Error",
+            detail: `Error loading runners: ${error}`,
+            life: 3000,
+          });
+        });
     } else {
       getUnassociatedRunners();
     }

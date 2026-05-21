@@ -176,7 +176,12 @@ function JobIndex({
         setJobs(responseJobs);
       })
       .catch((error) => {
-        console.error("Error fetching jobs:", error);
+        toast.current?.show({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching jobs: ${error}`,
+          life: 3000,
+        });
       });
   }, []);
 
@@ -225,7 +230,12 @@ function JobIndex({
             onClick={() => {
               if (job.id) {
                 RunAdhocJob(job.id).catch((error) => {
-                  console.error("Error running job:", error);
+                  toast.current?.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Error running job: ${error}`,
+                    life: 3000,
+                  });
                 });
               }
             }}
@@ -270,7 +280,12 @@ function JobIndex({
                     );
                   })
                   .catch((error) => {
-                    console.error("Error pausing job:", error);
+                    toast.current?.show({
+                      severity: "error",
+                      summary: "Error",
+                      detail: `Error pausing job: ${error}`,
+                      life: 3000,
+                    });
                   });
               }}
               title={"Pause Job " + job.name}
@@ -297,7 +312,12 @@ function JobIndex({
                     );
                   })
                   .catch((error) => {
-                    console.error("Error resuming job:", error);
+                    toast.current?.show({
+                      severity: "error",
+                      summary: "Error",
+                      detail: `Error resuming job: ${error}`,
+                      life: 3000,
+                    });
                   });
               }}
               title={"Resume Job " + job.name}
@@ -321,7 +341,12 @@ function JobIndex({
                   );
                 })
                 .catch((error) => {
-                  console.error("Error deleting job:", error);
+                  toast.current?.show({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Error deleting job: ${error}`,
+                    life: 3000,
+                  });
                 });
             }}
             title={"Delete Job " + job.name}
@@ -378,16 +403,24 @@ function JobIndex({
               setJobs(responseJobs);
             })
             .catch((error) => {
-              console.error("Error fetching jobs:", error);
+              toast.current?.show({
+                severity: "error",
+                summary: "Error",
+                detail: `Error fetching jobs: ${error}`,
+                life: 3000,
+              });
             });
         } catch (error) {
-          console.error("Error importing jobs:", error);
-          toast.current?.show({
-            severity: "error",
-            summary: "Error",
-            detail: "Failed to import jobs",
-            life: 3000,
-          });
+          if (error instanceof Error) {
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Failed to import jobs: ${error}`,
+              life: 3000,
+            });
+          } else {
+            console.error("Error importing jobs:", error);
+          }
         }
       }
     };
@@ -429,7 +462,12 @@ function JobIndex({
           raised
           onClick={() =>
             ExportJobs().catch((error) =>
-              console.error("Error exporting jobs:", error),
+              toast.current?.show({
+                severity: "error",
+                summary: "Error",
+                detail: `Error exporting jobs: ${error}`,
+                life: 3000,
+              }),
             )
           }
           {...GenerateTourProps(exportJobTourStep)}
