@@ -596,6 +596,7 @@ function GardenDashboard({
           itemTemplate={instanceStatusTemplate}
           placeholder="Filter by Instance Status"
           className="mb-3"
+          filter
         />
         <div className="flex justify-content-left">
           <div className="grid grid-nogutter gap-2">
