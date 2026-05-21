@@ -103,16 +103,18 @@ function GardenDashboard({
   const updateSelectedGarden = (garden?: Garden) => {
     if (garden) {
       if (garden.name !== selectedGardenRef.current?.name) {
+        setFilteredStatuses([]);   
+        setSelectedGarden({ ...garden });
+        selectedGardenRef.current = { ...garden };       
+      } 
         const matchedSystems = getSelectedSystems(garden);
         setSelectedSystems(matchedSystems);
-        setFilteredStatuses([]);
-        setSelectedGarden({ ...garden });
-        selectedGardenRef.current = { ...garden };
-        setUnassociatedRunners(getUnassociatedRunners());
         updateFilteredSystems();
-      }
+        setUnassociatedRunners(getUnassociatedRunners());
+      
     } else {
       selectedGardenRef.current = undefined;
+      console.log("Updating selected garden");
       setSelectedGarden(undefined);
       setSelectedSystems([]);
       updateFilteredSystems();
@@ -165,72 +167,7 @@ function GardenDashboard({
     return [];
   };
 
-  useEffect(() => {
-    const MonitorRunners = (message: any) => {
-      if (message.payload_type === "Runner") {
-        if (message.name === "RUNNER_REMOVED") {
-          if (associatedRunnersRef.current) {
-            associatedRunnersRef.current = associatedRunnersRef.current.filter(
-              (runner) => runner.id !== message.payload.id,
-            );
-            setAssociatedRunners(associatedRunnersRef.current);
-          }
-        } else {
-          if (associatedRunnersRef.current) {
-            if (
-              associatedRunnersRef.current.some(
-                (runner) => runner.id === message.payload.id,
-              )
-            ) {
-              associatedRunnersRef.current = associatedRunnersRef.current.map(
-                (runner) => {
-                  if (runner.id === message.payload.id) {
-                    return message.payload;
-                  }
-                  return runner;
-                },
-              );
-              setAssociatedRunners(associatedRunnersRef.current);
-            } else {
-              associatedRunnersRef.current = [
-                ...associatedRunnersRef.current,
-                message.payload,
-              ];
-              setAssociatedRunners(associatedRunnersRef.current);
-            }
-          } else {
-            associatedRunnersRef.current = [message.payload];
-            setAssociatedRunners(associatedRunnersRef.current);
-          }
-        }
-      }
-      getUnassociatedRunners();
-    };
-
-    listeners["dashboard"] = {
-      listener: MonitorRunners,
-    };
-
-    return () => {
-      delete listeners["dashboard"];
-    };
-  });
-
-  useEffect(() => {
-    if (associatedRunnersRef.current === undefined) {
-      GetRunnerList()
-        .then((runners) => {
-          associatedRunnersRef.current = runners;
-          setAssociatedRunners(associatedRunnersRef.current);
-          setUnassociatedRunners(getUnassociatedRunners());
-        })
-        .catch((error) => console.error("Error loading runners", error));
-    } else {
-      getUnassociatedRunners();
-    }
-    updateFilteredSystems();
-  }, [systemState, filteredStatuses]);
-
+  // Root Level Updates
   useEffect(() => {
     if (gardenRef?.current) {
       setGardenMenu([generateMenu(gardenRef.current, systemsRef.current)]);
@@ -267,8 +204,16 @@ function GardenDashboard({
       updateSelectedGarden(undefined);
     }
 
-    getUnassociatedRunners();
-  }, [gardenState, systemState]);
+    if (associatedRunnersRef.current) {
+      setUnassociatedRunners(getUnassociatedRunners());
+    }
+    if (selectedSystems) {
+      updateFilteredSystems();
+    }
+
+    
+    
+  }, [gardenState, systemState, filteredStatuses, selectedGarden]);
 
   const getSelectedSystems = (garden: Garden): System[] => {
     if (systemsRef.current && systemsRef.current.length > 0) {
@@ -526,10 +471,68 @@ function GardenDashboard({
     pos: 0,
   };
 
+  // Sets up one time run values
   useEffect(() => {
     AddTourStep(tourStepsRef, gardenTreeTourStep);
+
+    const MonitorRunners = (message: any) => {
+      if (message.payload_type === "Runner") {
+        if (message.name === "RUNNER_REMOVED") {
+          if (associatedRunnersRef.current) {
+            associatedRunnersRef.current = associatedRunnersRef.current.filter(
+              (runner) => runner.id !== message.payload.id,
+            );
+            setAssociatedRunners(associatedRunnersRef.current);
+          }
+        } else {
+          if (associatedRunnersRef.current) {
+            if (
+              associatedRunnersRef.current.some(
+                (runner) => runner.id === message.payload.id,
+              )
+            ) {
+              associatedRunnersRef.current = associatedRunnersRef.current.map(
+                (runner) => {
+                  if (runner.id === message.payload.id) {
+                    return message.payload;
+                  }
+                  return runner;
+                },
+              );
+              setAssociatedRunners(associatedRunnersRef.current);
+            } else {
+              associatedRunnersRef.current = [
+                ...associatedRunnersRef.current,
+                message.payload,
+              ];
+              setAssociatedRunners(associatedRunnersRef.current);
+            }
+          } else {
+            associatedRunnersRef.current = [message.payload];
+            setAssociatedRunners(associatedRunnersRef.current);
+          }
+        }
+      }
+      setUnassociatedRunners(getUnassociatedRunners());
+    };
+
+    listeners["dashboard"] = {
+      listener: MonitorRunners,
+    };
+
+    if (associatedRunnersRef.current === undefined) {
+      GetRunnerList()
+        .then((runners) => {
+          associatedRunnersRef.current = runners;
+          setAssociatedRunners(associatedRunnersRef.current);
+          setUnassociatedRunners(getUnassociatedRunners());
+        })
+        .catch((error) => console.error("Error loading runners", error));
+    }
+
     return () => {
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+      delete listeners["dashboard"];
     };
   }, []);
 
@@ -576,7 +579,7 @@ function GardenDashboard({
       {/* MAIN WORKSPACE */}
       <div className="col-10">
         {/* Garden Summary */}
-        (
+        
         <GardenSummary
           gardenRef={gardenRef}
           selectedGarden={selectedGarden}
@@ -585,7 +588,7 @@ function GardenDashboard({
           associatedRunners={associatedRunnersRef}
           selectedSystems={selectedSystems}
         />
-        )
+        
         <MultiSelect
           value={filteredStatuses}
           onChange={(e) => setFilteredStatuses(e.value)}
