@@ -313,9 +313,8 @@ function NavigationMenu({
                 onClick={() => setLoginVisible(true)}
                 data-testid="user-login"
                 tooltip="User Login"
-              >
-                Login
-              </AccessButton>
+                label="Login"
+              />
               <UserLogin
                 visible={loginVisible}
                 setVisible={setLoginVisible}
