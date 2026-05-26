@@ -305,9 +305,13 @@ function RequestWizard({
             system_version: responseRequest.system_version,
             instance_name: responseRequest.instance_name,
             command_display_name: responseRequest.command_display_name,
+            command: responseRequest.command,
             parameters: responseRequest.parameters,
             command_type: responseRequest.command_type,
-            comment: responseRequest.comment,
+            comment:
+              responseRequest.comment !== null
+                ? responseRequest.comment
+                : undefined,
           });
           updateRequestCommand({
             namespace: responseRequest?.namespace ?? undefined,
