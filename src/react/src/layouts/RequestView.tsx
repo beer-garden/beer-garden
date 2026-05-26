@@ -1,13 +1,16 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { BreadCrumb } from "primereact/breadcrumb";
+import { Toast } from "primereact/toast";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
+import ErrorPage from "../components/ErrorPage";
 import RequestTreeChart from "../components/RequestTreeChart";
 import RequestViewMain from "../components/RequestViewMain";
 import { Request } from "../models/brewtils-types";
 import { Config, RequestItem } from "../models/models";
 import { GetRequest } from "../services/request_service";
+import { getErrorCode } from "../services/util_service";
 
 function RequestHeader(request: Request) {
   const iconItemTemplate = (item: any, options: any) => {
@@ -64,6 +67,8 @@ function RequestView({
   config: Config;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
+  const toast = useRef<Toast>(null);
+  const [error, setError] = useState<Error>();
   const { requestId } = useParams<{ requestId: string }>();
   const [request, setRequest] = useState<Request | null>(null);
 
@@ -111,7 +116,13 @@ function RequestView({
             }
           })
           .catch((error) => {
-            console.error("Error fetching request:", error);
+            toast.current?.show({
+              severity: "error",
+              summary: "Error",
+              detail: `Error fetching request: ${error}`,
+              life: 3000,
+            });
+            setError(error);
           });
       }
     } else {
@@ -135,7 +146,12 @@ function RequestView({
               loadRootRequest(root_request);
             })
             .catch((error) => {
-              console.error("Error fetching parent request:", error);
+              toast.current?.show({
+                severity: "error",
+                summary: "Error",
+                detail: `Error fetching parent request: ${error}`,
+                life: 3000,
+              });
             });
         } else {
           setRootRequest(check_request);
@@ -162,30 +178,40 @@ function RequestView({
   }, [request, requestId, listeners, MonitorRequestId]);
 
   return (
-    <div>
-      {request && <RequestHeader {...request} />}
-
-      {rootRequest && (
-        <RequestTreeChart
-          {...{
-            rootRequest: rootRequest,
-            currentRequestId: requestId,
-            config: config,
-          }}
+    <>
+      {error ? (
+        <ErrorPage
+          errorCode={getErrorCode(error?.message)}
+          errorMsg={`Request ${requestId} was not found`}
         />
-      )}
+      ) : (
+        <div>
+          <Toast ref={toast} />
+          {request && <RequestHeader {...request} />}
 
-      {request && (
-        <RequestViewMain
-          request={request}
-          setRequest={setRequest}
-          addRequestItem={addRequestItem}
-          showProjections={true}
-          config={config}
-          isCard={false}
-        />
+          {rootRequest && (
+            <RequestTreeChart
+              {...{
+                rootRequest: rootRequest,
+                currentRequestId: requestId,
+                config: config,
+              }}
+            />
+          )}
+
+          {request && (
+            <RequestViewMain
+              request={request}
+              setRequest={setRequest}
+              addRequestItem={addRequestItem}
+              showProjections={true}
+              config={config}
+              isCard={false}
+            />
+          )}
+        </div>
       )}
-    </div>
+    </>
   );
 }
 

@@ -340,8 +340,14 @@ function NavigationMenu({
       config.auth_enabled !== authEnabled
     ) {
       setAuthEnabled(config.auth_enabled);
+
       if (config.auth_enabled && username === undefined) {
-        setLoginVisible(true);
+        const tokenUserName = GetCurrentUser();
+        if (tokenUserName) {
+          setUserName(tokenUserName);
+        } else {
+          setLoginVisible(true);
+        }
       } else if (!config.auth_enabled) {
         ClearToken();
         ClearRefresh().catch((error) => {

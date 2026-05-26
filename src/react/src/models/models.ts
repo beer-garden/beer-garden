@@ -1,3 +1,5 @@
+import { JwtPayload } from "jwt-decode";
+
 import {
   Command,
   Instance,
@@ -127,4 +129,13 @@ export interface TourStepProps {
 export interface RunnerGroup {
   path: string;
   runners: Runner[];
+}
+
+export interface CustomJwtPayload extends JwtPayload {
+  username?: string;
+  roles?: string[];
+  preferences?: {
+    theme?: string;
+    dark_mode: boolean;
+  };
 }

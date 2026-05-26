@@ -274,7 +274,7 @@ function UserIndex({
 
   function lastAuthenticatedTemplate(rowData: User) {
     if (rowData?.metadata?.last_authentication) {
-      const date = new Date(rowData.metadata.last_authentication * 1000);
+      const date = new Date(rowData.metadata.last_authentication);
       return (
         <span {...GenerateTourProps(lastAuthenticatedUserTourStep)}>
           {date.toUTCString()}
@@ -446,7 +446,12 @@ function UserIndex({
                       loadUsers();
                     })
                     .catch((error) =>
-                      console.error("Error attempting to delete user", error),
+                      toast.current?.show({
+                        severity: "error",
+                        summary: "Error",
+                        detail: `Error attempting to delete user: ${error}`,
+                        life: 3000,
+                      }),
                     );
                 }
               };
@@ -510,7 +515,12 @@ function UserIndex({
         });
       })
       .catch((error) => {
-        console.log("Error rescanning users", error);
+        toast.current?.show({
+          severity: "error",
+          summary: "Error",
+          detail: `Error rescanning users: ${error}`,
+          life: 3000,
+        });
       });
   }
 
@@ -523,8 +533,13 @@ function UserIndex({
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Error fetching users:", error);
         setLoading(false);
+        toast.current?.show({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching users: ${error}`,
+          life: 3000,
+        });
       });
   }, [users]);
 

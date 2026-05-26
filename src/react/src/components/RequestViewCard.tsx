@@ -7,10 +7,12 @@ import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import ErrorPage from "../components/ErrorPage";
 import RequestViewMain from "../components/RequestViewMain";
 import { Request } from "../models/brewtils-types";
 import { Config, RequestItem } from "../models/models";
 import { GetRequest } from "../services/request_service";
+import { getErrorCode } from "../services/util_service";
 import AccessButton from "./AccessButton";
 
 function RequestViewCard({
@@ -28,6 +30,7 @@ function RequestViewCard({
   config: Config;
   isDialog: boolean;
 }) {
+  const [error, setError] = useState<Error>();
   const requestId = useRef<string | null | undefined>(
     requestItem?.requestId ?? null,
   );
@@ -140,7 +143,7 @@ function RequestViewCard({
           }
         })
         .catch((error) => {
-          console.error("Error fetching request:", error);
+          setError(error);
         });
     };
 
@@ -209,25 +212,33 @@ function RequestViewCard({
       }
     >
       <Toast ref={toast} />
-      {request && (
-        <div>
-          <DataTable value={[request]}>
-            <Column field="command" header="Command"></Column>
-            <Column header="Status" body={statusTemplate}></Column>
-          </DataTable>
+      {error ? (
+        <ErrorPage
+          errorCode={getErrorCode(error?.message)}
+          errorMsg={`Request ${requestId.current} was not found`}
+          isCard={true}
+        />
+      ) : (
+        request && (
+          <div>
+            <DataTable value={[request]}>
+              <Column field="command" header="Command"></Column>
+              <Column header="Status" body={statusTemplate}></Column>
+            </DataTable>
 
-          {request && (
-            <RequestViewMain
-              request={request}
-              setRequest={setRequest}
-              addRequestItem={updateRequestItem}
-              showProjections={false}
-              isCard={true}
-              config={config}
-              openRequest={openRequest}
-            />
-          )}
-        </div>
+            {request && (
+              <RequestViewMain
+                request={request}
+                setRequest={setRequest}
+                addRequestItem={updateRequestItem}
+                showProjections={false}
+                isCard={true}
+                config={config}
+                openRequest={openRequest}
+              />
+            )}
+          </div>
+        )
       )}
     </Card>
   );

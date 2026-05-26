@@ -20,6 +20,7 @@
     "react": "19.2.1",
     "react-bootstrap": "^2.10.0",
     "react-dom": "19.2.1",
+    "react-error-boundary": "^6.1.1",
     "react-joyride": "^3.0.2",
     "react-js-cron": "^5.2.0",
     "react-router-dom": "^7.13.1",

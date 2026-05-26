@@ -39,8 +39,8 @@ class BasicLoginHandler(BaseLoginHandler):
 
                     if verify_password(user, password):
                         authenticated_user = user
-                        authenticated_user.metadata["last_authentication"] = (
-                            datetime.now(timezone.utc).timestamp()
+                        authenticated_user.metadata["last_authentication"] = int(
+                            datetime.now(timezone.utc).timestamp() * 1000
                         )
                         authenticated_user = update_user(user=authenticated_user)
 
