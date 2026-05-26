@@ -140,7 +140,7 @@ function NavigationMenu({
             className="p-menuitem-link"
             {...GenerateTourProps(requestTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="file-lines" aria-label="" />
+            <FontAwesomeIcon className="mr-2" icon="file-lines" aria-label={item.label} />
             <span>{item.label}</span>
           </NavLink>
         );
