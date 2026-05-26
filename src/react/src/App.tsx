@@ -335,7 +335,10 @@ function App() {
                     if (instance.id === updatedInstance.id) {
                       return {
                         ...instance,
-                        ...{ status: updatedInstance.status },
+                        ...{
+                          status: updatedInstance.status,
+                          metadata: updatedInstance.metadata,
+                        },
                       };
                     }
                     return instance;
