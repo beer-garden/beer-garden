@@ -1,7 +1,7 @@
 import { jwtDecode } from "jwt-decode";
 
 import { CustomJwtPayload } from "../models/models";
-import { ChangeTheme,GetBaseURL } from "./util_service";
+import { ChangeTheme, GetBaseURL } from "./util_service";
 
 export const UserLogin = async (
   username: string,

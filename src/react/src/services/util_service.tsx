@@ -2,7 +2,7 @@ import { RefObject } from "react";
 
 import { Garden, Instance, Runner, System } from "../models/brewtils-types";
 import { Version } from "../models/models";
-import { UpdateUserDarkMode,UpdateUserTheme } from "./user_service";
+import { UpdateUserDarkMode, UpdateUserTheme } from "./user_service";
 
 export const CompareObjects = (obj1: any, obj2: any) => {
   if (obj1 === obj2) return true; // Check if they are the same reference
