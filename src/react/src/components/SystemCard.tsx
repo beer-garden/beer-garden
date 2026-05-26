@@ -514,8 +514,7 @@ function SystemCard({
 
   const headerTemplate = (options: any) => {
     const className = `${options.className} justify-content-space-between`;
-
-    // Aria-label is none to mark icon as decorative since the system name and version are also read and provide context for the icon
+    
     return (
       <div className={className}>
         <div className="flex align-items-center gap-2">
