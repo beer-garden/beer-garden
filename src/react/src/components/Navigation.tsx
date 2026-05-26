@@ -40,9 +40,10 @@ function NavigationMenu({
     config?.application_name,
   );
   const [authEnabled, setAuthEnabled] = useState<boolean | undefined>(
-    config?.auth_enabled,
+    config?.auth_enabled === true,
   );
 
+  const [showAdmin, setShowAdmin] = useState<boolean>(false);
   const op = useRef<OverlayPanel>(null);
 
   const onLogout = () => {
@@ -107,15 +108,59 @@ function NavigationMenu({
     pos: 4,
   };
 
+  const topicTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Topics Link",
+    content: "Navigate to the Topics Page to see available topics.",
+    layer: "NAVIGATION",
+    pos: 5,
+  };
+
+  const userTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Users Link",
+    content: "Navigate to the Users Page to manage users.",
+    layer: "NAVIGATION",
+    pos: 6,
+  };
+
+  const rolesTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Roles Link",
+    content: "Navigate to the Roles Page to manage roles.",
+    layer: "NAVIGATION",
+    pos: 7,
+  };
+
+  const aboutTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "About Link",
+    content:
+      "Navigate to the About Page to see information about the application.",
+    layer: "NAVIGATION",
+    pos: 8,
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" || e.key === " ") {
+      (e.currentTarget as HTMLAnchorElement).click();
+    }
+  };
+
   const items = [
     {
       label: "Create Request",
       template: (item: any) => {
         return (
-          <NavLink
-            to="/requests"
-            onClick={(e) => {
-              e.preventDefault();
+          <div
+            role="button"
+            tabIndex={0}
+            onKeyDown={handleKeyDown}
+            onClick={() => {
               addRequestItem();
             }}
             className="p-menuitem-link"
@@ -123,7 +168,7 @@ function NavigationMenu({
           >
             <FontAwesomeIcon className="mr-2" icon="pencil" />
             <span>{item.label}</span>
-          </NavLink>
+          </div>
         );
       },
     },
@@ -134,6 +179,7 @@ function NavigationMenu({
           <NavLink
             to="/requests"
             className="p-menuitem-link"
+            onKeyDown={handleKeyDown}
             {...GenerateTourProps(requestTourStep)}
           >
             <FontAwesomeIcon className="mr-2" icon="file-lines" />
@@ -149,6 +195,7 @@ function NavigationMenu({
           <NavLink
             to="/jobs"
             className="p-menuitem-link"
+            onKeyDown={handleKeyDown}
             {...GenerateTourProps(schedulerTourStep)}
           >
             <FontAwesomeIcon className="mr-2" icon="clock" />
@@ -164,6 +211,7 @@ function NavigationMenu({
           <NavLink
             to="/workspace"
             className="p-menuitem-link"
+            onKeyDown={handleKeyDown}
             {...GenerateTourProps(workspaceTourStep)}
           >
             <FontAwesomeIcon className="mr-2" icon="toolbox" />
@@ -172,57 +220,75 @@ function NavigationMenu({
         );
       },
     },
+
     {
-      label: "Admin",
-      icon: <FontAwesomeIcon className="mr-2" icon="bars" />,
-      items: [
-        {
-          label: "Topics",
+      label: "Topics",
 
-          template: (item: any) => {
-            return (
-              <NavLink to="/topics" className="p-menuitem-link">
-                <FontAwesomeIcon className="mr-2" icon="envelope" />
-                <span>{item.label}</span>
-              </NavLink>
-            );
-          },
-        },
-        {
-          label: "Users",
-          template: (item: any) => {
-            return (
-              <NavLink to="/users" className="p-menuitem-link">
-                <FontAwesomeIcon className="mr-2" icon="users" />
-                <span>{item.label}</span>
-              </NavLink>
-            );
-          },
-        },
-        {
-          label: "Roles",
-          template: (item: any) => {
-            return (
-              <NavLink to="/roles" className="p-menuitem-link">
-                <FontAwesomeIcon className="mr-2" icon="user-gear" />
-                <span>{item.label}</span>
-              </NavLink>
-            );
-          },
-        },
+      template: (item: any) => {
+        return (
+          <NavLink
+            to="/topics"
+            className="p-menuitem-link"
+            onKeyDown={handleKeyDown}
+            {...GenerateTourProps(topicTourStep)}
+          >
+            <FontAwesomeIcon className="mr-2" icon="envelope" />
+            <span>{item.label}</span>
+          </NavLink>
+        );
+      },
+    },
 
-        {
-          label: "About",
-          template: (item: any) => {
-            return (
-              <NavLink to="/about" className="p-menuitem-link">
-                <FontAwesomeIcon className="mr-2" icon="circle-info" />
-                <span>{item.label}</span>
-              </NavLink>
-            );
-          },
-        },
-      ],
+    {
+      label: "Users",
+      template: (item: any) => {
+        return (
+          <NavLink
+            to="/users"
+            className="p-menuitem-link"
+            onKeyDown={handleKeyDown}
+            {...GenerateTourProps(userTourStep)}
+          >
+            <FontAwesomeIcon className="mr-2" icon="users" />
+            <span>{item.label}</span>
+          </NavLink>
+        );
+      },
+      visible: authEnabled,
+    },
+    {
+      label: "Roles",
+      template: (item: any) => {
+        return (
+          <NavLink
+            to="/roles"
+            className="p-menuitem-link"
+            onKeyDown={handleKeyDown}
+            {...GenerateTourProps(rolesTourStep)}
+          >
+            <FontAwesomeIcon className="mr-2" icon="user-gear" />
+            <span>{item.label}</span>
+          </NavLink>
+        );
+      },
+      command: () => setShowAdmin(!showAdmin),
+      visible: authEnabled,
+    },
+    {
+      label: "About",
+      template: (item: any) => {
+        return (
+          <NavLink
+            to="/about"
+            className="p-menuitem-link"
+            onKeyDown={handleKeyDown}
+            {...GenerateTourProps(aboutTourStep)}
+          >
+            <FontAwesomeIcon className="mr-2" icon="circle-info" />
+            <span>{item.label}</span>
+          </NavLink>
+        );
+      },
     },
   ];
 
@@ -295,6 +361,13 @@ function NavigationMenu({
     AddTourStep(tourStepsRef, requestTourStep);
     AddTourStep(tourStepsRef, schedulerTourStep);
     AddTourStep(tourStepsRef, workspaceTourStep);
+    AddTourStep(tourStepsRef, topicTourStep);
+    if (authEnabled) {
+      AddTourStep(tourStepsRef, userTourStep);
+      AddTourStep(tourStepsRef, rolesTourStep);
+    }
+
+    AddTourStep(tourStepsRef, aboutTourStep);
 
     return () => {
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
