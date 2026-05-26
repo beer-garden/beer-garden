@@ -166,7 +166,11 @@ function NavigationMenu({
             className="p-menuitem-link"
             {...GenerateTourProps(createRequestTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="pencil" />
+            <FontAwesomeIcon
+              className="mr-2"
+              icon="pencil"
+              aria-label={item.label}
+            />
             <span>{item.label}</span>
           </div>
         );
@@ -182,7 +186,11 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
             {...GenerateTourProps(requestTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="file-lines" />
+            <FontAwesomeIcon
+              className="mr-2"
+              icon="file-lines"
+              aria-label={item.label}
+            />
             <span>{item.label}</span>
           </NavLink>
         );
@@ -198,7 +206,11 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
             {...GenerateTourProps(schedulerTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="clock" />
+            <FontAwesomeIcon
+              className="mr-2"
+              icon="clock"
+              aria-label={item.label}
+            />
             <span>{item.label}</span>
           </NavLink>
         );
@@ -214,7 +226,11 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
             {...GenerateTourProps(workspaceTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="toolbox" />
+            <FontAwesomeIcon
+              className="mr-2"
+              icon="toolbox"
+              aria-label={item.label}
+            />
             <span>{item.label}</span>
           </NavLink>
         );
@@ -232,7 +248,11 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
             {...GenerateTourProps(topicTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="envelope" />
+            <FontAwesomeIcon
+              className="mr-2"
+              icon="envelope"
+              aria-label={item.label}
+            />
             <span>{item.label}</span>
           </NavLink>
         );
@@ -249,7 +269,11 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
             {...GenerateTourProps(userTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="users" />
+            <FontAwesomeIcon
+              className="mr-2"
+              icon="users"
+              aria-label={item.label}
+            />
             <span>{item.label}</span>
           </NavLink>
         );
@@ -266,7 +290,11 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
             {...GenerateTourProps(rolesTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="user-gear" />
+            <FontAwesomeIcon
+              className="mr-2"
+              icon="user-gear"
+              aria-label={item.label}
+            />
             <span>{item.label}</span>
           </NavLink>
         );
@@ -284,7 +312,11 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
             {...GenerateTourProps(aboutTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="circle-info" />
+            <FontAwesomeIcon
+              className="mr-2"
+              icon="circle-info"
+              aria-label={item.label}
+            />
             <span>{item.label}</span>
           </NavLink>
         );
@@ -300,7 +332,7 @@ function NavigationMenu({
     >
       <div className="flex">
         <div className="mr-2">
-          <FontAwesomeIcon icon={iconDefault} />
+          <FontAwesomeIcon icon={iconDefault} aria-label="Application Icon" />
         </div>
 
         {applicationName && <div className="mr-2">{applicationName}</div>}

@@ -315,6 +315,7 @@ function SystemCard({
         value={instance.status}
         severity={statusSeverity}
         {...GenerateTourProps(statusInstanceTourStep)}
+        aria-label={`Status ${instance.status} for instance ${instance.name} in system ${system.namespace}.${system.name}.${system.version}`}
       />
     );
   }
@@ -513,12 +514,13 @@ function SystemCard({
 
   const headerTemplate = (options: any) => {
     const className = `${options.className} justify-content-space-between`;
-
+    
     return (
       <div className={className}>
         <div className="flex align-items-center gap-2">
           <FontAwesomeIcon
             icon={system.icon_name ? system.icon_name : "gears"}
+            aria-label={system.name}
           />
           <label className="max-w-20rem font-semibold">
             {selectedGarden === system.namespace
