@@ -113,7 +113,6 @@ function GardenDashboard({
       setUnassociatedRunners(getUnassociatedRunners());
     } else {
       selectedGardenRef.current = undefined;
-      console.log("Updating selected garden");
       setSelectedGarden(undefined);
       setSelectedSystems([]);
       updateFilteredSystems();
@@ -472,6 +471,35 @@ function GardenDashboard({
     AddTourStep(tourStepsRef, gardenTreeTourStep);
 
     const MonitorRunners = (message: any) => {
+      if (message.payload_type == "Instance") {
+        if (
+          message.name === "INSTANCE_STARTED" ||
+          message.name === "INSTANCE_INITIALIZED" ||
+          message.name === "INSTANCE_UPDATED"
+        ) {
+          if (
+            associatedRunnersRef.current &&
+            getUnassociatedRunners().length > 0
+          ) {
+            if (
+              associatedRunnersRef.current.some(
+                (runner) => runner.id === message.payload.metadata.runner_id,
+              )
+            ) {
+              associatedRunnersRef.current = associatedRunnersRef.current.map(
+                (runner) => {
+                  if (runner.id === message.payload.metadata.runner_id) {
+                    return { ...runner, instance_id: message.payload.id };
+                  }
+                  return runner;
+                },
+              );
+              setAssociatedRunners(associatedRunnersRef.current);
+            }
+          }
+        }
+      }
+
       if (message.payload_type === "Runner") {
         if (message.name === "RUNNER_REMOVED") {
           if (associatedRunnersRef.current) {
