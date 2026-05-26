@@ -40,7 +40,7 @@ function NavigationMenu({
     config?.application_name,
   );
   const [authEnabled, setAuthEnabled] = useState<boolean | undefined>(
-    config?.auth_enabled,
+    config?.auth_enabled === true,
   );
 
   const [showAdmin, setShowAdmin] = useState<boolean>(false);
