@@ -3,7 +3,6 @@ from brewtils.models import Operation, Permissions
 from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.handlers import AuthorizationHandler
-from beer_garden.garden import local_garden
 
 
 class RoleAPI(AuthorizationHandler):
@@ -200,8 +199,6 @@ class RoleListAPI(AuthorizationHandler):
         tags:
           - Roles
         """
-
-        self.verify_user_permission_for_object(local_garden())
 
         response = await self.process_operation(
             Operation(operation_type="ROLE_READ_ALL")

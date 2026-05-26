@@ -2,6 +2,7 @@ import { RefObject } from "react";
 
 import { Garden, Instance, Runner, System } from "../models/brewtils-types";
 import { Version } from "../models/models";
+import { UpdateUserDarkMode, UpdateUserTheme } from "./user_service";
 
 export const CompareObjects = (obj1: any, obj2: any) => {
   if (obj1 === obj2) return true; // Check if they are the same reference
@@ -122,6 +123,13 @@ export const ChangeTheme = (color?: string, dark?: boolean) => {
   if (themeLink) {
     themeLink.href = `${GetBaseURL()}/themes/lara-${dark ? "dark" : "light"}-${color}/theme.css`;
   }
+
+  UpdateUserTheme(color).catch((error) => {
+    console.error("Error updating user theme:", error);
+  });
+  UpdateUserDarkMode(dark).catch((error) => {
+    console.error("Error updating user dark mode:", error);
+  });
 };
 
 const getInstanceStatus = (

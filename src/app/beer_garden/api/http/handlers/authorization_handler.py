@@ -8,7 +8,11 @@ from mongoengine.queryset.visitor import Q, QCombination
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.api.http.authentication import decode_token, get_user_from_token
+from beer_garden.api.http.authentication import (
+    decode_token,
+    get_user_from_token,
+    user_login,
+)
 from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.api.http.exceptions import (
     AuthorizationRequired,
@@ -41,14 +45,25 @@ class AuthorizationHandler(BaseHandler):
         to all gardens is returned"""
 
         if config.get("auth").enabled:
-            access_token = self._get_token_payload_from_request()
-
             try:
-                return get_user_from_token(access_token)
-            except InvalidTokenException:
-                raise RequestForbidden(reason="Authorization token invalid")
-            except ExpiredTokenException:
-                raise AuthorizationRequired(reason="Authorization token expired")
+                access_token = self._get_token_payload_from_request()
+
+                try:
+                    return get_user_from_token(access_token)
+                except InvalidTokenException:
+                    raise RequestForbidden(reason="Authorization token invalid")
+                except ExpiredTokenException:
+                    raise AuthorizationRequired(reason="Authorization token expired")
+            except AuthorizationRequired as e:
+                # Check and see if this has the login request information provided.
+                try:
+                    user = user_login(self.request)
+                    if user:
+                        return user
+                    else:
+                        raise e
+                except Exception:
+                    raise e
         else:
             return self._anonymous_superuser()
 

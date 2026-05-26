@@ -1,6 +1,7 @@
 import { jwtDecode } from "jwt-decode";
 
-import { GetBaseURL } from "./util_service";
+import { CustomJwtPayload } from "../models/models";
+import { ChangeTheme, GetBaseURL } from "./util_service";
 
 export const UserLogin = async (
   username: string,
@@ -138,6 +139,15 @@ export const preemptiveRefresh = () => {
 
 const SetToken = (token: string) => {
   localStorage.setItem("token", token);
+
+  const decode = jwtDecode<CustomJwtPayload>(token);
+  if (decode.preferences && typeof decode.preferences.theme === "string") {
+    localStorage.setItem("theme_color", decode.preferences.theme);
+  }
+  if (decode.preferences && typeof decode.preferences.dark_mode === "boolean") {
+    localStorage.setItem("theme_dark", decode.preferences.dark_mode.toString());
+  }
+  ChangeTheme();
 };
 
 export const GetToken = (): string | null => {
