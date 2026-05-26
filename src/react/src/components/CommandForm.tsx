@@ -1,10 +1,17 @@
 import { Dropdown } from "primereact/dropdown";
 import { InputTextarea } from "primereact/inputtextarea";
+import { Messages } from "primereact/messages";
 import { useEffect, useRef, useState } from "react";
 
-import { ChoicesValue, Request } from "../models/brewtils-types";
+import {
+  ChoicesValue,
+  Connection,
+  Garden,
+  Request,
+} from "../models/brewtils-types";
 import { CommandFormProps, InputParam } from "../models/models";
 import { PostRequest } from "../services/request_service";
+import { GetSystemList } from "../services/system_service";
 import CommandFormField from "./CommandFormField";
 
 function CommandForm({
@@ -30,6 +37,7 @@ function CommandForm({
   const altLoadingChoices = useRef<Array<{ key: string; timestamp: number }>>(
     [],
   );
+  const msgs = useRef<Messages>(null);
 
   const generateChoices = (
     parameter: InputParam,
@@ -446,9 +454,145 @@ function CommandForm({
     setIsFormValid(valid);
   };
 
+  const validateGardenRouting = (garden_name: string) => {
+    const rootGarden = sessionStorage.getItem("rootGarden")
+      ? JSON.parse(sessionStorage.getItem("rootGarden") || "")
+      : undefined;
+
+    if (rootGarden && rootGarden.name !== garden_name) {
+      const validateChildren = (
+        garden: Garden,
+        gardenName: string,
+      ): boolean => {
+        if (garden.name === gardenName) {
+          if (
+            garden.publishing_connections.length > 0 &&
+            garden.receiving_connections.length > 0
+          ) {
+            if (
+              garden.publishing_connections.some(
+                (connection: Connection) => connection.status === "PUBLISHING",
+              ) &&
+              garden.receiving_connections.some(
+                (connection: Connection) => connection.status === "RECEIVING",
+              )
+            ) {
+              return true;
+            } else {
+              return false;
+            }
+          }
+        }
+        if (
+          garden.children &&
+          garden.children.some((child: Garden) =>
+            validateChildren(child, gardenName),
+          )
+        ) {
+          return true;
+        }
+        return false;
+      };
+
+      if (!validateChildren(rootGarden, garden_name)) {
+        if (msgs.current) {
+          msgs.current.clear();
+          msgs.current.show({
+            sticky: true,
+            severity: "error",
+            summary: "Garden Check",
+            detail: `Target Garden for command is not routable`,
+            life: 3000,
+          });
+        }
+      }
+    }
+  };
+
+  const validateRouting = () => {
+    GetSystemList()
+      .then((systems) => {
+        const targetSystem = systems.find(
+          (system) =>
+            system.name === request?.system &&
+            system.namespace === request?.namespace &&
+            system.version === request?.system_version &&
+            system.instances &&
+            system.instances.some(
+              (instance) => instance.name === request?.instance_name,
+            ),
+        );
+
+        if (targetSystem === undefined) {
+          if (msgs.current) {
+            msgs.current.clear();
+            msgs.current.show({
+              sticky: true,
+              severity: "error",
+              summary: "System Check",
+              detail:
+                "Unable to find target system for command, unable to validate routing",
+              life: 3000,
+            });
+          }
+        } else if (
+          targetSystem.instances?.some(
+            (instance) => "RUNNING" !== instance.status,
+          )
+        ) {
+          if (msgs.current) {
+            const targetInstance = targetSystem.instances?.find(
+              (instance) => instance.name === request?.instance_name,
+            );
+            msgs.current.clear();
+            msgs.current.show({
+              sticky: true,
+              severity: "error",
+              summary: "System Check",
+              detail: `Target System has a status of ${targetInstance?.status} `,
+              life: 3000,
+            });
+          }
+        } else {
+          // Validate Garden Routing
+          if (request?.target_garden) {
+            validateGardenRouting(request.target_garden);
+          } else if (targetSystem?.garden_name) {
+            validateGardenRouting(targetSystem.garden_name);
+          } else {
+            if (msgs.current) {
+              msgs.current.clear();
+              msgs.current.show({
+                sticky: true,
+                severity: "error",
+                summary: "Garden Check",
+                detail:
+                  "Unable to find target Garden for command, unable to validate routing",
+                life: 3000,
+              });
+            }
+          }
+        }
+      })
+      .catch((error: any) => {
+        if (msgs.current) {
+          msgs.current.clear();
+          msgs.current.show({
+            sticky: true,
+            severity: "error",
+            summary: "Command Check",
+            detail: `Error validating command routing: ${error}`,
+            life: 3000,
+          });
+        }
+      });
+  };
+
   useEffect(() => {
     if (!initialized) {
       buildDefaults();
+      validateRouting();
+
       return;
     }
     if (resetForm) {
@@ -570,6 +714,7 @@ function CommandForm({
       key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}`}
       className="mt-4 mb-4"
     >
+      <Messages ref={msgs} />
       <div
         className="flex justify-content-between mb-3"
         key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMAND_TYPE`}
