@@ -44,6 +44,15 @@ function SystemCard({
   addRequestItem,
   associatedRunners,
 }: SystemCardProps) {
+  const instanceConfigMenu = useRef<Menu>(null);
+
+  const [logsVisible, setLogsVisible] = useState(false);
+  const closeLogsDialog = () => setLogsVisible(false);
+  const [queueVisible, setQueueVisible] = useState(false);
+  const closeQueueDialog = () => setQueueVisible(false);
+  const [cancelDeleteVisible, setCancelDeleteVisible] = useState(false);
+  const closeCancelDeleteDialog = () => setCancelDeleteVisible(false);
+
   const tourUuid = system.id;
   const tourPrefix = "system_summary";
 
@@ -389,15 +398,6 @@ function SystemCard({
     ) {
       return <></>;
     }
-
-    const instanceConfigMenu = useRef<Menu>(null);
-
-    const [logsVisible, setLogsVisible] = useState(false);
-    const closeLogsDialog = () => setLogsVisible(false);
-    const [queueVisible, setQueueVisible] = useState(false);
-    const closeQueueDialog = () => setQueueVisible(false);
-    const [cancelDeleteVisible, setCancelDeleteVisible] = useState(false);
-    const closeCancelDeleteDialog = () => setCancelDeleteVisible(false);
 
     const instanceMenuItems = [
       {
