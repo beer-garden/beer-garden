@@ -4,6 +4,8 @@ import { DataTable, SortOrder } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { Divider } from "primereact/divider";
 import { Dropdown } from "primereact/dropdown";
+import { ChevronDownIcon } from "primereact/icons/chevrondown";
+import { ChevronRightIcon } from "primereact/icons/chevronright";
 import { InputText } from "primereact/inputtext";
 import { Message } from "primereact/message";
 import { Messages } from "primereact/messages";
@@ -472,6 +474,63 @@ function RoleIndex({
       );
     }
 
+    const paginatorTemplate = {
+      layout:
+        "FirstPageLink PrevPageLink NextPageLink PageLinks LastPageLink RowsPerPageDropdown CurrentPageReport",
+      RowsPerPageDropdown: (options: any) => {
+        return (
+          <>
+            <datalist id="rowsPerPageDropdownOptions" aria-hidden="true">
+              {options?.options?.map((status: any) => (
+                <option key={status.label} value={status.value} />
+              ))}
+            </datalist>
+            <Dropdown
+              dropdownIcon={(opts) => {
+                return opts?.iconProps["data-pr-overlay-visible"] ? (
+                  <ChevronRightIcon
+                    {...opts.iconProps}
+                    role="img"
+                    aria-label="Collapse page length selection"
+                  />
+                ) : (
+                  <ChevronDownIcon
+                    {...opts.iconProps}
+                    role="img"
+                    aria-label="Expand page length selection"
+                  />
+                );
+              }}
+              value={options.value}
+              options={options.options}
+              onChange={options.onChange}
+              pt={{
+                input: {
+                  autoComplete: "off",
+                  "aria-label": "Dropdown page length",
+                },
+                select: {
+                  autoComplete: "off",
+                  "aria-controls": "rowsPerPageDropdownOptions",
+                  "aria-label": "Select page length",
+                },
+                trigger: { "aria-label": "Open Dropdown for page length" },
+              }}
+            />
+          </>
+        );
+      },
+    };
+
+    const columnPassThrough = (column: string) => {
+      return {
+        sortIcon: {
+          role: "img",
+          "aria-label": `Toggle Sort for Column ${column}`,
+        },
+      };
+    };
+
     return (
       <div>
         {config?.auth_enabled == false && (
@@ -481,6 +540,17 @@ function RoleIndex({
             text="Warning - Beergarden authorization is currently disabled. Changes made here
             will be persisted, but permissions will not be enforced. Contact your
             administator to enable this feature."
+            pt={{
+              icon: {
+                role: "img",
+                "aria-label": "Close Alert Message",
+                style: { color: "var(--danger-color)" },
+              },
+            }}
+            style={{
+              backgroundColor: "var(--danger-background-color)",
+              color: "var(--danger-color)",
+            }}
           />
         )}
         <DataTable
@@ -493,6 +563,7 @@ function RoleIndex({
           sortField={sortField}
           sortOrder={sortOrder}
           rowsPerPageOptions={[10, 25, 50]}
+          paginatorTemplate={paginatorTemplate}
           onPage={(e: any) => {
             setFirst(e.first);
             setRows(e.rows);
@@ -503,16 +574,82 @@ function RoleIndex({
             setFirst(0);
           }}
           dataKey="id"
+          pt={{
+            paginator: {
+              firstPageIcon: {
+                role: "img",
+                "aria-label": "First Paginator Icon",
+              },
+              prevPageIcon: {
+                role: "img",
+                "aria-label": "Previous Paginator Icon",
+              },
+              nextPageIcon: {
+                role: "img",
+                "aria-label": "Next Paginator Icon",
+              },
+              lastPageIcon: {
+                role: "img",
+                "aria-label": "Last Paginator Icon",
+              },
+            },
+          }}
         >
-          <Column field="name" sortable header="Role" body={roleNameTemplate} />
-          <Column field="permission" sortable header="Permission" />
-          <Column field="description" sortable header="Description" />
-          <Column field="scope_gardens" sortable header="Garden Scope" />
-          <Column field="scope_namespaces" sortable header="Namespace Scope" />
-          <Column field="scope_systems" sortable header="System Scope" />
-          <Column field="scope_versions" sortable header="Version Scope" />
-          <Column field="scope_instances" sortable header="Instance Scope" />
-          <Column field="scope_commands" sortable header="Command Scope" />
+          <Column
+            field="name"
+            sortable
+            header="Role"
+            body={roleNameTemplate}
+            pt={columnPassThrough("name")}
+          />
+          <Column
+            field="permission"
+            sortable
+            header="Permission"
+            pt={columnPassThrough("permission")}
+          />
+          <Column
+            field="description"
+            sortable
+            header="Description"
+            pt={columnPassThrough("description")}
+          />
+          <Column
+            field="scope_gardens"
+            sortable
+            header="Garden Scope"
+            pt={columnPassThrough("scope_gardens")}
+          />
+          <Column
+            field="scope_namespaces"
+            sortable
+            header="Namespace Scope"
+            pt={columnPassThrough("scope_namespaces")}
+          />
+          <Column
+            field="scope_systems"
+            sortable
+            header="System Scope"
+            pt={columnPassThrough("scope_systems")}
+          />
+          <Column
+            field="scope_versions"
+            sortable
+            header="Version Scope"
+            pt={columnPassThrough("scope_versions")}
+          />
+          <Column
+            field="scope_instances"
+            sortable
+            header="Instance Scope"
+            pt={columnPassThrough("scope_instances")}
+          />
+          <Column
+            field="scope_commands"
+            sortable
+            header="Command Scope"
+            pt={columnPassThrough("scope_commands")}
+          />
           <Column header="" body={roleButtonTemplate} />
         </DataTable>
       </div>
