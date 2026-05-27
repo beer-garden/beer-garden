@@ -591,10 +591,7 @@ function GardenSummary({
           </div>
         </div>
       ) : (
-        <>
-          <Skeleton width="100%" height="200px" className="mb-2"></Skeleton>
-          <Skeleton width="100%" height="300px"></Skeleton>
-        </>
+        <Skeleton width="100%" height="150px"></Skeleton>
       )}
     </Card>
   );

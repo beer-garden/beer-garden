@@ -514,7 +514,7 @@ function SystemCard({
 
   const headerTemplate = (options: any) => {
     const className = `${options.className} justify-content-space-between`;
-    
+
     return (
       <div className={className}>
         <div className="flex align-items-center gap-2">
