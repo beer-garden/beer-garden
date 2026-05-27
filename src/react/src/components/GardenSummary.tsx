@@ -349,11 +349,11 @@ function GardenSummary({
       key={selectedGarden?.name}
     >
       <div className="flex ml-2 page-header">
-        <h2 className="flex-1">
+        <h1 className="flex-1">
           {selectedGarden?.name
             ? `Garden Summary: ${selectedGarden?.name}`
             : "Garden Summary"}
-        </h2>
+        </h1>
         {selectedGarden?.name && (
           <div>
             <AccessButton
@@ -493,32 +493,41 @@ function GardenSummary({
         <div>
           <div className="grid">
             <div className="col-3">
-              <h3>Version</h3>
+              <h2>Version</h2>
               <p>{selectedGarden?.version}</p>
             </div>
             <div className="col-3">
-              <h3>Systems</h3>
-              {Array.from(systemCounts, ([status, count]) => {
-                if (count && count > 0) {
-                  const statusSeverity = GetSeverity(status);
-                  return (
-                    <Badge
-                      data-testid={`${status}_severity_system_summary`}
-                      value={count}
-                      severity={statusSeverity}
-                      key={status}
-                      title={status}
-                      aria-label={`${status} Count ${count}`}
-                    />
-                  );
-                }
-                return null;
-              })}
+              <h2>Systems</h2>
+              <div className="flex">
+                {Array.from(systemCounts, ([status, count]) => {
+                  if (count && count > 0) {
+                    const statusSeverity = GetSeverity(status);
+                    return (
+                      <div key={`${status}_Summary`}>
+                        <Tooltip
+                          content={`${status} Count ${count}`}
+                          target={`#${status}_${selectedGarden?.name}_severity_system_summary`}
+                          position="bottom"
+                        />
+                        <Badge
+                          data-testid={`${status}_severity_system_summary`}
+                          id={`${status}_${selectedGarden?.name}_severity_system_summary`}
+                          value={count}
+                          severity={statusSeverity}
+                          key={status}
+                        />
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })}
+              </div>
             </div>
             {selectedGarden?.children &&
               selectedGarden?.children.length > 0 && (
                 <div className="col-3">
-                  <h3>Downstream</h3>
+                  <h2>Downstream</h2>
 
                   {selectedGarden?.children &&
                     selectedGarden?.children.length > 0 && (
@@ -536,7 +545,7 @@ function GardenSummary({
               )}
             {selectedGarden?.parent && (
               <div className="col-3">
-                <h3>Upstream</h3>
+                <h2>Upstream</h2>
                 <ul>
                   <li>{selectedGarden?.parent}</li>
                 </ul>
@@ -546,7 +555,7 @@ function GardenSummary({
           <div className="grid">
             {receivingConnections && receivingConnections.length > 0 && (
               <div className="col-4">
-                <h3>Receiving</h3>
+                <h2>Receiving</h2>
 
                 <DataTable value={receivingConnections}>
                   <Column
@@ -569,7 +578,7 @@ function GardenSummary({
 
             {publishingConnections && publishingConnections.length > 0 && (
               <div className="col-4">
-                <h3>Publishing</h3>
+                <h2>Publishing</h2>
                 <DataTable value={publishingConnections}>
                   <Column
                     field="api"

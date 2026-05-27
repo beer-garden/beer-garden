@@ -496,7 +496,13 @@ function App() {
                   </>
                 </Dialog>
               )}
-              <div className="flex-grow-1" key={reloadUI} role="main">
+              <div
+                className="flex-grow-1"
+                key={reloadUI}
+                role="main"
+                id="main-content"
+                tabIndex={-1}
+              >
                 <ErrorBoundary FallbackComponent={ErrorFallback}>
                   <Routes>
                     <Route

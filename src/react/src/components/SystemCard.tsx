@@ -320,12 +320,19 @@ function SystemCard({
     const statusSeverity = getSeverity(instance.status);
 
     return (
-      <Tag
-        value={instance.status}
-        severity={statusSeverity}
-        {...GenerateTourProps(statusInstanceTourStep)}
-        aria-label={`Status ${instance.status} for instance ${instance.name} in system ${system.namespace}.${system.name}.${system.version}`}
-      />
+      <>
+        <Tooltip
+          content={`Status ${instance.status} for instance ${instance.name} in system ${system.namespace}.${system.name}.${system.version}`}
+          target={`#status_${instance.id}`}
+          position="bottom"
+        />
+        <Tag
+          value={instance.status}
+          severity={statusSeverity}
+          {...GenerateTourProps(statusInstanceTourStep)}
+          id={`status_${instance.id}`}
+        />
+      </>
     );
   }
 
@@ -514,7 +521,7 @@ function SystemCard({
 
   const headerTemplate = (options: any) => {
     const className = `${options.className} justify-content-space-between`;
-    
+
     return (
       <div className={className}>
         <div className="flex align-items-center gap-2">
@@ -522,12 +529,12 @@ function SystemCard({
             icon={system.icon_name ? system.icon_name : "gears"}
             aria-label={system.name}
           />
-          <label className="max-w-20rem font-semibold">
+          <span className="max-w-20rem font-semibold">
             {selectedGarden === system.namespace
               ? ""
               : `${system.namespace} / `}
             {system.name} ({system.version})
-          </label>
+          </span>
         </div>
       </div>
     );
@@ -542,7 +549,16 @@ function SystemCard({
   };
   return (
     <>
-      <Panel key={system.id} headerTemplate={headerTemplate}>
+      <Panel
+        key={system.id}
+        id={system.id}
+        headerTemplate={headerTemplate}
+        pt={{
+          content: { "aria-labelledby": undefined },
+          header: { "aria-labelledby": undefined },
+          toggleableContent: { "aria-labelledby": undefined },
+        }}
+      >
         <div className="mb-3">
           <div style={{ float: "right", marginLeft: "2px" }}>
             <ButtonGroup>
