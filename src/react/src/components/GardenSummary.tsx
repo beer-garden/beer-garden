@@ -498,28 +498,31 @@ function GardenSummary({
             </div>
             <div className="col-3">
               <h2>Systems</h2>
-              {Array.from(systemCounts, ([status, count]) => {
-                if (count && count > 0) {
-                  const statusSeverity = GetSeverity(status);
-                  return (
-                    <>
-                      <Tooltip
-                        content={`${status} Count ${count}`}
-                        target={`#${status}_${selectedGarden?.name}_severity_system_summary`}
-                        position="bottom"
-                      />
-                      <Badge
-                        data-testid={`${status}_severity_system_summary`}
-                        id={`${status}_${selectedGarden?.name}_severity_system_summary`}
-                        value={count}
-                        severity={statusSeverity}
-                        key={status}
-                      />
-                    </>
-                  );
-                }
-                return null;
-              })}
+              <div className="flex">
+                {Array.from(systemCounts, ([status, count]) => {
+                  if (count && count > 0) {
+                    const statusSeverity = GetSeverity(status);
+                    return (
+                      <div key={`${status}_Summary`}>
+                        <Tooltip
+                          content={`${status} Count ${count}`}
+                          target={`#${status}_${selectedGarden?.name}_severity_system_summary`}
+                          position="bottom"
+                        />
+                        <Badge
+                          data-testid={`${status}_severity_system_summary`}
+                          id={`${status}_${selectedGarden?.name}_severity_system_summary`}
+                          value={count}
+                          severity={statusSeverity}
+                          key={status}
+                        />
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })}
+              </div>
             </div>
             {selectedGarden?.children &&
               selectedGarden?.children.length > 0 && (

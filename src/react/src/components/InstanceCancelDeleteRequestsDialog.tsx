@@ -320,9 +320,8 @@ function InstanceCancelDeleteRequestsDialog({
                   )
                 }
                 tooltip={`Delete ${successCount} SUCCESS requests`}
-              >
-                Delete SUCCESS
-              </AccessButton>
+                label="Delete SUCCESS"
+              />
             </td>
           </tr>
           <tr>
@@ -337,9 +336,8 @@ function InstanceCancelDeleteRequestsDialog({
                   )
                 }
                 tooltip={`Delete ${canceledCount} CANCELED requests`}
-              >
-                Delete CANCELED
-              </AccessButton>
+                label="Delete CANCELED"
+              />
             </td>
           </tr>
           <tr>
@@ -354,9 +352,8 @@ function InstanceCancelDeleteRequestsDialog({
                   )
                 }
                 tooltip={`Delete ${errorCount} ERROR requests`}
-              >
-                Delete ERROR
-              </AccessButton>
+                label="Delete ERROR"
+              />
             </td>
           </tr>
           <tr>
@@ -372,9 +369,8 @@ function InstanceCancelDeleteRequestsDialog({
                   )
                 }
                 tooltip={`Delete ${inProgressCount} IN PROGRESS requests`}
-              >
-                Cancel IN PROGRESS
-              </AccessButton>
+                label="Cancel IN PROGRESS"
+              />
             </td>
           </tr>
           <tr>
@@ -390,9 +386,8 @@ function InstanceCancelDeleteRequestsDialog({
                   )
                 }
                 tooltip={`Delete ${receivedCount} RECEIVED requests`}
-              >
-                Cancel RECEIVED
-              </AccessButton>
+                label="Cancel RECEIVED"
+              />
             </td>
           </tr>
           <tr>
@@ -408,9 +403,8 @@ function InstanceCancelDeleteRequestsDialog({
                   )
                 }
                 tooltip={`Delete ${createdCount} CREATED requests`}
-              >
-                Cancel CREATED
-              </AccessButton>
+                label="Cancel CREATED"
+              />
             </td>
           </tr>
           <tr>
@@ -426,9 +420,8 @@ function InstanceCancelDeleteRequestsDialog({
                   )
                 }
                 tooltip={`Delete ${inProgressCount + receivedCount + createdCount} Non-Completed requests`}
-              >
-                Cancel Non-Completed
-              </AccessButton>
+                label="Cancel Non-Completed"
+              />
             </td>
           </tr>
           <tr>
@@ -443,9 +436,8 @@ function InstanceCancelDeleteRequestsDialog({
                   )
                 }
                 tooltip={`Delete ${allCount} ALL requests`}
-              >
-                Delete All
-              </AccessButton>
+                label="Delete All"
+              />
             </td>
           </tr>
         </tbody>
