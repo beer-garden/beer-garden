@@ -1,6 +1,3 @@
-import { Dropdown } from "primereact/dropdown";
-import { ChevronDownIcon } from "primereact/icons/chevrondown";
-import { ChevronRightIcon } from "primereact/icons/chevronright";
 import { RefObject } from "react";
 
 import { Garden, Instance, Runner, System } from "../models/brewtils-types";
@@ -242,61 +239,4 @@ export const getErrorCode = (errorMsg: string) => {
       }
     }
   }
-};
-
-export const PaginatorTemplate = {
-  layout:
-    "FirstPageLink PrevPageLink NextPageLink PageLinks LastPageLink RowsPerPageDropdown CurrentPageReport",
-  RowsPerPageDropdown: (options: any) => {
-    return (
-      <>
-        <datalist id="rowsPerPageDropdownOptions" aria-hidden="true">
-          {options?.options?.map((status: any) => (
-            <option key={status.label} value={status.value} />
-          ))}
-        </datalist>
-        <Dropdown
-          dropdownIcon={(opts) => {
-            return opts?.iconProps["data-pr-overlay-visible"] ? (
-              <ChevronRightIcon
-                {...opts.iconProps}
-                role="img"
-                aria-label="Collapse page length selection"
-              />
-            ) : (
-              <ChevronDownIcon
-                {...opts.iconProps}
-                role="img"
-                aria-label="Expand page length selection"
-              />
-            );
-          }}
-          value={options.value}
-          options={options.options}
-          onChange={options.onChange}
-          pt={{
-            input: {
-              autoComplete: "off",
-              "aria-label": "Dropdown page length",
-            },
-            select: {
-              autoComplete: "off",
-              "aria-controls": "rowsPerPageDropdownOptions",
-              "aria-label": "Select page length",
-            },
-            trigger: { "aria-label": "Open Dropdown for page length" },
-          }}
-        />
-      </>
-    );
-  },
-};
-
-export const ColumnPassThrough = (column: string) => {
-  return {
-    sortIcon: {
-      role: "img",
-      "aria-label": `Toggle Sort for Column ${column}`,
-    },
-  };
 };
