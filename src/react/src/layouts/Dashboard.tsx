@@ -72,7 +72,7 @@ function GardenDashboard({
     "DEAD",
     "ERROR",
     "UNKNOWN",
-  ];
+  ] as string[];
 
   const instanceStatusTemplate = (option: string) => {
     const statusSeverity = GetSeverity(option);
@@ -610,6 +610,11 @@ function GardenDashboard({
             associatedRunners={associatedRunnersRef}
             selectedSystems={selectedSystems}
           />
+          <datalist id="instance_status_multiselect_input" aria-hidden="true">
+            {instanceStatuses?.map((status: string) => (
+              <option value={status} />
+            ))}
+          </datalist>
 
           <MultiSelect
             value={filteredStatuses}
@@ -619,6 +624,17 @@ function GardenDashboard({
             placeholder="Filter by Instance Status"
             className="mb-3"
             filter
+            pt={{
+              input: {
+                "aria-label": "Filter by Instance Status",
+                "aria-controls": "instance_status_multiselect_input",
+                autocomplete: "off",
+              },
+              triggerIcon: {
+                role: "img",
+                "aria-label": "Toggle Instance Status Filter",
+              },
+            }}
           />
 
           <div className="flex justify-content-left">
