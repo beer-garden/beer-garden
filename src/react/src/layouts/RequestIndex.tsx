@@ -5,6 +5,9 @@ import { Checkbox, CheckboxChangeEvent } from "primereact/checkbox";
 import { Column } from "primereact/column";
 import { DataTable, SortOrder } from "primereact/datatable";
 import { Divider } from "primereact/divider";
+import { Dropdown } from "primereact/dropdown";
+import { ChevronDownIcon } from "primereact/icons/chevrondown";
+import { ChevronRightIcon } from "primereact/icons/chevronright";
 import { MultiSelect } from "primereact/multiselect";
 import { Toast } from "primereact/toast";
 import { Tooltip } from "primereact/tooltip";
@@ -363,7 +366,7 @@ function RequestIndex({
 
   const header = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-      <span className="text-xl text-900 font-bold">Requests</span>
+      <h1 className="text-xl text-900 font-bold">Requests</h1>
       <div className="flex align-items-center">
         <label htmlFor="autoRefreshButton">
           <Checkbox
@@ -460,7 +463,10 @@ function RequestIndex({
   const commandActionTemplate = (request: Request) => {
     return (
       <div>
-        <Link to={`/request/${request.id}`}>
+        <Link
+          to={`/request/${request.id}`}
+          aria-label={`Open Request ${request.command_display_name ?? request.command} ${request.id}`}
+        >
           <AccessButton
             rounded
             raised
@@ -588,6 +594,58 @@ function RequestIndex({
         );
       }
     },
+    RowsPerPageDropdown: (options: any) => {
+      return (
+        <>
+          <datalist id="rowsPerPageDropdownOptions" aria-hidden="true">
+            {options?.options?.map((status: any) => (
+              <option key={status.label} value={status.value} />
+            ))}
+          </datalist>
+          <Dropdown
+            dropdownIcon={(opts) => {
+              return opts?.iconProps["data-pr-overlay-visible"] ? (
+                <ChevronRightIcon
+                  {...opts.iconProps}
+                  role="img"
+                  aria-label="Collapse page length selection"
+                />
+              ) : (
+                <ChevronDownIcon
+                  {...opts.iconProps}
+                  role="img"
+                  aria-label="Expand page length selection"
+                />
+              );
+            }}
+            value={options.value}
+            options={options.options}
+            onChange={options.onChange}
+            pt={{
+              input: {
+                autoComplete: "off",
+                "aria-label": "Dropdown page length",
+              },
+              select: {
+                autoComplete: "off",
+                "aria-controls": "rowsPerPageDropdownOptions",
+                "aria-label": "Select page length",
+              },
+              trigger: { "aria-label": "Open Dropdown for page length" },
+            }}
+          />
+        </>
+      );
+    },
+  };
+
+  const columnPassThrough = (column: string) => {
+    return {
+      sortIcon: {
+        role: "img",
+        "aria-label": `Toggle Sort for Column ${column}`,
+      },
+    };
   };
 
   return (
@@ -610,6 +668,26 @@ function RequestIndex({
         onFilter={(e) => setFilters(e.filters as typeof filters)}
         rowsPerPageOptions={[5, 10, 20, 50]}
         paginatorTemplate={paginatorTemplate}
+        pt={{
+          paginator: {
+            firstPageIcon: {
+              role: "img",
+              "aria-label": "First Paginator Icon",
+            },
+            prevPageIcon: {
+              role: "img",
+              "aria-label": "Previous Paginator Icon",
+            },
+            nextPageIcon: {
+              role: "img",
+              "aria-label": "Next Paginator Icon",
+            },
+            lastPageIcon: {
+              role: "img",
+              "aria-label": "Last Paginator Icon",
+            },
+          },
+        }}
       >
         <Column header="Actions" body={commandActionTemplate} />
         <Column
@@ -618,11 +696,36 @@ function RequestIndex({
           sortable
           header="Command"
           body={commandNameTemplate}
+          pt={columnPassThrough("Command")}
         />
-        <Column field="namespace" filter sortable header="Namespace" />
-        <Column field="system" filter sortable header="System" />
-        <Column field="system_version" filter sortable header="Version" />
-        <Column field="instance_name" filter sortable header="Instance" />
+        <Column
+          field="namespace"
+          filter
+          sortable
+          header="Namespace"
+          pt={columnPassThrough("Namespace")}
+        />
+        <Column
+          field="system"
+          filter
+          sortable
+          header="System"
+          pt={columnPassThrough("System")}
+        />
+        <Column
+          field="system_version"
+          filter
+          sortable
+          header="Version"
+          pt={columnPassThrough("Version")}
+        />
+        <Column
+          field="instance_name"
+          filter
+          sortable
+          header="Instance"
+          pt={columnPassThrough("Instance")}
+        />
         <Column
           field="status"
           filter
@@ -633,6 +736,7 @@ function RequestIndex({
             { label: "In", value: FilterMatchMode.IN },
             { label: "Not In", value: FilterMatchMode.NOT_IN },
           ]}
+          pt={columnPassThrough("Status")}
         />
         <Column
           field="created_at"
@@ -642,8 +746,15 @@ function RequestIndex({
           header="Created"
           body={(rowData) => formatDate(rowData.created_at)}
           filterElement={dateTimeFilterTemplate}
+          pt={columnPassThrough("Created")}
         />
-        <Column field="comment" filter sortable header="Comment" />
+        <Column
+          field="comment"
+          filter
+          sortable
+          header="Comment"
+          pt={columnPassThrough("Comment")}
+        />
       </DataTable>
     </div>
   );
