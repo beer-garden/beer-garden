@@ -47,6 +47,22 @@
   margin-left: 5px;
 }
 
+/* Hide the link off-screen by default */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: #000;
+  color: #fff;
+  padding: 10px;
+  z-index: 100;
+}
+
+/* Show the link when it gains keyboard focus */
+.skip-link:focus {
+  top: 0;
+}
+
 /* Start 508 Color Contrast Formatting */
 
 :root {

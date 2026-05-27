@@ -502,14 +502,20 @@ function GardenSummary({
                 if (count && count > 0) {
                   const statusSeverity = GetSeverity(status);
                   return (
-                    <Badge
-                      data-testid={`${status}_severity_system_summary`}
-                      value={count}
-                      severity={statusSeverity}
-                      key={status}
-                      title={status}
-                      aria-label={`${status} Count ${count}`}
-                    />
+                    <>
+                      <Tooltip
+                        content={`${status} Count ${count}`}
+                        target={`#${status}_${selectedGarden?.name}_severity_system_summary`}
+                        position="bottom"
+                      />
+                      <Badge
+                        data-testid={`${status}_severity_system_summary`}
+                        id={`${status}_${selectedGarden?.name}_severity_system_summary`}
+                        value={count}
+                        severity={statusSeverity}
+                        key={status}
+                      />
+                    </>
                   );
                 }
                 return null;

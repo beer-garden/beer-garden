@@ -359,15 +359,11 @@ function GardenDashboard({
       return (
         <>
           <Tooltip
-            content="Routing Error"
+            content={`Routing Error for ${garden.name}`}
             target={`#GARDEN_MENU_${garden.id}`}
             position="bottom"
           />
-          <span
-            className="fa-layers"
-            id={`GARDEN_MENU_${garden.id}`}
-            aria-label={`Routing Error for ${garden.name}`}
-          >
+          <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
             <FontAwesomeIcon
               icon="circle"
               style={{ color: "var(--danger-color)" }}
@@ -383,15 +379,11 @@ function GardenDashboard({
       return (
         <>
           <Tooltip
-            content="Publishing Error"
+            content={`Publishing Connection Error for ${garden.name}`}
             target={`#GARDEN_MENU_${garden.id}`}
             position="bottom"
           />
-          <span
-            className="fa-layers"
-            id={`GARDEN_MENU_${garden.id}`}
-            aria-label={`Publishing Connection Error for ${garden.name}`}
-          >
+          <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
             <FontAwesomeIcon
               icon="circle"
               style={{ color: "var(--danger-color)" }}
@@ -407,15 +399,11 @@ function GardenDashboard({
       return (
         <>
           <Tooltip
-            content="Receiving Error"
+            content={`Receiving Connection Error for ${garden.name}`}
             target={`#GARDEN_MENU_${garden.id}`}
             position="bottom"
           />
-          <span
-            className="fa-layers"
-            id={`GARDEN_MENU_${garden.id}`}
-            aria-label={`Receiving Connection Error for ${garden.name}`}
-          >
+          <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
             <FontAwesomeIcon
               icon="circle"
               style={{ color: "var(--danger-color)" }}
@@ -445,12 +433,19 @@ function GardenDashboard({
       if (count && count > 0) {
         const statusSeverity = GetSeverity(status);
         return (
-          <Badge
-            value={count}
-            severity={statusSeverity}
-            key={status}
-            title={status}
-          />
+          <>
+            <Tooltip
+              content={`${status} Count ${count} for ${garden?.name}`}
+              target={`#${status}_${garden?.name}_menu_severity_system_summary`}
+              position="bottom"
+            />
+            <Badge
+              value={count}
+              id={`${status}_${garden?.name}_menu_severity_system_summary`}
+              severity={statusSeverity}
+              key={status}
+            />
+          </>
         );
       }
       return null;
@@ -567,7 +562,7 @@ function GardenDashboard({
       <div className={options.className}>
         <div>
           {node.gardenIcon}
-          <b className="ml-1">{node.label}</b>
+          <span className="ml-1">{node.label}</span>
         </div>
         <div style={{ flexWrap: "wrap" }} className="flex ml-4">
           {node.statusCounts}
