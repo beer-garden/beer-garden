@@ -433,7 +433,7 @@ function GardenDashboard({
       if (count && count > 0) {
         const statusSeverity = GetSeverity(status);
         return (
-          <>
+          <div key={`${status}_${garden?.name}_count`}>
             <Tooltip
               content={`${status} Count ${count} for ${garden?.name}`}
               target={`#${status}_${garden?.name}_menu_severity_system_summary`}
@@ -443,9 +443,9 @@ function GardenDashboard({
               value={count}
               id={`${status}_${garden?.name}_menu_severity_system_summary`}
               severity={statusSeverity}
-              key={status}
+              key={`${status}_${garden?.name}`}
             />
-          </>
+          </div>
         );
       }
       return null;
@@ -612,7 +612,7 @@ function GardenDashboard({
           />
           <datalist id="instance_status_multiselect_input" aria-hidden="true">
             {instanceStatuses?.map((status: string) => (
-              <option value={status} />
+              <option key={status} value={status} />
             ))}
           </datalist>
 
@@ -628,7 +628,7 @@ function GardenDashboard({
               input: {
                 "aria-label": "Filter by Instance Status",
                 "aria-controls": "instance_status_multiselect_input",
-                "autocomplete": "off",
+                autoComplete: "off",
               },
               triggerIcon: {
                 role: "img",
