@@ -628,7 +628,7 @@ function GardenDashboard({
               input: {
                 "aria-label": "Filter by Instance Status",
                 "aria-controls": "instance_status_multiselect_input",
-                autocomplete: "off",
+                "autocomplete": "off",
               },
               triggerIcon: {
                 role: "img",
