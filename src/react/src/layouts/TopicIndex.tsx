@@ -6,6 +6,9 @@ import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { DataTable, SortOrder } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { Divider } from "primereact/divider";
+import { Dropdown } from "primereact/dropdown";
+import { ChevronDownIcon } from "primereact/icons/chevrondown";
+import { ChevronRightIcon } from "primereact/icons/chevronright";
 import { InputText } from "primereact/inputtext";
 import { Messages } from "primereact/messages";
 import { Toast } from "primereact/toast";
@@ -525,6 +528,13 @@ function TopicIndex({
             onChange={handleChange}
             checked={hideGenerated}
             className="mr-2"
+            pt={{
+              icon: {
+                role: "img",
+                "aria-label": "Image of toggle state for Hide Generated Topics",
+              },
+              input: { "aria-label": "Toggle state for Hide Generated Topics" },
+            }}
           />
           Hide Generated
         </div>
@@ -537,9 +547,72 @@ function TopicIndex({
         <InputText
           value={props.value}
           onChange={(e) => props.filterApplyCallback(e.target.value)}
-          pt={{root: {autoComplete: "off"}}}
+          pt={{
+            root: {
+              autoComplete: "off",
+              "aria-label": `Input Filter for ${props?.field}`,
+              type: "text",
+            },
+          }}
         />
       );
+    };
+
+    const paginatorTemplate = {
+      layout:
+        "FirstPageLink PrevPageLink NextPageLink PageLinks LastPageLink RowsPerPageDropdown CurrentPageReport",
+      RowsPerPageDropdown: (options: any) => {
+        return (
+          <>
+            <datalist id="rowsPerPageDropdownOptions" aria-hidden="true">
+              {options?.options?.map((status: any) => (
+                <option key={status.label} value={status.value} />
+              ))}
+            </datalist>
+            <Dropdown
+              dropdownIcon={(opts) => {
+                return opts?.iconProps["data-pr-overlay-visible"] ? (
+                  <ChevronRightIcon
+                    {...opts.iconProps}
+                    role="img"
+                    aria-label="Collapse page length selection"
+                  />
+                ) : (
+                  <ChevronDownIcon
+                    {...opts.iconProps}
+                    role="img"
+                    aria-label="Expand page length selection"
+                  />
+                );
+              }}
+              value={options.value}
+              options={options.options}
+              onChange={options.onChange}
+              pt={{
+                input: {
+                  autoComplete: "off",
+                  "aria-label": "Dropdown page length",
+                },
+                select: {
+                  autoComplete: "off",
+                  "aria-controls": "rowsPerPageDropdownOptions",
+                  "aria-label": "Select page length",
+                },
+                trigger: { "aria-label": "Open Dropdown for page length" },
+              }}
+            />
+          </>
+        );
+      },
+    };
+
+    const columnPassThrough = (column: string) => {
+      return {
+        sortIcon: {
+          role: "img",
+          "aria-label": `Toggle Sort for Column ${column}`,
+        },
+      };
     };
 
     return (
@@ -560,6 +633,7 @@ function TopicIndex({
           sortField={sortField}
           sortOrder={sortOrder}
           rowsPerPageOptions={[10, 25, 50]}
+          paginatorTemplate={paginatorTemplate}
           onPage={(e: any) => {
             setFirst(e.first);
             setRows(e.rows);
@@ -568,6 +642,26 @@ function TopicIndex({
             setSortField(e.sortField);
             setSortOrder(e.sortOrder);
             setFirst(0);
+          }}
+          pt={{
+            paginator: {
+              firstPageIcon: {
+                role: "img",
+                "aria-label": "First Paginator Icon",
+              },
+              prevPageIcon: {
+                role: "img",
+                "aria-label": "Previous Paginator Icon",
+              },
+              nextPageIcon: {
+                role: "img",
+                "aria-label": "Next Paginator Icon",
+              },
+              lastPageIcon: {
+                role: "img",
+                "aria-label": "Last Paginator Icon",
+              },
+            },
           }}
         >
           <Column
@@ -578,6 +672,7 @@ function TopicIndex({
             style={{ maxWidth: "400px", overflowWrap: "break-word" }}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={columnPassThrough("Topic")}
           />
           <Column field="topic.name" header="" body={topicButtonTemplate} />
           <Column
@@ -588,6 +683,7 @@ function TopicIndex({
             body={publisherCountTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={columnPassThrough("Publisher_Count")}
           />
           <Column
             field="subscriber.garden"
@@ -597,6 +693,7 @@ function TopicIndex({
             body={gardenTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={columnPassThrough("Garden")}
           />
           <Column
             field="subscriber.namespace"
@@ -606,6 +703,7 @@ function TopicIndex({
             body={namespaceTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={columnPassThrough("Namespace")}
           />
           <Column
             field="subscriber.system"
@@ -615,6 +713,7 @@ function TopicIndex({
             body={systemTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={columnPassThrough("System")}
           />
           <Column
             field="subscriber.version"
@@ -624,6 +723,7 @@ function TopicIndex({
             body={versionTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={columnPassThrough("Version")}
           />
           <Column
             field="subscriber.instance"
@@ -633,6 +733,7 @@ function TopicIndex({
             body={instanceTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={columnPassThrough("Instance")}
           />
           <Column
             field="subscriber.command"
@@ -643,6 +744,7 @@ function TopicIndex({
             style={{ maxWidth: "300px", overflowWrap: "break-word" }}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={columnPassThrough("Command")}
           />
           <Column
             field="subscriber.consumer_count"
@@ -652,6 +754,7 @@ function TopicIndex({
             body={consumerCountTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={columnPassThrough("Consumer_Count")}
           />
           <Column
             field="subscriber.subscriber_type"
@@ -661,6 +764,7 @@ function TopicIndex({
             body={subscriberTypeTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={columnPassThrough("Subscriber_Type")}
           />
         </DataTable>
       </>
