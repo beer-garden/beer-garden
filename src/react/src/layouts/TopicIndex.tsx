@@ -525,7 +525,6 @@ function TopicIndex({
             onChange={handleChange}
             checked={hideGenerated}
             className="mr-2"
-            aria-label="Hide Generated Topics"
           />
           Hide Generated
         </div>
@@ -538,7 +537,7 @@ function TopicIndex({
         <InputText
           value={props.value}
           onChange={(e) => props.filterApplyCallback(e.target.value)}
-          aria-label={`Filter by ${props.field}`}
+          pt={{root: {autoComplete: "off"}}}
         />
       );
     };
