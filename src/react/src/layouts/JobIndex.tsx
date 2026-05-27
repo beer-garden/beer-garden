@@ -473,9 +473,8 @@ function JobIndex({
           {...GenerateTourProps(exportJobTourStep)}
           config={config}
           permission="OPERATOR"
-        >
-          Export Jobs
-        </AccessButton>
+          label="Export Jobs"
+        />
       </div>
     </div>
   );
