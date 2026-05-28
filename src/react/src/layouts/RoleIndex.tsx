@@ -34,7 +34,7 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { ColumnPassThrough,PaginatorTemplate } from "../services/util_service";
+import { ColumnPassThrough, PaginatorTemplate } from "../services/util_service";
 
 const permissions = [
   { label: "GARDEN_ADMIN", value: "GARDEN_ADMIN" },
