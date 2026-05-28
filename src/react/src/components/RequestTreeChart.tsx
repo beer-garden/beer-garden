@@ -126,7 +126,10 @@ function RequestTreeChart(props: RequestTreeChartProps) {
     };
     return (
       <div>
-        <Link to={`/request/${node.data.id}`}>
+        <Link
+          to={`/request/${node.data.id}`}
+          aria-label={`Open Request ${node.data.command_display_name ?? node.data.command} ${node.data.id}`}
+        >
           <AccessButton rounded raised link title="Open">
             <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
           </AccessButton>
@@ -168,7 +171,10 @@ function RequestTreeChart(props: RequestTreeChartProps) {
         {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
           node.data.status,
         ) && (
-          <Link to={`/recreate/${node.data.id}`}>
+          <Link
+            to={`/recreate/${node.data.id}`}
+            aria-label={`Pour Again Request ${node.data.command_display_name ?? node.data.command} ${node.data.id}`}
+          >
             <AccessButton
               rounded
               raised
@@ -190,6 +196,16 @@ function RequestTreeChart(props: RequestTreeChartProps) {
         value={[node]}
         rowClassName={rowClassName}
         tableStyle={{ minWidth: "50rem" }}
+        pt={{
+          row: ({ context }: { context: any }) => ({
+            "aria-checked": undefined,
+            tabindex:
+              context?.node?.data?.children &&
+              context.node.data.children.length > 0
+                ? 0
+                : -1,
+          }),
+        }}
       >
         <Column
           field="command"

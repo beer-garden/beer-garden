@@ -55,7 +55,11 @@ function RequestHeader(request: Request) {
     },
   ];
 
-  return <BreadCrumb model={items} />;
+  return (
+    <h1>
+      <BreadCrumb model={items} />
+    </h1>
+  );
 }
 
 function RequestView({

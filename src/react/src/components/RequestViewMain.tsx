@@ -111,7 +111,33 @@ function RequestViewMain({
           activeStep={activeIndex}
           style={{ flexBasis: "50rem" }}
         >
-          <StepperPanel header="Request Parameters">
+          <StepperPanel
+            header="Request Parameters"
+            pt={{
+              action: {
+                id: `${request.id}_tab_1`,
+                "aria-controls": `${request.id}_stepper_1`,
+              },
+              content: {
+                id: `${request.id}_stepper_1`,
+                role: "tabpanel",
+                "aria-labelledby": `${request.id}_tab_1`,
+              },
+              number: {
+                style: {
+                  color: "var(--info-color)",
+                  backgroundColor: "var(--info-background-color)",
+                },
+              },
+              separator: {
+                "aria-hidden": undefined,
+                tabindex: -1,
+                style: {
+                  color: "var(--info-background-color)",
+                },
+              },
+            }}
+          >
             {/* Need to determine if Read Only can still download values */}
             <div className="flex">
               {!showCommandForm && <Skeleton width="100%" height="10rem" />}
@@ -147,7 +173,33 @@ function RequestViewMain({
               )}
             </div>
           </StepperPanel>
-          <StepperPanel header="Request Output">
+          <StepperPanel
+            header="Request Output"
+            pt={{
+              action: {
+                id: `${request.id}_tab_2`,
+                "aria-controls": `${request.id}_stepper_2`,
+              },
+              content: {
+                id: `${request.id}_stepper_2`,
+                role: "tabpanel",
+                "aria-labelledby": `${request.id}_tab_2`,
+              },
+              number: {
+                style: {
+                  color: "var(--info-color)",
+                  backgroundColor: "var(--info-background-color)",
+                },
+              },
+              separator: {
+                "aria-hidden": undefined,
+                tabindex: -1,
+                style: {
+                  color: "var(--info-background-color)",
+                },
+              },
+            }}
+          >
             <div className="flex">
               {request && <RequestOutput request={request} />}
               {request && (
