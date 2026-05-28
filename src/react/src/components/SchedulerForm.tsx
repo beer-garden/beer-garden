@@ -191,19 +191,20 @@ function DateForm({
       : dateTrigger?.run_date,
   );
 
-  useEffect(() => {
-    if (runDate) {
+  const updateRunDate = (updatedRunDate: any) => {
+    if (updatedRunDate) {
+      setRunDate(updatedRunDate);
       if (
         !dateTrigger ||
-        dateTrigger.run_date !== new Date(runDate).getTime()
+        dateTrigger.run_date !== new Date(updatedRunDate).getTime()
       ) {
         setDateTrigger({
           ...dateTrigger,
-          ...{ run_date: new Date(runDate).getTime() },
+          ...{ run_date: new Date(updatedRunDate).getTime() },
         });
       }
     }
-  }, [runDate, dateTrigger, setDateTrigger]);
+  };
 
   return (
     <div>
@@ -216,7 +217,7 @@ function DateForm({
             value={runDate}
             showTime
             hourFormat="24"
-            onChange={(e: any) => setRunDate(e.value)}
+            onChange={(e: any) => updateRunDate(e.value)}
             invalid={
               runDate === undefined || runDate === null || runDate === ""
             }
