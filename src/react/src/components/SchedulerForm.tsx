@@ -192,8 +192,11 @@ function DateForm({
   );
 
   useEffect(() => {
-    if (runDate){
-      if (!dateTrigger || dateTrigger.run_date !== new Date(runDate).getTime()) {
+    if (runDate) {
+      if (
+        !dateTrigger ||
+        dateTrigger.run_date !== new Date(runDate).getTime()
+      ) {
         setDateTrigger({
           ...dateTrigger,
           ...{ run_date: new Date(runDate).getTime() },
