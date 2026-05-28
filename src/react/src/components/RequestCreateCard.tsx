@@ -87,6 +87,7 @@ function RequestCreateCard({
   const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
   const [resetForm, setResetForm] = useState<boolean>(false);
   const [isFormValid, setIsFormValid] = useState<boolean>(false);
+  const [isJobValid, setIsJobValid] = useState<boolean>(false);
 
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
     (requestItem?.requestId === undefined || requestItem?.requestId === null) &&
@@ -326,7 +327,7 @@ function RequestCreateCard({
               <AccessButton
                 label="Submit Job"
                 severity="success"
-                disabled={!isFormValid}
+                disabled={!(isJobValid && isFormValid)}
                 icon="pi pi-arrow-right"
                 iconPos="right"
                 onClick={submitJob}
@@ -338,7 +339,7 @@ function RequestCreateCard({
               <AccessButton
                 label="Update Job"
                 severity="success"
-                disabled={!isFormValid}
+                disabled={!(isJobValid && isFormValid)}
                 icon="pi pi-arrow-right"
                 iconPos="right"
                 onClick={updateJob}
@@ -357,6 +358,7 @@ function RequestCreateCard({
               <SchedulerForm
                 scheduledJob={job}
                 setScheduledJob={updateJobValue}
+                setIsJobValid={setIsJobValid}
               />
             )}
             {showCreateRequest && (

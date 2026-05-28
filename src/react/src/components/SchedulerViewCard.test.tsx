@@ -422,7 +422,7 @@ describe("SchedulerViewCard", () => {
       name: "example_job",
       trigger_type: "date",
       trigger: {
-        runDate: "0",
+        run_date: "0",
         timezone: "UTC",
       } as DateTrigger,
       coalesce: false,
