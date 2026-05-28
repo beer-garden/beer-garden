@@ -3,9 +3,6 @@ import { Chip } from "primereact/chip";
 import { Column } from "primereact/column";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { DataTable, SortOrder } from "primereact/datatable";
-import { Dropdown } from "primereact/dropdown";
-import { ChevronDownIcon } from "primereact/icons/chevrondown";
-import { ChevronRightIcon } from "primereact/icons/chevronright";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
@@ -25,6 +22,7 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { DeleteUser, GetUsers, RescanUsers } from "../services/user_service";
+import { ColumnPassThrough, PaginatorTemplate } from "../services/util_service";
 
 function UserIndex({
   config,
@@ -596,63 +594,6 @@ function UserIndex({
     };
   }, [users]);
 
-  const paginatorTemplate = {
-    layout:
-      "FirstPageLink PrevPageLink NextPageLink PageLinks LastPageLink RowsPerPageDropdown CurrentPageReport",
-    RowsPerPageDropdown: (options: any) => {
-      return (
-        <>
-          <datalist id="rowsPerPageDropdownOptions" aria-hidden="true">
-            {options?.options?.map((status: any) => (
-              <option key={status.label} value={status.value} />
-            ))}
-          </datalist>
-          <Dropdown
-            dropdownIcon={(opts) => {
-              return opts?.iconProps["data-pr-overlay-visible"] ? (
-                <ChevronRightIcon
-                  {...opts.iconProps}
-                  role="img"
-                  aria-label="Collapse page length selection"
-                />
-              ) : (
-                <ChevronDownIcon
-                  {...opts.iconProps}
-                  role="img"
-                  aria-label="Expand page length selection"
-                />
-              );
-            }}
-            value={options.value}
-            options={options.options}
-            onChange={options.onChange}
-            pt={{
-              input: {
-                autoComplete: "off",
-                "aria-label": "Dropdown page length",
-              },
-              select: {
-                autoComplete: "off",
-                "aria-controls": "rowsPerPageDropdownOptions",
-                "aria-label": "Select page length",
-              },
-              trigger: { "aria-label": "Open Dropdown for page length" },
-            }}
-          />
-        </>
-      );
-    },
-  };
-
-  const columnPassThrough = (column: string) => {
-    return {
-      sortIcon: {
-        role: "img",
-        "aria-label": `Toggle Sort for Column ${column}`,
-      },
-    };
-  };
-
   return (
     <div>
       <Toast ref={toast} />
@@ -755,7 +696,7 @@ function UserIndex({
         sortField={sortField}
         sortOrder={sortOrder}
         rowsPerPageOptions={[10, 25, 50]}
-        paginatorTemplate={paginatorTemplate}
+        paginatorTemplate={PaginatorTemplate}
         onPage={(e: any) => {
           setFirst(e.first);
           setRows(e.rows);
@@ -766,33 +707,13 @@ function UserIndex({
           setFirst(0);
         }}
         dataKey="id"
-        pt={{
-          paginator: {
-            firstPageIcon: {
-              role: "img",
-              "aria-label": "First Paginator Icon",
-            },
-            prevPageIcon: {
-              role: "img",
-              "aria-label": "Previous Paginator Icon",
-            },
-            nextPageIcon: {
-              role: "img",
-              "aria-label": "Next Paginator Icon",
-            },
-            lastPageIcon: {
-              role: "img",
-              "aria-label": "Last Paginator Icon",
-            },
-          },
-        }}
       >
         <Column
           field="username"
           sortable
           header="Username"
           body={userNameTemplate}
-          pt={columnPassThrough("username")}
+          pt={ColumnPassThrough("username")}
         />
         <Column header="Max Permission" body={maxPermissionTemplate} />
         <Column header="Last Authenticated" body={lastAuthenticatedTemplate} />
