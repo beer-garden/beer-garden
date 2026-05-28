@@ -5,9 +5,6 @@ import { Checkbox, CheckboxChangeEvent } from "primereact/checkbox";
 import { Column } from "primereact/column";
 import { DataTable, SortOrder } from "primereact/datatable";
 import { Divider } from "primereact/divider";
-import { Dropdown } from "primereact/dropdown";
-import { ChevronDownIcon } from "primereact/icons/chevrondown";
-import { ChevronRightIcon } from "primereact/icons/chevronright";
 import { MultiSelect } from "primereact/multiselect";
 import { Toast } from "primereact/toast";
 import { Tooltip } from "primereact/tooltip";
@@ -31,7 +28,11 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { GetBaseURL } from "../services/util_service";
+import {
+  ColumnPassThrough,
+  GetBaseURL,
+  PaginatorTemplate,
+} from "../services/util_service";
 
 interface LazyParams {
   first: number;
@@ -466,6 +467,7 @@ function RequestIndex({
         <Link
           to={`/request/${request.id}`}
           aria-label={`Open Request ${request.command_display_name ?? request.command} ${request.id}`}
+          tabIndex={-1}
         >
           <AccessButton
             rounded
@@ -576,8 +578,8 @@ function RequestIndex({
   }, [requests]);
 
   const paginatorTemplate = {
-    layout:
-      "FirstPageLink PrevPageLink NextPageLink PageLinks LastPageLink RowsPerPageDropdown CurrentPageReport",
+    ...PaginatorTemplate,
+
     CurrentPageReport: () => {
       const lastCount = lazyParams.first + lazyParams.rows;
       if (filteredRecords > 0 && filteredRecords < totalRecords) {
@@ -594,58 +596,6 @@ function RequestIndex({
         );
       }
     },
-    RowsPerPageDropdown: (options: any) => {
-      return (
-        <>
-          <datalist id="rowsPerPageDropdownOptions" aria-hidden="true">
-            {options?.options?.map((status: any) => (
-              <option key={status.label} value={status.value} />
-            ))}
-          </datalist>
-          <Dropdown
-            dropdownIcon={(opts) => {
-              return opts?.iconProps["data-pr-overlay-visible"] ? (
-                <ChevronRightIcon
-                  {...opts.iconProps}
-                  role="img"
-                  aria-label="Collapse page length selection"
-                />
-              ) : (
-                <ChevronDownIcon
-                  {...opts.iconProps}
-                  role="img"
-                  aria-label="Expand page length selection"
-                />
-              );
-            }}
-            value={options.value}
-            options={options.options}
-            onChange={options.onChange}
-            pt={{
-              input: {
-                autoComplete: "off",
-                "aria-label": "Dropdown page length",
-              },
-              select: {
-                autoComplete: "off",
-                "aria-controls": "rowsPerPageDropdownOptions",
-                "aria-label": "Select page length",
-              },
-              trigger: { "aria-label": "Open Dropdown for page length" },
-            }}
-          />
-        </>
-      );
-    },
-  };
-
-  const columnPassThrough = (column: string) => {
-    return {
-      sortIcon: {
-        role: "img",
-        "aria-label": `Toggle Sort for Column ${column}`,
-      },
-    };
   };
 
   return (
@@ -696,35 +646,35 @@ function RequestIndex({
           sortable
           header="Command"
           body={commandNameTemplate}
-          pt={columnPassThrough("Command")}
+          pt={ColumnPassThrough("Command")}
         />
         <Column
           field="namespace"
           filter
           sortable
           header="Namespace"
-          pt={columnPassThrough("Namespace")}
+          pt={ColumnPassThrough("Namespace")}
         />
         <Column
           field="system"
           filter
           sortable
           header="System"
-          pt={columnPassThrough("System")}
+          pt={ColumnPassThrough("System")}
         />
         <Column
           field="system_version"
           filter
           sortable
           header="Version"
-          pt={columnPassThrough("Version")}
+          pt={ColumnPassThrough("Version")}
         />
         <Column
           field="instance_name"
           filter
           sortable
           header="Instance"
-          pt={columnPassThrough("Instance")}
+          pt={ColumnPassThrough("Instance")}
         />
         <Column
           field="status"
@@ -736,7 +686,7 @@ function RequestIndex({
             { label: "In", value: FilterMatchMode.IN },
             { label: "Not In", value: FilterMatchMode.NOT_IN },
           ]}
-          pt={columnPassThrough("Status")}
+          pt={ColumnPassThrough("Status")}
         />
         <Column
           field="created_at"
@@ -746,14 +696,14 @@ function RequestIndex({
           header="Created"
           body={(rowData) => formatDate(rowData.created_at)}
           filterElement={dateTimeFilterTemplate}
-          pt={columnPassThrough("Created")}
+          pt={ColumnPassThrough("Created")}
         />
         <Column
           field="comment"
           filter
           sortable
           header="Comment"
-          pt={columnPassThrough("Comment")}
+          pt={ColumnPassThrough("Comment")}
         />
       </DataTable>
     </div>

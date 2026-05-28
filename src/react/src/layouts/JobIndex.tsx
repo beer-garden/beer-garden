@@ -22,6 +22,7 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
+import { PaginatorTemplate } from "../services/util_service";
 
 function JobIndex({
   listeners,
@@ -429,7 +430,7 @@ function JobIndex({
 
   const header = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-      <span className="text-xl text-900 font-bold">Requests Scheduler</span>
+      <h1 className="text-xl text-900 font-bold">Requests Scheduler</h1>
       <Toast ref={toast} />
 
       <div className="flex">
@@ -455,6 +456,12 @@ function JobIndex({
           auto
           uploadHandler={customJobImporter}
           {...GenerateTourProps(importJobTourStep)}
+          pt={{
+            uploadIcon: { role: "img", "aria-label": "Upload Job File" },
+            cancelIcon: { role: "img", "aria-label": "Remove Upload Job File" },
+            chooseIcon: { role: "img", "aria-label": "Choose Upload Job File" },
+            basicButton: { role: "button" },
+          }}
         />
 
         <AccessButton
@@ -487,6 +494,7 @@ function JobIndex({
         paginator
         rows={5}
         rowsPerPageOptions={[5, 10, 25, 50]}
+        paginatorTemplate={PaginatorTemplate}
         tableStyle={{ minWidth: "50rem" }}
       >
         <Column field="name" header="Actions" body={actionTemplate}></Column>
