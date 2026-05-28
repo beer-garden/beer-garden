@@ -103,6 +103,15 @@ function RequestViewMain({
     }
   }, [request, showProjections, system]);
 
+  // ARC Toolkit Errors:
+  //     1) The tab role is missing the {{requiredContextRole}} required context role
+  //     2) The list element is not expected inside the tablist role
+  //     3) A relationship attribute (such as <label for="...">, or an ARIA attribute such as aria-controls="...") is pointing to a non-existent id.
+  // Stepper Panel Content is not loaded into DOM until loaded causing checks to fail
+
+  // ARC Toolkit Errors:
+  //     1) Found an <ol> ordered list or <ul> unordered list that contains no list items.
+  // PrimeReact CSS styling is `list-style-type:none` that hides is from check in DOM
   return (
     <div>
       {request && (

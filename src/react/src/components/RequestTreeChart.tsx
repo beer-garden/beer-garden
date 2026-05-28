@@ -205,6 +205,9 @@ function RequestTreeChart(props: RequestTreeChartProps) {
                 ? 0
                 : -1,
           }),
+          root: {
+            role: undefined,
+          },
         }}
       >
         <Column
