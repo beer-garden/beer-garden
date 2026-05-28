@@ -119,7 +119,7 @@ export const ChangeTheme = (color?: string, dark?: boolean) => {
     localStorage.setItem("theme_dark", dark.toString());
   }
 
-  const themeLink = document.getElementById("theme-link");
+  const themeLink = document.getElementById("theme-link") as HTMLAnchorElement;
   if (themeLink) {
     themeLink.href = `${GetBaseURL()}/themes/lara-${dark ? "dark" : "light"}-${color}/theme.css`;
   }
@@ -135,14 +135,14 @@ export const ChangeTheme = (color?: string, dark?: boolean) => {
 const getInstanceStatus = (
   instance: Instance,
   associatedRunners: RefObject<Runner[] | undefined>,
-) => {
+): string => {
   if (instance.metadata?.runner_id && associatedRunners.current) {
     for (const runner of associatedRunners.current) {
       if (runner.id === instance.metadata?.runner_id) {
         if (runner.dead) {
           return "DEAD";
         }
-        return instance.status;
+        return instance.status ?? "UNKNOWN";
       }
     }
   }

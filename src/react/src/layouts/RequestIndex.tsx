@@ -604,15 +604,16 @@ function RequestIndex({
           </datalist>
           <Dropdown
             dropdownIcon={(opts) => {
-              return opts?.iconProps["data-pr-overlay-visible"] ? (
+              const iconProps = opts?.iconProps as any;
+              return iconProps["data-pr-overlay-visible"] ? (
                 <ChevronRightIcon
-                  {...opts.iconProps}
+                  {...iconProps}
                   role="img"
                   aria-label="Collapse page length selection"
                 />
               ) : (
                 <ChevronDownIcon
-                  {...opts.iconProps}
+                  {...iconProps}
                   role="img"
                   aria-label="Expand page length selection"
                 />
