@@ -467,6 +467,7 @@ function RequestIndex({
         <Link
           to={`/request/${request.id}`}
           aria-label={`Open Request ${request.command_display_name ?? request.command} ${request.id}`}
+          tabIndex={-1}
         >
           <AccessButton
             rounded
