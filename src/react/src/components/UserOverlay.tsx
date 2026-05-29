@@ -80,8 +80,17 @@ function UserOverlay({
             checked={dark}
             onChange={(e) => setDark(e.value)}
             className="align-self-center"
+            pt={{
+              root: {
+                role: undefined,
+                "aria-checked": undefined,
+              },
+              input: {
+                "aria-labelledby": "switchMode",
+              },
+            }}
           />
-          <span className="ml-2">
+          <span className="ml-2" id="switchMode">
             {dark ? (
               <>
                 <FontAwesomeIcon className="mr-2" icon="moon" />
@@ -94,6 +103,11 @@ function UserOverlay({
               </>
             )}
           </span>
+          <datalist id="selectThemeColorDropdown" aria-hidden="true">
+            {ThemeOptions().map((status: any) => (
+              <option key={status.label} value={status.value} />
+            ))}
+          </datalist>
           <Dropdown
             value={color}
             onChange={(e) => setColor(e.value)}
@@ -101,6 +115,21 @@ function UserOverlay({
             optionLabel="Color"
             placeholder="Select a Color"
             className="mr-2"
+            pt={{
+              dropdownIcon: {
+                role: "img",
+                "aria-label": "Dropdown icon for selecting theme color",
+              },
+              input: {
+                autoComplete: "off",
+                "aria-label": "Dropdown theme color",
+              },
+              select: {
+                autoComplete: "off",
+                "aria-controls": "selectThemeColorDropdown",
+                "aria-label": "Select theme color",
+              },
+            }}
           />
         </div>
         <div className="flex align-items-center gap-2">
@@ -111,8 +140,19 @@ function UserOverlay({
               localStorage.setItem("user_advanced", JSON.stringify(e.value));
             }}
             className="align-self-center"
+            pt={{
+              root: {
+                role: undefined,
+                "aria-checked": undefined,
+              },
+              input: {
+                "aria-labelledby": "switchPowerUser",
+              },
+            }}
           />
-          <span className="ml-2">Power User</span>
+          <span className="ml-2" id="switchPowerUser">
+            Power User
+          </span>
         </div>
       </div>
       {username && (
