@@ -177,6 +177,12 @@ function RequestOptions({
             }}
             severity="success"
             style={{ marginLeft: "auto" }}
+            pt={{
+              icon: {
+                role: "img",
+                "aria-label": `Split Button Options for Request ${request.id}`,
+              },
+            }}
           />
         )}
         {!execute_authority && (

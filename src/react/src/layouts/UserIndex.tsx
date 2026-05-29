@@ -22,6 +22,7 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { DeleteUser, GetUsers, RescanUsers } from "../services/user_service";
+import { ColumnPassThrough, PaginatorTemplate } from "../services/util_service";
 
 function UserIndex({
   config,
@@ -290,7 +291,11 @@ function UserIndex({
     return (
       <div {...GenerateTourProps(localRolesUserTourStep)}>
         {rowData?.local_roles?.map((role: Role) => (
-          <Chip key={role.id} label={role.name} title={role.permission} />
+          <Chip
+            key={role.id}
+            label={role.name}
+            pt={{ root: { "aria-label": undefined } }}
+          />
         ))}
       </div>
     );
@@ -300,7 +305,11 @@ function UserIndex({
     return (
       <div {...GenerateTourProps(upstreamRolesUserTourStep)}>
         {rowData?.upstream_roles?.map((role: Role) => (
-          <Chip key={role.id} label={role.name} title={role.permission} />
+          <Chip
+            key={role.id}
+            label={role.name}
+            pt={{ root: { "aria-label": undefined } }}
+          />
         ))}
       </div>
     );
@@ -624,6 +633,17 @@ function UserIndex({
           text="Warning - Beergarden authorization is currently disabled. Changes made here
                   will be persisted, but permissions will not be enforced. Contact your
                   administator to enable this feature."
+          pt={{
+            icon: {
+              role: "img",
+              "aria-label": "Close Alert Message",
+              style: { color: "var(--danger-color)" },
+            },
+          }}
+          style={{
+            backgroundColor: "var(--danger-background-color)",
+            color: "var(--danger-color)",
+          }}
         />
       )}
       {showPasswordDialog && passwordUsername && (
@@ -676,6 +696,7 @@ function UserIndex({
         sortField={sortField}
         sortOrder={sortOrder}
         rowsPerPageOptions={[10, 25, 50]}
+        paginatorTemplate={PaginatorTemplate}
         onPage={(e: any) => {
           setFirst(e.first);
           setRows(e.rows);
@@ -692,6 +713,7 @@ function UserIndex({
           sortable
           header="Username"
           body={userNameTemplate}
+          pt={ColumnPassThrough("username")}
         />
         <Column header="Max Permission" body={maxPermissionTemplate} />
         <Column header="Last Authenticated" body={lastAuthenticatedTemplate} />

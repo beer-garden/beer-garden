@@ -85,7 +85,7 @@ export interface CronTrigger {
 }
 
 export interface DateTrigger {
-  runDate?: any;
+  run_date?: any;
   timezone?: string;
 }
 

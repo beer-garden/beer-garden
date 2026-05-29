@@ -63,6 +63,7 @@ function RequestWizard({
   const instanceList: Array<any> = [];
   const [resetForm, setResetForm] = useState<boolean>(false);
   const [isFormValid, setIsFormValid] = useState<boolean>(false);
+  const [isJobValid, setIsJobValid] = useState<boolean>(false);
   const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
 
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
@@ -630,6 +631,7 @@ function RequestWizard({
               <SchedulerForm
                 scheduledJob={job}
                 setScheduledJob={updateJobValue}
+                setIsJobValid={setIsJobValid}
               />
             )}
             <CommandForm
@@ -690,7 +692,7 @@ function RequestWizard({
                   label="Submit Job"
                   severity="success"
                   icon="pi pi-arrow-right"
-                  disabled={!isFormValid}
+                  disabled={!(isJobValid && isFormValid)}
                   iconPos="right"
                   onClick={submitJob}
                   config={config}
@@ -707,7 +709,7 @@ function RequestWizard({
                   label="Update Job"
                   severity="success"
                   icon="pi pi-arrow-right"
-                  disabled={!isFormValid}
+                  disabled={!(isJobValid && isFormValid)}
                   iconPos="right"
                   onClick={updateJob}
                   config={config}
