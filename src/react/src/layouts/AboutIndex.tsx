@@ -89,13 +89,18 @@ function AboutIndex({ config }: { config: Config }) {
   }) {
     if (!config || !version) return <p>Loading version information...</p>;
     return (
-      <p>
-        {config.application_name} is currently on version{" "}
-        <span className="font-bold">{version.beer_garden_version}</span>
-        <br />
-        Python version{" "}
-        <span className="font-bold">{version.python_version}</span>
-      </p>
+      <>
+        <div>
+          <span className="mr-1">
+            {config.application_name} is currently on version
+          </span>
+          <span className="font-bold">{version.beer_garden_version}</span>
+        </div>
+        <div>
+          <span className="mr-1">Python version</span>
+          <span className="font-bold">{version.python_version}</span>
+        </div>
+      </>
     );
   }
 
