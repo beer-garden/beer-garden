@@ -250,14 +250,6 @@ function RequestCreateCard({
     hasCommandName: requestItem.requestCommandInput?.command,
   };
 
-  const handleSubmitInteraction = (event: any) => {
-    if (event.type === "mousedown" && event.button === 1) {
-      submitRequestAndOpen();
-    } else if (event.type === "mousedown" || event.type === "click") {
-      submitRequest();
-    }
-  };
-
   return (
     <Card
       className="justify-content-center"
@@ -316,8 +308,12 @@ function RequestCreateCard({
                 label="Submit"
                 icon="pi pi-arrow-right"
                 disabled={!isFormValid}
-                onMouseDown={handleSubmitInteraction}
-                onClick={handleSubmitInteraction}
+                onMouseDown={(event: any) => {
+                  if (event.type === "mousedown" && event.button === 1) {
+                    submitRequestAndOpen();
+                  }
+                }}
+                onClick={submitRequest}
                 {...permissions}
                 permission="OPERATOR"
               />
