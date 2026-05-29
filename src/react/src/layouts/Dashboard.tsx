@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
 import { ConfirmDialog } from "primereact/confirmdialog";
 import { MultiSelect } from "primereact/multiselect";
+import { Skeleton } from "primereact/skeleton";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
 import { Tooltip } from "primereact/tooltip";
@@ -616,61 +617,67 @@ function GardenDashboard({
             ))}
           </datalist>
 
-          <MultiSelect
-            value={filteredStatuses}
-            onChange={(e) => setFilteredStatuses(e.value)}
-            options={instanceStatuses}
-            itemTemplate={instanceStatusTemplate}
-            placeholder="Filter by Instance Status"
-            className="mb-3"
-            filter
-            pt={{
-              input: {
-                "aria-label": "Filter by Instance Status",
-                "aria-controls": "instance_status_multiselect_input",
-                autoComplete: "off",
-              },
-              triggerIcon: {
-                role: "img",
-                "aria-label": "Toggle Instance Status Filter",
-              },
-            }}
-          />
+          {loading ? (
+            <Skeleton width="100%" height="350px"></Skeleton>
+          ) : (
+            <>
+              <MultiSelect
+                value={filteredStatuses}
+                onChange={(e) => setFilteredStatuses(e.value)}
+                options={instanceStatuses}
+                itemTemplate={instanceStatusTemplate}
+                placeholder="Filter by Instance Status"
+                className="mb-3"
+                filter
+                pt={{
+                  input: {
+                    "aria-label": "Filter by Instance Status",
+                    "aria-controls": "instance_status_multiselect_input",
+                    autoComplete: "off",
+                  },
+                  triggerIcon: {
+                    role: "img",
+                    "aria-label": "Toggle Instance Status Filter",
+                  },
+                }}
+              />
 
-          <div className="flex justify-content-left">
-            <div className="grid grid-nogutter gap-2">
-              {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
-                <div
-                  key={runnerGroup.path}
-                  className="mb-4 mr-2"
-                  style={{ width: "26.5vw", minWidth: "250px" }}
-                >
-                  <UnassociatedRunnerCard
-                    runnerGroup={runnerGroup}
-                    toast={toast}
-                    config={config}
-                  />
+              <div className="flex justify-content-left">
+                <div className="grid grid-nogutter gap-2">
+                  {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
+                    <div
+                      key={runnerGroup.path}
+                      className="mb-4 mr-2"
+                      style={{ width: "26.5vw", minWidth: "250px" }}
+                    >
+                      <UnassociatedRunnerCard
+                        runnerGroup={runnerGroup}
+                        toast={toast}
+                        config={config}
+                      />
+                    </div>
+                  ))}
+                  {filteredSystems?.map((system: System) => (
+                    <div
+                      key={system.id}
+                      className="mr-2 mb-2"
+                      style={{ width: "26.5vw", minWidth: "250px" }}
+                    >
+                      <SystemCard
+                        system={system}
+                        toast={toast}
+                        tourStepsRef={tourStepsRef}
+                        selectedGarden={selectedGarden?.name}
+                        addRequestItem={addRequestItem}
+                        config={config}
+                        associatedRunners={associatedRunners}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-              {filteredSystems?.map((system: System) => (
-                <div
-                  key={system.id}
-                  className="mr-2 mb-2"
-                  style={{ width: "26.5vw", minWidth: "250px" }}
-                >
-                  <SystemCard
-                    system={system}
-                    toast={toast}
-                    tourStepsRef={tourStepsRef}
-                    selectedGarden={selectedGarden?.name}
-                    addRequestItem={addRequestItem}
-                    config={config}
-                    associatedRunners={associatedRunners}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
