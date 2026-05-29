@@ -103,6 +103,15 @@ function RequestViewMain({
     }
   }, [request, showProjections, system]);
 
+  // ARC Toolkit Errors:
+  //     1) The tab role is missing the {{requiredContextRole}} required context role
+  //     2) The list element is not expected inside the tablist role
+  //     3) A relationship attribute (such as <label for="...">, or an ARIA attribute such as aria-controls="...") is pointing to a non-existent id.
+  // Stepper Panel Content is not loaded into DOM until loaded causing checks to fail
+
+  // ARC Toolkit Errors:
+  //     1) Found an <ol> ordered list or <ul> unordered list that contains no list items.
+  // PrimeReact CSS styling is `list-style-type:none` that hides it from check in DOM
   return (
     <div>
       {request && (
@@ -111,7 +120,33 @@ function RequestViewMain({
           activeStep={activeIndex}
           style={{ flexBasis: "50rem" }}
         >
-          <StepperPanel header="Request Parameters">
+          <StepperPanel
+            header="Request Parameters"
+            pt={{
+              action: {
+                id: `${request.id}_tab_1`,
+                "aria-controls": `${request.id}_stepper_1`,
+              },
+              content: {
+                id: `${request.id}_stepper_1`,
+                role: "tabpanel",
+                "aria-labelledby": `${request.id}_tab_1`,
+              },
+              number: {
+                style: {
+                  color: "var(--info-color)",
+                  backgroundColor: "var(--info-background-color)",
+                },
+              },
+              separator: {
+                "aria-hidden": undefined,
+                tabindex: -1,
+                style: {
+                  color: "var(--info-background-color)",
+                },
+              },
+            }}
+          >
             {/* Need to determine if Read Only can still download values */}
             <div className="flex">
               {!showCommandForm && <Skeleton width="100%" height="10rem" />}
@@ -147,7 +182,33 @@ function RequestViewMain({
               )}
             </div>
           </StepperPanel>
-          <StepperPanel header="Request Output">
+          <StepperPanel
+            header="Request Output"
+            pt={{
+              action: {
+                id: `${request.id}_tab_2`,
+                "aria-controls": `${request.id}_stepper_2`,
+              },
+              content: {
+                id: `${request.id}_stepper_2`,
+                role: "tabpanel",
+                "aria-labelledby": `${request.id}_tab_2`,
+              },
+              number: {
+                style: {
+                  color: "var(--info-color)",
+                  backgroundColor: "var(--info-background-color)",
+                },
+              },
+              separator: {
+                "aria-hidden": undefined,
+                tabindex: -1,
+                style: {
+                  color: "var(--info-background-color)",
+                },
+              },
+            }}
+          >
             <div className="flex">
               {request && <RequestOutput request={request} />}
               {request && (
