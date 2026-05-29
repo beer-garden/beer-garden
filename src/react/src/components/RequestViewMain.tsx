@@ -111,7 +111,7 @@ function RequestViewMain({
 
   // ARC Toolkit Errors:
   //     1) Found an <ol> ordered list or <ul> unordered list that contains no list items.
-  // PrimeReact CSS styling is `list-style-type:none` that hides is from check in DOM
+  // PrimeReact CSS styling is `list-style-type:none` that hides it from check in DOM
   return (
     <div>
       {request && (
