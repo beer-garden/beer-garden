@@ -1,3 +1,4 @@
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
 import { ConfirmDialog } from "primereact/confirmdialog";
@@ -354,7 +355,9 @@ function GardenDashboard({
       // Ideal scenario is to get this icon from the Garden model, but we
       // don't currently have access to the downstream icons
       return (
-        <FontAwesomeIcon icon={config?.icon_default ?? "beer-mug-empty"} />
+        <FontAwesomeIcon
+          icon={(config?.icon_default as IconProp) ?? "beer-mug-empty"}
+        />
       );
     } else if (!publishing && !receiving) {
       return (
