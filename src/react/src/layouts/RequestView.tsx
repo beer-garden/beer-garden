@@ -57,7 +57,7 @@ function RequestHeader(request: Request) {
 
   // ARC Toolkit Errors:
   //     1) An element other than an <li> list item was found as the first child element of a list.
-  // PrimeReact CSS styling is `list-style-type:none` that hides is from check in DOM
+  // PrimeReact CSS styling is `list-style-type:none` that hides it from check in DOM
   return (
     <h1>
       <BreadCrumb model={items} />
