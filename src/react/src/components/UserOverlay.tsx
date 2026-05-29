@@ -30,6 +30,13 @@ function UserOverlay({
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const toast = useRef<Toast>(null);
 
+  const focusRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Focus the element when the component mounts
+    focusRef.current?.focus();
+  }, []);
+
   useEffect(() => {
     if (
       (localStorage.getItem("theme_dark") === "true") !== dark ||
@@ -62,15 +69,6 @@ function UserOverlay({
                 className="mr-2"
               />
               <span>{username}</span>
-              <AccessButton
-                style={{ marginLeft: "auto" }}
-                size="small"
-                onClick={() => setShowPasswordDialog(true)}
-                data-testid="user-password-overlay"
-              >
-                <FontAwesomeIcon className="mr-2" icon="key" />
-                <span>Change Password</span>
-              </AccessButton>
             </div>
             <Divider />
           </div>
@@ -89,6 +87,7 @@ function UserOverlay({
                 "aria-labelledby": "switchMode",
               },
             }}
+            ref={focusRef}
           />
           <span className="ml-2" id="switchMode">
             {dark ? (
@@ -156,18 +155,34 @@ function UserOverlay({
         </div>
       </div>
       {username && (
-        <div>
-          <Divider />
-          <AccessButton
-            size="small"
-            className="mr-2"
-            onClick={onLogout}
-            data-testid="user-logout-overlay"
-          >
-            <FontAwesomeIcon className="mr-2" icon="sign-out" />
-            <span>Logout</span>
-          </AccessButton>
-        </div>
+        <>
+          <div>
+            <div className="mt-2">
+              <AccessButton
+                style={{ marginLeft: "auto" }}
+                size="small"
+                onClick={() => setShowPasswordDialog(true)}
+                data-testid="user-password-overlay"
+              >
+                <FontAwesomeIcon className="mr-2" icon="key" />
+                <span>Change Password</span>
+              </AccessButton>
+            </div>
+          </div>
+
+          <div>
+            <Divider />
+            <AccessButton
+              size="small"
+              className="mr-2"
+              onClick={onLogout}
+              data-testid="user-logout-overlay"
+            >
+              <FontAwesomeIcon className="mr-2" icon="sign-out" />
+              <span>Logout</span>
+            </AccessButton>
+          </div>
+        </>
       )}
     </>
   );
