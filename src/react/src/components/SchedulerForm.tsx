@@ -22,6 +22,7 @@ import { CompareObjects } from "../services/util_service";
 interface SchedulerFormProps {
   scheduledJob: Job | undefined;
   setScheduledJob: (job: Job | undefined) => void;
+  setIsJobValid: (isValid: boolean) => void;
 }
 
 interface LayoutProps {
@@ -113,10 +114,15 @@ function FileForm({
         <div style={{ width: layoutProps.valueWidth }}>
           <InputText
             id="path"
-            value={fileTrigger?.path}
+            value={fileTrigger?.path ?? ""}
             onChange={(e) => {
               setFileTrigger({ ...fileTrigger, ...{ path: e.target.value } });
             }}
+            invalid={
+              fileTrigger?.path === undefined ||
+              fileTrigger?.path === null ||
+              fileTrigger?.path === ""
+            }
           />
         </div>
       </div>
@@ -180,16 +186,25 @@ function DateForm({
   layoutProps: LayoutProps;
 }) {
   const [runDate, setRunDate] = useState(
-    typeof dateTrigger?.runDate === "string"
-      ? new Date(dateTrigger.runDate)
-      : dateTrigger?.runDate,
+    dateTrigger?.run_date
+      ? new Date(dateTrigger.run_date)
+      : dateTrigger?.run_date,
   );
 
-  useEffect(() => {
-    if (!dateTrigger || dateTrigger.runDate !== runDate) {
-      setDateTrigger({ ...dateTrigger, ...{ runDate: runDate } });
+  const updateRunDate = (updatedRunDate: any) => {
+    if (updatedRunDate) {
+      setRunDate(updatedRunDate);
+      if (
+        !dateTrigger ||
+        dateTrigger.run_date !== new Date(updatedRunDate).getTime()
+      ) {
+        setDateTrigger({
+          ...dateTrigger,
+          ...{ run_date: new Date(updatedRunDate).getTime() },
+        });
+      }
     }
-  }, [runDate, dateTrigger, setDateTrigger]);
+  };
 
   return (
     <div>
@@ -202,7 +217,10 @@ function DateForm({
             value={runDate}
             showTime
             hourFormat="24"
-            onChange={(e: any) => setRunDate(e.value)}
+            onChange={(e: any) => updateRunDate(e.value)}
+            invalid={
+              runDate === undefined || runDate === null || runDate === ""
+            }
           />
         </div>
       </div>
@@ -582,7 +600,11 @@ function CronForm({
   );
 }
 
-function SchedulerForm({ scheduledJob, setScheduledJob }: SchedulerFormProps) {
+function SchedulerForm({
+  scheduledJob,
+  setScheduledJob,
+  setIsJobValid,
+}: SchedulerFormProps) {
   const jobOptions = ["CRON", "Interval", "Date", "File"];
   let defaultJobOption = "CRON";
   const defaultTimeZone = "UTC";
@@ -618,6 +640,35 @@ function SchedulerForm({ scheduledJob, setScheduledJob }: SchedulerFormProps) {
   );
 
   useEffect(() => {
+    const validateForm = () => {
+      let valid = true;
+      if (
+        scheduledJob?.name === undefined ||
+        scheduledJob?.name === null ||
+        scheduledJob?.name === ""
+      ) {
+        valid = false;
+      }
+      if (
+        jobState === "Date" &&
+        (dateTrigger?.run_date === undefined ||
+          dateTrigger?.run_date === null ||
+          dateTrigger?.run_date === "")
+      ) {
+        valid = false;
+      }
+      if (
+        jobState === "File" &&
+        (fileTrigger?.path === undefined ||
+          fileTrigger?.path === null ||
+          fileTrigger?.path === "")
+      ) {
+        valid = false;
+      }
+      setIsJobValid(valid);
+    };
+    validateForm();
+
     if (scheduledJob === undefined) {
       setScheduledJob({
         max_instances: 3,
@@ -689,13 +740,18 @@ function SchedulerForm({ scheduledJob, setScheduledJob }: SchedulerFormProps) {
             <div style={{ width: layoutProps.valueWidth }}>
               <InputText
                 id="jobName"
-                value={scheduledJob?.name}
+                value={scheduledJob?.name ?? ""}
                 onChange={(e) => {
                   setScheduledJob({
                     ...scheduledJob,
                     ...{ name: e.target.value },
                   });
                 }}
+                invalid={
+                  scheduledJob?.name === undefined ||
+                  scheduledJob?.name === null ||
+                  scheduledJob?.name === ""
+                }
               />
             </div>
           </div>

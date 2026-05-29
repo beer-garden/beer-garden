@@ -423,7 +423,7 @@ function SchedulerViewCard({
                 <div>
                   <p>
                     <strong className="mr-2">Run Date:</strong>
-                    {formatDate((job.trigger as DateTrigger).runDate)}
+                    {formatDate((job.trigger as DateTrigger).run_date)}
                   </p>
                   <p>
                     <strong className="mr-2">Timezone:</strong>
