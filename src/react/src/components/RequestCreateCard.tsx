@@ -253,7 +253,7 @@ function RequestCreateCard({
   const handleSubmitInteraction = (event: any) => {
     if (event.type === "mousedown" && event.button === 1) {
       submitRequestAndOpen();
-    } else {
+    } else if (event.type === "mousedown" || event.type === "click") {
       submitRequest();
     }
   };
