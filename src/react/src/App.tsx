@@ -111,6 +111,28 @@ function App() {
 
   const primeValue = {
     hideOverlaysOnDocumentScrolling: true,
+    pt: {
+      datatable: {
+        paginator: {
+          firstPageIcon: {
+            role: "img",
+            "aria-label": "First Paginator Icon",
+          },
+          prevPageIcon: {
+            role: "img",
+            "aria-label": "Previous Paginator Icon",
+          },
+          nextPageIcon: {
+            role: "img",
+            "aria-label": "Next Paginator Icon",
+          },
+          lastPageIcon: {
+            role: "img",
+            "aria-label": "Last Paginator Icon",
+          },
+        },
+      },
+    },
   };
 
   useEffect(() => {
@@ -496,7 +518,13 @@ function App() {
                   </>
                 </Dialog>
               )}
-              <div className="flex-grow-1" key={reloadUI} role="main">
+              <div
+                className="flex-grow-1"
+                key={reloadUI}
+                role="main"
+                id="main-content"
+                tabIndex={-1}
+              >
                 <ErrorBoundary FallbackComponent={ErrorFallback}>
                   <Routes>
                     <Route
