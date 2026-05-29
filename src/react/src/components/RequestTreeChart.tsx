@@ -129,6 +129,8 @@ function RequestTreeChart(props: RequestTreeChartProps) {
         <Link
           to={`/request/${node.data.id}`}
           aria-label={`Open Request ${node.data.command_display_name ?? node.data.command} ${node.data.id}`}
+          tabIndex={-1}
+          style={{ textDecoration: "none" }}
         >
           <AccessButton rounded raised link title="Open">
             <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
@@ -174,6 +176,8 @@ function RequestTreeChart(props: RequestTreeChartProps) {
           <Link
             to={`/recreate/${node.data.id}`}
             aria-label={`Pour Again Request ${node.data.command_display_name ?? node.data.command} ${node.data.id}`}
+            tabIndex={-1}
+            style={{ textDecoration: "none" }}
           >
             <AccessButton
               rounded

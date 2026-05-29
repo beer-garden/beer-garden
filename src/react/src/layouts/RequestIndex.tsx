@@ -444,7 +444,11 @@ function RequestIndex({
                 <span>{request.parent.command}</span>
               </div>
             </Tooltip>
-            <Link to={`${GetBaseURL()}/request/${request.parent.id}`}>
+            <Link
+              to={`${GetBaseURL()}/request/${request.parent.id}`}
+              style={{ textDecoration: "none" }}
+              tabIndex={-1}
+            >
               <FontAwesomeIcon
                 icon="level-up"
                 className="parent-icon mr-2"
@@ -468,6 +472,7 @@ function RequestIndex({
           to={`/request/${request.id}`}
           aria-label={`Open Request ${request.command_display_name ?? request.command} ${request.id}`}
           tabIndex={-1}
+          style={{ textDecoration: "none" }}
         >
           <AccessButton
             rounded
