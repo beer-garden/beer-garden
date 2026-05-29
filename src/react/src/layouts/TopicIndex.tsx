@@ -24,6 +24,7 @@ import {
   ResetCount,
   SyncTopics,
 } from "../services/topic_service";
+import { ColumnPassThrough, PaginatorTemplate } from "../services/util_service";
 
 interface TopicSubscriber {
   topic?: Topic;
@@ -525,7 +526,13 @@ function TopicIndex({
             onChange={handleChange}
             checked={hideGenerated}
             className="mr-2"
-            aria-label="Hide Generated Topics"
+            pt={{
+              icon: {
+                role: "img",
+                "aria-label": "Image of toggle state for Hide Generated Topics",
+              },
+              input: { "aria-label": "Toggle state for Hide Generated Topics" },
+            }}
           />
           Hide Generated
         </div>
@@ -538,7 +545,13 @@ function TopicIndex({
         <InputText
           value={props.value}
           onChange={(e) => props.filterApplyCallback(e.target.value)}
-          aria-label={`Filter by ${props.field}`}
+          pt={{
+            root: {
+              autoComplete: "off",
+              "aria-label": `Input Filter for ${props?.field}`,
+              type: "text",
+            },
+          }}
         />
       );
     };
@@ -561,6 +574,7 @@ function TopicIndex({
           sortField={sortField}
           sortOrder={sortOrder}
           rowsPerPageOptions={[10, 25, 50]}
+          paginatorTemplate={PaginatorTemplate}
           onPage={(e: any) => {
             setFirst(e.first);
             setRows(e.rows);
@@ -579,6 +593,7 @@ function TopicIndex({
             style={{ maxWidth: "400px", overflowWrap: "break-word" }}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={ColumnPassThrough("Topic")}
           />
           <Column field="topic.name" header="" body={topicButtonTemplate} />
           <Column
@@ -589,6 +604,7 @@ function TopicIndex({
             body={publisherCountTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={ColumnPassThrough("Publisher_Count")}
           />
           <Column
             field="subscriber.garden"
@@ -598,6 +614,7 @@ function TopicIndex({
             body={gardenTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={ColumnPassThrough("Garden")}
           />
           <Column
             field="subscriber.namespace"
@@ -607,6 +624,7 @@ function TopicIndex({
             body={namespaceTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={ColumnPassThrough("Namespace")}
           />
           <Column
             field="subscriber.system"
@@ -616,6 +634,7 @@ function TopicIndex({
             body={systemTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={ColumnPassThrough("System")}
           />
           <Column
             field="subscriber.version"
@@ -625,6 +644,7 @@ function TopicIndex({
             body={versionTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={ColumnPassThrough("Version")}
           />
           <Column
             field="subscriber.instance"
@@ -634,6 +654,7 @@ function TopicIndex({
             body={instanceTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={ColumnPassThrough("Instance")}
           />
           <Column
             field="subscriber.command"
@@ -644,6 +665,7 @@ function TopicIndex({
             style={{ maxWidth: "300px", overflowWrap: "break-word" }}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={ColumnPassThrough("Command")}
           />
           <Column
             field="subscriber.consumer_count"
@@ -653,6 +675,7 @@ function TopicIndex({
             body={consumerCountTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={ColumnPassThrough("Consumer_Count")}
           />
           <Column
             field="subscriber.subscriber_type"
@@ -662,6 +685,7 @@ function TopicIndex({
             body={subscriberTypeTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
+            pt={ColumnPassThrough("Subscriber_Type")}
           />
         </DataTable>
       </>
