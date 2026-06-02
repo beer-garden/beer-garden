@@ -975,15 +975,26 @@ function CommandFormField({
       };
 
       return (
-        <div key={parameter.key} className="p-field">
+        <div id={parameter.key} key={parameter.key} className="p-field">
           <FileUpload
             ref={bytesUploadRef}
-            id={parameter.key}
             mode="basic"
             customUpload
             onSelect={customBytesUploader}
             disabled={disabled}
-            aria-label={`${inputAreaAriaLabel}: File Upload Bytes`}
+            pt={{
+              root: {
+                tabIndex: -1,
+              },
+              basicButton: {
+                "aria-label": `${inputAreaAriaLabel}: File Upload Bytes Choose Button`,
+                role: "button",
+              },
+              chooseIcon: {
+                role: "img",
+                "aria-label": `${inputAreaAriaLabel}: File Upload Bytes Choose Button Icon`,
+              },
+            }}
           />
         </div>
       );
@@ -1014,10 +1025,9 @@ function CommandFormField({
       };
 
       return (
-        <div key={parameter.key} className="p-field">
+        <div id={parameter.key} key={parameter.key} className="p-field">
           <FileUpload
             ref={fileUploadRef}
-            id={parameter.key}
             // mode="basic"
             customUpload
             auto
@@ -1030,7 +1040,24 @@ function CommandFormField({
                 displayValueTemplate={() => `${uploadPercentage}%`}
               />
             }
-            aria-label={`${inputAreaAriaLabel}: File Upload Base64`}
+            // aria-label={`${inputAreaAriaLabel}: File Upload Base64`}
+            pt={{
+              root: {
+                tabIndex: -1,
+              },
+
+              chooseButton: {
+                "aria-label": `${inputAreaAriaLabel}: File Upload Base64 Choose Button`,
+                role: "button",
+              },
+              chooseIcon: {
+                role: "img",
+                "aria-label": `${inputAreaAriaLabel}: File Upload Base64 Choose Button Icon`,
+              },
+              actions: {
+                "aria-description": `${inputAreaAriaLabel}: File Upload Base64 Remove File Button, button is out of scope in framework to update accessibility labels`,
+              },
+            }}
           />
         </div>
       );
