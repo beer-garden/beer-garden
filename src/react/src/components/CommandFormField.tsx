@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { AutoComplete } from "primereact/autocomplete";
+import { autoComplete } from "primereact/autoComplete";
 import { Calendar } from "primereact/calendar";
 import { Checkbox } from "primereact/checkbox";
 import { Dropdown } from "primereact/dropdown";
@@ -35,7 +35,7 @@ function CommandFormField({
   loadingChoices,
   resetForm,
 }: CommandFormFieldParams) {
-  //AutoComplete Objects
+  //autoComplete Objects
   const [items, setItems] = useState<Array<string>>([]);
 
   //Base64 Stateful Objects
@@ -225,7 +225,7 @@ function CommandFormField({
     };
     return (
       <div key={parameter.key} className="p-field">
-        <AutoComplete
+        <autoComplete
           id={parameter.key}
           value={parameter.value}
           suggestions={items}
@@ -284,7 +284,7 @@ function CommandFormField({
                     tooltip={`${inputAreaAriaLabel} Index ${index}: String`}
                     pt={{
                       root: {
-                        autocomplete: "off",
+                        autoComplete: "off",
                         "aria-label": `${inputAreaAriaLabel} Index ${index}: String`,
                         type: "text",
                       },
@@ -327,7 +327,7 @@ function CommandFormField({
             tooltip={`${inputAreaAriaLabel}: String`}
             pt={{
               root: {
-                autocomplete: "off",
+                autoComplete: "off",
 
                 type: "text",
               },
@@ -361,7 +361,7 @@ function CommandFormField({
                     pt={{
                       root: () => {
                         return {
-                          autocomplete: "off",
+                          autoComplete: "off",
                           "aria-label": `${inputAreaAriaLabel} Index ${index}: Dictionary`,
                         };
                       },
@@ -405,7 +405,7 @@ function CommandFormField({
             tooltip={`${inputAreaAriaLabel}: Dictionary`}
             pt={{
               root: {
-                autocomplete: "off",
+                autoComplete: "off",
               },
             }}
           />
@@ -449,7 +449,7 @@ function CommandFormField({
                       input: {
                         root: () => {
                           return {
-                            autocomplete: "off",
+                            autoComplete: "off",
                             "aria-label": `${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
                             "aria-valuenow": getMultiValue(parameter.key, index)
                               ? JSON.stringify(
@@ -505,7 +505,7 @@ function CommandFormField({
             pt={{
               input: {
                 root: {
-                  autocomplete: "off",
+                  autoComplete: "off",
                   "aria-label": `${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
                 },
               },
@@ -550,7 +550,7 @@ function CommandFormField({
                       input: {
                         root: () => {
                           return {
-                            autocomplete: "off",
+                            autoComplete: "off",
                             "aria-label": `${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
                             "aria-valuenow": getMultiValue(parameter.key, index)
                               ? JSON.stringify(
@@ -607,7 +607,7 @@ function CommandFormField({
             pt={{
               input: {
                 root: {
-                  autocomplete: "off",
+                  autoComplete: "off",
                   "aria-label": `${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
                 },
               },

@@ -597,7 +597,7 @@ function RequestWizard({
               },
               separator: {
                 "aria-hidden": undefined,
-                tabindex: -1,
+                tabIndex: -1,
                 style: {
                   color: "var(--info-background-color)",
                 },
@@ -634,7 +634,7 @@ function RequestWizard({
               },
               separator: {
                 "aria-hidden": undefined,
-                tabindex: -1,
+                tabIndex: -1,
                 style: {
                   color: "var(--info-background-color)",
                 },
@@ -706,7 +706,7 @@ function RequestWizard({
               },
               separator: {
                 "aria-hidden": undefined,
-                tabindex: -1,
+                tabIndex: -1,
                 style: {
                   color: "var(--info-background-color)",
                 },

@@ -739,10 +739,10 @@ function CommandForm({
                 "aria-label": "Dropdown trigger for selecting command type",
               },
               input: {
-                autocomplete: "off",
+                autoComplete: "off",
               },
               select: {
-                autocomplete: "off",
+                autoComplete: "off",
                 "aria-label": "Dropdown select for selecting command type",
               },
               dropdownIcon: {
@@ -795,7 +795,7 @@ function CommandForm({
                 tooltip="Comment Field"
                 pt={{
                   root: {
-                    autocomplete: "off",
+                    autoComplete: "off",
                   },
                 }}
               />
