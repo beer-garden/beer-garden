@@ -1,5 +1,6 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { ConfirmDialog } from "primereact/confirmdialog";
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
 
 import {
@@ -717,22 +718,27 @@ describe("SchedulerViewCard", () => {
 
     const deleteJobMock = vi.fn().mockResolvedValue({} as Job);
 
+    // Simulate ConfirmDialog in parent (i.e. App.tsx)
     render(
-      <SchedulerViewCard
-        listeners={{}}
-        jobId="1"
-        editJob={() => {}}
-        deleteJob={deleteJobMock}
-        removeItem={() => {}}
-        config={{}}
-        isDialog={true}
-      />,
+      <>
+        <ConfirmDialog />
+        <SchedulerViewCard
+          listeners={{}}
+          jobId="1"
+          editJob={() => {}}
+          deleteJob={deleteJobMock}
+          removeItem={() => {}}
+          config={{}}
+          isDialog={true}
+        />
+      </>,
     );
 
     const deleteButton = await screen.findByRole("button", {
       name: /Delete Job/i,
     });
     await userEvent.click(deleteButton);
+    await userEvent.click(screen.getByRole("button", { name: /yes/i }));
 
     await waitFor(() => {
       expect(screen.getByText("example_job")).toBeInTheDocument();
