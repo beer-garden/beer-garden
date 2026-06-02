@@ -267,15 +267,22 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.target.value, index)
                     }
                     disabled={disabled}
-                    aria-label={`${inputAreaAriaLabel} Index ${index}}: String`}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}}: String`}
+                    // aria-label={`${inputAreaAriaLabel} Index ${index}: String`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}: String`}
+                    pt={{
+                      root: {
+                        autocomplete: "off",
+                        "aria-label": `${inputAreaAriaLabel} Index ${index}: String`,
+                        type: "text",
+                      },
+                    }}
                   />
                   <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   />
                 </div>
               ))}
@@ -304,8 +311,15 @@ function CommandFormField({
             }
             onChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
-            aria-label={`${inputAreaAriaLabel}: String`}
+            // aria-label={`${inputAreaAriaLabel}: String`}
             tooltip={`${inputAreaAriaLabel}: String`}
+            pt={{
+              root: {
+                autocomplete: "off",
+                "aria-label": `${inputAreaAriaLabel}: String`,
+                type: "text",
+              },
+            }}
           />
         </div>
       );
@@ -330,15 +344,21 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.target.value, index)
                     }
                     disabled={disabled}
-                    aria-label={`${inputAreaAriaLabel} Index ${index}}: Dictionary`}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}}: Dictionary`}
+                    aria-label={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
+                    pt={{
+                      root: {
+                        autocomplete: "off",
+                        "aria-label": `${inputAreaAriaLabel} Index ${index}: Dictionary`,
+                      },
+                    }}
                   />
                   <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   />
                 </div>
               ))}
@@ -368,8 +388,14 @@ function CommandFormField({
             onChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
             className={classNames({ "p-invalid": parameter.isInvalid })}
-            aria-label={`${inputAreaAriaLabel}: Dictionary`}
+            // aria-label={`${inputAreaAriaLabel}: Dictionary`}
             tooltip={`${inputAreaAriaLabel}: Dictionary`}
+            pt={{
+              root: {
+                autocomplete: "off",
+                "aria-label": `${inputAreaAriaLabel}: Dictionary`,
+              },
+            }}
           />
         </div>
       );
@@ -404,15 +430,23 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
-                    aria-label={`${inputAreaAriaLabel} Index ${index}}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                    // aria-label={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                    pt={{
+                      input: {
+                        root: {
+                          autocomplete: "off",
+                          "aria-label": `${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
+                        },
+                      },
+                    }}
                   />
                   <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   />
                 </div>
               ))}
@@ -447,8 +481,16 @@ function CommandFormField({
             }
             onValueChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
-            aria-label={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+            // aria-label={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
             tooltip={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+            pt={{
+              input: {
+                root: {
+                  autocomplete: "off",
+                  "aria-label": `${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
+                },
+              },
+            }}
           />
         </div>
       );
@@ -484,15 +526,23 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
-                    aria-label={`${inputAreaAriaLabel} Index ${index}}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                    // aria-label={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                    pt={{
+                      input: {
+                        root: {
+                          autocomplete: "off",
+                          "aria-label": `${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
+                        },
+                      },
+                    }}
                   />
                   <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   />
                 </div>
               ))}
@@ -528,8 +578,16 @@ function CommandFormField({
             minFractionDigits={2}
             onValueChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
-            aria-label={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+            // aria-label={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
             tooltip={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+            pt={{
+              input: {
+                root: {
+                  autocomplete: "off",
+                  "aria-label": `${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
+                },
+              },
+            }}
           />
         </div>
       );
@@ -561,8 +619,8 @@ function CommandFormField({
                         handleMultiChange(parameter.key, e.value, index)
                       }
                       disabled={disabled}
-                      aria-label={`${inputAreaAriaLabel} Index ${index}}: Boolean`}
-                      tooltip={`${inputAreaAriaLabel} Index ${index}}: Boolean`}
+                      // aria-label={`${inputAreaAriaLabel} Index ${index}: Boolean`}
+                      tooltip={`${inputAreaAriaLabel} Index ${index}: Boolean`}
                     />
 
                     <AccessButton
@@ -570,7 +628,7 @@ function CommandFormField({
                       severity="danger"
                       onClick={() => removeMultiItem(parameter.key, index)}
                       disabled={disabled}
-                      tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                      tooltip={`${removeInputAriaLabel} Index ${index}`}
                     />
                   </div>
                 ))}
@@ -603,8 +661,8 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.checked, index)
                     }
                     disabled={disabled}
-                    aria-label={`${inputAreaAriaLabel} Index ${index}}: Boolean`}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}}: Boolean`}
+                    // aria-label={`${inputAreaAriaLabel} Index ${index}: Boolean`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}: Boolean`}
                   />
 
                   <AccessButton
@@ -612,7 +670,7 @@ function CommandFormField({
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   />
                 </div>
               ))}
@@ -643,7 +701,7 @@ function CommandFormField({
               value={parameter.value}
               onChange={(e) => handleChange(e.target.id, e.value)}
               disabled={disabled}
-              aria-label={`${inputAreaAriaLabel}: Boolean`}
+              // aria-label={`${inputAreaAriaLabel}: Boolean`}
               tooltip={`${inputAreaAriaLabel}: Boolean`}
             />
           </div>
@@ -665,8 +723,13 @@ function CommandFormField({
             checked={parameter.value}
             onChange={(e) => handleChange(e.target.id, e.checked)}
             disabled={disabled}
-            aria-label={`${inputAreaAriaLabel}: Boolean`}
+            // aria-label={`${inputAreaAriaLabel}: Boolean`}
             tooltip={`${inputAreaAriaLabel}: Boolean`}
+            pt={{
+              input:{
+                "aria-label": `${inputAreaAriaLabel}: Boolean`
+              }
+            }}
           />
         </div>
       );
@@ -692,15 +755,15 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
-                    aria-label={`${inputAreaAriaLabel} Index ${index}}: Date`}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}}: Date`}
+                    // aria-label={`${inputAreaAriaLabel} Index ${index}: Date`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}: Date`}
                   />
                   <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   />
                 </div>
               ))}
@@ -730,7 +793,7 @@ function CommandFormField({
             hourFormat="24"
             onChange={(e: any) => handleChange(e.target.id, e.value)}
             disabled={disabled}
-            aria-label={`${inputAreaAriaLabel}: Date`}
+            // aria-label={`${inputAreaAriaLabel}: Date`}
             tooltip={`${inputAreaAriaLabel}: Date`}
           />
         </div>
@@ -758,15 +821,33 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
-                    aria-label={`${inputAreaAriaLabel} Index ${index}}: DateTime`}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}}: DateTime`}
+                    // aria-label={`${inputAreaAriaLabel} Index ${index}: DateTime`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}: DateTime`}
+                    pt={{
+                      input: {
+                        root: ({ context }: { context: any }) => {
+                          if (!context.disabled) {
+                            return {
+                              "aria-label": `${inputAreaAriaLabel} Index ${index}: DateTime`,
+                              "aria-controls": undefined,
+                              "aria-description":
+                                "Select Date and Time, aria-controls removed when popup is not in DOM",
+                            };
+                          }
+                          return {
+                            "aria-label": `${inputAreaAriaLabel} Index ${index}: DateTime`,
+                            "aria-description": "Select Date and Time",
+                          };
+                        },
+                      },
+                    }}
                   />
                   <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   />
                 </div>
               ))}
@@ -797,8 +878,26 @@ function CommandFormField({
             }
             onChange={(e: any) => handleChange(e.target.id, e.value)}
             disabled={disabled}
-            aria-label={`${inputAreaAriaLabel}: DateTime`}
+            // aria-label={`${inputAreaAriaLabel}: DateTime`}
             tooltip={`${inputAreaAriaLabel}: DateTime`}
+            pt={{
+              input: {
+                root: ({ context }: { context: any }) => {
+                  if (!context.disabled) {
+                    return {
+                      "aria-label": `${inputAreaAriaLabel}: DateTime Disabled`,
+                      "aria-controls": undefined,
+                      "aria-description":
+                        "Select Date and Time, aria-controls removed when popup is not in DOM",
+                    };
+                  }
+                  return {
+                    "aria-label": `${inputAreaAriaLabel}: DateTime`,
+                    "aria-description": "Select Date and Time",
+                  };
+                },
+              },
+            }}
           />
         </div>
       );

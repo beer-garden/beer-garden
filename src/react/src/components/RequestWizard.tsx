@@ -558,17 +558,47 @@ function RequestWizard({
           pt={{
             nav: {
               "aria-label":
-                "Three step process of finding and executing create request",
+                "Three step process of finding and executing create request",             
+                // role:"tablist"   
             },
+            root:{
+              // role: undefined
+            }
           }}
           onChangeStep={handleChangeStep}
         >
           <StepperPanel
             header="Pick System"
-            aria-label="Pick System Step"
             pt={{
-              action: {
-                "aria-label": "Pick System Step",
+              action: ({ context }: { context: any }) => {
+                return {
+                  id: `${requestItem.itemId}_tab_1`,
+                  "aria-controls": context.active
+                    ? `${requestItem.itemId}_stepper_1`
+                    : undefined,
+                  "aria-label": `${requestItem.itemId} Pick System Step`,
+                  "aria-description": context.active
+                    ? "First step in creating a request where you select the system for your request."
+                    : "First step in creating a request where you select the system for your request, currently inactive.",
+                };
+              },
+              content: {
+                id: `${requestItem.itemId}_stepper_1`,
+                role: "tabpanel",
+                "aria-labelledby": `${requestItem.itemId}_tab_1`,
+              },
+              number: {
+                style: {
+                  color: "var(--info-color)",
+                  backgroundColor: "var(--info-background-color)",
+                },
+              },
+              separator: {
+                "aria-hidden": undefined,
+                tabindex: -1,
+                style: {
+                  color: "var(--info-background-color)",
+                },
               },
             }}
           >
@@ -577,8 +607,35 @@ function RequestWizard({
           <StepperPanel
             header="Pick Command"
             pt={{
-              action: {
-                "aria-label": "Pick Command Step",
+              action: ({ context }: { context: any }) => {
+                return {
+                  id: `${requestItem.itemId}_tab_2`,
+                  "aria-controls": context.active
+                    ? `${requestItem.itemId}_stepper_2`
+                    : undefined,
+                  "aria-label": `${requestItem.itemId} Pick Command Step`,
+                  "aria-description": context.active
+                    ? "Second step in creating a request where you select the command for your request."
+                    : "Second step in creating a request where you select the command for your request, currently inactive.",
+                };
+              },
+              content: {
+                id: `${requestItem.itemId}_stepper_2`,
+                role: "tabpanel",
+                "aria-labelledby": `${requestItem.itemId}_tab_2`,
+              },
+              number: {
+                style: {
+                  color: "var(--info-color)",
+                  backgroundColor: "var(--info-background-color)",
+                },
+              },
+              separator: {
+                "aria-hidden": undefined,
+                tabindex: -1,
+                style: {
+                  color: "var(--info-background-color)",
+                },
               },
               header: stepperPanel1Options,
             }}
@@ -612,8 +669,35 @@ function RequestWizard({
           <StepperPanel
             header="Form"
             pt={{
-              action: {
-                "aria-label": "Populate Create Request Form Step",
+              action: ({ context }: { context: any }) => {
+                return {
+                  id: `${requestItem.itemId}_tab_3`,
+                  "aria-controls": context.active
+                    ? `${requestItem.itemId}_stepper_3`
+                    : undefined,
+                  "aria-label": `${requestItem.itemId} Populate Create Request Form Step`,
+                  "aria-description": context.active
+                    ? "Third step in creating a request where you populate the form for your request."
+                    : "Third step in creating a request where you populate the form for your request, currently inactive.",
+                };
+              },
+              content: {
+                id: `${requestItem.itemId}_stepper_3`,
+                role: "tabpanel",
+                "aria-labelledby": `${requestItem.itemId}_tab_3`,
+              },
+              number: {
+                style: {
+                  color: "var(--info-color)",
+                  backgroundColor: "var(--info-background-color)",
+                },
+              },
+              separator: {
+                "aria-hidden": undefined,
+                tabindex: -1,
+                style: {
+                  color: "var(--info-background-color)",
+                },
               },
               header: stepperPanel2Options,
             }}
@@ -624,7 +708,15 @@ function RequestWizard({
               <InputSwitch
                 checked={showScheduleJob}
                 onChange={(e) => updateShowScheduleJob(e.value)}
-                aria-label="Toggle for creating Scheduled Job"
+                pt={{
+                  root: {
+                    role: undefined,
+                    "aria-checked": undefined,
+                  },
+                  input: {
+                    "aria-label": "Toggle for creating Scheduled Job",
+                  },
+                }}
               />
             </div>
             {showScheduleJob && (

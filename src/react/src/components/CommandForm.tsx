@@ -720,7 +720,7 @@ function CommandForm({
         key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMAND_TYPE`}
       >
         <div style={{ width: "20%" }}>
-          <label htmlFor="COMMAND_TYPE">Command Type</label>
+          <label id="command-type-label" htmlFor="COMMAND_TYPE">Command Type</label>
         </div>
         <div style={{ width: "80%" }}>
           <Dropdown
@@ -732,6 +732,24 @@ function CommandForm({
             options={["ACTION", "INFO", "TEMP"]}
             disabled={disabled}
             style={{ maxWidth: "75%" }}
+            pt={{
+              trigger: {
+                // "aria-labelledby": "command-type-label",
+                "aria-label": "Dropdown trigger for selecting command type",
+              },
+              input: {
+                autocomplete: "off",
+                "aria-label": "Dropdown input for selecting command type",
+              },
+              select: {
+                autocomplete: "off",
+                "aria-label": "Dropdown select for selecting command type",
+              },
+              dropdownIcon: {
+                role: "img",
+                "aria-label": "Dropdown icon for selecting command type",
+              },
+            }}
           />
         </div>
       </div>
@@ -757,27 +775,32 @@ function CommandForm({
             </div>
           </div>
         ))}
-      <div
-        className="flex justify-content-between mb-3"
-        key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMENT`}
-      >
-        <div style={{ width: "20%" }}>
-          <label htmlFor="COMMAND_COMMENT">Comment</label>
-        </div>
-        <div style={{ width: "80%" }}>
-          <InputTextarea
-            id="COMMAND_COMMENT"
-            value={request?.comment}
-            onChange={(e) =>
-              setRequest({ ...request, comment: e.target.value })
-            }
-            disabled={disabled}
-            style={{ maxWidth: "75%" }}
-            aria-label="Comment Field"
-            tooltip="Comment Field"
-          />
-        </div>
-      </div>
+      {(() => {
+        const commentId = `${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMENT`;
+        return (
+          <div className="flex justify-content-between mb-3" key={commentId}>
+            <div style={{ width: "20%" }}>
+              <label htmlFor={commentId}>Comment</label>
+            </div>
+            <div style={{ width: "80%" }}>
+              <InputTextarea
+                id={commentId}
+                name={commentId}
+                value={request?.comment}
+                onChange={(e) => setRequest({ ...request, comment: e.target.value })}
+                disabled={disabled}
+                style={{ maxWidth: "75%" }}
+                tooltip="Comment Field"
+                pt={{
+                  root: {
+                    autocomplete: "off",
+                  },
+                }}
+              />
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
