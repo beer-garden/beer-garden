@@ -558,12 +558,12 @@ function RequestWizard({
           pt={{
             nav: {
               "aria-label":
-                "Three step process of finding and executing create request",             
-                // role:"tablist"   
+                "Three step process of finding and executing create request",
+              // role:"tablist"
             },
-            root:{
+            root: {
               // role: undefined
-            }
+            },
           }}
           onChangeStep={handleChangeStep}
         >

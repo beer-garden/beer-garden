@@ -73,6 +73,20 @@ function CommandFormField({
     });
   };
 
+  const getMultiValue = (key: any, index: any) => {
+    parametersFields.forEach((param: InputParam) => {
+      if (param.key === key) {
+        if (param.value[index]) {
+          return param.value[index];
+        }
+        if (param.default) {
+          return param.default;
+        }
+      }
+    });
+    return undefined;
+  };
+
   const removeMultiItem = (key: any, index: any) => {
     parametersFields.forEach((param: InputParam) => {
       if (param.key === key) {
@@ -250,7 +264,7 @@ function CommandFormField({
     case "String": {
       if (parameter.multi) {
         return (
-          <div key={parameter.key} className="p-field">
+          <div id={parameter.key} key={parameter.key} className="p-field">
             <div className="container">
               {parameter.value?.map((item: any, index: any) => (
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">
@@ -316,7 +330,7 @@ function CommandFormField({
             pt={{
               root: {
                 autocomplete: "off",
-                "aria-label": `${inputAreaAriaLabel}: String`,
+                // "aria-label": `${inputAreaAriaLabel}: String`,
                 type: "text",
               },
             }}
@@ -327,7 +341,7 @@ function CommandFormField({
     case "Dictionary": {
       if (parameter.multi) {
         return (
-          <div key={parameter.key} className="p-field">
+          <div id={parameter.key} key={parameter.key} className="p-field">
             <div className="container">
               {parameter.value?.map((item: any, index: any) => (
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">
@@ -347,9 +361,11 @@ function CommandFormField({
                     aria-label={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
                     pt={{
-                      root: {
-                        autocomplete: "off",
-                        "aria-label": `${inputAreaAriaLabel} Index ${index}: Dictionary`,
+                      root: () => {
+                        return {
+                          autocomplete: "off",
+                          "aria-label": `${inputAreaAriaLabel} Index ${index}: Dictionary`,
+                        };
                       },
                     }}
                   />
@@ -393,7 +409,7 @@ function CommandFormField({
             pt={{
               root: {
                 autocomplete: "off",
-                "aria-label": `${inputAreaAriaLabel}: Dictionary`,
+                // "aria-label": `${inputAreaAriaLabel}: Dictionary`,
               },
             }}
           />
@@ -403,13 +419,15 @@ function CommandFormField({
     case "Integer": {
       if (parameter.multi) {
         return (
-          <div key={parameter.key} className="p-field">
+          <div id={parameter.key} key={parameter.key} className="p-field">
             <div className="container">
               {parameter.value?.map((item: any, index: any) => (
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">
                   <InputNumber
                     id={`${parameter.key}-${index}`}
-                    value={item ?? parameter.default}
+                    value={
+                      getMultiValue(parameter.key, index) ?? parameter.default
+                    }
                     invalid={
                       (!disabled &&
                         !parameter.optional &&
@@ -434,9 +452,16 @@ function CommandFormField({
                     tooltip={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                     pt={{
                       input: {
-                        root: {
-                          autocomplete: "off",
-                          "aria-label": `${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
+                        root: () => {
+                          return {
+                            autocomplete: "off",
+                            "aria-label": `${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
+                            "aria-valuenow": getMultiValue(parameter.key, index)
+                              ? JSON.stringify(
+                                  getMultiValue(parameter.key, index),
+                                )
+                              : "0",
+                          };
                         },
                       },
                     }}
@@ -498,7 +523,7 @@ function CommandFormField({
     case "Float": {
       if (parameter.multi) {
         return (
-          <div key={parameter.key} className="p-field">
+          <div id={parameter.key} key={parameter.key} className="p-field">
             <div className="container">
               {parameter.value?.map((item: any, index: any) => (
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">
@@ -530,9 +555,16 @@ function CommandFormField({
                     tooltip={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                     pt={{
                       input: {
-                        root: {
-                          autocomplete: "off",
-                          "aria-label": `${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
+                        root: () => {
+                          return {
+                            autocomplete: "off",
+                            "aria-label": `${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
+                            "aria-valuenow": getMultiValue(parameter.key, index)
+                              ? JSON.stringify(
+                                  getMultiValue(parameter.key, index),
+                                )
+                              : "0",
+                          };
                         },
                       },
                     }}
@@ -596,7 +628,7 @@ function CommandFormField({
       if (parameter.multi) {
         if (parameter.nullable || parameter.optional) {
           return (
-            <div key={parameter.key} className="p-field">
+            <div id={parameter.key} key={parameter.key} className="p-field">
               <div className="container">
                 {parameter.value?.map((item: any, index: any) => (
                   <div
@@ -621,6 +653,11 @@ function CommandFormField({
                       disabled={disabled}
                       // aria-label={`${inputAreaAriaLabel} Index ${index}: Boolean`}
                       tooltip={`${inputAreaAriaLabel} Index ${index}: Boolean`}
+                      pt={{
+                        input: {
+                          "aria-label": `${inputAreaAriaLabel} Index ${index}: Boolean`,
+                        },
+                      }}
                     />
 
                     <AccessButton
@@ -643,7 +680,7 @@ function CommandFormField({
           );
         }
         return (
-          <div key={parameter.key} className="p-field">
+          <div id={parameter.key} key={parameter.key} className="p-field">
             <div className="container">
               {parameter.value?.map((item: any, index: any) => (
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">
@@ -663,6 +700,11 @@ function CommandFormField({
                     disabled={disabled}
                     // aria-label={`${inputAreaAriaLabel} Index ${index}: Boolean`}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: Boolean`}
+                    pt={{
+                      input: {
+                        "aria-label": `${inputAreaAriaLabel} Index ${index}: Boolean`,
+                      },
+                    }}
                   />
 
                   <AccessButton
@@ -703,6 +745,11 @@ function CommandFormField({
               disabled={disabled}
               // aria-label={`${inputAreaAriaLabel}: Boolean`}
               tooltip={`${inputAreaAriaLabel}: Boolean`}
+              pt={{
+                input: {
+                  "aria-label": `${inputAreaAriaLabel}: Boolean`,
+                },
+              }}
             />
           </div>
         );
@@ -726,9 +773,9 @@ function CommandFormField({
             // aria-label={`${inputAreaAriaLabel}: Boolean`}
             tooltip={`${inputAreaAriaLabel}: Boolean`}
             pt={{
-              input:{
-                "aria-label": `${inputAreaAriaLabel}: Boolean`
-              }
+              input: {
+                "aria-label": `${inputAreaAriaLabel}: Boolean`,
+              },
             }}
           />
         </div>
@@ -737,7 +784,7 @@ function CommandFormField({
     case "Date": {
       if (parameter.multi) {
         return (
-          <div key={parameter.key} className="p-field">
+          <div id={parameter.key} key={parameter.key} className="p-field">
             <div className="container">
               {parameter.value?.map((item: any, index: any) => (
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">
@@ -802,7 +849,7 @@ function CommandFormField({
     case "DateTime": {
       if (parameter.multi) {
         return (
-          <div key={parameter.key} className="p-field">
+          <div id={parameter.key} key={parameter.key} className="p-field">
             <div className="container">
               {parameter.value?.map((item: any, index: any) => (
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">

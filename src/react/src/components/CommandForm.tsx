@@ -720,7 +720,9 @@ function CommandForm({
         key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMAND_TYPE`}
       >
         <div style={{ width: "20%" }}>
-          <label id="command-type-label" htmlFor="COMMAND_TYPE">Command Type</label>
+          <label id="command-type-label" htmlFor="COMMAND_TYPE">
+            Command Type
+          </label>
         </div>
         <div style={{ width: "80%" }}>
           <Dropdown
@@ -787,7 +789,9 @@ function CommandForm({
                 id={commentId}
                 name={commentId}
                 value={request?.comment}
-                onChange={(e) => setRequest({ ...request, comment: e.target.value })}
+                onChange={(e) =>
+                  setRequest({ ...request, comment: e.target.value })
+                }
                 disabled={disabled}
                 style={{ maxWidth: "75%" }}
                 tooltip="Comment Field"
