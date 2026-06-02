@@ -285,7 +285,6 @@ function RequestCreateCard({
                 "aria-label": "Toggle for creating Scheduled Job",
               },
             }}
-            // aria-label="Toggle for creating Scheduled Job"
           />
         </div>
       }

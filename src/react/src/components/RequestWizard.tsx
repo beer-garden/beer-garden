@@ -559,10 +559,12 @@ function RequestWizard({
             nav: {
               "aria-label":
                 "Three step process of finding and executing create request",
-              // role:"tablist"
+              "aria-description":
+                "Step 1: Pick System, Step 2: Pick Command, Step 3: Populate Create Request Form. Framework utilizes <ul> to generate breadcrumbs, this could confuses screen readers",
+              role: "tablist",
             },
             root: {
-              // role: undefined
+              role: undefined,
             },
           }}
           onChangeStep={handleChangeStep}
@@ -640,7 +642,17 @@ function RequestWizard({
               header: stepperPanel1Options,
             }}
           >
-            <BreadCrumb model={breadcrumbs} className="mb-2" />
+            <BreadCrumb
+              model={breadcrumbs}
+              className="mb-2"
+              aria-label="test"
+              pt={{
+                menu: {
+                  "aria-description":
+                    "Breadcrumb navigation for system and instance selection steps of request creation. Items in list has CSS injected list-style-type:none causing screen testers to fail",
+                },
+              }}
+            />
             <CommandList
               selectedSystem={selectedSystem}
               commandListButtonClick={commandListButtonClick}
@@ -702,7 +714,16 @@ function RequestWizard({
               header: stepperPanel2Options,
             }}
           >
-            <BreadCrumb model={commandBreadcrumbs} className="mb-2" />
+            <BreadCrumb
+              model={commandBreadcrumbs}
+              className="mb-2"
+              pt={{
+                menu: {
+                  "aria-description":
+                    "Breadcrumb navigation for command selection step of request creation. Items in list has CSS injected list-style-type:none causing screen testers to fail",
+                },
+              }}
+            />
             <div className="flex ml-4">
               <span className="mr-2 align-self-center">Scheduled</span>
               <InputSwitch

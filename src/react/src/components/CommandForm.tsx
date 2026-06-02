@@ -736,12 +736,10 @@ function CommandForm({
             style={{ maxWidth: "75%" }}
             pt={{
               trigger: {
-                // "aria-labelledby": "command-type-label",
                 "aria-label": "Dropdown trigger for selecting command type",
               },
               input: {
                 autocomplete: "off",
-                "aria-label": "Dropdown input for selecting command type",
               },
               select: {
                 autocomplete: "off",

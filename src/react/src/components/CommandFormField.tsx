@@ -281,7 +281,6 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.target.value, index)
                     }
                     disabled={disabled}
-                    // aria-label={`${inputAreaAriaLabel} Index ${index}: String`}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: String`}
                     pt={{
                       root: {
@@ -325,12 +324,11 @@ function CommandFormField({
             }
             onChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
-            // aria-label={`${inputAreaAriaLabel}: String`}
             tooltip={`${inputAreaAriaLabel}: String`}
             pt={{
               root: {
                 autocomplete: "off",
-                // "aria-label": `${inputAreaAriaLabel}: String`,
+
                 type: "text",
               },
             }}
@@ -404,12 +402,10 @@ function CommandFormField({
             onChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
             className={classNames({ "p-invalid": parameter.isInvalid })}
-            // aria-label={`${inputAreaAriaLabel}: Dictionary`}
             tooltip={`${inputAreaAriaLabel}: Dictionary`}
             pt={{
               root: {
                 autocomplete: "off",
-                // "aria-label": `${inputAreaAriaLabel}: Dictionary`,
               },
             }}
           />
@@ -448,7 +444,6 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
-                    // aria-label={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                     pt={{
                       input: {
@@ -506,7 +501,6 @@ function CommandFormField({
             }
             onValueChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
-            // aria-label={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
             tooltip={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
             pt={{
               input: {
@@ -551,7 +545,6 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
-                    // aria-label={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                     pt={{
                       input: {
@@ -610,7 +603,6 @@ function CommandFormField({
             minFractionDigits={2}
             onValueChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
-            // aria-label={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
             tooltip={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
             pt={{
               input: {
@@ -651,7 +643,6 @@ function CommandFormField({
                         handleMultiChange(parameter.key, e.value, index)
                       }
                       disabled={disabled}
-                      // aria-label={`${inputAreaAriaLabel} Index ${index}: Boolean`}
                       tooltip={`${inputAreaAriaLabel} Index ${index}: Boolean`}
                       pt={{
                         input: {
@@ -698,7 +689,6 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.checked, index)
                     }
                     disabled={disabled}
-                    // aria-label={`${inputAreaAriaLabel} Index ${index}: Boolean`}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: Boolean`}
                     pt={{
                       input: {
@@ -743,7 +733,6 @@ function CommandFormField({
               value={parameter.value}
               onChange={(e) => handleChange(e.target.id, e.value)}
               disabled={disabled}
-              // aria-label={`${inputAreaAriaLabel}: Boolean`}
               tooltip={`${inputAreaAriaLabel}: Boolean`}
               pt={{
                 input: {
@@ -770,7 +759,6 @@ function CommandFormField({
             checked={parameter.value}
             onChange={(e) => handleChange(e.target.id, e.checked)}
             disabled={disabled}
-            // aria-label={`${inputAreaAriaLabel}: Boolean`}
             tooltip={`${inputAreaAriaLabel}: Boolean`}
             pt={{
               input: {
@@ -802,7 +790,6 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
-                    // aria-label={`${inputAreaAriaLabel} Index ${index}: Date`}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: Date`}
                   />
                   <AccessButton
@@ -840,7 +827,6 @@ function CommandFormField({
             hourFormat="24"
             onChange={(e: any) => handleChange(e.target.id, e.value)}
             disabled={disabled}
-            // aria-label={`${inputAreaAriaLabel}: Date`}
             tooltip={`${inputAreaAriaLabel}: Date`}
           />
         </div>
@@ -868,7 +854,6 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
-                    // aria-label={`${inputAreaAriaLabel} Index ${index}: DateTime`}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: DateTime`}
                     pt={{
                       input: {
@@ -925,7 +910,6 @@ function CommandFormField({
             }
             onChange={(e: any) => handleChange(e.target.id, e.value)}
             disabled={disabled}
-            // aria-label={`${inputAreaAriaLabel}: DateTime`}
             tooltip={`${inputAreaAriaLabel}: DateTime`}
             pt={{
               input: {
