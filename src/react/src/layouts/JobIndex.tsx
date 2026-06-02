@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Column } from "primereact/column";
+import { confirmDialog } from "primereact/confirmdialog";
 import { DataTable } from "primereact/datatable";
 import { FileUpload } from "primereact/fileupload";
 import { Toast } from "primereact/toast";
@@ -335,20 +336,34 @@ function JobIndex({
             raised
             link
             onClick={() => {
-              DeleteJob(job)
-                .then(() => {
-                  setJobs((prevJobs) =>
-                    prevJobs.filter((j) => j.id !== job.id),
-                  );
-                })
-                .catch((error) => {
-                  toast.current?.show({
-                    severity: "error",
-                    summary: "Error",
-                    detail: `Error deleting job: ${error}`,
-                    life: 3000,
+              const accept = () => {
+                DeleteJob(job)
+                  .then(() => {
+                    setJobs((prevJobs) =>
+                      prevJobs.filter((j) => j.id !== job.id),
+                    );
+                  })
+                  .catch((error) => {
+                    toast.current?.show({
+                      severity: "error",
+                      summary: "Error",
+                      detail: `Error deleting job: ${error}`,
+                      life: 3000,
+                    });
                   });
+              };
+              const reject = () => {};
+              const confirm = () => {
+                confirmDialog({
+                  message: "Are you sure you want to delete this job?",
+                  header: `Confirm Delete ${job.name}`,
+                  icon: "pi pi-exclamation-triangle",
+                  defaultFocus: "accept",
+                  accept,
+                  reject,
                 });
+              };
+              confirm();
             }}
             title={"Delete Job " + job.name}
             className="mr-2"

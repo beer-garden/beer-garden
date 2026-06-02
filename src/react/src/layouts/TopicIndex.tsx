@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { FilterMatchMode } from "primereact/api";
 import { Checkbox } from "primereact/checkbox";
 import { Column } from "primereact/column";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { confirmDialog } from "primereact/confirmdialog";
 import { DataTable, SortOrder } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { Divider } from "primereact/divider";
@@ -558,7 +558,6 @@ function TopicIndex({
 
     return (
       <>
-        <ConfirmDialog />
         <DataTable
           data-testid="topic-datatable"
           value={topicSubscribers}

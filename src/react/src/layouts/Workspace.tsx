@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { ConfirmDialog } from "primereact/confirmdialog";
 import { DataView } from "primereact/dataview";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -196,6 +197,7 @@ function Workspace({
   return (
     <div>
       <h1>Workspace</h1>
+      <ConfirmDialog />
       <AccessButton
         onClick={() => addItem()}
         aria-label="Add Request"

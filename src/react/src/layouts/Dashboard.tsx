@@ -1,7 +1,6 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Badge } from "primereact/badge";
-import { ConfirmDialog } from "primereact/confirmdialog";
 import { MultiSelect } from "primereact/multiselect";
 import { Skeleton } from "primereact/skeleton";
 import { Tag } from "primereact/tag";
@@ -578,7 +577,6 @@ function GardenDashboard({
   return (
     <div>
       <Toast ref={toast} />
-      <ConfirmDialog />
       {/* LEFT NAV TREE */}
       <div className="flex flex-wrap">
         <div

@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Chip } from "primereact/chip";
 import { Column } from "primereact/column";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { confirmDialog } from "primereact/confirmdialog";
 import { DataTable, SortOrder } from "primereact/datatable";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
@@ -597,7 +597,6 @@ function UserIndex({
   return (
     <div>
       <Toast ref={toast} />
-      <ConfirmDialog />
       <div className="flex items-end ml-2 page-header">
         <h1 className="flex-1">User Management</h1>
 
