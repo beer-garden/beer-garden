@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { autoComplete } from "primereact/autoComplete";
+import { AutoComplete } from "primereact/autocomplete";
 import { Calendar } from "primereact/calendar";
 import { Checkbox } from "primereact/checkbox";
 import { Dropdown } from "primereact/dropdown";
@@ -35,7 +35,7 @@ function CommandFormField({
   loadingChoices,
   resetForm,
 }: CommandFormFieldParams) {
-  //autoComplete Objects
+  //AutoComplete Objects
   const [items, setItems] = useState<Array<string>>([]);
 
   //Base64 Stateful Objects
@@ -225,7 +225,7 @@ function CommandFormField({
     };
     return (
       <div key={parameter.key} className="p-field">
-        <autoComplete
+        <AutoComplete
           id={parameter.key}
           value={parameter.value}
           suggestions={items}
@@ -328,7 +328,6 @@ function CommandFormField({
             pt={{
               root: {
                 autoComplete: "off",
-
                 type: "text",
               },
             }}
@@ -791,6 +790,24 @@ function CommandFormField({
                     }
                     disabled={disabled}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: Date`}
+                    pt={{
+                      input: {
+                        root: ({ context }: { context: any }) => {
+                          if (!context.disabled) {
+                            return {
+                              "aria-label": `${inputAreaAriaLabel} Index ${index}: DateTime`,
+                              "aria-controls": undefined,
+                              "aria-description":
+                                "Select Date and Time, aria-controls removed when popup is not in DOM",
+                            };
+                          }
+                          return {
+                            "aria-label": `${inputAreaAriaLabel} Index ${index}: DateTime`,
+                            "aria-description": "Select Date and Time",
+                          };
+                        },
+                      },
+                    }}
                   />
                   <AccessButton
                     label="Remove"
@@ -828,6 +845,24 @@ function CommandFormField({
             onChange={(e: any) => handleChange(e.target.id, e.value)}
             disabled={disabled}
             tooltip={`${inputAreaAriaLabel}: Date`}
+            pt={{
+              input: {
+                root: ({ context }: { context: any }) => {
+                  if (!context.disabled) {
+                    return {
+                      "aria-label": `${inputAreaAriaLabel}: DateTime Disabled`,
+                      "aria-controls": undefined,
+                      "aria-description":
+                        "Select Date and Time, aria-controls removed when popup is not in DOM",
+                    };
+                  }
+                  return {
+                    "aria-label": `${inputAreaAriaLabel}: DateTime`,
+                    "aria-description": "Select Date and Time",
+                  };
+                },
+              },
+            }}
           />
         </div>
       );
