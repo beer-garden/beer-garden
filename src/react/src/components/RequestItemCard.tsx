@@ -1,5 +1,4 @@
-import { Toast } from "primereact/toast";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import { Config, RequestItem } from "../models/models";
 import { DeleteJob } from "../services/job_service";
@@ -28,11 +27,8 @@ function RequestItemCard({
     localStorage.getItem("user_advanced") === "true" ? false : true,
   );
 
-  const toast = useRef(null as null | Toast);
-
   return (
     <>
-      <Toast ref={toast} />
       {requestItem?.type === "REQUEST" && useWizard && (
         <RequestWizard
           requestItem={requestItem}
@@ -82,12 +78,7 @@ function RequestItemCard({
                   removeItem(requestItem.itemId);
                 })
                 .catch((error) => {
-                  toast.current?.show({
-                    severity: "error",
-                    summary: "Error",
-                    detail: `Error deleting job: ${error}`,
-                    life: 3000,
-                  });
+                  console.error("Error deleting job:", error);
                 });
             }
           }}
