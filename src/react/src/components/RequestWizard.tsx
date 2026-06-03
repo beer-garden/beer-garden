@@ -106,14 +106,6 @@ function RequestWizard({
     });
   };
 
-  const handleSubmitInteraction = (event: any) => {
-    if (event.type === "mousedown" && event.button === 1) {
-      submitRequestAndOpen();
-    } else {
-      submitRequest();
-    }
-  };
-
   const submitRequest = () => {
     if (request) {
       PostRequest(request)
@@ -676,8 +668,12 @@ function RequestWizard({
                   label="Submit"
                   icon="pi pi-arrow-right"
                   disabled={!isFormValid}
-                  onMouseDown={handleSubmitInteraction}
-                  onClick={handleSubmitInteraction}
+                  onMouseDown={(event: any) => {
+                    if (event.type === "mousedown" && event.button === 1) {
+                      submitRequestAndOpen();
+                    }
+                  }}
+                  onClick={submitRequest}
                   config={config}
                   permission="OPERATOR"
                   hasNamespace={requestItem.requestCommandInput?.namespace}
