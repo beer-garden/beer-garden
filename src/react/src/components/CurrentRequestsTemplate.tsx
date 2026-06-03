@@ -304,7 +304,7 @@ function CurrentRequestsTemplate({
                   hide();
                 }}
                 className="p-button-sm p-button-outlined"
-                tooltip="Close Current Requests"
+                tooltip="Close Current Requests, this will capture auto focus for popup. Navigate backwards in tab order to access the list with screen readers."
               />
             </div>
           </div>
