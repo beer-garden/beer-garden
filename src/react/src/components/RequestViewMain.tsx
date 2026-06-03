@@ -140,7 +140,7 @@ function RequestViewMain({
               },
               separator: {
                 "aria-hidden": undefined,
-                tabindex: -1,
+                tabIndex: -1,
                 style: {
                   color: "var(--info-background-color)",
                 },
@@ -202,7 +202,7 @@ function RequestViewMain({
               },
               separator: {
                 "aria-hidden": undefined,
-                tabindex: -1,
+                tabIndex: -1,
                 style: {
                   color: "var(--info-background-color)",
                 },

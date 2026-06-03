@@ -199,7 +199,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
         pt={{
           row: ({ context }: { context: any }) => ({
             "aria-checked": undefined,
-            tabindex:
+            tabIndex:
               context?.node?.data?.children &&
               context.node.data.children.length > 0
                 ? 0
