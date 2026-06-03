@@ -283,6 +283,11 @@ function CommandSelect({
   return (
     <div className="border-2 border-dashed surface-border border-round surface-ground flex-auto flex justify-content-center align-items-center font-medium">
       <div>
+        <datalist id={`selectNamespaceDropdown`} aria-hidden="true">
+          {namespaces?.map((value: string) => (
+            <option key={value} value={value} />
+          ))}
+        </datalist>
         <Dropdown
           value={selectedNamespace}
           onChange={(e) => {
@@ -293,7 +298,26 @@ function CommandSelect({
           optionLabel="Namespace"
           placeholder="Select Namespace"
           aria-label="Select Namespace"
+          pt={{
+            dropdownIcon: {
+              role: "img",
+              "aria-label": `Dropdown Select Namespace Icon`,
+            },
+            input: {
+              autoComplete: "off",
+            },
+            select: {
+              autoComplete: "off",
+              "aria-controls": `selectNamespaceDropdown`,
+              "aria-label": `Select Namespace value for Dropdown Select`,
+            },
+          }}
         />
+        <datalist id={`selectSystemDropdown`} aria-hidden="true">
+          {systemNames?.map((value: string) => (
+            <option key={value} value={value} />
+          ))}
+        </datalist>
         <Dropdown
           value={selectedSystemName}
           onChange={(e) => {
@@ -304,7 +328,26 @@ function CommandSelect({
           optionLabel="System"
           placeholder="Select System"
           aria-label="Select System"
+          pt={{
+            dropdownIcon: {
+              role: "img",
+              "aria-label": `Dropdown Select System Icon`,
+            },
+            input: {
+              autoComplete: "off",
+            },
+            select: {
+              autoComplete: "off",
+              "aria-controls": `selectSystemDropdown`,
+              "aria-label": `Select System value for Dropdown Select`,
+            },
+          }}
         />
+        <datalist id={`selectVersionDropdown`} aria-hidden="true">
+          {versions?.map((value: string) => (
+            <option key={value} value={value} />
+          ))}
+        </datalist>
         <Dropdown
           value={selectedVersion}
           onChange={(e) => {
@@ -315,7 +358,26 @@ function CommandSelect({
           optionLabel="Version"
           placeholder="Select Version"
           aria-label="Select Version"
+          pt={{
+            dropdownIcon: {
+              role: "img",
+              "aria-label": `Dropdown Select Version Icon`,
+            },
+            input: {
+              autoComplete: "off",
+            },
+            select: {
+              autoComplete: "off",
+              "aria-controls": `selectVersionDropdown`,
+              "aria-label": `Select Version value for Dropdown Select`,
+            },
+          }}
         />
+        <datalist id={`selectInstanceDropdown`} aria-hidden="true">
+          {instances?.map((value: string) => (
+            <option key={value} value={value} />
+          ))}
+        </datalist>
         <Dropdown
           value={selectedInstance}
           onChange={(e) => {
@@ -326,7 +388,26 @@ function CommandSelect({
           optionLabel="Instance"
           placeholder="Select Instance"
           aria-label="Select Instance"
+          pt={{
+            dropdownIcon: {
+              role: "img",
+              "aria-label": `Dropdown Select Instance Icon`,
+            },
+            input: {
+              autoComplete: "off",
+            },
+            select: {
+              autoComplete: "off",
+              "aria-controls": `selectInstanceDropdown`,
+              "aria-label": `Select Instance value for Dropdown Select`,
+            },
+          }}
         />
+        <datalist id={`selectCommandDropdown`} aria-hidden="true">
+          {commands?.map((value: string) => (
+            <option key={value} value={value} />
+          ))}
+        </datalist>
         <Dropdown
           value={selectedCommand}
           onChange={(e) => {
@@ -337,6 +418,20 @@ function CommandSelect({
           optionLabel="Command"
           placeholder="Select Command"
           aria-label="Select Command"
+          pt={{
+            dropdownIcon: {
+              role: "img",
+              "aria-label": `Dropdown Select Command Icon`,
+            },
+            input: {
+              autoComplete: "off",
+            },
+            select: {
+              autoComplete: "off",
+              "aria-controls": `selectCommandDropdown`,
+              "aria-label": `Select Command value for Dropdown Select`,
+            },
+          }}
         />
       </div>
     </div>

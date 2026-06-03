@@ -281,10 +281,14 @@ function RequestCreateCard({
             onChange={(e) => updateShowScheduleJob(e.value)}
             className="align-self-center"
             pt={{
-              root: {
-                "aria-label": "Toggle for creating Scheduled Job",
-              },
-            }}
+                  root: {
+                    role: undefined,
+                    "aria-checked": undefined,
+                  },
+                  input: {
+                    "aria-label": "Toggle for creating Scheduled Job",
+                  },
+                }}
           />
         </div>
       }
