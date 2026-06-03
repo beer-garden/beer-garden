@@ -17,7 +17,7 @@ import { useEffect, useRef, useState } from "react";
 import { InputParam } from "../models/models";
 import { uploadFile } from "../services/file_service";
 import AccessButton from "./AccessButton";
-
+import { v4 as uuidv4 } from "uuid";
 interface CommandFormFieldParams {
   parameter: InputParam;
   disabled: boolean;
@@ -123,11 +123,19 @@ function CommandFormField({
   if (!parameter.key) return null;
 
   if (parameter.multi && !Array.isArray(parameter.default)) {
+    if (parameter.default === undefined || parameter.default === null) {
+      parameter.default = [];
+    } else {
     parameter.default = [parameter.default];
+    }
   }
 
   if (parameter.multi && !Array.isArray(parameter.value)) {
-    parameter.value = [parameter.value];
+    if (parameter.value === undefined || parameter.value === null) {
+      parameter.value = [];
+    } else {
+      parameter.value = [parameter.value];
+    }
   }
 
   // Choices = command, static, url
@@ -151,9 +159,10 @@ function CommandFormField({
                   parameter.value === "")) ||
               undefined
             }
-            onChange={(e) => handleChange(e.target.id, e.value)}
+            onChange={(e) => 
+              handleChange(e.target.id, e.value.filter((option: string) => parameter.options?.some((opt) => opt.value === option)))
+            }
             placeholder={`Select ${parameter.key}`}
-            aria-label={`${inputAreaAriaLabel}: Multi Select`}
             tooltip={`${inputAreaAriaLabel}: Multi Select`}
             disabled={
               disabled ||
@@ -162,6 +171,45 @@ function CommandFormField({
               loadingChoices.some((loading) => loading.key === parameter.key) ||
               parameter.error
             }
+            pt={{
+              dropdownIcon: {
+                role: "img",
+                "aria-label": `${inputAreaAriaLabel}: Multiselect Icon`,
+              },
+              input: {
+                autoComplete: "off",
+                "aria-label": `${inputAreaAriaLabel}: Multiselect`,
+              },
+              headerCheckbox: {
+                input: {
+                  "aria-label": `${inputAreaAriaLabel}: Multiselect Header Checkbox`,
+                },
+              },
+              list: {
+                "aria-label": `${inputAreaAriaLabel}: Multiselect Options List`,
+              },
+              checkboxContainer: {
+                root: {
+                  input: {
+                    "aria-label": `${inputAreaAriaLabel}: Multiselect Option Checkbox`,
+                  },
+                },
+              },
+              checkbox: ( data: any) => {
+                
+                if (data?.context?.index && parameter.options && parameter.options[data.context.index]) {
+                  return {
+                    input: {
+                      "aria-label": `${inputAreaAriaLabel}: Multiselect Option Checkbox: ${parameter.options[data.context.index].label}`,
+                    },
+                  };
+                } else {;
+                  return {input: {
+                      "aria-label": `${inputAreaAriaLabel}: Multiselect Option Checkbox with random UUID generated ${uuidv4()}`,
+                    },
+                }}
+              },
+            }}
           />
           {loadingChoices &&
             loadingChoices.some((loading) => loading.key === parameter.key) && (
@@ -192,7 +240,7 @@ function CommandFormField({
           }
           onChange={(e) => handleChange(e.target.id, e.value)}
           placeholder={`Select ${parameter.key}`}
-          aria-label={`${inputAreaAriaLabel}: Dropdown Select`}
+          // aria-label={`${inputAreaAriaLabel}: Dropdown Select`}
           tooltip={`${inputAreaAriaLabel}: Dropdown Select`}
           disabled={
             disabled ||
@@ -200,6 +248,21 @@ function CommandFormField({
             parameter.options.length === 0 ||
             loadingChoices.some((loading) => loading.key === parameter.key)
           }
+          pt={{
+            dropdownIcon: {
+              role: "img",
+              "aria-label": `${inputAreaAriaLabel}: Dropdown Select Icon`,
+            },
+            input: {
+              autoComplete: "off",
+              "aria-label": `${inputAreaAriaLabel}: Dropdown Select`,
+            },
+            select: {
+              autoComplete: "off",
+              "aria-controls": "selectThemeColorDropdown",
+              "aria-label": `${inputAreaAriaLabel}: Select value for Dropdown Select`,
+            },
+          }}
         />
         {loadingChoices &&
           loadingChoices.some((loading) => loading.key === parameter.key) && (
