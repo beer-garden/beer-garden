@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { confirmDialog } from "primereact/confirmdialog";
 import { Dialog } from "primereact/dialog";
 import { useEffect, useState } from "react";
 
@@ -96,7 +96,6 @@ function InstanceManageQueueDialog({
               <td>{queue.name}</td>
               <td>{queue.size}</td>
               <td>
-                <ConfirmDialog message="Are you sure you want to clear the Queue?" />
                 <AccessButton
                   onClick={() => clearQueue(queue.name)}
                   label="Clear Queue"

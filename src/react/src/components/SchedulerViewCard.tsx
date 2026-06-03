@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Card } from "primereact/card";
 import { Column } from "primereact/column";
+import { confirmDialog } from "primereact/confirmdialog";
 import { DataTable } from "primereact/datatable";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -243,6 +244,24 @@ function SchedulerViewCard({
     hasCommandName: job?.request_template?.command,
   };
 
+  const confirmDeleteJob = () => {
+    const accept = () => {
+      deleteJob();
+    };
+    const reject = () => {};
+    const confirm = () => {
+      confirmDialog({
+        message: "Are you sure you want to delete this job?",
+        header: `Confirm Delete ${job?.name}`,
+        icon: "pi pi-exclamation-triangle",
+        defaultFocus: "accept",
+        accept,
+        reject,
+      });
+    };
+    confirm();
+  };
+
   return (
     <Card
       className="justify-content-center"
@@ -349,7 +368,7 @@ function SchedulerViewCard({
             rounded
             raised
             link
-            onClick={() => deleteJob()}
+            onClick={() => confirmDeleteJob(job)}
             title={"Delete Job " + job?.name}
             className="mr-2"
             {...permissions}

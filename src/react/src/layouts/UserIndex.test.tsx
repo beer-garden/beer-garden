@@ -5,6 +5,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { ConfirmDialog } from "primereact/confirmdialog";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { User } from "../models/brewtils-types";
@@ -137,7 +138,13 @@ describe("UserIndex", () => {
   });
 
   test("should delete user", async () => {
-    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
+    // Simulate ConfirmDialog in parent (i.e. App.tsx)
+    render(
+      <>
+        <ConfirmDialog />
+        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+      </>,
+    );
     const userTwo = mockUsers[1];
 
     await waitFor(() => {

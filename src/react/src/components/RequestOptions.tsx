@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { confirmDialog } from "primereact/confirmdialog";
 import { Dropdown } from "primereact/dropdown";
 import { MenuItem } from "primereact/menuitem";
 import { SplitButton } from "primereact/splitbutton";
@@ -115,13 +116,27 @@ function RequestOptions({
           label: "Delete Request",
           icon: <FontAwesomeIcon icon="xmark" />,
           command: () => {
-            DeleteRequest(request)
-              .then(() => {
-                void navigate(`/requests`);
-              })
-              .catch((error) => {
-                console.error("Error deleting request:", error);
+            const accept = () => {
+              DeleteRequest(request)
+                .then(() => {
+                  void navigate(`/requests`);
+                })
+                .catch((error) => {
+                  console.error("Error deleting request:", error);
+                });
+            };
+            const reject = () => {};
+            const confirm = () => {
+              confirmDialog({
+                message: "Are you sure you want to delete this request?",
+                header: `Confirm Delete ${request.id}`,
+                icon: "pi pi-exclamation-triangle",
+                defaultFocus: "accept",
+                accept,
+                reject,
               });
+            };
+            confirm();
           },
         });
       }

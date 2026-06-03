@@ -4,6 +4,7 @@ import "primeicons/primeicons.css";
 import "./App.css";
 
 import { PrimeReactProvider } from "primereact/api";
+import { ConfirmDialog } from "primereact/confirmdialog";
 import { Dialog } from "primereact/dialog";
 import { Skeleton } from "primereact/skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -484,6 +485,7 @@ function App() {
                   tourStepsRef={tourStepsRef}
                 />
               </div>
+              <ConfirmDialog />
               {requestItem && (
                 <Dialog
                   visible={requestItem !== undefined}
