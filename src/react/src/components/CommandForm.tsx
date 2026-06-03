@@ -117,19 +117,23 @@ function CommandForm({
     };
 
     const mapChoice = (
-      choice: string | { text: string; value: string },
-    ): { label: string; value: string } => {
-      if (
-        choice !== null &&
-        choice !== undefined &&
-        typeof choice !== "string" &&
-        "text" in choice &&
-        "value" in choice
-      ) {
-        return {
-          label: choice.text,
-          value: choice.value,
-        };
+      choice: string | { text: string; value: string } | number,
+    ): { label: string; value: string | number } => {
+      if (choice !== null && choice !== undefined) {
+        if (typeof choice === "number") {
+          return { label: choice.toString(), value: choice };
+        }
+
+        if (
+          typeof choice === "object" &&
+          "text" in choice &&
+          "value" in choice
+        ) {
+          return {
+            label: choice.text,
+            value: choice.value,
+          };
+        }
       }
       return {
         label: choice,

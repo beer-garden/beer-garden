@@ -13,11 +13,11 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { TriStateCheckbox } from "primereact/tristatecheckbox";
 import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 import { InputParam } from "../models/models";
 import { uploadFile } from "../services/file_service";
 import AccessButton from "./AccessButton";
-import { v4 as uuidv4 } from "uuid";
 interface CommandFormFieldParams {
   parameter: InputParam;
   disabled: boolean;
@@ -126,7 +126,7 @@ function CommandFormField({
     if (parameter.default === undefined || parameter.default === null) {
       parameter.default = [];
     } else {
-    parameter.default = [parameter.default];
+      parameter.default = [parameter.default];
     }
   }
 
@@ -159,10 +159,16 @@ function CommandFormField({
                   parameter.value === "")) ||
               undefined
             }
-            onChange={(e) => 
-              handleChange(e.target.id, e.value.filter((option: string) => parameter.options?.some((opt) => opt.value === option)))
+            onChange={(e) =>
+              handleChange(
+                e.target.id,
+                e.value.filter((option: string) =>
+                  parameter.options?.some((opt) => opt.value === option),
+                ),
+              )
             }
             placeholder={`Select ${parameter.key}`}
+            selectAllLabel={`Select all options for ${parameter.display_name ?? parameter.key}`}
             tooltip={`${inputAreaAriaLabel}: Multi Select`}
             disabled={
               disabled ||
@@ -195,19 +201,34 @@ function CommandFormField({
                   },
                 },
               },
-              checkbox: ( data: any) => {
-                
-                if (data?.context?.index && parameter.options && parameter.options[data.context.index]) {
+              item: ({ context }: { context: any }) => {
+                return {
+                  style: context?.selected
+                    ? {
+                        backgroundColor: "var(--info-background-color)",
+                        color: "var(--info-color)",
+                      }
+                    : {},
+                };
+              },
+              checkbox: (data: any) => {
+                if (
+                  data?.context?.index &&
+                  parameter.options &&
+                  parameter.options[data.context.index]
+                ) {
                   return {
                     input: {
                       "aria-label": `${inputAreaAriaLabel}: Multiselect Option Checkbox: ${parameter.options[data.context.index].label}`,
                     },
                   };
-                } else {;
-                  return {input: {
+                } else {
+                  return {
+                    input: {
                       "aria-label": `${inputAreaAriaLabel}: Multiselect Option Checkbox with random UUID generated ${uuidv4()}`,
                     },
-                }}
+                  };
+                }
               },
             }}
           />
@@ -226,6 +247,11 @@ function CommandFormField({
     }
     return (
       <div key={parameter.key} className="p-field">
+        <datalist id={`select${parameter.key}Dropdown`} aria-hidden="true">
+          {parameter.options?.map((status: any) => (
+            <option key={status.label} value={status.value} />
+          ))}
+        </datalist>
         <Dropdown
           id={parameter.key}
           value={parameter.value}
@@ -255,11 +281,11 @@ function CommandFormField({
             },
             input: {
               autoComplete: "off",
-              "aria-label": `${inputAreaAriaLabel}: Dropdown Select`,
+              // "aria-label": `${inputAreaAriaLabel}: Dropdown Select`,
             },
             select: {
               autoComplete: "off",
-              "aria-controls": "selectThemeColorDropdown",
+              "aria-controls": `select${parameter.key}Dropdown`,
               "aria-label": `${inputAreaAriaLabel}: Select value for Dropdown Select`,
             },
           }}
@@ -305,8 +331,34 @@ function CommandFormField({
           disabled={disabled}
           multiple={parameter.multi}
           dropdown
+          dropdownIcon="pi pi-chevron-down"
           aria-label={`${inputAreaAriaLabel}: String with Typeahead`}
           tooltip={`${inputAreaAriaLabel}: String with Typeahead`}
+          pt={{
+            root: {
+              "aria-description": `${inputAreaAriaLabel}: Type to search available options, controls popup hidden from DOM until generated`,
+            },
+            input: {
+              "aria-label": `${inputAreaAriaLabel}: String with Typeahead input`,
+            },
+            listwrapper: {
+              role: "region",
+              "aria-label": `${inputAreaAriaLabel}: Available options`,
+              tabIndex: 0,
+            },
+            list: {
+              "aria-label": `${inputAreaAriaLabel}: List of available options`,
+            },
+            dropdownButton: {
+              icon: {
+                role: "img",
+                "aria-label": `${inputAreaAriaLabel}: Dropdown for Typeahead`,
+              },
+              root: {
+                "aria-label": `${inputAreaAriaLabel}: Dropdown for Typeahead, opens list of available options`,
+              },
+            },
+          }}
         />
         {loadingChoices &&
           loadingChoices.some((loading) => loading.key === parameter.key) && (
