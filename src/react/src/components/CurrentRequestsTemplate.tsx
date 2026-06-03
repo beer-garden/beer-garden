@@ -10,6 +10,7 @@ import { Request } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { DeleteRequest, GetRequestList } from "../services/request_service";
 import { GetCurrentUser } from "../services/user_service";
+import { PaginatorTemplate } from "../services/util_service";
 import AccessButton from "./AccessButton";
 
 function CurrentRequestsTemplate({
@@ -218,12 +219,18 @@ function CurrentRequestsTemplate({
   const optionsTemplate = (request: Request) => {
     return (
       <div>
-        <Link to={`/request/${request.id}`}>
+        <Link
+          to={`/request/${request.id}`}
+          tabIndex={-1}
+          aria-label={`Open Request ${request.id}`}
+          style={{ textDecoration: "none" }}
+        >
           <AccessButton
             rounded
             raised
             link
             tooltip={`Open Request ${request.id}`}
+            className="mr-2"
           >
             <FontAwesomeIcon icon="arrow-up-right-from-square" />
           </AccessButton>
@@ -282,6 +289,7 @@ function CurrentRequestsTemplate({
                 paginator
                 rows={5}
                 rowsPerPageOptions={[5, 10, 25, 50]}
+                paginatorTemplate={PaginatorTemplate}
               >
                 <Column field="command" header="Command"></Column>
                 <Column header="Status" body={statusTemplate}></Column>
@@ -296,7 +304,7 @@ function CurrentRequestsTemplate({
                   hide();
                 }}
                 className="p-button-sm p-button-outlined"
-                tooltip="Close Current Requests"
+                tooltip="Close Current Requests, this will capture auto focus for popup. Navigate backwards in tab order to access the list with screen readers."
               />
             </div>
           </div>
@@ -305,7 +313,6 @@ function CurrentRequestsTemplate({
       <AccessButton
         className="fa-layers fa-fw fa-2x"
         onClick={confirm}
-        tooltip="Show Current Requests"
         text
       >
         <FontAwesomeIcon
