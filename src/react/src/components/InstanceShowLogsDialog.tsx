@@ -157,13 +157,7 @@ function InstanceShowLogsDialog({
       pt={{}}
       onHide={onClose}
     >
-      <Messages
-        ref={msgs}
-        pt={{
-          icon: { role: "img", "aria-label": "Message information icon" },
-          buttonIcon: { role: "img", "aria-label": "Close Message" },
-        }}
-      />
+      <Messages ref={msgs} />
       <div>
         <div>
           <AccessButton
