@@ -35,10 +35,10 @@ function CommandFormField({
   loadingChoices,
   resetForm,
 }: CommandFormFieldParams) {
-  //AutoComplete Objects
+  // AutoComplete Objects
   const [items, setItems] = useState<Array<string>>([]);
 
-  //Base64 Stateful Objects
+  // Base64 Stateful Objects
   const [uploadPercentage, setUploadPercentage] = useState(0);
   const fileUploadRef = useRef<FileUpload>(null);
 
@@ -266,7 +266,6 @@ function CommandFormField({
           }
           onChange={(e) => handleChange(e.target.id, e.value)}
           placeholder={`Select ${parameter.key}`}
-          // aria-label={`${inputAreaAriaLabel}: Dropdown Select`}
           tooltip={`${inputAreaAriaLabel}: Dropdown Select`}
           disabled={
             disabled ||
@@ -281,7 +280,6 @@ function CommandFormField({
             },
             input: {
               autoComplete: "off",
-              // "aria-label": `${inputAreaAriaLabel}: Dropdown Select`,
             },
             select: {
               autoComplete: "off",
@@ -1155,7 +1153,6 @@ function CommandFormField({
                 displayValueTemplate={() => `${uploadPercentage}%`}
               />
             }
-            // aria-label={`${inputAreaAriaLabel}: File Upload Base64`}
             pt={{
               root: {
                 tabIndex: -1,

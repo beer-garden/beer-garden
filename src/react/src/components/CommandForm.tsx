@@ -505,7 +505,7 @@ function CommandForm({
             sticky: true,
             severity: "error",
             summary: "Garden Check",
-            detail: `Target Garden for command is not routable`,
+            detail: "Target Garden for command is not routable",
             life: 3000,
           });
         }
@@ -553,7 +553,7 @@ function CommandForm({
               sticky: true,
               severity: "error",
               summary: "System Check",
-              detail: `Target System has a status of ${targetInstance?.status} `,
+              detail: `Target System has a status of ${targetInstance?.status}`,
               life: 3000,
             });
           }
