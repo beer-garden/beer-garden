@@ -32,7 +32,9 @@ const AccessButton = ({
   }
 
   if (!Object.hasOwn(props, "aria-label")) {
-    if (Object.hasOwn(props, "tooltip")) {
+    if (Object.hasOwn(props, "label")) {
+      props["aria-label"] = props.label;
+    } else if (Object.hasOwn(props, "tooltip")) {
       props["aria-label"] = props.tooltip;
     }
   }
@@ -43,6 +45,20 @@ const AccessButton = ({
 
   if (!Object.hasOwn(props, "tooltipOptions")) {
     props.tooltipOptions = { position: "bottom" };
+  }
+
+  if (
+    Object.hasOwn(props, "aria-label") &&
+    Object.hasOwn(props, "label") &&
+    props["aria-label"] !== props["label"]
+  ) {
+    console.error(
+      "Mismatched Label and Aria-Label, migrating for 508 compliance to Label value:",
+      props["aria-label"],
+      " !== ",
+      props["label"],
+    );
+    props["aria-label"] = props["label"];
   }
 
   if (permission && config && config?.auth_enabled === true) {

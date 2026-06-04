@@ -1,4 +1,6 @@
+import { Column } from "primereact/column";
 import { confirmDialog } from "primereact/confirmdialog";
+import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { Messages } from "primereact/messages";
 import { useEffect, useRef, useState } from "react";
@@ -24,11 +26,82 @@ function InstanceCancelDeleteRequestsDialog({
 
   const msgs = useRef<Messages>(null);
 
+  const [countsDataModels, setCountDataModels] = useState<Array<any>>([
+    { label: "SUCCESS", count: successCount },
+    { label: "CANCELED", count: canceledCount },
+    { label: "ERROR", count: errorCount },
+    { label: "IN PROGRESS", count: inProgressCount },
+    { label: "RECEIVED", count: receivedCount },
+    { label: "CREATED", count: createdCount },
+    {
+      label: "Non-Completed (CREATED/RECEIVED/IN PROGRESS)",
+      count: inProgressCount + receivedCount + createdCount,
+    },
+    { label: "ALL", count: allCount },
+  ]);
+
   useEffect(() => {
     if (isVisible) {
       loadRequests();
     }
   }, [isVisible]);
+
+  useEffect(() => {
+    const updateValues = () => {
+      setCountDataModels([
+        { label: "SUCCESS", count: successCount },
+        { label: "CANCELED", count: canceledCount },
+        { label: "ERROR", count: errorCount },
+        { label: "IN PROGRESS", count: inProgressCount },
+        { label: "RECEIVED", count: receivedCount },
+        { label: "CREATED", count: createdCount },
+        {
+          label: "Non-Completed (CREATED/RECEIVED/IN PROGRESS)",
+          count: inProgressCount + receivedCount + createdCount,
+        },
+        { label: "ALL", count: allCount },
+      ]);
+    };
+    if (
+      !countsDataModels.some(
+        (value) => value.label === "SUCCESS" && value.count === successCount,
+      ) ||
+      !countsDataModels.some(
+        (value) => value.label === "CANCELED" && value.count === canceledCount,
+      ) ||
+      !countsDataModels.some(
+        (value) => value.label === "ERROR" && value.count === errorCount,
+      ) ||
+      !countsDataModels.some(
+        (value) =>
+          value.label === "IN PROGRESS" && value.count === inProgressCount,
+      ) ||
+      !countsDataModels.some(
+        (value) => value.label === "RECEIVED" && value.count === receivedCount,
+      ) ||
+      !countsDataModels.some(
+        (value) => value.label === "CREATED" && value.count === createdCount,
+      ) ||
+      !countsDataModels.some(
+        (value) =>
+          value.label === "Non-Completed (CREATED/RECEIVED/IN PROGRESS)" &&
+          value.count === inProgressCount + receivedCount + createdCount,
+      ) ||
+      !countsDataModels.some(
+        (value) => value.label === "ALL" && value.count === allCount,
+      )
+    ) {
+      updateValues();
+    }
+  }, [
+    allCount,
+    successCount,
+    canceledCount,
+    errorCount,
+    createdCount,
+    receivedCount,
+    inProgressCount,
+  ]);
 
   function buildFilter(status: string) {
     return {
@@ -287,6 +360,45 @@ function InstanceCancelDeleteRequestsDialog({
     confirm();
   }
 
+  const actionTemplate = (counter: any) => {
+    return (
+      <div>
+        <AccessButton
+          onClick={() => {
+            if (counter.label === "IN PROGRESS") {
+              deleteRequests(
+                counter.label,
+                "Are you sure you want to cancel Requests with status IN PROGRESS? There may be a plugin already running the request.",
+                true,
+              );
+            } else if (["RECEIVED", "CREATED"].includes(counter.label)) {
+              deleteRequests(
+                counter.label,
+                `Are you sure you want to delete Requests with status ${counter.label}?`,
+                true,
+              );
+            } else if (
+              counter.label === "Non-Completed (CREATED/RECEIVED/IN PROGRESS)"
+            ) {
+              deleteRequests(
+                "ALL",
+                "Are you sure you want to cancel all non-completed Requests?",
+                true,
+              );
+            } else {
+              deleteRequests(
+                counter.label,
+                `Are you sure you want to delete Requests with status ${counter.label}?`,
+              );
+            }
+          }}
+          tooltip={`Delete ${counter.count} ${counter.label} requests`}
+          label={`Delete ${counter.label === "Non-Completed (CREATED/RECEIVED/IN PROGRESS)" ? "Non-Completed" : counter.label}`}
+        />
+      </div>
+    );
+  };
+
   return (
     <Dialog
       header={`Cancel/Delete Requests: ${system.name}[${system.version}]-${instance.name}`}
@@ -296,152 +408,14 @@ function InstanceCancelDeleteRequestsDialog({
       onHide={onClose}
     >
       <Messages ref={msgs} />
-      <div>Currently {allCount} Requests present in the database</div>
-      <br />
-      <table
-        id="requestDeleteCancelTable"
-        className="table table-striped table-bordered w-100"
+      <DataTable
+        value={countsDataModels}
+        header={`Currently ${allCount} Requests present in the database`}
       >
-        <tbody>
-          <tr>
-            <th>Status</th>
-            <th>Count</th>
-            <th>Action</th>
-          </tr>
-          <tr>
-            <td>SUCCESS</td>
-            <td>{successCount}</td>
-            <td>
-              <AccessButton
-                onClick={() =>
-                  deleteRequests(
-                    "SUCCESS",
-                    "Are you sure you want to delete Requests with status SUCCESS?",
-                  )
-                }
-                tooltip={`Delete ${successCount} SUCCESS requests`}
-                label="Delete SUCCESS"
-              />
-            </td>
-          </tr>
-          <tr>
-            <td>CANCELED</td>
-            <td>{canceledCount}</td>
-            <td>
-              <AccessButton
-                onClick={() =>
-                  deleteRequests(
-                    "CANCELED",
-                    "Are you sure you want to delete Requests with status CANCELED?",
-                  )
-                }
-                tooltip={`Delete ${canceledCount} CANCELED requests`}
-                label="Delete CANCELED"
-              />
-            </td>
-          </tr>
-          <tr>
-            <td>ERROR</td>
-            <td>{errorCount}</td>
-            <td>
-              <AccessButton
-                onClick={() =>
-                  deleteRequests(
-                    "ERROR",
-                    "Are you sure you want to delete Requests with status ERROR?",
-                  )
-                }
-                tooltip={`Delete ${errorCount} ERROR requests`}
-                label="Delete ERROR"
-              />
-            </td>
-          </tr>
-          <tr>
-            <td>IN PROGRESS</td>
-            <td>{inProgressCount}</td>
-            <td>
-              <AccessButton
-                onClick={() =>
-                  deleteRequests(
-                    "IN PROGRESS",
-                    "Are you sure you want to cancel Requests with status IN PROGRESS? There may be a plugin already running the request.",
-                    true,
-                  )
-                }
-                tooltip={`Delete ${inProgressCount} IN PROGRESS requests`}
-                label="Cancel IN PROGRESS"
-              />
-            </td>
-          </tr>
-          <tr>
-            <td>RECEIVED</td>
-            <td>{receivedCount}</td>
-            <td>
-              <AccessButton
-                onClick={() =>
-                  deleteRequests(
-                    "RECEIVED",
-                    "Are you sure you want to cancel Requests with status RECEIVED?",
-                    true,
-                  )
-                }
-                tooltip={`Delete ${receivedCount} RECEIVED requests`}
-                label="Cancel RECEIVED"
-              />
-            </td>
-          </tr>
-          <tr>
-            <td>CREATED</td>
-            <td>{createdCount}</td>
-            <td>
-              <AccessButton
-                onClick={() =>
-                  deleteRequests(
-                    "CREATED",
-                    "Are you sure you want to cancel Requests with status CREATED? Recommend clearing topics as well.",
-                    true,
-                  )
-                }
-                tooltip={`Delete ${createdCount} CREATED requests`}
-                label="Cancel CREATED"
-              />
-            </td>
-          </tr>
-          <tr>
-            <td>Non-Completed (CREATED/RECEIVED/IN PROGRESS)</td>
-            <td>{inProgressCount + receivedCount + createdCount}</td>
-            <td>
-              <AccessButton
-                onClick={() =>
-                  deleteRequests(
-                    "ALL",
-                    "Are you sure you want to cancel all non-completed Requests?",
-                    true,
-                  )
-                }
-                tooltip={`Delete ${inProgressCount + receivedCount + createdCount} Non-Completed requests`}
-                label="Cancel Non-Completed"
-              />
-            </td>
-          </tr>
-          <tr>
-            <td>ALL</td>
-            <td>{allCount}</td>
-            <td>
-              <AccessButton
-                onClick={() =>
-                  deleteRequests(
-                    "ALL",
-                    "Are you sure you want to delete all the Requests?",
-                  )
-                }
-                tooltip={`Delete ${allCount} ALL requests`}
-                label="Delete All"
-              />
-            </td>
-          </tr>
-        </tbody>
-      </table>
+        <Column field="label" header="Status"></Column>
+        <Column field="count" header="Count"></Column>
+        <Column body={actionTemplate} header="Action"></Column>
+      </DataTable>
     </Dialog>
   );
 }
