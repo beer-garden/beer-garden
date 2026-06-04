@@ -117,6 +117,7 @@ function App() {
       props.placeholder ??
       props.optionLabel ??
       props.id ??
+      props.header ??
       "MISSING REF"
     );
   };
@@ -320,6 +321,12 @@ function App() {
           },
         };
       },
+      dialog:({ props }: { props: any }) => { return {
+        maximizableIcon:{
+            role: "img",
+            "aria-label": `${findPropLabel(props)}: Maximizable`,          
+        }
+      };}
     },
   };
 
@@ -678,6 +685,7 @@ function App() {
                   visible={requestItem !== undefined}
                   style={{ width: "70%", overflowY: "auto" }}
                   modal
+                  maximizable
                   onHide={() => {
                     setRequestItem(undefined);
                   }}
