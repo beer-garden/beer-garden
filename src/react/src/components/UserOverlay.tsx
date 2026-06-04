@@ -115,18 +115,8 @@ function UserOverlay({
             placeholder="Select a Color"
             className="mr-2"
             pt={{
-              dropdownIcon: {
-                role: "img",
-                "aria-label": "Dropdown icon for selecting theme color",
-              },
-              input: {
-                autoComplete: "off",
-                "aria-label": "Dropdown theme color",
-              },
               select: {
-                autoComplete: "off",
                 "aria-controls": "selectThemeColorDropdown",
-                "aria-label": "Select theme color",
               },
             }}
           />

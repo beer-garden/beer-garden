@@ -283,6 +283,11 @@ function CommandSelect({
   return (
     <div className="border-2 border-dashed surface-border border-round surface-ground flex-auto flex justify-content-center align-items-center font-medium">
       <div>
+        <datalist id="selectNamespaceDropdown" aria-hidden="true">
+          {namespaces?.map((value: string) => (
+            <option key={value} value={value} />
+          ))}
+        </datalist>
         <Dropdown
           value={selectedNamespace}
           onChange={(e) => {
@@ -293,7 +298,17 @@ function CommandSelect({
           optionLabel="Namespace"
           placeholder="Select Namespace"
           aria-label="Select Namespace"
+          pt={{
+            select: {
+              "aria-controls": "selectNamespaceDropdown",
+            },
+          }}
         />
+        <datalist id="selectSystemDropdown" aria-hidden="true">
+          {systemNames?.map((value: string) => (
+            <option key={value} value={value} />
+          ))}
+        </datalist>
         <Dropdown
           value={selectedSystemName}
           onChange={(e) => {
@@ -304,7 +319,17 @@ function CommandSelect({
           optionLabel="System"
           placeholder="Select System"
           aria-label="Select System"
+          pt={{
+            select: {
+              "aria-controls": "selectSystemDropdown",
+            },
+          }}
         />
+        <datalist id="selectVersionDropdown" aria-hidden="true">
+          {versions?.map((value: string) => (
+            <option key={value} value={value} />
+          ))}
+        </datalist>
         <Dropdown
           value={selectedVersion}
           onChange={(e) => {
@@ -315,7 +340,17 @@ function CommandSelect({
           optionLabel="Version"
           placeholder="Select Version"
           aria-label="Select Version"
+          pt={{
+            select: {
+              "aria-controls": "selectVersionDropdown",
+            },
+          }}
         />
+        <datalist id="selectInstanceDropdown" aria-hidden="true">
+          {instances?.map((value: string) => (
+            <option key={value} value={value} />
+          ))}
+        </datalist>
         <Dropdown
           value={selectedInstance}
           onChange={(e) => {
@@ -326,7 +361,17 @@ function CommandSelect({
           optionLabel="Instance"
           placeholder="Select Instance"
           aria-label="Select Instance"
+          pt={{
+            select: {
+              "aria-controls": "selectInstanceDropdown",
+            },
+          }}
         />
+        <datalist id="selectCommandDropdown" aria-hidden="true">
+          {commands?.map((value: string) => (
+            <option key={value} value={value} />
+          ))}
+        </datalist>
         <Dropdown
           value={selectedCommand}
           onChange={(e) => {
@@ -337,6 +382,11 @@ function CommandSelect({
           optionLabel="Command"
           placeholder="Select Command"
           aria-label="Select Command"
+          pt={{
+            select: {
+              "aria-controls": "selectCommandDropdown",
+            },
+          }}
         />
       </div>
     </div>
