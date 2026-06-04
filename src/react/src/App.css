@@ -83,6 +83,7 @@
   color: var(--base-color);
 }
 
+.p-message.p-message-success,
 .p-badge.p-badge-success,
 .p-button.p-button-success,
 .p-splitbutton.p-splitbutton-button.p-splitbutton-button-success,
@@ -90,6 +91,7 @@
   background-color: var(--success-background-color);
   color: var(--success-color);
 }
+.p-message.p-message-info,
 .p-badge.p-badge-info,
 .p-button.p-button-info,
 .p-splitbutton.p-splitbutton-button.p-splitbutton-button-info,
@@ -97,6 +99,7 @@
   background-color: var(--info-background-color);
   color: var(--info-color);
 }
+.p-message.p-message-warn,
 .p-badge.p-badge-warning,
 .p-button.p-button-warning,
 .p-splitbutton.p-splitbutton-button.p-splitbutton-button-warning,
@@ -104,6 +107,7 @@
   background-color: var(--warning-background-color);
   color: var(--warning-color);
 }
+.p-message.p-message-error,
 .p-badge.p-badge-danger,
 .p-button.p-button-danger,
 .p-splitbutton.p-splitbutton-button.p-splitbutton-button-danger,

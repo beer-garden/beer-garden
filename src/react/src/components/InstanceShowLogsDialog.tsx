@@ -139,6 +139,7 @@ function InstanceShowLogsDialog({
         <AccessButton
           onClick={onClose}
           tooltip="Close Instance Show Logs Dialog"
+          aria-label="Close Logs"
           label="Close Logs"
         />
       }
@@ -152,9 +153,17 @@ function InstanceShowLogsDialog({
           sticky: true,
         });
       }}
+      // Framework adds hidden focusable spans. Unable to edit these
+      pt={{}}
       onHide={onClose}
     >
-      <Messages ref={msgs} />
+      <Messages
+        ref={msgs}
+        pt={{
+          icon: { role: "img", "aria-label": "Message information icon" },
+          buttonIcon: { role: "img", "aria-label": "Close Message" },
+        }}
+      />
       <div>
         <div>
           <AccessButton
@@ -179,7 +188,6 @@ function InstanceShowLogsDialog({
             defaultValue={20}
             name="tail_line_start"
             onChange={updateTailLineStart}
-            aria-label="Input Tail line start"
           />
         </div>
         <div>
@@ -188,7 +196,8 @@ function InstanceShowLogsDialog({
             download={filename}
           >
             <AccessButton
-              aria-label="Download Full Logs File"
+              tooltip="Download Full Logs File"
+              aria-label="Get Full Logs"
               label="Get Full Logs"
             />
           </a>
