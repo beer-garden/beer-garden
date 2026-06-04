@@ -110,6 +110,17 @@ function App() {
     setReloadUI(reloadUI + 1);
   };
 
+  const findPropLabel = (props: any) => {
+    return (
+      props.tooltip ??
+      props["aria-label"] ??
+      props.placeholder ??
+      props.optionLabel ??
+      props.id ??
+      "MISSING REF"
+    );
+  };
+
   const primeValue = {
     hideOverlaysOnDocumentScrolling: true,
     pt: {
@@ -142,6 +153,182 @@ function App() {
           role: "img",
           "aria-label": "Close Message",
         },
+      },
+      dropdown: ({ props }: { props: any }) => {
+        return {
+          dropdownIcon: {
+            role: "img",
+            "aria-label": `${findPropLabel(props)}: Dropdown Icon`,
+          },
+          input: {
+            autoComplete: "off",
+          },
+          select: {
+            autoComplete: "off",
+            "aria-label": `${findPropLabel(props)}: Select`,
+          },
+          trigger: {
+            "aria-label": `${findPropLabel(props)}: Dropdown trigger`,
+          },
+        };
+      },
+      multiselect: ({ props }: { props: any }) => {
+        return {
+          dropdownIcon: {
+            role: "img",
+            "aria-label": `${findPropLabel(props)}: Multiselect Icon`,
+          },
+          input: {
+            autoComplete: "off",
+            "aria-label": `${findPropLabel(props)}: Multiselect`,
+          },
+          headerCheckbox: {
+            input: {
+              "aria-label": `${findPropLabel(props)}: Multiselect Header Checkbox`,
+            },
+          },
+          list: {
+            "aria-label": `${findPropLabel(props)}: Multiselect Options List`,
+          },
+          checkboxContainer: {
+            root: {
+              input: {
+                "aria-label": `${findPropLabel(props)}: Multiselect Option Checkbox`,
+              },
+            },
+          },
+          item: ({ context }: { context: any }) => {
+            return {
+              style: context?.selected
+                ? {
+                    backgroundColor: "var(--info-background-color)",
+                    color: "var(--info-color)",
+                  }
+                : {},
+            };
+          },
+        };
+      },
+      autocomplete: ({ props }: { props: any }) => {
+        return {
+          root: {
+            "aria-description": `${findPropLabel(props)}: Type to search available options, controls popup hidden from DOM until generated`,
+          },
+          input: {
+            "aria-label": `${findPropLabel(props)}: String with Typeahead input`,
+          },
+          listwrapper: {
+            role: "region",
+            "aria-label": `${findPropLabel(props)}: Available options`,
+            tabIndex: 0,
+          },
+          list: {
+            "aria-label": `${findPropLabel(props)}: List of available options`,
+          },
+          dropdownButton: {
+            icon: {
+              role: "img",
+              "aria-label": `${findPropLabel(props)}: Dropdown for Typeahead`,
+            },
+            root: {
+              "aria-label": `${findPropLabel(props)}: Dropdown for Typeahead, opens list of available options`,
+            },
+          },
+        };
+      },
+      inputText: ({ props }: { props: any }) => {
+        return {
+          root: {
+            autoComplete: "off",
+            type: "text",
+            "aria-label": findPropLabel(props),
+          },
+        };
+      },
+      inputTextarea: ({ props }: { props: any }) => {
+        return {
+          root: {
+            autoComplete: "off",
+            "aria-label": findPropLabel(props),
+          },
+        };
+      },
+      inputNumber: ({ props }: { props: any }) => {
+        return {
+          input: {
+            root: {
+              autoComplete: "off",
+              "aria-label": findPropLabel(props),
+              "aria-valuenow": `${
+                props.value !== null && props.value !== undefined
+                  ? JSON.stringify(props.value)
+                  : "0"
+              }`,
+            },
+          },
+        };
+      },
+      triStateCheckbox: ({ props }: { props: any }) => {
+        return {
+          input: {
+            "aria-label": findPropLabel(props),
+            "aria-checked": props.value === true ? "true" : "false",
+          },
+          box: {
+            tabIndex: "-1",
+            role: undefined,
+            "aria-checked": undefined,
+          },
+        };
+      },
+      checkbox: ({ props }: { props: any }) => {
+        return {
+          input: {
+            "aria-label": findPropLabel(props),
+          },
+        };
+      },
+      calendar: ({ props }: { props: any }) => {
+        return {
+          input: {
+            root: ({ context }: { context: any }) => {
+              if (!context.disabled) {
+                return {
+                  "aria-label": findPropLabel(props),
+                  "aria-controls": undefined,
+                  "aria-description":
+                    "Select Date and Time, aria-controls removed when popup is not in DOM",
+                };
+              }
+              return {
+                "aria-label": findPropLabel(props),
+                "aria-description": "Select Date and Time",
+              };
+            },
+          },
+        };
+      },
+      fileUpload: ({ props }: { props: any }) => {
+        return {
+          root: {
+            tabIndex: -1,
+          },
+          basicButton: {
+            "aria-label": `${findPropLabel(props)}: File Upload Bytes Choose Button`,
+            role: "button",
+          },
+          chooseButton: {
+            "aria-label": `${findPropLabel(props)}: File Upload Base64 Choose Button`,
+            role: "button",
+          },
+          chooseIcon: {
+            role: "img",
+            "aria-label": `${findPropLabel(props)}: File Upload Base64 Choose Button Icon`,
+          },
+          actions: {
+            "aria-description": `${findPropLabel(props)}: File Upload Base64 Remove File Button, button is out of scope in framework to update accessibility labels`,
+          },
+        };
       },
     },
   };

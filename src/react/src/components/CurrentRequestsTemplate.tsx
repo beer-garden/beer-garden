@@ -241,9 +241,17 @@ function CurrentRequestsTemplate({
           raised
           link
           onClick={() => {
-            DeleteRequest(request).catch((error) => {
-              console.error("Error deleting request:", error);
-            });
+            DeleteRequest(request)
+              .then(() => {
+                setAllRequests(
+                  altRequests.current.filter(
+                    (r: Request) => r.id != request.id,
+                  ),
+                );
+              })
+              .catch((error) => {
+                console.error("Error deleting request:", error);
+              });
           }}
           tooltip={`Delete Request for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
           config={config}

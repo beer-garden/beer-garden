@@ -117,19 +117,23 @@ function CommandForm({
     };
 
     const mapChoice = (
-      choice: string | { text: string; value: string },
-    ): { label: string; value: string } => {
-      if (
-        choice !== null &&
-        choice !== undefined &&
-        typeof choice !== "string" &&
-        "text" in choice &&
-        "value" in choice
-      ) {
-        return {
-          label: choice.text,
-          value: choice.value,
-        };
+      choice: string | { text: string; value: string } | number,
+    ): { label: string; value: string | number } => {
+      if (choice !== null && choice !== undefined) {
+        if (typeof choice === "number") {
+          return { label: choice.toString(), value: choice };
+        }
+
+        if (
+          typeof choice === "object" &&
+          "text" in choice &&
+          "value" in choice
+        ) {
+          return {
+            label: choice.text,
+            value: choice.value,
+          };
+        }
       }
       return {
         label: choice,
@@ -501,7 +505,7 @@ function CommandForm({
             sticky: true,
             severity: "error",
             summary: "Garden Check",
-            detail: `Target Garden for command is not routable`,
+            detail: "Target Garden for command is not routable",
             life: 3000,
           });
         }
@@ -549,7 +553,7 @@ function CommandForm({
               sticky: true,
               severity: "error",
               summary: "System Check",
-              detail: `Target System has a status of ${targetInstance?.status} `,
+              detail: `Target System has a status of ${targetInstance?.status}`,
               life: 3000,
             });
           }
@@ -720,9 +724,16 @@ function CommandForm({
         key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMAND_TYPE`}
       >
         <div style={{ width: "20%" }}>
-          <label htmlFor="COMMAND_TYPE">Command Type</label>
+          <label id="command-type-label" htmlFor="COMMAND_TYPE">
+            Command Type
+          </label>
         </div>
         <div style={{ width: "80%" }}>
+          <datalist id="selectCommandTypeDropdown" aria-hidden="true">
+            {["ACTION", "INFO", "TEMP"]?.map((status: any) => (
+              <option key={status.label} value={status.value} />
+            ))}
+          </datalist>
           <Dropdown
             id="COMMAND_TYPE"
             value={request?.command_type}
@@ -732,6 +743,11 @@ function CommandForm({
             options={["ACTION", "INFO", "TEMP"]}
             disabled={disabled}
             style={{ maxWidth: "75%" }}
+            pt={{
+              select: {
+                "aria-controls": "selectCommandTypeDropdown",
+              },
+            }}
           />
         </div>
       </div>
@@ -757,27 +773,29 @@ function CommandForm({
             </div>
           </div>
         ))}
-      <div
-        className="flex justify-content-between mb-3"
-        key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMENT`}
-      >
-        <div style={{ width: "20%" }}>
-          <label htmlFor="COMMAND_COMMENT">Comment</label>
-        </div>
-        <div style={{ width: "80%" }}>
-          <InputTextarea
-            id="COMMAND_COMMENT"
-            value={request?.comment}
-            onChange={(e) =>
-              setRequest({ ...request, comment: e.target.value })
-            }
-            disabled={disabled}
-            style={{ maxWidth: "75%" }}
-            aria-label="Comment Field"
-            tooltip="Comment Field"
-          />
-        </div>
-      </div>
+      {(() => {
+        const commentId = `${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMENT`;
+        return (
+          <div className="flex justify-content-between mb-3" key={commentId}>
+            <div style={{ width: "20%" }}>
+              <label htmlFor={commentId}>Comment</label>
+            </div>
+            <div style={{ width: "80%" }}>
+              <InputTextarea
+                id={commentId}
+                name={commentId}
+                value={request?.comment}
+                onChange={(e) =>
+                  setRequest({ ...request, comment: e.target.value })
+                }
+                disabled={disabled}
+                style={{ maxWidth: "75%" }}
+                tooltip="Comment Field"
+              />
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
