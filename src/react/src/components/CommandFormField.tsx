@@ -178,39 +178,6 @@ function CommandFormField({
               parameter.error
             }
             pt={{
-              dropdownIcon: {
-                role: "img",
-                "aria-label": `${inputAreaAriaLabel}: Multiselect Icon`,
-              },
-              input: {
-                autoComplete: "off",
-                "aria-label": `${inputAreaAriaLabel}: Multiselect`,
-              },
-              headerCheckbox: {
-                input: {
-                  "aria-label": `${inputAreaAriaLabel}: Multiselect Header Checkbox`,
-                },
-              },
-              list: {
-                "aria-label": `${inputAreaAriaLabel}: Multiselect Options List`,
-              },
-              checkboxContainer: {
-                root: {
-                  input: {
-                    "aria-label": `${inputAreaAriaLabel}: Multiselect Option Checkbox`,
-                  },
-                },
-              },
-              item: ({ context }: { context: any }) => {
-                return {
-                  style: context?.selected
-                    ? {
-                        backgroundColor: "var(--info-background-color)",
-                        color: "var(--info-color)",
-                      }
-                    : {},
-                };
-              },
               checkbox: (data: any) => {
                 if (
                   data?.context?.index &&
@@ -274,17 +241,8 @@ function CommandFormField({
             loadingChoices.some((loading) => loading.key === parameter.key)
           }
           pt={{
-            dropdownIcon: {
-              role: "img",
-              "aria-label": `${inputAreaAriaLabel}: Dropdown Select Icon`,
-            },
-            input: {
-              autoComplete: "off",
-            },
             select: {
-              autoComplete: "off",
               "aria-controls": `select${parameter.key}Dropdown`,
-              "aria-label": `${inputAreaAriaLabel}: Select value for Dropdown Select`,
             },
           }}
         />
@@ -332,31 +290,6 @@ function CommandFormField({
           dropdownIcon="pi pi-chevron-down"
           aria-label={`${inputAreaAriaLabel}: String with Typeahead`}
           tooltip={`${inputAreaAriaLabel}: String with Typeahead`}
-          pt={{
-            root: {
-              "aria-description": `${inputAreaAriaLabel}: Type to search available options, controls popup hidden from DOM until generated`,
-            },
-            input: {
-              "aria-label": `${inputAreaAriaLabel}: String with Typeahead input`,
-            },
-            listwrapper: {
-              role: "region",
-              "aria-label": `${inputAreaAriaLabel}: Available options`,
-              tabIndex: 0,
-            },
-            list: {
-              "aria-label": `${inputAreaAriaLabel}: List of available options`,
-            },
-            dropdownButton: {
-              icon: {
-                role: "img",
-                "aria-label": `${inputAreaAriaLabel}: Dropdown for Typeahead`,
-              },
-              root: {
-                "aria-label": `${inputAreaAriaLabel}: Dropdown for Typeahead, opens list of available options`,
-              },
-            },
-          }}
         />
         {loadingChoices &&
           loadingChoices.some((loading) => loading.key === parameter.key) && (
@@ -395,13 +328,6 @@ function CommandFormField({
                     }
                     disabled={disabled}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: String`}
-                    pt={{
-                      root: {
-                        autoComplete: "off",
-                        "aria-label": `${inputAreaAriaLabel} Index ${index}: String`,
-                        type: "text",
-                      },
-                    }}
                   />
                   <AccessButton
                     label="Remove"
@@ -438,12 +364,6 @@ function CommandFormField({
             onChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
             tooltip={`${inputAreaAriaLabel}: String`}
-            pt={{
-              root: {
-                autoComplete: "off",
-                type: "text",
-              },
-            }}
           />
         </div>
       );
@@ -470,14 +390,6 @@ function CommandFormField({
                     disabled={disabled}
                     aria-label={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
-                    pt={{
-                      root: () => {
-                        return {
-                          autoComplete: "off",
-                          "aria-label": `${inputAreaAriaLabel} Index ${index}: Dictionary`,
-                        };
-                      },
-                    }}
                   />
                   <AccessButton
                     label="Remove"
@@ -515,11 +427,6 @@ function CommandFormField({
             disabled={disabled}
             className={classNames({ "p-invalid": parameter.isInvalid })}
             tooltip={`${inputAreaAriaLabel}: Dictionary`}
-            pt={{
-              root: {
-                autoComplete: "off",
-              },
-            }}
           />
         </div>
       );
@@ -557,21 +464,6 @@ function CommandFormField({
                     }
                     disabled={disabled}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                    pt={{
-                      input: {
-                        root: () => {
-                          return {
-                            autoComplete: "off",
-                            "aria-label": `${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
-                            "aria-valuenow": getMultiValue(parameter.key, index)
-                              ? JSON.stringify(
-                                  getMultiValue(parameter.key, index),
-                                )
-                              : "0",
-                          };
-                        },
-                      },
-                    }}
                   />
                   <AccessButton
                     label="Remove"
@@ -614,14 +506,6 @@ function CommandFormField({
             onValueChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
             tooltip={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-            pt={{
-              input: {
-                root: {
-                  autoComplete: "off",
-                  "aria-label": `${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
-                },
-              },
-            }}
           />
         </div>
       );
@@ -658,21 +542,6 @@ function CommandFormField({
                     }
                     disabled={disabled}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                    pt={{
-                      input: {
-                        root: () => {
-                          return {
-                            autoComplete: "off",
-                            "aria-label": `${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
-                            "aria-valuenow": getMultiValue(parameter.key, index)
-                              ? JSON.stringify(
-                                  getMultiValue(parameter.key, index),
-                                )
-                              : "0",
-                          };
-                        },
-                      },
-                    }}
                   />
                   <AccessButton
                     label="Remove"
@@ -716,14 +585,6 @@ function CommandFormField({
             onValueChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
             tooltip={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-            pt={{
-              input: {
-                root: {
-                  autoComplete: "off",
-                  "aria-label": `${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`,
-                },
-              },
-            }}
           />
         </div>
       );
@@ -756,11 +617,6 @@ function CommandFormField({
                       }
                       disabled={disabled}
                       tooltip={`${inputAreaAriaLabel} Index ${index}: Boolean`}
-                      pt={{
-                        input: {
-                          "aria-label": `${inputAreaAriaLabel} Index ${index}: Boolean`,
-                        },
-                      }}
                     />
 
                     <AccessButton
@@ -802,11 +658,6 @@ function CommandFormField({
                     }
                     disabled={disabled}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: Boolean`}
-                    pt={{
-                      input: {
-                        "aria-label": `${inputAreaAriaLabel} Index ${index}: Boolean`,
-                      },
-                    }}
                   />
 
                   <AccessButton
@@ -846,11 +697,6 @@ function CommandFormField({
               onChange={(e) => handleChange(e.target.id, e.value)}
               disabled={disabled}
               tooltip={`${inputAreaAriaLabel}: Boolean`}
-              pt={{
-                input: {
-                  "aria-label": `${inputAreaAriaLabel}: Boolean`,
-                },
-              }}
             />
           </div>
         );
@@ -872,11 +718,6 @@ function CommandFormField({
             onChange={(e) => handleChange(e.target.id, e.checked)}
             disabled={disabled}
             tooltip={`${inputAreaAriaLabel}: Boolean`}
-            pt={{
-              input: {
-                "aria-label": `${inputAreaAriaLabel}: Boolean`,
-              },
-            }}
           />
         </div>
       );
@@ -903,24 +744,6 @@ function CommandFormField({
                     }
                     disabled={disabled}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: Date`}
-                    pt={{
-                      input: {
-                        root: ({ context }: { context: any }) => {
-                          if (!context.disabled) {
-                            return {
-                              "aria-label": `${inputAreaAriaLabel} Index ${index}: DateTime`,
-                              "aria-controls": undefined,
-                              "aria-description":
-                                "Select Date and Time, aria-controls removed when popup is not in DOM",
-                            };
-                          }
-                          return {
-                            "aria-label": `${inputAreaAriaLabel} Index ${index}: DateTime`,
-                            "aria-description": "Select Date and Time",
-                          };
-                        },
-                      },
-                    }}
                   />
                   <AccessButton
                     label="Remove"
@@ -958,24 +781,6 @@ function CommandFormField({
             onChange={(e: any) => handleChange(e.target.id, e.value)}
             disabled={disabled}
             tooltip={`${inputAreaAriaLabel}: Date`}
-            pt={{
-              input: {
-                root: ({ context }: { context: any }) => {
-                  if (!context.disabled) {
-                    return {
-                      "aria-label": `${inputAreaAriaLabel}: DateTime Disabled`,
-                      "aria-controls": undefined,
-                      "aria-description":
-                        "Select Date and Time, aria-controls removed when popup is not in DOM",
-                    };
-                  }
-                  return {
-                    "aria-label": `${inputAreaAriaLabel}: DateTime`,
-                    "aria-description": "Select Date and Time",
-                  };
-                },
-              },
-            }}
           />
         </div>
       );
@@ -1003,24 +808,6 @@ function CommandFormField({
                     }
                     disabled={disabled}
                     tooltip={`${inputAreaAriaLabel} Index ${index}: DateTime`}
-                    pt={{
-                      input: {
-                        root: ({ context }: { context: any }) => {
-                          if (!context.disabled) {
-                            return {
-                              "aria-label": `${inputAreaAriaLabel} Index ${index}: DateTime`,
-                              "aria-controls": undefined,
-                              "aria-description":
-                                "Select Date and Time, aria-controls removed when popup is not in DOM",
-                            };
-                          }
-                          return {
-                            "aria-label": `${inputAreaAriaLabel} Index ${index}: DateTime`,
-                            "aria-description": "Select Date and Time",
-                          };
-                        },
-                      },
-                    }}
                   />
                   <AccessButton
                     label="Remove"
@@ -1059,24 +846,6 @@ function CommandFormField({
             onChange={(e: any) => handleChange(e.target.id, e.value)}
             disabled={disabled}
             tooltip={`${inputAreaAriaLabel}: DateTime`}
-            pt={{
-              input: {
-                root: ({ context }: { context: any }) => {
-                  if (!context.disabled) {
-                    return {
-                      "aria-label": `${inputAreaAriaLabel}: DateTime Disabled`,
-                      "aria-controls": undefined,
-                      "aria-description":
-                        "Select Date and Time, aria-controls removed when popup is not in DOM",
-                    };
-                  }
-                  return {
-                    "aria-label": `${inputAreaAriaLabel}: DateTime`,
-                    "aria-description": "Select Date and Time",
-                  };
-                },
-              },
-            }}
           />
         </div>
       );
@@ -1090,24 +859,12 @@ function CommandFormField({
       return (
         <div id={parameter.key} key={parameter.key} className="p-field">
           <FileUpload
+            id={parameter.key}
             ref={bytesUploadRef}
             mode="basic"
             customUpload
             onSelect={customBytesUploader}
             disabled={disabled}
-            pt={{
-              root: {
-                tabIndex: -1,
-              },
-              basicButton: {
-                "aria-label": `${inputAreaAriaLabel}: File Upload Bytes Choose Button`,
-                role: "button",
-              },
-              chooseIcon: {
-                role: "img",
-                "aria-label": `${inputAreaAriaLabel}: File Upload Bytes Choose Button Icon`,
-              },
-            }}
           />
         </div>
       );
@@ -1140,6 +897,7 @@ function CommandFormField({
       return (
         <div id={parameter.key} key={parameter.key} className="p-field">
           <FileUpload
+            id={parameter.key}
             ref={fileUploadRef}
             // mode="basic"
             customUpload
@@ -1153,23 +911,6 @@ function CommandFormField({
                 displayValueTemplate={() => `${uploadPercentage}%`}
               />
             }
-            pt={{
-              root: {
-                tabIndex: -1,
-              },
-
-              chooseButton: {
-                "aria-label": `${inputAreaAriaLabel}: File Upload Base64 Choose Button`,
-                role: "button",
-              },
-              chooseIcon: {
-                role: "img",
-                "aria-label": `${inputAreaAriaLabel}: File Upload Base64 Choose Button Icon`,
-              },
-              actions: {
-                "aria-description": `${inputAreaAriaLabel}: File Upload Base64 Remove File Button, button is out of scope in framework to update accessibility labels`,
-              },
-            }}
           />
         </div>
       );

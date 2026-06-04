@@ -729,6 +729,11 @@ function CommandForm({
           </label>
         </div>
         <div style={{ width: "80%" }}>
+          <datalist id="selectCommandTypeDropdown" aria-hidden="true">
+            {["ACTION", "INFO", "TEMP"]?.map((status: any) => (
+              <option key={status.label} value={status.value} />
+            ))}
+          </datalist>
           <Dropdown
             id="COMMAND_TYPE"
             value={request?.command_type}
@@ -739,19 +744,8 @@ function CommandForm({
             disabled={disabled}
             style={{ maxWidth: "75%" }}
             pt={{
-              trigger: {
-                "aria-label": "Dropdown trigger for selecting command type",
-              },
-              input: {
-                autoComplete: "off",
-              },
               select: {
-                autoComplete: "off",
-                "aria-label": "Dropdown select for selecting command type",
-              },
-              dropdownIcon: {
-                role: "img",
-                "aria-label": "Dropdown icon for selecting command type",
+                "aria-controls": "selectCommandTypeDropdown",
               },
             }}
           />
@@ -797,11 +791,6 @@ function CommandForm({
                 disabled={disabled}
                 style={{ maxWidth: "75%" }}
                 tooltip="Comment Field"
-                pt={{
-                  root: {
-                    autoComplete: "off",
-                  },
-                }}
               />
             </div>
           </div>
