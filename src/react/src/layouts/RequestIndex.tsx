@@ -28,11 +28,7 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import {
-  ColumnPassThrough,
-  GetBaseURL,
-  PaginatorTemplate,
-} from "../services/util_service";
+import { GetBaseURL, PaginatorTemplate } from "../services/util_service";
 
 interface LazyParams {
   first: number;
@@ -651,36 +647,11 @@ function RequestIndex({
           sortable
           header="Command"
           body={commandNameTemplate}
-          pt={ColumnPassThrough("Command")}
         />
-        <Column
-          field="namespace"
-          filter
-          sortable
-          header="Namespace"
-          pt={ColumnPassThrough("Namespace")}
-        />
-        <Column
-          field="system"
-          filter
-          sortable
-          header="System"
-          pt={ColumnPassThrough("System")}
-        />
-        <Column
-          field="system_version"
-          filter
-          sortable
-          header="Version"
-          pt={ColumnPassThrough("Version")}
-        />
-        <Column
-          field="instance_name"
-          filter
-          sortable
-          header="Instance"
-          pt={ColumnPassThrough("Instance")}
-        />
+        <Column field="namespace" filter sortable header="Namespace" />
+        <Column field="system" filter sortable header="System" />
+        <Column field="system_version" filter sortable header="Version" />
+        <Column field="instance_name" filter sortable header="Instance" />
         <Column
           field="status"
           filter
@@ -691,7 +662,6 @@ function RequestIndex({
             { label: "In", value: FilterMatchMode.IN },
             { label: "Not In", value: FilterMatchMode.NOT_IN },
           ]}
-          pt={ColumnPassThrough("Status")}
         />
         <Column
           field="created_at"
@@ -701,15 +671,8 @@ function RequestIndex({
           header="Created"
           body={(rowData) => formatDate(rowData.created_at)}
           filterElement={dateTimeFilterTemplate}
-          pt={ColumnPassThrough("Created")}
         />
-        <Column
-          field="comment"
-          filter
-          sortable
-          header="Comment"
-          pt={ColumnPassThrough("Comment")}
-        />
+        <Column field="comment" filter sortable header="Comment" />
       </DataTable>
     </div>
   );

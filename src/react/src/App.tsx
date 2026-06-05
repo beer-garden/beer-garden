@@ -143,7 +143,18 @@ function App() {
             "aria-label": "Last Paginator Icon",
           },
         },
+        column: ({ props }: { props: any }) => {
+          if (props && props?.sortable === true) {
+            return {
+              sortIcon: {
+                role: "img",
+                "aria-label": `Toggle Sort for Column ${props.header ?? props.field}`,
+              },
+            };
+          }
+        },
       },
+
       dropdown: ({ props }: { props: any }) => {
         return {
           dropdownIcon: {
