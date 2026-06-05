@@ -152,7 +152,7 @@ function FileForm({
             onChange={(e) => {
               setFileTrigger({
                 ...fileTrigger,
-                ...{ recursive: e.target.value },
+                ...{ recursive: e.checked },
               });
             }}
             checked={fileTrigger?.recursive === true}
@@ -766,7 +766,7 @@ function SchedulerForm({
                 onChange={(e) => {
                   setScheduledJob({
                     ...scheduledJob,
-                    ...{ coalesce: e.value },
+                    ...{ coalesce: e.checked },
                   });
                 }}
                 checked={scheduledJob?.coalesce === true}
