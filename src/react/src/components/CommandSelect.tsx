@@ -1,6 +1,6 @@
 import { validate as validateVersion } from "compare-versions";
 import { Dropdown } from "primereact/dropdown";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Command, Instance, System } from "../models/brewtils-types";
 import { RequestCommand } from "../models/models";
@@ -131,7 +131,9 @@ function CommandSelect({
     }
 
     if (!CompareObjects(instances, instanceList)) {
-      setInstances(instanceList);
+      setInstances(
+        instanceList.sort((a: string, b: string) => a.localeCompare(b)),
+      );
     }
 
     if (!CompareObjects(commands, commandList)) {
@@ -280,10 +282,6 @@ function CommandSelect({
     setRequestCommand,
   ]);
 
-  const sortedInstances = useMemo(() => {
-    return [...instances].sort();
-  }, [instances]);
-
   return (
     <div className="border-2 border-dashed surface-border border-round surface-ground flex-auto flex justify-content-center align-items-center font-medium">
       <div>
@@ -325,7 +323,7 @@ function CommandSelect({
           onChange={(e) => {
             setSelectedInstance(e.value);
           }}
-          options={sortedInstances}
+          options={instances}
           filter
           optionLabel="Instance"
           placeholder="Select Instance"
