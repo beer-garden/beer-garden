@@ -3,7 +3,6 @@ import { Avatar } from "primereact/avatar";
 import { Divider } from "primereact/divider";
 import { Dropdown } from "primereact/dropdown";
 import { InputSwitch } from "primereact/inputswitch";
-import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
 
 import { ChangeTheme, ThemeOptions } from "../services/util_service";
@@ -28,7 +27,6 @@ function UserOverlay({
   );
 
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-  const toast = useRef<Toast>(null);
 
   const focusRef = useRef<HTMLInputElement>(null);
 
@@ -49,14 +47,12 @@ function UserOverlay({
 
   return (
     <>
-      <Toast ref={toast} />
       {username && showPasswordDialog && (
         <UserChangePassword
           username={username}
           isAdmin={false}
           showPasswordDialog={showPasswordDialog}
           setShowPasswordDialog={setShowPasswordDialog}
-          toast={toast}
           callback={() => setShowPasswordDialog(false)}
         />
       )}

@@ -10,6 +10,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { User } from "../models/brewtils-types";
 import { Config, TourStepProps } from "../models/models";
+import { ToastProvider } from "../providers/ToastProvider";
 import * as permissionService from "../services/permission_service";
 import * as tokenService from "../services/token_service";
 import * as userService from "../services/user_service";
@@ -63,7 +64,11 @@ describe("UserIndex", () => {
   });
 
   test("should render user management page", async () => {
-    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
+    render(
+      <ToastProvider>
+        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+      </ToastProvider>,
+    );
     expect(screen.getByText("User Management")).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByTestId("user-datatable")).toBeInTheDocument();
@@ -71,14 +76,22 @@ describe("UserIndex", () => {
   });
 
   test("should load users on mount", async () => {
-    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
+    render(
+      <ToastProvider>
+        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+      </ToastProvider>,
+    );
     await waitFor(() => {
       expect(userService.GetUsers).toHaveBeenCalled();
     });
   });
 
   test("should display users in datatable", async () => {
-    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
+    render(
+      <ToastProvider>
+        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+      </ToastProvider>,
+    );
     await waitFor(() => {
       expect(screen.getByText("admin")).toBeInTheDocument();
       expect(screen.getByText("operator")).toBeInTheDocument();
@@ -86,17 +99,29 @@ describe("UserIndex", () => {
   });
 
   test("should show rescan button", () => {
-    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
+    render(
+      <ToastProvider>
+        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+      </ToastProvider>,
+    );
     expect(screen.getByTestId("rescan-btn")).toBeInTheDocument();
   });
 
   test("should show create user button", () => {
-    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
+    render(
+      <ToastProvider>
+        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+      </ToastProvider>,
+    );
     expect(screen.getByTestId("create-btn")).toBeInTheDocument();
   });
 
   test("should handle rescan users", async () => {
-    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
+    render(
+      <ToastProvider>
+        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+      </ToastProvider>,
+    );
     const rescanBtn = screen.getByTestId("rescan-btn");
     fireEvent.click(rescanBtn);
     await waitFor(() => {
@@ -105,7 +130,11 @@ describe("UserIndex", () => {
   });
 
   test("should revoke user token", async () => {
-    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
+    render(
+      <ToastProvider>
+        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+      </ToastProvider>,
+    );
     await waitFor(() => {
       expect(
         screen.getByTestId(`revoke-user-${mockUsers[0].id}`),
@@ -124,14 +153,22 @@ describe("UserIndex", () => {
   });
 
   test("should not show roles button for protected user", async () => {
-    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
+    render(
+      <ToastProvider>
+        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+      </ToastProvider>,
+    );
     await waitFor(() => {
       expect(screen.queryByTestId("roles-user-1")).not.toBeInTheDocument();
     });
   });
 
   test("should show roles button for non-protected user", async () => {
-    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
+    render(
+      <ToastProvider>
+        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+      </ToastProvider>,
+    );
     await waitFor(() => {
       expect(screen.getByTestId("roles-user-2")).toBeInTheDocument();
     });
@@ -141,8 +178,10 @@ describe("UserIndex", () => {
     // Simulate ConfirmDialog in parent (i.e. App.tsx)
     render(
       <>
-        <ConfirmDialog />
-        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+        <ToastProvider>
+          <ConfirmDialog />
+          <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+        </ToastProvider>
       </>,
     );
     const userTwo = mockUsers[1];
@@ -166,7 +205,9 @@ describe("UserIndex", () => {
   test("should display auth disabled warning when auth is disabled", () => {
     const disabledConfig: Config = { auth_enabled: false } as Config;
     render(
-      <UserIndex config={disabledConfig} tourStepsRef={mockTourSteps()} />,
+      <ToastProvider>
+        <UserIndex config={disabledConfig} tourStepsRef={mockTourSteps()} />
+      </ToastProvider>,
     );
     expect(
       screen.getByText(/authorization is currently disabled/i),
@@ -174,7 +215,11 @@ describe("UserIndex", () => {
   });
 
   test("should show active tag for users with token", async () => {
-    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
+    render(
+      <ToastProvider>
+        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+      </ToastProvider>,
+    );
     await waitFor(() => {
       const activeTags = screen.getAllByText("Active");
       expect(activeTags.length).toBeGreaterThan(0);
@@ -182,7 +227,11 @@ describe("UserIndex", () => {
   });
 
   test("should show inactive tag for users without token", async () => {
-    render(<UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />);
+    render(
+      <ToastProvider>
+        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+      </ToastProvider>,
+    );
     await waitFor(() => {
       const inactiveTags = screen.getAllByText("Inactive");
       expect(inactiveTags.length).toBeGreaterThan(0);

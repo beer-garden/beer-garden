@@ -3,7 +3,6 @@ import { Badge } from "primereact/badge";
 import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
-import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -37,8 +36,6 @@ function RequestViewCard({
   const [request, setRequest] = useState<Request | null>(
     requestItem?.request ?? null,
   );
-
-  const toast = useRef(null as null | any);
 
   const navigate = useNavigate();
 
@@ -211,7 +208,6 @@ function RequestViewCard({
         )
       }
     >
-      <Toast ref={toast} />
       {error ? (
         <ErrorPage
           errorCode={getErrorCode(error?.message)}

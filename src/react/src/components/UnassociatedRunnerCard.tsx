@@ -3,11 +3,11 @@ import { ButtonGroup } from "primereact/buttongroup";
 import { Divider } from "primereact/divider";
 import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
-import { Toast } from "primereact/toast";
-import { RefObject, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Runner } from "../models/brewtils-types";
 import { Config, RunnerGroup } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import {
   ReloadRunner,
   RemoveRunner,
@@ -18,13 +18,12 @@ import AccessButton from "./AccessButton";
 
 function UnassociatedRunnerCard({
   runnerGroup,
-  toast,
   config,
 }: {
   runnerGroup: RunnerGroup;
-  toast?: RefObject<Toast | null>;
   config: Config;
 }) {
+  const showToast = useToast();
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem("theme_dark") === "true",
   );
@@ -77,14 +76,12 @@ function UnassociatedRunnerCard({
   function startRunner(runner: Runner) {
     StartRunner(runner)
       .then(() => {
-        if (toast && toast.current) {
-          toast.current?.show({
-            severity: "info",
-            summary: "Confirmation",
-            detail: `Start runner ${runner.id}`,
-            life: 3000,
-          });
-        }
+        showToast({
+          severity: "info",
+          summary: "Confirmation",
+          detail: `Start runner ${runner.id}`,
+          life: 3000,
+        });
       })
       .catch((error) => {
         console.log("Error starting runner", error);
@@ -100,14 +97,12 @@ function UnassociatedRunnerCard({
   function stopRunner(runner: Runner) {
     StopRunner(runner)
       .then(() => {
-        if (toast && toast.current) {
-          toast.current?.show({
-            severity: "info",
-            summary: "Confirmation",
-            detail: `Stopped runner ${runner.id}`,
-            life: 3000,
-          });
-        }
+        showToast({
+          severity: "info",
+          summary: "Confirmation",
+          detail: `Stopped runner ${runner.id}`,
+          life: 3000,
+        });
       })
       .catch((error) => {
         console.log("Error stopping runner", error);
@@ -123,14 +118,12 @@ function UnassociatedRunnerCard({
   function deleteRunner(runner: Runner) {
     RemoveRunner(runner)
       .then(() => {
-        if (toast && toast.current) {
-          toast.current?.show({
-            severity: "info",
-            summary: "Confirmation",
-            detail: `Deleted runner ${runner.id}`,
-            life: 3000,
-          });
-        }
+        showToast({
+          severity: "info",
+          summary: "Confirmation",
+          detail: `Deleted runner ${runner.id}`,
+          life: 3000,
+        });
       })
       .catch((error) => {
         console.log("Error deleting runner", error);
@@ -140,14 +133,12 @@ function UnassociatedRunnerCard({
   function reloadPath() {
     ReloadRunner(runnerGroup.path)
       .then(() => {
-        if (toast && toast.current) {
-          toast.current?.show({
-            severity: "info",
-            summary: "Confirmation",
-            detail: `Reloaded runner ${runnerGroup.path}`,
-            life: 3000,
-          });
-        }
+        showToast({
+          severity: "info",
+          summary: "Confirmation",
+          detail: `Reloaded runner ${runnerGroup.path}`,
+          life: 3000,
+        });
       })
       .catch((error) => {
         console.log("Error Reloading runner", error);
