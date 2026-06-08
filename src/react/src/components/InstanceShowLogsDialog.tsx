@@ -190,7 +190,6 @@ function InstanceShowLogsDialog({
           >
             <AccessButton
               tooltip="Download Full Logs File"
-              aria-label="Get Full Logs"
               label="Get Full Logs"
             />
           </a>
