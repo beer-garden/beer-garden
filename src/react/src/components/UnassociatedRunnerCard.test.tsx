@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { Runner } from "../models/brewtils-types";
 import { RunnerGroup } from "../models/models";
+import { ToastProvider } from "../providers/ToastProvider";
 import * as runnerService from "../services/runner_service";
 import UnassociatedRunnerCard from "./UnassociatedRunnerCard";
 
@@ -24,13 +25,10 @@ describe("UnassociatedRunnerCard", () => {
   } as RunnerGroup;
 
   test("renders Runner Group", async () => {
-    const mockToast = { current: null };
-
     render(
-      <UnassociatedRunnerCard
-        runnerGroup={mock_runner_group}
-        toast={mockToast}
-      />,
+      <ToastProvider>
+        <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
+      </ToastProvider>,
     );
 
     await waitFor(() => {
@@ -43,15 +41,12 @@ describe("UnassociatedRunnerCard", () => {
   });
 
   test("renders Runner Group Stop", async () => {
-    const mockToast = { current: null };
-
     vi.mocked(runnerService.StopRunner);
 
     render(
-      <UnassociatedRunnerCard
-        runnerGroup={mock_runner_group}
-        toast={mockToast}
-      />,
+      <ToastProvider>
+        <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
+      </ToastProvider>,
     );
 
     const target_button = await screen.findByTestId("STOP_GROUP");
@@ -65,15 +60,12 @@ describe("UnassociatedRunnerCard", () => {
   });
 
   test("renders Runner Group Start", async () => {
-    const mockToast = { current: null };
-
     vi.mocked(runnerService.StartRunner);
 
     render(
-      <UnassociatedRunnerCard
-        runnerGroup={mock_runner_group}
-        toast={mockToast}
-      />,
+      <ToastProvider>
+        <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
+      </ToastProvider>,
     );
 
     const target_button = await screen.findByTestId("START_GROUP");
@@ -87,15 +79,12 @@ describe("UnassociatedRunnerCard", () => {
   });
 
   test("renders Runner Group Delete", async () => {
-    const mockToast = { current: null };
-
     vi.mocked(runnerService.RemoveRunner);
 
     render(
-      <UnassociatedRunnerCard
-        runnerGroup={mock_runner_group}
-        toast={mockToast}
-      />,
+      <ToastProvider>
+        <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
+      </ToastProvider>,
     );
 
     const target_button = await screen.findByTestId("DELETE_GROUP");
@@ -109,15 +98,12 @@ describe("UnassociatedRunnerCard", () => {
   });
 
   test("renders Runner Group Reload", async () => {
-    const mockToast = { current: null };
-
     vi.mocked(runnerService.ReloadRunner);
 
     render(
-      <UnassociatedRunnerCard
-        runnerGroup={mock_runner_group}
-        toast={mockToast}
-      />,
+      <ToastProvider>
+        <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
+      </ToastProvider>,
     );
 
     const target_button = await screen.findByTestId("RELOAD_GROUP");
@@ -132,15 +118,12 @@ describe("UnassociatedRunnerCard", () => {
   });
 
   test("renders Runner Start", async () => {
-    const mockToast = { current: null };
-
     vi.mocked(runnerService.StartRunner);
 
     render(
-      <UnassociatedRunnerCard
-        runnerGroup={mock_runner_group}
-        toast={mockToast}
-      />,
+      <ToastProvider>
+        <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
+      </ToastProvider>,
     );
 
     const target_button = await screen.findByTestId(
@@ -159,15 +142,12 @@ describe("UnassociatedRunnerCard", () => {
   });
 
   test("renders Runner Stop", async () => {
-    const mockToast = { current: null };
-
     vi.mocked(runnerService.StopRunner);
 
     render(
-      <UnassociatedRunnerCard
-        runnerGroup={mock_runner_group}
-        toast={mockToast}
-      />,
+      <ToastProvider>
+        <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
+      </ToastProvider>,
     );
 
     const target_button = await screen.findByTestId(
@@ -186,15 +166,12 @@ describe("UnassociatedRunnerCard", () => {
   });
 
   test("renders Runner Delete", async () => {
-    const mockToast = { current: null };
-
     vi.mocked(runnerService.RemoveRunner);
 
     render(
-      <UnassociatedRunnerCard
-        runnerGroup={mock_runner_group}
-        toast={mockToast}
-      />,
+      <ToastProvider>
+        <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
+      </ToastProvider>,
     );
 
     const target_button = await screen.findByTestId(

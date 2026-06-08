@@ -318,11 +318,7 @@ function CurrentRequestsTemplate({
           </div>
         )}
       />
-      <AccessButton
-        className="fa-layers fa-fw fa-2x"
-        onClick={confirm}
-        text
-      >
+      <AccessButton className="fa-layers fa-fw fa-2x" onClick={confirm} text>
         <FontAwesomeIcon
           icon="envelope"
           className={
