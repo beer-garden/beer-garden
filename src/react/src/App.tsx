@@ -32,6 +32,7 @@ import { AutoCompletePT } from "./passthrough/AutoCompletePT";
 import { CalendarPT } from "./passthrough/CalendarPT";
 import { CheckboxPT } from "./passthrough/CheckboxPT";
 import { DataTablePT } from "./passthrough/DataTablePT";
+import { DialogPT } from "./passthrough/DialogPT";
 import { DropdownPT } from "./passthrough/DropdownPT";
 import { FileUploadPT } from "./passthrough/FileUploadPT";
 import { InputNumberPT } from "./passthrough/InputNumberPT";
@@ -138,6 +139,7 @@ function App() {
       calendar: CalendarPT,
       fileUpload: FileUploadPT,
       messages: MessagesPT,
+      dialog: DialogPT,
     },
   };
 
@@ -497,6 +499,7 @@ function App() {
                     visible={requestItem !== undefined}
                     style={{ width: "70%", overflowY: "auto" }}
                     modal
+                    maximizable
                     onHide={() => {
                       setRequestItem(undefined);
                     }}

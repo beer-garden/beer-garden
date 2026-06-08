@@ -5,6 +5,7 @@ export const FindPropLabel = (props: any) => {
     props.placeholder ??
     props.optionLabel ??
     props.id ??
+    props.header ??
     "MISSING REF"
   );
 };
