@@ -1,6 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { BreadCrumb } from "primereact/breadcrumb";
-import { Toast } from "primereact/toast";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -9,6 +8,7 @@ import RequestTreeChart from "../components/RequestTreeChart";
 import RequestViewMain from "../components/RequestViewMain";
 import { Request } from "../models/brewtils-types";
 import { Config, RequestItem } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { GetRequest } from "../services/request_service";
 import { getErrorCode } from "../services/util_service";
 
@@ -74,7 +74,7 @@ function RequestView({
   config: Config;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
-  const toast = useRef<Toast>(null);
+  const showToast = useToast();
   const [error, setError] = useState<Error>();
   const { requestId } = useParams<{ requestId: string }>();
   const [request, setRequest] = useState<Request | null>(null);
@@ -123,7 +123,7 @@ function RequestView({
             }
           })
           .catch((error) => {
-            toast.current?.show({
+            showToast({
               severity: "error",
               summary: "Error",
               detail: `Error fetching request: ${error}`,
@@ -153,7 +153,7 @@ function RequestView({
               loadRootRequest(root_request);
             })
             .catch((error) => {
-              toast.current?.show({
+              showToast({
                 severity: "error",
                 summary: "Error",
                 detail: `Error fetching parent request: ${error}`,
@@ -193,7 +193,6 @@ function RequestView({
         />
       ) : (
         <div>
-          <Toast ref={toast} />
           {request && <RequestHeader {...request} />}
 
           {rootRequest && (

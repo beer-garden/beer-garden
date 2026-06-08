@@ -1,23 +1,22 @@
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
-import { Toast } from "primereact/toast";
-import { ChangeEvent, RefObject, useState } from "react";
+import { ChangeEvent, useState } from "react";
 
+import { useToast } from "../providers/ToastProvider";
 import { CreateUser } from "../services/user_service";
 import AccessButton from "./AccessButton";
 
 function UserCreate({
   showCreateUserDialog,
   setShowCreateUserDialog,
-  toast,
   callback,
 }: {
   showCreateUserDialog: boolean;
   setShowCreateUserDialog: (show: boolean) => void;
-  toast: RefObject<Toast | null>;
   callback?: () => void;
 }) {
+  const showToast = useToast();
   const [username, setUsername] = useState<string | undefined>(undefined);
   const [newPassword, setNewPassword] = useState<string | undefined>(undefined);
   const [confirmPassword, setConfirmPassword] = useState<string | undefined>(
@@ -28,21 +27,21 @@ function UserCreate({
 
   function createUser() {
     if (!username) {
-      toast.current?.show({
+      showToast({
         severity: "error",
         summary: "Error",
         detail: "Missing Username",
         life: 3000,
       });
     } else if (!newPassword || !confirmPassword) {
-      toast.current?.show({
+      showToast({
         severity: "error",
         summary: "Error",
         detail: "Missing Password",
         life: 3000,
       });
     } else if (newPassword !== confirmPassword) {
-      toast.current?.show({
+      showToast({
         severity: "error",
         summary: "Error",
         detail: "Passwords do not match",
@@ -51,7 +50,7 @@ function UserCreate({
     } else {
       CreateUser(username, newPassword)
         .then(() => {
-          toast.current?.show({
+          showToast({
             severity: "info",
             summary: "Info",
             detail: `Created Account for ${username}`,

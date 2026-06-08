@@ -139,7 +139,6 @@ function InstanceShowLogsDialog({
         <AccessButton
           onClick={onClose}
           tooltip="Close Instance Show Logs Dialog"
-          aria-label="Close Logs"
           label="Close Logs"
         />
       }
