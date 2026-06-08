@@ -292,12 +292,3 @@ export const PaginatorTemplate = {
     );
   },
 };
-
-export const ColumnPassThrough = (column: string) => {
-  return {
-    sortIcon: {
-      role: "img",
-      "aria-label": `Toggle Sort for Column ${column}`,
-    },
-  };
-};

@@ -22,7 +22,7 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { DeleteUser, GetUsers, RescanUsers } from "../services/user_service";
-import { ColumnPassThrough, PaginatorTemplate } from "../services/util_service";
+import { PaginatorTemplate } from "../services/util_service";
 
 function UserIndex({
   config,
@@ -707,7 +707,6 @@ function UserIndex({
           sortable
           header="Username"
           body={userNameTemplate}
-          pt={ColumnPassThrough("username")}
         />
         <Column header="Max Permission" body={maxPermissionTemplate} />
         <Column header="Last Authenticated" body={lastAuthenticatedTemplate} />

@@ -34,7 +34,7 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { ColumnPassThrough, PaginatorTemplate } from "../services/util_service";
+import { PaginatorTemplate } from "../services/util_service";
 
 const permissions = [
   { label: "GARDEN_ADMIN", value: "GARDEN_ADMIN" },
@@ -517,61 +517,15 @@ function RoleIndex({
           }}
           dataKey="id"
         >
-          <Column
-            field="name"
-            sortable
-            header="Role"
-            body={roleNameTemplate}
-            pt={ColumnPassThrough("name")}
-          />
-          <Column
-            field="permission"
-            sortable
-            header="Permission"
-            pt={ColumnPassThrough("permission")}
-          />
-          <Column
-            field="description"
-            sortable
-            header="Description"
-            pt={ColumnPassThrough("description")}
-          />
-          <Column
-            field="scope_gardens"
-            sortable
-            header="Garden Scope"
-            pt={ColumnPassThrough("scope_gardens")}
-          />
-          <Column
-            field="scope_namespaces"
-            sortable
-            header="Namespace Scope"
-            pt={ColumnPassThrough("scope_namespaces")}
-          />
-          <Column
-            field="scope_systems"
-            sortable
-            header="System Scope"
-            pt={ColumnPassThrough("scope_systems")}
-          />
-          <Column
-            field="scope_versions"
-            sortable
-            header="Version Scope"
-            pt={ColumnPassThrough("scope_versions")}
-          />
-          <Column
-            field="scope_instances"
-            sortable
-            header="Instance Scope"
-            pt={ColumnPassThrough("scope_instances")}
-          />
-          <Column
-            field="scope_commands"
-            sortable
-            header="Command Scope"
-            pt={ColumnPassThrough("scope_commands")}
-          />
+          <Column field="name" sortable header="Role" body={roleNameTemplate} />
+          <Column field="permission" sortable header="Permission" />
+          <Column field="description" sortable header="Description" />
+          <Column field="scope_gardens" sortable header="Garden Scope" />
+          <Column field="scope_namespaces" sortable header="Namespace Scope" />
+          <Column field="scope_systems" sortable header="System Scope" />
+          <Column field="scope_versions" sortable header="Version Scope" />
+          <Column field="scope_instances" sortable header="Instance Scope" />
+          <Column field="scope_commands" sortable header="Command Scope" />
           <Column header="" body={roleButtonTemplate} />
         </DataTable>
       </div>
