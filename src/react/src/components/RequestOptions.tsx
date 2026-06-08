@@ -14,7 +14,7 @@ import {
   RequestItem,
 } from "../models/models";
 import { checkPermission } from "../services/permission_service";
-import { CancelRequest, DeleteRequest } from "../services/request_service";
+import { CancelRequest } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
 
 const handleDownload = (request: Request) => {
@@ -56,6 +56,7 @@ function RequestOptions({
   config,
   isCard,
   openRequest,
+  deleteRequest,
 }: {
   request: Request;
   setRequest: (request: Request | null) => void;
@@ -67,6 +68,7 @@ function RequestOptions({
   config: Config;
   isCard: boolean;
   openRequest?: () => void;
+  deleteRequest?: () => void;
 }) {
   const navigate = useNavigate();
   const items: MenuItem[] = [];
@@ -117,13 +119,13 @@ function RequestOptions({
           icon: <FontAwesomeIcon icon="xmark" />,
           command: () => {
             const accept = () => {
-              DeleteRequest(request)
-                .then(() => {
-                  void navigate(`/requests`);
-                })
-                .catch((error) => {
-                  console.error("Error deleting request:", error);
-                });
+              if (isCard) {
+                if (deleteRequest) {
+                  deleteRequest();
+                }
+              } else {
+                void navigate(`/requests`);
+              }
             };
             const reject = () => {};
             const confirm = () => {
