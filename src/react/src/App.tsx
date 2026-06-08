@@ -37,6 +37,7 @@ import { FileUploadPT } from "./passthrough/FileUploadPT";
 import { InputNumberPT } from "./passthrough/InputNumberPT";
 import { InputTextareaPT } from "./passthrough/InputTextareaPT";
 import { InputTextPT } from "./passthrough/InputTextPT";
+import { MessagesPT } from "./passthrough/MessagesPT";
 import { MultiSelectPT } from "./passthrough/MultiSelectPT";
 import { TriStateCheckboxPT } from "./passthrough/TriStateCheckboxPT";
 import { ToastProvider } from "./providers/ToastProvider";
@@ -46,7 +47,6 @@ import { preemptiveRefresh } from "./services/token_service";
 import { GetToken } from "./services/token_service";
 import { ConvertToTourStepProps } from "./services/tour_service";
 import { ChangeTheme } from "./services/util_service";
-import { MessagesPT } from "./passthrough/MessagesPT";
 
 function App() {
   const socketRef = useRef(null as null | any);
