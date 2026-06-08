@@ -23,12 +23,16 @@ export const FindPropLabel = (props: any) => {
     return props.header;
   }
 
+  if (props?.pt) {
+    return FindPropLabel(props.pt);
+  }
+
   if (
-    props?.pt &&
-    Object.hasOwn(props.pt, "aria-label") &&
-    props.pt["aria-label"]
+    props?.__parentMetadata &&
+    props.__parentMetadata?.parent &&
+    props.__parentMetadata.parent?.props
   ) {
-    return props.pt["aria-label"];
+    return FindPropLabel(props.__parentMetadata.parent.props);
   }
 
   return "MISSING REF";
