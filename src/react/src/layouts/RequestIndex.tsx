@@ -6,7 +6,6 @@ import { Column } from "primereact/column";
 import { DataTable, SortOrder } from "primereact/datatable";
 import { Divider } from "primereact/divider";
 import { MultiSelect } from "primereact/multiselect";
-import { Toast } from "primereact/toast";
 import { Tooltip } from "primereact/tooltip";
 import {
   RefObject,
@@ -22,6 +21,7 @@ import AccessButton from "../components/AccessButton";
 import { Request } from "../models/brewtils-types";
 import { RequestItem } from "../models/models";
 import { TourStepProps } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { GetRequestList } from "../services/request_service";
 import {
   AddTourStep,
@@ -49,7 +49,7 @@ function RequestIndex({
 }) {
   const [requests, setRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
-  const toast = useRef<Toast>(null);
+  const showToast = useToast();
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [filteredRecords, setFilteredRecords] = useState<number>(0);
@@ -297,7 +297,7 @@ function RequestIndex({
       })
       .catch((error) => {
         setLoading(false);
-        toast.current?.show({
+        showToast({
           severity: "error",
           summary: "Error",
           detail: `Error fetching request list: ${error}`,
@@ -601,7 +601,6 @@ function RequestIndex({
 
   return (
     <div>
-      <Toast ref={toast} />
       <DataTable
         value={requests}
         loading={loading}

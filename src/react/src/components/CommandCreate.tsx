@@ -1,12 +1,12 @@
 import { ScrollPanel } from "primereact/scrollpanel";
 import { Skeleton } from "primereact/skeleton";
-import { Toast } from "primereact/toast";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import CommandForm from "../components/CommandForm";
 import CommandSelect from "../components/CommandSelect";
 import { Command, Request, System } from "../models/brewtils-types";
 import { RequestCommand } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import {
   DetermineLatestSystemVersion,
   GetSystemList,
@@ -31,13 +31,13 @@ function CommandCreate({
   setIsFormValid: (isValid: boolean) => void;
   callback?: () => void;
 }) {
-  const toast = useRef(null as null | any);
-
   const [systems, setSystems] = useState<Array<System>>([]);
 
   // Command Panel
   const [showCommand, setShowCommand] = useState<boolean>(false);
   const [command, setCommand] = useState<Command | null>(null);
+
+  const showToast = useToast();
 
   // Effect only runs at startup to get systems
   useEffect(() => {
@@ -46,7 +46,12 @@ function CommandCreate({
         setSystems(data);
       })
       .catch((error) => {
-        console.error("Error fetching system list:", error);
+        showToast({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching system list: ${error}`,
+          life: 3000,
+        });
       });
   }, []);
 
@@ -173,7 +178,6 @@ function CommandCreate({
 
   return (
     <div>
-      <Toast ref={toast} />
       {systems && systems.length > 0 && (
         <CommandSelect
           systems={systems}
