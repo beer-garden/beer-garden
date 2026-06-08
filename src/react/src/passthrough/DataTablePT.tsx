@@ -18,13 +18,36 @@ export const DataTablePT = {
     },
   },
   column: ({ props }: { props: any }) => {
+    let pt = {};
     if (props && props?.sortable === true) {
-      return {
+      pt = {
+        ...pt,
         sortIcon: {
           role: "img",
           "aria-label": `Toggle Sort for Column ${props.header ?? props.field}`,
         },
       };
     }
+    if (props && ["multiple", "checkbox"].includes(props.selectionMode)) {
+      pt = {
+        ...pt,
+        rowCheckbox: {
+          root: {
+            "aria-label": undefined,
+            "aria-checked": undefined,
+            role: undefined,
+          },
+        },
+        headerCheckbox: {
+          root: {
+            "aria-label": undefined,
+            "aria-checked": undefined,
+            role: undefined,
+          },
+        },
+      };
+    }
+
+    return pt;
   },
 };

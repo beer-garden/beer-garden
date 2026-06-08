@@ -40,6 +40,7 @@ import { InputTextareaPT } from "./passthrough/InputTextareaPT";
 import { InputTextPT } from "./passthrough/InputTextPT";
 import { MessagesPT } from "./passthrough/MessagesPT";
 import { MultiSelectPT } from "./passthrough/MultiSelectPT";
+import { TreeTablePT } from "./passthrough/TreeTablePT";
 import { TriStateCheckboxPT } from "./passthrough/TriStateCheckboxPT";
 import { ToastProvider } from "./providers/ToastProvider";
 import { GetConfig } from "./services/config_service";
@@ -140,6 +141,7 @@ function App() {
       fileUpload: FileUploadPT,
       messages: MessagesPT,
       dialog: DialogPT,
+      treeTable: TreeTablePT,
     },
   };
 

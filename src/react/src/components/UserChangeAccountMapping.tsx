@@ -180,6 +180,7 @@ function UserChangeAccountMapping({
         onChange={(e) => onEditorValueChange(node, e.target.value)}
         onKeyDown={(e) => e.stopPropagation()}
         data-testid={`edit-user-account-${node.data.garden}`}
+        tooltip={`Update User Account mapping for ${node.data.garden}`}
       />
     );
   };
