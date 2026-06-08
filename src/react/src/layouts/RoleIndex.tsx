@@ -7,7 +7,6 @@ import { Dropdown } from "primereact/dropdown";
 import { InputText } from "primereact/inputtext";
 import { Message } from "primereact/message";
 import { Messages } from "primereact/messages";
-import { Toast } from "primereact/toast";
 import {
   ChangeEvent,
   RefObject,
@@ -21,6 +20,7 @@ import AccessButton from "../components/AccessButton";
 import RoleScopeCard from "../components/RoleScopeCard";
 import { Role } from "../models/brewtils-types";
 import { Config, TourStepProps } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { checkPermission } from "../services/permission_service";
 import {
   CreateRole,
@@ -34,7 +34,7 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { ColumnPassThrough, PaginatorTemplate } from "../services/util_service";
+import { PaginatorTemplate } from "../services/util_service";
 
 const permissions = [
   { label: "GARDEN_ADMIN", value: "GARDEN_ADMIN" },
@@ -50,7 +50,7 @@ function RoleIndex({
   config: Config;
   tourStepsRef: RefObject<Array<TourStepProps>>;
 }) {
-  const toast = useRef<Toast>(null);
+  const showToast = useToast();
   const [roles, setRoles] = useState<Array<Role>>([]);
   const [loading, setLoading] = useState(false);
   const [first, setFirst] = useState<number>(0);
@@ -139,7 +139,7 @@ function RoleIndex({
       })
       .catch((error) => {
         setLoading(false);
-        toast.current?.show({
+        showToast({
           severity: "error",
           summary: "Error",
           detail: `Error fetching roles: ${error}`,
@@ -213,7 +213,7 @@ function RoleIndex({
               return newRoles;
             });
             setDialogVisible(false);
-            toast.current?.show({
+            showToast({
               severity: "info",
               summary: "Role Updated",
               detail: `Role updated: ${roleObj.name}`,
@@ -221,7 +221,7 @@ function RoleIndex({
             });
           })
           .catch((error) => {
-            toast.current?.show({
+            showToast({
               severity: "error",
               summary: "Error",
               detail: `Error editing the role: ${error}`,
@@ -235,7 +235,7 @@ function RoleIndex({
             setRoles([...roles, createdRole]);
             roleId.current = undefined;
             setDialogVisible(false);
-            toast.current?.show({
+            showToast({
               severity: "info",
               summary: "Role Created",
               detail: `New role created: ${roleObj.name}`,
@@ -243,7 +243,7 @@ function RoleIndex({
             });
           })
           .catch((error) => {
-            toast.current?.show({
+            showToast({
               severity: "error",
               summary: "Error",
               detail: `Error creating the role: ${error}`,
@@ -281,7 +281,7 @@ function RoleIndex({
       Rescan()
         .then(() => {
           loadRoles();
-          toast.current?.show({
+          showToast({
             severity: "info",
             summary: "Confirmation",
             detail: "Rescan complete",
@@ -289,7 +289,7 @@ function RoleIndex({
           });
         })
         .catch((error) => {
-          toast.current?.show({
+          showToast({
             severity: "error",
             summary: "Error",
             detail: `Error rescanning roles: ${error}`,
@@ -337,7 +337,7 @@ function RoleIndex({
             setRoles((currentRoles) => {
               return currentRoles.filter((r) => r.id !== role.id);
             });
-            toast.current?.show({
+            showToast({
               severity: "info",
               summary: "Role Deleted",
               detail: `Deleted role: ${role.name}`,
@@ -345,7 +345,7 @@ function RoleIndex({
             });
           })
           .catch((error) => {
-            toast.current?.show({
+            showToast({
               severity: "error",
               summary: "Error",
               detail: `Error deleting the role: ${error}`,
@@ -517,61 +517,15 @@ function RoleIndex({
           }}
           dataKey="id"
         >
-          <Column
-            field="name"
-            sortable
-            header="Role"
-            body={roleNameTemplate}
-            pt={ColumnPassThrough("name")}
-          />
-          <Column
-            field="permission"
-            sortable
-            header="Permission"
-            pt={ColumnPassThrough("permission")}
-          />
-          <Column
-            field="description"
-            sortable
-            header="Description"
-            pt={ColumnPassThrough("description")}
-          />
-          <Column
-            field="scope_gardens"
-            sortable
-            header="Garden Scope"
-            pt={ColumnPassThrough("scope_gardens")}
-          />
-          <Column
-            field="scope_namespaces"
-            sortable
-            header="Namespace Scope"
-            pt={ColumnPassThrough("scope_namespaces")}
-          />
-          <Column
-            field="scope_systems"
-            sortable
-            header="System Scope"
-            pt={ColumnPassThrough("scope_systems")}
-          />
-          <Column
-            field="scope_versions"
-            sortable
-            header="Version Scope"
-            pt={ColumnPassThrough("scope_versions")}
-          />
-          <Column
-            field="scope_instances"
-            sortable
-            header="Instance Scope"
-            pt={ColumnPassThrough("scope_instances")}
-          />
-          <Column
-            field="scope_commands"
-            sortable
-            header="Command Scope"
-            pt={ColumnPassThrough("scope_commands")}
-          />
+          <Column field="name" sortable header="Role" body={roleNameTemplate} />
+          <Column field="permission" sortable header="Permission" />
+          <Column field="description" sortable header="Description" />
+          <Column field="scope_gardens" sortable header="Garden Scope" />
+          <Column field="scope_namespaces" sortable header="Namespace Scope" />
+          <Column field="scope_systems" sortable header="System Scope" />
+          <Column field="scope_versions" sortable header="Version Scope" />
+          <Column field="scope_instances" sortable header="Instance Scope" />
+          <Column field="scope_commands" sortable header="Command Scope" />
           <Column header="" body={roleButtonTemplate} />
         </DataTable>
       </div>
@@ -580,7 +534,6 @@ function RoleIndex({
 
   return (
     <div>
-      <Toast ref={toast} />
       <Dialog
         data-testid="role-dialog"
         appendTo={"self"}
