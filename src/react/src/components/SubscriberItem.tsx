@@ -227,6 +227,11 @@ function SubscriberItem({
               <label className="font-bold flex" htmlFor={`garden-${index}`}>
                 Garden
               </label>
+              <datalist id="selectGardenDropdown" aria-hidden="true">
+                {filteredGardenItems?.map((value: string) => (
+                  <option key={value} value={value} />
+                ))}
+              </datalist>
               <AutoComplete
                 dropdown
                 id={`garden-${index}`}
@@ -236,12 +241,25 @@ function SubscriberItem({
                 onChange={(e) =>
                   handleUpdateSubscriber("garden", e.target.value, index)
                 }
+                dropdownIcon="pi pi-chevron-down"
+                pt={{
+                  input: {
+                    root: {
+                      "aria-controls": "selectGardenDropdown",
+                    },
+                  },
+                }}
               />
             </div>
             <div className="mb-2">
-              <label className="font-bold flex" htmlFor={`namepace-${index}`}>
+              <label className="font-bold flex" htmlFor={`namespace-${index}`}>
                 Namespace
               </label>
+              <datalist id="selectNamespaceDropdown" aria-hidden="true">
+                {filteredNamespaceItems?.map((value: string) => (
+                  <option key={value} value={value} />
+                ))}
+              </datalist>
               <AutoComplete
                 dropdown
                 id={`namespace-${index}`}
@@ -251,12 +269,25 @@ function SubscriberItem({
                 onChange={(e) =>
                   handleUpdateSubscriber("namespace", e.target.value, index)
                 }
+                dropdownIcon="pi pi-chevron-down"
+                pt={{
+                  input: {
+                    root: {
+                      "aria-controls": "selectNamespaceDropdown",
+                    },
+                  },
+                }}
               />
             </div>
             <div className="mb-2">
               <label className="font-bold flex" htmlFor={`system-${index}`}>
                 System
               </label>
+              <datalist id="selectSystemDropdown" aria-hidden="true">
+                {filteredSystemItems?.map((value: string) => (
+                  <option key={value} value={value} />
+                ))}
+              </datalist>
               <AutoComplete
                 dropdown
                 id={`system-${index}`}
@@ -266,12 +297,25 @@ function SubscriberItem({
                 onChange={(e) =>
                   handleUpdateSubscriber("system", e.target.value, index)
                 }
+                dropdownIcon="pi pi-chevron-down"
+                pt={{
+                  input: {
+                    root: {
+                      "aria-controls": "selectSystemDropdown",
+                    },
+                  },
+                }}
               />
             </div>
             <div className="mb-2">
               <label className="font-bold flex" htmlFor={`system-${index}`}>
                 Version
               </label>
+              <datalist id="selectVersionDropdown" aria-hidden="true">
+                {filteredVersionItems?.map((value: string) => (
+                  <option key={value} value={value} />
+                ))}
+              </datalist>
               <AutoComplete
                 dropdown
                 id={`version-${index}`}
@@ -281,12 +325,25 @@ function SubscriberItem({
                 onChange={(e) =>
                   handleUpdateSubscriber("version", e.target.value, index)
                 }
+                dropdownIcon="pi pi-chevron-down"
+                pt={{
+                  input: {
+                    root: {
+                      "aria-controls": "selectVersionDropdown",
+                    },
+                  },
+                }}
               />
             </div>
             <div className="mb-2">
               <label className="font-bold flex" htmlFor={`system-${index}`}>
                 Instance
               </label>
+              <datalist id="selectInstanceDropdown" aria-hidden="true">
+                {filteredInstanceItems?.map((value: string) => (
+                  <option key={value} value={value} />
+                ))}
+              </datalist>
               <AutoComplete
                 dropdown
                 id={`instance-${index}`}
@@ -296,12 +353,25 @@ function SubscriberItem({
                 onChange={(e) =>
                   handleUpdateSubscriber("instance", e.target.value, index)
                 }
+                dropdownIcon="pi pi-chevron-down"
+                pt={{
+                  input: {
+                    root: {
+                      "aria-controls": "selectInstanceDropdown",
+                    },
+                  },
+                }}
               />
             </div>
             <div className="mb-2">
               <label className="font-bold flex" htmlFor={`system-${index}`}>
                 Command
               </label>
+              <datalist id="selectCommandDropdown" aria-hidden="true">
+                {filteredCommandItems?.map((value: string) => (
+                  <option key={value} value={value} />
+                ))}
+              </datalist>
               <AutoComplete
                 dropdown
                 id={`command-${index}`}
@@ -311,6 +381,14 @@ function SubscriberItem({
                 onChange={(e) =>
                   handleUpdateSubscriber("command", e.target.value, index)
                 }
+                dropdownIcon="pi pi-chevron-down"
+                pt={{
+                  input: {
+                    root: {
+                      "aria-controls": "selectCommandDropdown",
+                    },
+                  },
+                }}
               />
             </div>
           </Card>
