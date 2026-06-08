@@ -29,6 +29,7 @@ import Workspace from "./layouts/Workspace";
 import { Garden, Instance, System } from "./models/brewtils-types";
 import { Config, Listener, RequestItem, TourStepProps } from "./models/models";
 import { AutoCompletePT } from "./passthrough/AutoCompletePT";
+import { ButtonPT } from "./passthrough/ButtonPT";
 import { CalendarPT } from "./passthrough/CalendarPT";
 import { CheckboxPT } from "./passthrough/CheckboxPT";
 import { DataTablePT } from "./passthrough/DataTablePT";
@@ -130,7 +131,7 @@ function App() {
       datatable: DataTablePT,
       dropdown: DropdownPT,
       multiselect: MultiSelectPT,
-      autocomplete: AutoCompletePT,
+
       inputText: InputTextPT,
       inputTextarea: InputTextareaPT,
       inputNumber: InputNumberPT,
@@ -140,6 +141,8 @@ function App() {
       fileUpload: FileUploadPT,
       messages: MessagesPT,
       dialog: DialogPT,
+      autocomplete: AutoCompletePT,
+      button: ButtonPT,
     },
   };
 

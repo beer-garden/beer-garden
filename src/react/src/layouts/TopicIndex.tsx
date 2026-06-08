@@ -797,6 +797,12 @@ function TopicIndex({
               setTopicName(e.target.value)
             }
             disabled={isEdit.current}
+            pt={{
+              root: {
+                "aria-label": undefined,
+                required: undefined,
+              },
+            }}
           />
         </div>
         <Divider />
