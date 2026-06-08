@@ -121,10 +121,8 @@ function RequestOptions({
             const accept = () => {
               DeleteRequest(request)
                 .then(() => {
-                  if (isCard) {
-                    if (closeRequest) {
-                      closeRequest();
-                    }
+                  if (closeRequest) {
+                    closeRequest();
                   } else {
                     void navigate(`/requests`);
                   }
