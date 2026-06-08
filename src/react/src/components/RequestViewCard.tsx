@@ -11,7 +11,6 @@ import RequestViewMain from "../components/RequestViewMain";
 import { Request } from "../models/brewtils-types";
 import { Config, RequestItem } from "../models/models";
 import { GetRequest } from "../services/request_service";
-import { DeleteRequest } from "../services/request_service";
 import { getErrorCode } from "../services/util_service";
 import AccessButton from "./AccessButton";
 
@@ -89,15 +88,9 @@ function RequestViewCard({
     }
   };
 
-  const deleteRequest = () => {
+  const closeRequest = () => {
     if (requestItem.requestId) {
-      DeleteRequest({ id: requestItem.requestId } as any)
-        .then(() => {
-          removeItem(requestItem.itemId);
-        })
-        .catch((error) => {
-          console.error("Error deleting request:", error);
-        });
+      removeItem(requestItem.itemId);
     }
   };
 
@@ -244,7 +237,7 @@ function RequestViewCard({
                 isCard={true}
                 config={config}
                 openRequest={openRequest}
-                deleteRequest={deleteRequest}
+                closeRequest={closeRequest}
               />
             )}
           </div>
