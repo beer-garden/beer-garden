@@ -37,6 +37,7 @@ import { FileUploadPT } from "./passthrough/FileUploadPT";
 import { InputNumberPT } from "./passthrough/InputNumberPT";
 import { InputTextareaPT } from "./passthrough/InputTextareaPT";
 import { InputTextPT } from "./passthrough/InputTextPT";
+import { MessagesPT } from "./passthrough/MessagesPT";
 import { MultiSelectPT } from "./passthrough/MultiSelectPT";
 import { TriStateCheckboxPT } from "./passthrough/TriStateCheckboxPT";
 import { ToastProvider } from "./providers/ToastProvider";
@@ -136,6 +137,7 @@ function App() {
       checkbox: CheckboxPT,
       calendar: CalendarPT,
       fileUpload: FileUploadPT,
+      messages: MessagesPT,
     },
   };
 
