@@ -75,21 +75,30 @@ function RequestWizard({
 
   // Input Request
   const [request, setRequest] = useState<Request | undefined>(
-    (requestItem?.request ?? requestItem.requestCommandInput)
-      ? {
-          system: requestItem.requestCommandInput?.systemName,
-          system_version: requestItem.requestCommandInput?.version,
-          namespace: requestItem.requestCommandInput?.namespace,
-          instance_name: requestItem.requestCommandInput?.instance,
-          command: requestItem.requestCommandInput?.command,
-        }
-      : undefined,
+    requestItem?.request ??
+      (requestItem.requestCommandInput
+        ? {
+            system: requestItem.requestCommandInput?.systemName,
+            system_version: requestItem.requestCommandInput?.version,
+            namespace: requestItem.requestCommandInput?.namespace,
+            instance_name: requestItem.requestCommandInput?.instance,
+            command: requestItem.requestCommandInput?.command,
+          }
+        : undefined),
   );
+
   const updateRequestValue = (requestValue: Request | undefined) => {
     setRequest(requestValue);
     updateRequestItem({
       ...requestItem,
       request: requestValue,
+      requestCommandInput: {
+        namespace: requestValue?.namespace,
+        systemName: requestValue?.system,
+        version: requestValue?.system_version,
+        instance: requestValue?.instance_name,
+        command: requestValue?.command,
+      },
     });
   };
 
@@ -364,7 +373,10 @@ function RequestWizard({
         .catch((error) => {
           console.error("Error fetching job:", error);
         });
-    } else if (requestItem?.job !== undefined) {
+    } else if (
+      requestItem?.job !== undefined &&
+      requestItem.job?.request_template !== undefined
+    ) {
       const job = requestItem.job;
       findSelectedSystem(
         job.request_template?.namespace,
