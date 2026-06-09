@@ -8,6 +8,7 @@ export const DropdownPT = ({ props }: { props: any }) => {
     },
     input: {
       autoComplete: "off",
+      "aria-label": `${FindPropLabel(props)}: Input`,
     },
     select: {
       autoComplete: "off",
