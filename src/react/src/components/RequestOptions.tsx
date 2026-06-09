@@ -56,6 +56,7 @@ function RequestOptions({
   config,
   isCard,
   openRequest,
+  closeRequest,
 }: {
   request: Request;
   setRequest: (request: Request | null) => void;
@@ -67,6 +68,7 @@ function RequestOptions({
   config: Config;
   isCard: boolean;
   openRequest?: () => void;
+  closeRequest?: () => void;
 }) {
   const navigate = useNavigate();
   const items: MenuItem[] = [];
@@ -119,7 +121,11 @@ function RequestOptions({
             const accept = () => {
               DeleteRequest(request)
                 .then(() => {
-                  void navigate(`/requests`);
+                  if (closeRequest) {
+                    closeRequest();
+                  } else {
+                    void navigate(`/requests`);
+                  }
                 })
                 .catch((error) => {
                   console.error("Error deleting request:", error);
