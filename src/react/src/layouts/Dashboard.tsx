@@ -21,6 +21,7 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { GenerateStatusCounts, GetSeverity } from "../services/util_service";
+import { useToast } from "../providers/ToastProvider";
 
 function GardenDashboard({
   gardenRef,
@@ -58,6 +59,8 @@ function GardenDashboard({
   const [gardenMenu, setGardenMenu] = useState<Array<any>>();
 
   const [loading, setLoading] = useState<boolean>(true);
+  
+  const showToast = useToast();
 
   const instanceStatuses = [
     "RUNNING",
@@ -547,7 +550,15 @@ function GardenDashboard({
           setAssociatedRunners(associatedRunnersRef.current);
           setUnassociatedRunners(getUnassociatedRunners());
         })
-        .catch((error) => console.error("Error loading runners", error));
+        .catch((error) => {
+          console.error("Error loading runners", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error loading runners: ${error}`,
+            life: 3000,
+          });
+        });
     }
 
     return () => {

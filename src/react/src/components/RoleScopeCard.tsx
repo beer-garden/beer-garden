@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 import { GetSystemList } from "../services/system_service";
 import AccessButton from "./AccessButton";
+import { useToast } from "../providers/ToastProvider";
 
 interface RoleScopeCardProps {
   scopeName: string;
@@ -19,6 +20,8 @@ function RoleScopeCard({
 }: RoleScopeCardProps) {
   const [filteredItems, setFilteredItems] = useState([] as Array<string>);
   const items = useRef<Array<string>>([]);
+
+  const showToast = useToast();
 
   useEffect(() => {
     GetSystemList()
@@ -71,6 +74,12 @@ function RoleScopeCard({
       })
       .catch((error) => {
         console.error("Error fetching system list:", error);
+        showToast({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching system list: ${error}`,
+          life: 3000,
+        });
       });
   }, []);
 

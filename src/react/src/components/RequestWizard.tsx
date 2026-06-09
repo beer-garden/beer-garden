@@ -26,6 +26,7 @@ import CommandForm from "./CommandForm";
 import CommandList from "./CommandList";
 import SchedulerForm from "./SchedulerForm";
 import SystemList from "./SystemList";
+import { useToast } from "../providers/ToastProvider";
 
 function RequestWizard({
   requestItem,
@@ -40,6 +41,7 @@ function RequestWizard({
   isDialog: boolean;
   config: Config;
 }) {
+  const showToast = useToast();
   const stepperRef = useRef<Stepper>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const stepperPanelOptions: any = {
@@ -121,6 +123,12 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error creating request:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error creating request: ${error}`,
+            life: 3000,
+          });
         });
     }
   };
@@ -136,6 +144,12 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error creating request:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error creating request: ${error}`,
+            life: 3000,
+          });
         });
     }
   };
@@ -155,6 +169,12 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error creating job:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error creating request: ${error}`,
+            life: 3000,
+          });
         });
     }
   };
@@ -174,6 +194,12 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error updating job:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error updating job: ${error}`,
+            life: 3000,
+          });
         });
     }
   };
@@ -245,6 +271,12 @@ function RequestWizard({
       })
       .catch((error) => {
         console.error("Error fetching systems:", error);
+        showToast({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching systems: ${error}`,
+          life: 3000,
+        });
       });
   };
 
@@ -324,6 +356,12 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error fetching request:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching request: ${error}`,
+            life: 3000,
+          });
         });
     } else if (
       requestItem?.jobId !== null &&
@@ -363,6 +401,12 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error fetching job:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching job: ${error}`,
+            life: 3000,
+          });
         });
     } else if (requestItem?.job !== undefined) {
       const job = requestItem.job;

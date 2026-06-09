@@ -436,6 +436,12 @@ function JobIndex({
             });
           } else {
             console.error("Error importing jobs:", error);
+            showToast({
+              severity: "error",
+              summary: "Error",
+              detail: `Error importing jobs: ${error}`,
+              life: 3000,
+            });
           }
         }
       }

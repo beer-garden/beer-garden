@@ -161,6 +161,12 @@ function RequestTreeChart(props: RequestTreeChartProps) {
             onClick={() =>
               DeleteRequest(node.data).catch((error) => {
                 console.error("Error deleting request:", error);
+                showToast({
+                  severity: "error",
+                  summary: "Error",
+                  detail: `Error deleting request: ${error}`,
+                  life: 3000,
+                });
               })
             }
             title="Delete"

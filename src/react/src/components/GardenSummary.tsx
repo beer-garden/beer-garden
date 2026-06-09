@@ -11,6 +11,7 @@ import { RefObject, useEffect, useState } from "react";
 import { Connection, Garden, Runner, System } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { TourStepProps } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import {
   DeleteGarden,
   RescanGarden,
@@ -43,6 +44,7 @@ function GardenSummary({
   tourStepsRef?: RefObject<Array<TourStepProps>>;
   config: Config;
 }) {
+  const showToast = useToast();
   const tourUuid = selectedGarden?.id;
   const tourPrefix = "garden_summary";
   const getPublishingConnections = () => {
@@ -298,6 +300,12 @@ function GardenSummary({
             UpdateApiGarden(selectedGarden.name, type, node.api, type).catch(
               (error) => {
                 console.error("Error Updating Garden API Connection:", error);
+                showToast({
+                  severity: "error",
+                  summary: "Error",
+                  detail: `Error Updating Garden API Connection: ${error}`,
+                  life: 3000,
+                });
               },
             );
           } else if (node?.api === null || node?.api === undefined) {
@@ -328,6 +336,12 @@ function GardenSummary({
               type,
             ).catch((error) => {
               console.error("Error Updating Garden API Connection:", error);
+              showToast({
+                severity: "error",
+                summary: "Error",
+                detail: `Error Updating Garden API Connection: ${error}`,
+                life: 3000,
+              });
             });
           }
         }}
@@ -366,6 +380,12 @@ function GardenSummary({
                 if (selectedGarden?.name) {
                   Rescan(selectedGarden.name).catch((error) => {
                     console.error("Error Rescanning Garden Plugin Dir:", error);
+                    showToast({
+                      severity: "error",
+                      summary: "Error",
+                      detail: `Error Rescanning Garden Plugin Dir: ${error}`,
+                      life: 3000,
+                    });
                   });
                 }
               }}
@@ -383,6 +403,12 @@ function GardenSummary({
                 if (selectedGarden?.name) {
                   RescanGarden(selectedGarden.name).catch((error) => {
                     console.error("Error Rescanning Garden:", error);
+                    showToast({
+                      severity: "error",
+                      summary: "Error",
+                      detail: `Error Rescanning Garden: ${error}`,
+                      life: 3000,
+                    });
                   });
                 }
               }}
@@ -401,6 +427,12 @@ function GardenSummary({
                 if (selectedGarden?.name) {
                   ClearAllQueues(selectedGarden.name).catch((error) => {
                     console.error("Error clearing Plugin Queue:", error);
+                    showToast({
+                      severity: "error",
+                      summary: "Error",
+                      detail: `Error clearing Plugin Queue: ${error}`,
+                      life: 3000,
+                    });
                   });
                 }
               }}
@@ -420,6 +452,12 @@ function GardenSummary({
                     if (selectedGarden?.name) {
                       SyncGarden(selectedGarden.name).catch((error) => {
                         console.error("Error Syncing Garden:", error);
+                        showToast({
+                          severity: "error",
+                          summary: "Error",
+                          detail: `Error Syncing Garden: ${error}`,
+                          life: 3000,
+                        });
                       });
                     }
                   }}
@@ -438,6 +476,12 @@ function GardenSummary({
                   onClick={() => {
                     SyncGarden().catch((error) => {
                       console.error("Error Syncing Garden:", error);
+                      showToast({
+                        severity: "error",
+                        summary: "Error",
+                        detail: `Error Syncing Garden: ${error}`,
+                        life: 3000,
+                      });
                     });
                   }}
                   config={config}
@@ -457,6 +501,12 @@ function GardenSummary({
                     if (selectedGarden?.name) {
                       SyncUsersGarden(selectedGarden.name).catch((error) => {
                         console.error("Error Syncing Users in Garden:", error);
+                        showToast({
+                          severity: "error",
+                          summary: "Error",
+                          detail: `Error Syncing Users in Garden: ${error}`,
+                          life: 3000,
+                        });
                       });
                     }
                   }}
@@ -478,6 +528,12 @@ function GardenSummary({
                     if (selectedGarden?.name) {
                       DeleteGarden(selectedGarden.name).catch((error) => {
                         console.error("Error Deleting Garden:", error);
+                        showToast({
+                          severity: "error",
+                          summary: "Error",
+                          detail: `Error Deleting Garden: ${error}`,
+                          life: 3000,
+                        });
                       });
                     }
                   }}

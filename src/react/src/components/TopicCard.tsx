@@ -10,6 +10,7 @@ import { RequestItem } from "../models/models";
 import { GetRequestList } from "../services/request_service";
 import { PaginatorTemplate } from "../services/util_service";
 import AccessButton from "./AccessButton";
+import { useToast } from "../providers/ToastProvider";
 
 function TopicCard({
   requestItem,
@@ -24,6 +25,7 @@ function TopicCard({
 }) {
   const [topic, setTopic] = useState<Topic | undefined>(undefined);
   const navigate = useNavigate();
+  const showToast = useToast();
   const [requests, setRequests] = useState<Array<Request> | undefined>(
     undefined,
   );
@@ -161,6 +163,12 @@ function TopicCard({
         })
         .catch((error) => {
           console.error("Error fetching request list:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching request list: ${error}`,
+            life: 3000,
+          });
           setLoading(false);
         });
     } else {

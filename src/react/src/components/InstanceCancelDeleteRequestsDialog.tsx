@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Request } from "../models/brewtils-types";
 import { InstanceDialogProps } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { DeleteRequests, GetRequestList } from "../services/request_service";
 import AccessButton from "./AccessButton";
 
@@ -25,6 +26,7 @@ function InstanceCancelDeleteRequestsDialog({
   const [inProgressCount, setInProgressCount] = useState<number>(0);
 
   const msgs = useRef<Messages>(null);
+  const showToast = useToast();
 
   const [countsDataModels, setCountDataModels] = useState<Array<any>>([
     { label: "SUCCESS", count: successCount },
@@ -341,6 +343,12 @@ function InstanceCancelDeleteRequestsDialog({
         }, addDeleteErrorAlert)
         .catch((error) => {
           console.error("Error fetching queues:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching queues: ${error}`,
+            life: 3000,
+          });
         });
     };
 

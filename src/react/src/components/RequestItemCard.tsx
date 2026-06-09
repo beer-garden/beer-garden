@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { Config, RequestItem } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { DeleteJob } from "../services/job_service";
 import RequestCreateCard from "./RequestCreateCard";
 import RequestViewCard from "./RequestViewCard";
@@ -26,6 +27,8 @@ function RequestItemCard({
   const [useWizard] = useState<boolean>(
     localStorage.getItem("user_advanced") === "true" ? false : true,
   );
+
+  const showToast = useToast();
 
   return (
     <>
@@ -79,6 +82,12 @@ function RequestItemCard({
                 })
                 .catch((error) => {
                   console.error("Error deleting job:", error);
+                  showToast({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Error deleting job: ${error}`,
+                    life: 3000,
+                  });
                 });
             }
           }}

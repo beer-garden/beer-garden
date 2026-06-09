@@ -31,7 +31,6 @@ const LoginDialog = ({
         setPassword("");
       })
       .catch((error) => {
-        console.error(`Error Logging in ${error}`);
         msgs.current?.show({
           severity: "error",
           detail: "Incorrect username or password",

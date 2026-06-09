@@ -8,6 +8,7 @@ import { NavLink } from "react-router-dom";
 import CurrentRequestsTemplate from "../components/CurrentRequestsTemplate";
 import UserLogin from "../components/UserLogin";
 import { Config, RequestItem, TourStepProps } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { ClearRefresh, ClearToken } from "../services/token_service";
 import {
   AddTourStep,
@@ -46,6 +47,8 @@ function NavigationMenu({
   const [showAdmin, setShowAdmin] = useState<boolean>(false);
   const op = useRef<OverlayPanel>(null);
 
+  const showToast = useToast();
+
   const onLogout = () => {
     ClearToken();
     ClearRefresh()
@@ -54,6 +57,12 @@ function NavigationMenu({
       })
       .catch((error) => {
         console.error("Error clearing Refresh Token:", error);
+        showToast({
+          severity: "error",
+          summary: "Error",
+          detail: `Error clearing Refresh Token: ${error}`,
+          life: 3000,
+        });
       });
 
     op.current?.hide();
@@ -352,6 +361,12 @@ function NavigationMenu({
         ClearToken();
         ClearRefresh().catch((error) => {
           console.error("Error Clearing Refresh Token:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error Clearing Refresh Token: ${error}`,
+            life: 3000,
+          });
         });
       }
     }

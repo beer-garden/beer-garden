@@ -367,7 +367,6 @@ function UserIndex({
                   });
                 })
                 .catch((error) => {
-                  console.error("Error Revoking Token", error);
                   showToast({
                     severity: "error",
                     summary: "Revoke Token",
