@@ -23,6 +23,10 @@ export const FindPropLabel = (props: any) => {
     return props.header;
   }
 
+  if (props.label) {
+    return props.label;
+  }
+
   if (
     props?.pt &&
     Object.hasOwn(props.pt, "aria-label") &&
