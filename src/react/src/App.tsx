@@ -137,7 +137,7 @@ function App() {
       dialog: DialogPT,
       dropdown: DropdownPT,
       fileUpload: FileUploadPT,
-      inputNumber: InputNumberPT,  
+      inputNumber: InputNumberPT,
       inputText: InputTextPT,
       inputTextarea: InputTextareaPT,
       messages: MessagesPT,
