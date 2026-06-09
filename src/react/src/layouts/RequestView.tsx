@@ -91,19 +91,69 @@ function RequestView({
           message.payload.id &&
           message.payload.id === requestId
         ) {
-          setRequest(message.payload as Request);
+          setRequest({
+            ...message.payload,
+            children: request?.children,
+          } as Request);
         }
         if (
           rootRequestId.current &&
           message.payload.id &&
           message.payload.id === rootRequestId.current
         ) {
-          setRootRequest(message.payload as Request);
+          setRootRequest({
+            ...message.payload,
+            children: rootRequest?.children,
+          } as Request);
+        } else if (rootRequest) {
+          setRootRequest(updateNestedRequest(message.payload, rootRequest));
         }
       }
     },
     [requestId],
   );
+
+  const updateNestedRequest = (
+    updatedRequest: Request,
+    parentRequest: Request,
+  ) => {
+    // Only check requests that have parents
+    if (updatedRequest?.parent_id) {
+      if (updatedRequest.parent_id === parentRequest.id) {
+        if (
+          parentRequest?.children &&
+          parentRequest.children.some(
+            (childRequest: Request) => childRequest.id === updatedRequest.id,
+          )
+        ) {
+          // Replace Request
+          parentRequest.children.map((childRequest: Request) => {
+            if (childRequest.id !== updatedRequest.id) {
+              return childRequest;
+            }
+
+            return { ...updatedRequest, children: childRequest.children };
+          });
+          return parentRequest;
+        } else {
+          // Insert Request
+          if (parentRequest?.children) {
+            parentRequest.children.append(updatedRequest);
+          } else {
+            parentRequest.children = [updatedRequest];
+          }
+          return parentRequest;
+        }
+      } else if (parentRequest?.children) {
+        // Check Children
+        parentRequest.children.map((childRequest: Request) => {
+          return updateNestedRequest(updatedRequest, childRequest);
+        });
+      }
+    }
+
+    return parentRequest;
+  };
 
   useEffect(() => {
     if (!request || request.id !== requestId) {
@@ -111,7 +161,6 @@ function RequestView({
         GetRequest(requestId, {})
           .then((data: Request) => {
             setRequest(data);
-
             if (
               !(requestId in listeners) &&
               data.status &&
