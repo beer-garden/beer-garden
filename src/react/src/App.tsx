@@ -14,6 +14,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
 import ErrorPage from "./components/ErrorPage";
+import HasAccess from "./components/HasAccess";
 import NavigationMenu from "./components/Navigation";
 import RequestItemCard from "./components/RequestItemCard";
 import AboutIndex from "./layouts/AboutIndex";
@@ -475,7 +476,7 @@ function App() {
           </div>
         )}
         {config && Object.keys(config).length > 0 && (
-          <div className="flex">
+          <div className="flex" key={reloadUI}>
             <div className="flex-grow-1">
               <BrowserRouter basename={baseURL}>
                 {runTour && (
@@ -534,7 +535,6 @@ function App() {
                 )}
                 <div
                   className="flex-grow-1"
-                  key={reloadUI}
                   role="main"
                   id="main-content"
                   tabIndex={-1}
@@ -659,10 +659,22 @@ function App() {
                       <Route
                         path="/roles"
                         element={
-                          <RoleIndex
+                          <HasAccess
                             config={config}
-                            tourStepsRef={tourStepsRef}
-                          />
+                            permission="GARDEN_ADMIN"
+                            isGlobal={true}
+                            renderAuthFailed={
+                              <ErrorPage
+                                errorCode={401}
+                                errorMsg="Insufficient Access for Roles Management. Please contact Garden Administrator"
+                              />
+                            }
+                          >
+                            <RoleIndex
+                              config={config}
+                              tourStepsRef={tourStepsRef}
+                            />
+                          </HasAccess>
                         }
                       />
                       <Route

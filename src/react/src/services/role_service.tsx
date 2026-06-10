@@ -2,7 +2,7 @@ import { Role } from "../models/brewtils-types";
 import { GetAuthHeaders } from "./token_service";
 import { GetBaseURL } from "./util_service";
 
-export const GetRole = async (roleId: string): Promise<void> => {
+export const GetRole = async (roleId: string): Promise<Role> => {
   const headers = GetAuthHeaders();
   headers.append("Content-Type", "application/json");
   const fetch_url = `${GetBaseURL()}/api/v1/roles/${roleId}`;
@@ -14,6 +14,8 @@ export const GetRole = async (roleId: string): Promise<void> => {
     // Handle non-OK responses (e.g., 404, 500)
     throw new Error(`HTTP error: Status ${response.status}`);
   }
+  const data = (await response.json()) as Role;
+  return data;
 };
 
 export const DeleteRole = async (roleId: string): Promise<void> => {

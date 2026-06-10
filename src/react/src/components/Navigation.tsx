@@ -16,6 +16,7 @@ import {
 } from "../services/tour_service";
 import { GetCurrentUser } from "../services/user_service";
 import AccessButton from "./AccessButton";
+import HasAccess from "./HasAccess";
 import UserOverlay from "./UserOverlay";
 
 function NavigationMenu({
@@ -43,7 +44,6 @@ function NavigationMenu({
     config?.auth_enabled === true,
   );
 
-  const [showAdmin, setShowAdmin] = useState<boolean>(false);
   const op = useRef<OverlayPanel>(null);
 
   const onLogout = () => {
@@ -260,18 +260,19 @@ function NavigationMenu({
       label: "Roles",
       template: (item: any) => {
         return (
-          <NavLink
-            to="/roles"
-            className="p-menuitem-link"
-            onKeyDown={handleKeyDown}
-            {...GenerateTourProps(rolesTourStep)}
-          >
-            <FontAwesomeIcon className="mr-2" icon="user-gear" />
-            <span>{item.label}</span>
-          </NavLink>
+          <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
+            <NavLink
+              to="/roles"
+              className="p-menuitem-link"
+              onKeyDown={handleKeyDown}
+              {...GenerateTourProps(rolesTourStep)}
+            >
+              <FontAwesomeIcon className="mr-2" icon="user-gear" />
+              <span>{item.label}</span>
+            </NavLink>
+          </HasAccess>
         );
       },
-      command: () => setShowAdmin(!showAdmin),
       visible: authEnabled,
     },
     {
