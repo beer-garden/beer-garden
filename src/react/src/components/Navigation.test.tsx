@@ -3,6 +3,7 @@ import { BrowserRouter } from "react-router-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { TourStepProps } from "../models/models";
+import { ToastProvider } from "../providers/ToastProvider";
 import * as tokenService from "../services/token_service";
 import * as userService from "../services/user_service";
 import Navigation from "./Navigation";
@@ -29,14 +30,16 @@ describe("Navigation", () => {
 
     render(
       <BrowserRouter basename="/">
-        <Navigation
-          listeners={{}}
-          config={{ auth_enabled: true }}
-          runReloadUI={() => {}}
-          toggleRunTour={() => {}}
-          tourStepsRef={mockTourSteps()}
-          addRequestItem={() => {}}
-        />
+        <ToastProvider>
+          <Navigation
+            listeners={{}}
+            config={{ auth_enabled: true }}
+            runReloadUI={() => {}}
+            toggleRunTour={() => {}}
+            tourStepsRef={mockTourSteps()}
+            addRequestItem={() => {}}
+          />
+        </ToastProvider>
       </BrowserRouter>,
     );
 
@@ -50,16 +53,18 @@ describe("Navigation", () => {
 
     render(
       <BrowserRouter basename="/">
-        <Navigation
-          listeners={{}}
-          config={{
-            auth_enabled: false,
-          }}
-          runReloadUI={() => {}}
-          toggleRunTour={() => {}}
-          tourStepsRef={mockTourSteps()}
-          addRequestItem={() => {}}
-        />
+        <ToastProvider>
+          <Navigation
+            listeners={{}}
+            config={{
+              auth_enabled: false,
+            }}
+            runReloadUI={() => {}}
+            toggleRunTour={() => {}}
+            tourStepsRef={mockTourSteps()}
+            addRequestItem={() => {}}
+          />
+        </ToastProvider>
       </BrowserRouter>,
     );
 

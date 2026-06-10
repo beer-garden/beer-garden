@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { System } from "../models/brewtils-types";
 import { RequestItem } from "../models/models";
+import { ToastProvider } from "../providers/ToastProvider";
 import * as systemService from "../services/system_service";
 import RequestWizard from "./RequestWizard";
 
@@ -25,13 +26,15 @@ describe("RequestWizard", () => {
     vi.mocked(systemService.GetSystemList).mockResolvedValue(mockSystems);
 
     render(
-      <RequestWizard
-        requestItem={newItem}
-        updateRequestItem={() => {}}
-        removeItem={() => {}}
-        config={{}}
-        isDialog={false}
-      />,
+      <ToastProvider>
+        <RequestWizard
+          requestItem={newItem}
+          updateRequestItem={() => {}}
+          removeItem={() => {}}
+          config={{}}
+          isDialog={false}
+        />
+      </ToastProvider>,
     );
 
     await waitFor(() => {

@@ -15,6 +15,7 @@ import {
   Request,
 } from "../models/brewtils-types";
 import { Config } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import {
   GetJob,
   PauseJob,
@@ -54,6 +55,7 @@ function SchedulerViewCard({
   const [recordsUpdated, setRecordsUpdated] = useState(false);
 
   const navigate = useNavigate();
+  const showToast = useToast();
 
   useEffect(() => {
     if (job === undefined && jobId !== undefined) {

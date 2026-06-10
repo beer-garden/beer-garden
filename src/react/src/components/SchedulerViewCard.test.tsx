@@ -11,6 +11,7 @@ import {
   Job,
   Request,
 } from "../models/brewtils-types";
+import { ToastProvider } from "../providers/ToastProvider";
 import * as jobService from "../services/job_service";
 import * as requestService from "../services/request_service";
 import SchedulerViewCard from "./SchedulerViewCard";
@@ -63,15 +64,17 @@ describe("SchedulerViewCard", () => {
     ]);
 
     render(
-      <SchedulerViewCard
-        listeners={{}}
-        jobId="1"
-        editJob={() => {}}
-        deleteJob={() => {}}
-        removeItem={() => {}}
-        config={{}}
-        isDialog={true}
-      />,
+      <ToastProvider>
+        <SchedulerViewCard
+          listeners={{}}
+          jobId="1"
+          editJob={() => {}}
+          deleteJob={() => {}}
+          removeItem={() => {}}
+          config={{}}
+          isDialog={true}
+        />
+      </ToastProvider>,
     );
 
     await waitFor(() => {
@@ -247,15 +250,17 @@ describe("SchedulerViewCard", () => {
     ]);
 
     render(
-      <SchedulerViewCard
-        listeners={{}}
-        jobId="1"
-        editJob={() => {}}
-        deleteJob={() => {}}
-        removeItem={() => {}}
-        config={{}}
-        isDialog={true}
-      />,
+      <ToastProvider>
+        <SchedulerViewCard
+          listeners={{}}
+          jobId="1"
+          editJob={() => {}}
+          deleteJob={() => {}}
+          removeItem={() => {}}
+          config={{}}
+          isDialog={true}
+        />
+      </ToastProvider>,
     );
 
     await waitFor(() => {
@@ -295,15 +300,17 @@ describe("SchedulerViewCard", () => {
     ]);
 
     render(
-      <SchedulerViewCard
-        listeners={{}}
-        jobId="1"
-        editJob={() => {}}
-        deleteJob={() => {}}
-        removeItem={() => {}}
-        config={{}}
-        isDialog={true}
-      />,
+      <ToastProvider>
+        <SchedulerViewCard
+          listeners={{}}
+          jobId="1"
+          editJob={() => {}}
+          deleteJob={() => {}}
+          removeItem={() => {}}
+          config={{}}
+          isDialog={true}
+        />
+      </ToastProvider>,
     );
 
     await waitFor(() => {
@@ -396,15 +403,17 @@ describe("SchedulerViewCard", () => {
     ]);
 
     render(
-      <SchedulerViewCard
-        listeners={{}}
-        jobId="1"
-        editJob={() => {}}
-        deleteJob={() => {}}
-        removeItem={() => {}}
-        config={{}}
-        isDialog={true}
-      />,
+      <ToastProvider>
+        <SchedulerViewCard
+          listeners={{}}
+          jobId="1"
+          editJob={() => {}}
+          deleteJob={() => {}}
+          removeItem={() => {}}
+          config={{}}
+          isDialog={true}
+        />
+      </ToastProvider>,
     );
 
     await waitFor(() => {
@@ -441,15 +450,17 @@ describe("SchedulerViewCard", () => {
     ]);
 
     render(
-      <SchedulerViewCard
-        listeners={{}}
-        jobId="1"
-        editJob={() => {}}
-        deleteJob={() => {}}
-        removeItem={() => {}}
-        config={{}}
-        isDialog={true}
-      />,
+      <ToastProvider>
+        <SchedulerViewCard
+          listeners={{}}
+          jobId="1"
+          editJob={() => {}}
+          deleteJob={() => {}}
+          removeItem={() => {}}
+          config={{}}
+          isDialog={true}
+        />
+      </ToastProvider>,
     );
 
     await waitFor(() => {
@@ -510,15 +521,17 @@ describe("SchedulerViewCard", () => {
     ]);
 
     render(
-      <SchedulerViewCard
-        listeners={{}}
-        jobId="1"
-        editJob={() => {}}
-        deleteJob={() => {}}
-        removeItem={() => {}}
-        config={{}}
-        isDialog={true}
-      />,
+      <ToastProvider>
+        <SchedulerViewCard
+          listeners={{}}
+          jobId="1"
+          editJob={() => {}}
+          deleteJob={() => {}}
+          removeItem={() => {}}
+          config={{}}
+          isDialog={true}
+        />
+      </ToastProvider>,
     );
 
     await waitFor(() => {
@@ -601,15 +614,17 @@ describe("SchedulerViewCard", () => {
     } as Job);
 
     render(
-      <SchedulerViewCard
-        listeners={{}}
-        jobId="1"
-        editJob={() => {}}
-        deleteJob={() => {}}
-        removeItem={() => {}}
-        config={{}}
-        isDialog={true}
-      />,
+      <ToastProvider>
+        <SchedulerViewCard
+          listeners={{}}
+          jobId="1"
+          editJob={() => {}}
+          deleteJob={() => {}}
+          removeItem={() => {}}
+          config={{}}
+          isDialog={true}
+        />
+      </ToastProvider>,
     );
 
     const pauseButton = await screen.findByRole("button", {
@@ -661,15 +676,17 @@ describe("SchedulerViewCard", () => {
     } as Job);
 
     render(
-      <SchedulerViewCard
-        listeners={{}}
-        jobId="1"
-        editJob={() => {}}
-        deleteJob={() => {}}
-        removeItem={() => {}}
-        config={{}}
-        isDialog={true}
-      />,
+      <ToastProvider>
+        <SchedulerViewCard
+          listeners={{}}
+          jobId="1"
+          editJob={() => {}}
+          deleteJob={() => {}}
+          removeItem={() => {}}
+          config={{}}
+          isDialog={true}
+        />
+      </ToastProvider>,
     );
 
     const resumeButton = await screen.findByRole("button", {
@@ -722,15 +739,17 @@ describe("SchedulerViewCard", () => {
     render(
       <>
         <ConfirmDialog />
-        <SchedulerViewCard
-          listeners={{}}
-          jobId="1"
-          editJob={() => {}}
-          deleteJob={deleteJobMock}
-          removeItem={() => {}}
-          config={{}}
-          isDialog={true}
-        />
+        <ToastProvider>
+          <SchedulerViewCard
+            listeners={{}}
+            jobId="1"
+            editJob={() => {}}
+            deleteJob={deleteJobMock}
+            removeItem={() => {}}
+            config={{}}
+            isDialog={true}
+          />
+        </ToastProvider>
       </>,
     );
 
@@ -778,15 +797,17 @@ describe("SchedulerViewCard", () => {
     vi.mocked(jobService.RunAdhocJob);
 
     render(
-      <SchedulerViewCard
-        listeners={{}}
-        jobId="1"
-        editJob={() => {}}
-        deleteJob={() => {}}
-        removeItem={() => {}}
-        config={{}}
-        isDialog={true}
-      />,
+      <ToastProvider>
+        <SchedulerViewCard
+          listeners={{}}
+          jobId="1"
+          editJob={() => {}}
+          deleteJob={() => {}}
+          removeItem={() => {}}
+          config={{}}
+          isDialog={true}
+        />
+      </ToastProvider>,
     );
 
     const runNowButton = await screen.findByRole("button", {
@@ -832,15 +853,17 @@ describe("SchedulerViewCard", () => {
     const closeJobMock = vi.fn().mockResolvedValue({} as Job);
 
     render(
-      <SchedulerViewCard
-        listeners={{}}
-        jobId="1"
-        editJob={() => {}}
-        deleteJob={() => {}}
-        removeItem={closeJobMock}
-        config={{}}
-        isDialog={false}
-      />,
+      <ToastProvider>
+        <SchedulerViewCard
+          listeners={{}}
+          jobId="1"
+          editJob={() => {}}
+          deleteJob={() => {}}
+          removeItem={closeJobMock}
+          config={{}}
+          isDialog={false}
+        />
+      </ToastProvider>,
     );
 
     const closeButton = await screen.findByTestId("CLOSE_JOB_" + mockJob?.name);
@@ -892,15 +915,17 @@ describe("SchedulerViewCard", () => {
     ]);
 
     render(
-      <SchedulerViewCard
-        listeners={{}}
-        jobId="1"
-        editJob={() => {}}
-        deleteJob={() => {}}
-        removeItem={() => {}}
-        config={{}}
-        isDialog={true}
-      />,
+      <ToastProvider>
+        <SchedulerViewCard
+          listeners={{}}
+          jobId="1"
+          editJob={() => {}}
+          deleteJob={() => {}}
+          removeItem={() => {}}
+          config={{}}
+          isDialog={true}
+        />
+      </ToastProvider>,
     );
 
     await waitFor(() => {
