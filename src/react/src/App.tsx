@@ -41,6 +41,7 @@ import { InputTextareaPT } from "./passthrough/InputTextareaPT";
 import { InputTextPT } from "./passthrough/InputTextPT";
 import { MessagesPT } from "./passthrough/MessagesPT";
 import { MultiSelectPT } from "./passthrough/MultiSelectPT";
+import { SplitButtonPT } from "./passthrough/SplitButtonPT";
 import { TriStateCheckboxPT } from "./passthrough/TriStateCheckboxPT";
 import { ToastProvider } from "./providers/ToastProvider";
 import { GetConfig } from "./services/config_service";
@@ -128,21 +129,21 @@ function App() {
   const primeValue = {
     hideOverlaysOnDocumentScrolling: true,
     pt: {
-      datatable: DataTablePT,
-      dropdown: DropdownPT,
-      multiselect: MultiSelectPT,
-
-      inputText: InputTextPT,
-      inputTextarea: InputTextareaPT,
-      inputNumber: InputNumberPT,
-      triStateCheckbox: TriStateCheckboxPT,
-      checkbox: CheckboxPT,
-      calendar: CalendarPT,
-      fileUpload: FileUploadPT,
-      messages: MessagesPT,
-      dialog: DialogPT,
       autocomplete: AutoCompletePT,
       button: ButtonPT,
+      calendar: CalendarPT,
+      checkbox: CheckboxPT,
+      datatable: DataTablePT,
+      dialog: DialogPT,
+      dropdown: DropdownPT,
+      fileUpload: FileUploadPT,
+      inputNumber: InputNumberPT,
+      inputText: InputTextPT,
+      inputTextarea: InputTextareaPT,
+      messages: MessagesPT,
+      multiselect: MultiSelectPT,
+      splitButton: SplitButtonPT,
+      triStateCheckbox: TriStateCheckboxPT,
     },
   };
 
