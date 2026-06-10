@@ -4,9 +4,9 @@ import { DataTable } from "primereact/datatable";
 import { useEffect, useState } from "react";
 
 import { System } from "../models/brewtils-types";
+import { useToast } from "../providers/ToastProvider";
 import { GetSystemList } from "../services/system_service";
 import AccessButton from "./AccessButton";
-import { useToast } from "../providers/ToastProvider";
 
 function SystemList({ systemListButtonClick }: { systemListButtonClick: any }) {
   const showToast = useToast();

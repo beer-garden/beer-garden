@@ -14,6 +14,7 @@ import UnassociatedRunnerCard from "../components/UnassociatedRunnerCard";
 import { Garden, Runner, System } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { RequestItem, RunnerGroup, TourStepProps } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { GetRunnerList } from "../services/runner_service";
 import {
   AddTourStep,
@@ -21,7 +22,6 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { GenerateStatusCounts, GetSeverity } from "../services/util_service";
-import { useToast } from "../providers/ToastProvider";
 
 function GardenDashboard({
   gardenRef,
@@ -59,7 +59,7 @@ function GardenDashboard({
   const [gardenMenu, setGardenMenu] = useState<Array<any>>();
 
   const [loading, setLoading] = useState<boolean>(true);
-  
+
   const showToast = useToast();
 
   const instanceStatuses = [

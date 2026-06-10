@@ -439,7 +439,7 @@ function JobIndex({
             showToast({
               severity: "error",
               summary: "Error",
-              detail: `Error importing jobs: ${error}`,
+              detail: "Error importing jobs",
               life: 3000,
             });
           }

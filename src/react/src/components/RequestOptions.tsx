@@ -13,10 +13,10 @@ import {
   RequestCommand,
   RequestItem,
 } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { checkPermission } from "../services/permission_service";
 import { CancelRequest, DeleteRequest } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
-import { useToast } from "../providers/ToastProvider";
 
 function RequestOptions({
   request,
@@ -56,7 +56,7 @@ function RequestOptions({
     } else if (request.output_type == "JSON") {
       filename = `${request.id}.json`;
     }
-  
+
     fetch(fileUrl)
       .then((response) => response.blob())
       .then((blob) => {

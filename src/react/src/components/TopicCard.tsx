@@ -7,10 +7,10 @@ import { useNavigate } from "react-router-dom";
 
 import { Request, Topic } from "../models/brewtils-types";
 import { RequestItem } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { GetRequestList } from "../services/request_service";
 import { PaginatorTemplate } from "../services/util_service";
 import AccessButton from "./AccessButton";
-import { useToast } from "../providers/ToastProvider";
 
 function TopicCard({
   requestItem,

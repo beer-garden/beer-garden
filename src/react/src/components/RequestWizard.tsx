@@ -15,6 +15,7 @@ import {
   System,
 } from "../models/brewtils-types";
 import { Config, RequestCommand, RequestItem } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
@@ -26,7 +27,6 @@ import CommandForm from "./CommandForm";
 import CommandList from "./CommandList";
 import SchedulerForm from "./SchedulerForm";
 import SystemList from "./SystemList";
-import { useToast } from "../providers/ToastProvider";
 
 function RequestWizard({
   requestItem,

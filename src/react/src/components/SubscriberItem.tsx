@@ -4,9 +4,9 @@ import { Card } from "primereact/card";
 import React, { useEffect, useRef, useState } from "react";
 
 import { Subscriber } from "../models/brewtils-types";
+import { useToast } from "../providers/ToastProvider";
 import { GetSystemList } from "../services/system_service";
 import AccessButton from "./AccessButton";
-import { useToast } from "../providers/ToastProvider";
 
 interface SubscriberItemProps {
   subscriberList: Array<Subscriber>;
