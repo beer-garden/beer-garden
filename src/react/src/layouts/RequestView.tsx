@@ -197,11 +197,10 @@ function RequestView({
 
           {rootRequest && (
             <RequestTreeChart
-              {...{
-                rootRequest: rootRequest,
-                currentRequestId: requestId,
-                config: config,
-              }}
+              rootRequest={rootRequest}
+              currentRequestId={requestId}
+              config={config}
+              addRequestItem={addRequestItem}
             />
           )}
 
