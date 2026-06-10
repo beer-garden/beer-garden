@@ -153,10 +153,11 @@ function RequestTreeChart({
             rounded
             raised
             link
-            onClick={() => CancelRequest(node.data).catch((error) => {
-              console.error("Error canceling request:", error);
-            })
-          }
+            onClick={() =>
+              CancelRequest(node.data).catch((error) => {
+                console.error("Error canceling request:", error);
+              })
+            }
             title="Cancel"
             permission="OPERATOR"
             {...permissions}
