@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
 import { Config, RequestItem } from "../models/models";
-import { DeleteRequest } from "../services/request_service";
+import { CancelRequest, DeleteRequest } from "../services/request_service";
 import AccessButton from "./AccessButton";
 
 function parseRequest(request: Request, config: Config) {
@@ -143,7 +143,7 @@ function RequestTreeChart({
           style={{ textDecoration: "none" }}
         >
           <AccessButton rounded raised link title="Open">
-            <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
+            <FontAwesomeIcon icon="arrow-up-right-from-square" />
           </AccessButton>
         </Link>
         {!["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
@@ -153,12 +153,15 @@ function RequestTreeChart({
             rounded
             raised
             link
-            onClick={() => {}}
+            onClick={() => CancelRequest(node.data).catch((error) => {
+              console.error("Error canceling request:", error);
+            })
+          }
             title="Cancel"
             permission="OPERATOR"
             {...permissions}
           >
-            <FontAwesomeIcon icon="ban" />{" "}
+            <FontAwesomeIcon icon="ban" />
           </AccessButton>
         )}
         {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
@@ -177,7 +180,7 @@ function RequestTreeChart({
             {...permissions}
             permission="OPERATOR"
           >
-            <FontAwesomeIcon icon="trash" />{" "}
+            <FontAwesomeIcon icon="trash" />
           </AccessButton>
         )}
         {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
@@ -192,7 +195,7 @@ function RequestTreeChart({
             permission="OPERATOR"
             onClick={() => pourAgain(node.data)}
           >
-            <FontAwesomeIcon icon="rotate" />{" "}
+            <FontAwesomeIcon icon="rotate" />
           </AccessButton>
         )}
       </div>
