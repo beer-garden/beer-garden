@@ -135,14 +135,14 @@ function RequestTreeChart({
       hasCommandName: rootRequest?.command,
     };
     return (
-      <div>
+      <div className="flex flex-wrap">
         <Link
           to={`/request/${node.data.id}`}
           aria-label={`Open Request ${node.data.command_display_name ?? node.data.command} ${node.data.id}`}
           tabIndex={-1}
           style={{ textDecoration: "none" }}
         >
-          <AccessButton rounded raised link title="Open">
+          <AccessButton rounded raised link title="Open" size="small">
             <FontAwesomeIcon icon="arrow-up-right-from-square" />
           </AccessButton>
         </Link>
@@ -159,6 +159,7 @@ function RequestTreeChart({
               })
             }
             title="Cancel"
+            size="small"
             permission="OPERATOR"
             {...permissions}
           >
@@ -178,6 +179,7 @@ function RequestTreeChart({
               })
             }
             title="Delete"
+            size="small"
             {...permissions}
             permission="OPERATOR"
           >
@@ -192,6 +194,7 @@ function RequestTreeChart({
             raised
             link
             title="Pour Again"
+            size="small"
             {...permissions}
             permission="OPERATOR"
             onClick={() => pourAgain(node.data)}
@@ -239,7 +242,11 @@ function RequestTreeChart({
         <Column field="status_updated_at" header="Status Updated"></Column>
         <Column field="updated_at" header="Updated"></Column>
         <Column field="comment" header="Comment"></Column>
-        <Column body={(node) => actionTemplate(node, config)}> </Column>
+        <Column
+          body={(node) => actionTemplate(node, config)}
+          style={{ width: "10vw" }}
+        >
+        </Column>
       </TreeTable>
     )
   );
