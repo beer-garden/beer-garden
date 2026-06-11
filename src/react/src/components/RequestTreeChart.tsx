@@ -142,7 +142,7 @@ function RequestTreeChart({
           tabIndex={-1}
           style={{ textDecoration: "none" }}
         >
-          <AccessButton rounded raised link title="Open">
+          <AccessButton rounded raised link title="Open" basic>
             <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
           </AccessButton>
         </Link>
@@ -153,6 +153,7 @@ function RequestTreeChart({
             rounded
             raised
             link
+            basic
             onClick={() => {}}
             title="Cancel"
             permission="OPERATOR"
@@ -168,6 +169,7 @@ function RequestTreeChart({
             rounded
             raised
             link
+            basic
             onClick={() =>
               DeleteRequest(node.data).catch((error) => {
                 console.error("Error deleting request:", error);
@@ -188,6 +190,7 @@ function RequestTreeChart({
             raised
             link
             title="Pour Again"
+            basic
             {...permissions}
             permission="OPERATOR"
             onClick={() => pourAgain(node.data)}

@@ -17,8 +17,11 @@ const AccessButton = ({
   isLoading,
   renderAuthFailed,
   children,
+  basic,
   ...props
-}: PropsWithChildren<ButtonProps & HasAccessProps>) => {
+}: PropsWithChildren<
+  ButtonProps & HasAccessProps & { basic?: boolean | undefined }
+>) => {
   if (!Object.hasOwn(props, "tooltip")) {
     if (Object.hasOwn(props, "aria-label")) {
       props["tooltip"] = props["aria-label"];
@@ -59,6 +62,37 @@ const AccessButton = ({
       props["label"],
     );
     props["aria-label"] = props["label"];
+  }
+
+  if (!Object.hasOwn(props, "style") || props.style === undefined) {
+    props.style = {};
+  }
+
+  // Custom Class Styles
+  if (basic) {
+    props.style["color"] =
+      localStorage.getItem("theme_dark") === "true"
+        ? "var(--contrast-background-color)"
+        : "var(--contrast-color)";
+
+    if (Object.hasOwn(props, "raised") && props.raised === true) {
+      props.style["backgroundColor"] =
+        localStorage.getItem("theme_dark") === "true"
+          ? "var(--contrast-color)"
+          : "var(--contrast-background-color)";
+      props.style["borderColor"] =
+        localStorage.getItem("theme_dark") === "true"
+          ? "var(--contrast-color)"
+          : "var(--contrast-background-color)";
+    } else if (!Object.hasOwn(props.style, "backgroundColor")) {
+      props.style["backgroundColor"] = "transparent";
+    }
+
+    if (localStorage.getItem("theme_dark") === "true") {
+      props.style["color"] = "var(--contrast-background-color)";
+    } else {
+      props.style["color"] = "var(--contrast-color)";
+    }
   }
 
   if (permission && config && config?.auth_enabled === true) {
