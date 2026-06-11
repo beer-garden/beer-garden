@@ -87,12 +87,6 @@ const AccessButton = ({
     } else if (!Object.hasOwn(props.style, "backgroundColor")) {
       props.style["backgroundColor"] = "transparent";
     }
-
-    if (localStorage.getItem("theme_dark") === "true") {
-      props.style["color"] = "var(--contrast-background-color)";
-    } else {
-      props.style["color"] = "var(--contrast-color)";
-    }
   }
 
   if (permission && config && config?.auth_enabled === true) {
