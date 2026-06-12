@@ -70,22 +70,10 @@ const AccessButton = ({
 
   // Custom Class Styles
   if (basic) {
-    props.style["color"] =
-      localStorage.getItem("theme_dark") === "true"
-        ? "var(--contrast-background-color)"
-        : "var(--contrast-color)";
-
-    if (Object.hasOwn(props, "raised") && props.raised === true) {
-      props.style["backgroundColor"] =
-        localStorage.getItem("theme_dark") === "true"
-          ? "var(--contrast-color)"
-          : "var(--contrast-background-color)";
-      props.style["borderColor"] =
-        localStorage.getItem("theme_dark") === "true"
-          ? "var(--contrast-color)"
-          : "var(--contrast-background-color)";
-    } else if (!Object.hasOwn(props.style, "backgroundColor")) {
-      props.style["backgroundColor"] = "transparent";
+    if (Object.hasOwn(props, "className") && props.className) {
+      props.className = `${props.className} basic`;
+    } else {
+      props.className = "basic";
     }
   }
 

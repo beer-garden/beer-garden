@@ -549,16 +549,7 @@ function SystemCard({
   };
   return (
     <>
-      <Panel
-        key={system.id}
-        id={system.id}
-        headerTemplate={headerTemplate}
-        pt={{
-          content: { "aria-labelledby": undefined },
-          header: { "aria-labelledby": undefined },
-          toggleableContent: { "aria-labelledby": undefined },
-        }}
-      >
+      <Panel key={system.id} id={system.id} headerTemplate={headerTemplate}>
         <div className="mb-3">
           <div style={{ float: "right", marginLeft: "2px" }}>
             <ButtonGroup>
