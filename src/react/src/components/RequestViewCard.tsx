@@ -33,8 +33,8 @@ function RequestViewCard({
   const requestId = useRef<string | null | undefined>(
     requestItem?.requestId ?? null,
   );
-  const [request, setRequest] = useState<Request | null>(
-    requestItem?.request ?? null,
+  const [request, setRequest] = useState<Request | undefined>(
+    requestItem?.request ?? undefined,
   );
 
   const navigate = useNavigate();
@@ -121,7 +121,7 @@ function RequestViewCard({
       ) {
         // First load, force a refresh of data to ensure latest is rendered in case the completed
         // event has already been received before the listener was registered
-        setRequest(null);
+        setRequest(undefined);
       }
     }
 

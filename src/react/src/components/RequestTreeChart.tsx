@@ -1,14 +1,12 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Column } from "primereact/column";
 import { Tooltip } from "primereact/tooltip";
+import { TreeNode } from "primereact/treenode";
 import { TreeTable } from "primereact/treetable";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 import { Request } from "../models/brewtils-types";
 import AccessButton from "./AccessButton";
-import { TreeNode } from "primereact/treenode";
-import { useEffect, useState } from "react";
 
 function parseRequest(request: Request): TreeNode {
   const item = {
@@ -30,6 +28,7 @@ function parseRequest(request: Request): TreeNode {
       comment: request.comment,
       parent: request.parent_id,
       has_parent: request.has_parent,
+      raw_request: request,
     },
     children: [] as Array<any>,
     expanded: true,
@@ -51,37 +50,39 @@ function parseRequest(request: Request): TreeNode {
   return item;
 }
 
-function expandAllKeys(nodes: TreeNode[]) {
-  const expanded: Record<any, boolean>[] = [];
+function expandAllKeys(nodes: TreeNode[]): Record<string, boolean> {
+  const expanded: Record<string, boolean> = {};
   for (const node of nodes) {
-    if (node.key) {
-      expanded.push({ [node.key]: true });
+    if (node && node.key) {
+      expanded[String(node.key)] = true;
     }
     if (node.children && node.children.length > 0) {
-      expanded.push(...expandAllKeys(node.children));
+      Object.assign(expanded, expandAllKeys(node.children));
     }
   }
   return expanded;
 }
 
 interface RequestTreeChartProps {
-  rootRequest?: Request;
-  currentRequestId?: string;
+  rootRequest?: Request | undefined;
+  request?: Request;
+  setRequest: (request: Request) => void;
 }
 
 function RequestTreeChart({
   rootRequest,
-  currentRequestId,
+  request,
+  setRequest,
 }: RequestTreeChartProps) {
   const [node, setNode] = useState(
-    rootRequest !== undefined && rootRequest !== null
-      ? parseRequest(rootRequest)
-      : {},
+    rootRequest !== undefined ? parseRequest(rootRequest) : {},
   );
-  const [expandedKeys, setExpandedKeys] = useState(expandAllKeys([node]));
+  const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>(
+    expandAllKeys([node]),
+  );
 
   useEffect(() => {
-    if (rootRequest !== undefined && rootRequest !== null) {
+    if (rootRequest && rootRequest !== undefined) {
       setNode(parseRequest(rootRequest));
     }
   }, [rootRequest]);
@@ -90,55 +91,54 @@ function RequestTreeChart({
     setExpandedKeys(expandAllKeys([node]));
   }, [node]);
 
-  const navigate = useNavigate();
   const rowClassName = (node: any) => {
-    return { "p-highlight": node.data.id === currentRequestId };
+    return { "p-highlight": node?.data?.id === request?.id };
   };
 
   const commandNameTemplate = (node: any) => {
     return (
       <div>
-        {node.data.topic && (
+        {node.data?.topic && (
           <>
             <Tooltip
-              content={node.data.topic}
-              target={`#TOPIC_${node.data.id}`}
+              content={node.data?.topic}
+              target={`#TOPIC_${node.data?.id}`}
             />
             <FontAwesomeIcon
               icon="envelope"
               className="mr-2"
-              id={`TOPIC_${node.data.id}`}
+              id={`TOPIC_${node.data?.id}`}
             />
           </>
         )}
         <Tooltip
-          content={`${node.data.command_type} Command`}
-          target={`#ICON_${node.data.id}`}
+          content={`${node?.data?.command_type} Command`}
+          target={`#ICON_${node.data?.id}`}
         />
-        {(node.data.command_type === undefined ||
-          node.data.command_type.length === 0 ||
-          node.data.command_type === "ACTION") && (
+        {(node.data?.command_type === undefined ||
+          node.data?.command_type.length === 0 ||
+          node.data?.command_type === "ACTION") && (
           <FontAwesomeIcon
             icon="a"
             className="mr-2"
-            id={`ICON_${node.data.id}`}
+            id={`ICON_${node.data?.id}`}
           />
         )}
-        {node.data.command_type === "INFO" && (
+        {node.data?.command_type === "INFO" && (
           <FontAwesomeIcon
             icon="i"
             className="mr-2"
-            id={`ICON_${node.data.id}`}
+            id={`ICON_${node.data?.id}`}
           />
         )}
-        {node.data.command_type === "TEMP" && (
+        {node.data?.command_type === "TEMP" && (
           <FontAwesomeIcon
             icon="hourglass"
             className="mr-2"
-            id={`ICON_${node.data.id}`}
+            id={`ICON_${node.data?.id}`}
           />
         )}
-        <span>{node.data.command}</span>
+        <span>{node.data?.command}</span>
       </div>
     );
   };
@@ -146,18 +146,36 @@ function RequestTreeChart({
   const actionTemplate = (node: any) => {
     return (
       <div>
-        <Link
-          to={`/request/${node.data.id}`}
-          aria-label={`Open Request ${node.data.command_display_name ?? node.data.command} ${node.data.id}`}
-          tabIndex={-1}
-          style={{ textDecoration: "none" }}
+        <AccessButton
+          rounded
+          raised
+          link
+          title={`Open Request ${node.data?.command_display_name ?? node.data?.command} ${node.data?.id}`}
+          onClick={() => setRequest(node.data?.raw_request)}
         >
-          <AccessButton rounded raised link title="Open">
-            <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
-          </AccessButton>
-        </Link>
+          <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
+        </AccessButton>
       </div>
     );
+  };
+
+  const findNodeRequest = (
+    nodeKey: string,
+    node: TreeNode,
+  ): Request | undefined => {
+    if (node.key === nodeKey) {
+      return node.data.raw_request;
+    }
+    if (node?.children) {
+      for (const child of node.children) {
+        const childRequest = findNodeRequest(nodeKey, child);
+        if (childRequest) {
+          return childRequest;
+        }
+      }
+    }
+
+    return undefined;
   };
 
   return (
@@ -167,21 +185,24 @@ function RequestTreeChart({
         rowClassName={rowClassName}
         tableStyle={{ minWidth: "50rem" }}
         pt={{
-          row: ({ context }: { context: any }) => ({
+          row: {
             "aria-checked": undefined,
             tabIndex: -1,
-          }),
+          },
           rowTogglerIcon: { tabIndex: 0 },
           root: {
             role: undefined,
           },
         }}
         selectionMode="single"
-        onSelectionChange={(e) =>
-          navigate(
-            `/request/${e.value && typeof e.value === "string" ? e.value.split("-").at(-1) : ""}`,
-          )
-        }
+        onSelectionChange={(e) => {
+          if (e.value && typeof e.value === "string") {
+            const targetRequest = findNodeRequest(e.value, node);
+            if (targetRequest) {
+              setRequest(targetRequest);
+            }
+          }
+        }}
         expandedKeys={expandedKeys}
         onToggle={(e) => setExpandedKeys(e.value)}
       >

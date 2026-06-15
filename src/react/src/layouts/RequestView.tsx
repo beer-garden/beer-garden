@@ -7,7 +7,7 @@ import RequestViewMain from "../components/RequestViewMain";
 import { Request } from "../models/brewtils-types";
 import { Config, RequestItem } from "../models/models";
 import { useToast } from "../providers/ToastProvider";
-import { GetRequest, GetRequestList } from "../services/request_service";
+import { GetRequest } from "../services/request_service";
 import { getErrorCode } from "../services/util_service";
 
 function RequestView({
@@ -22,11 +22,13 @@ function RequestView({
   const showToast = useToast();
   const [error, setError] = useState<Error>();
   const { requestId } = useParams<{ requestId: string }>();
-  const [request, setRequest] = useState<Request | null>(null);
+  const [request, setRequest] = useState<Request | undefined>(undefined);
 
-  const [rootRequest, setRootRequest] = useState<Request | null>(null);
+  const [rootRequest, setRootRequest] = useState<Request | undefined>(
+    undefined,
+  );
 
-  const rootRequestId = useRef<string | null>(null);
+  const rootRequestId = useRef<string | undefined>(undefined);
 
   const MonitorRequestId = useCallback(
     (message: any) => {
@@ -57,7 +59,7 @@ function RequestView({
   );
 
   useEffect(() => {
-    if (!request || request.id !== requestId) {
+    if (!request || request.id === undefined) {
       if (requestId !== undefined) {
         GetRequest(requestId, {})
           .then((data: Request) => {
@@ -85,12 +87,28 @@ function RequestView({
       }
     } else {
       if (
+        requestId &&
+        request.id !== requestId &&
+        rootRequestId.current !== requestId
+      ) {
+        delete listeners[requestId];
+      }
+
+      if (
         request.status &&
         ["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(request.status)
       ) {
-        if (requestId && requestId in listeners) {
-          delete listeners[requestId];
+        if (request && request.id in listeners) {
+          delete listeners[request.id];
         }
+      } else if (
+        request &&
+        request.id &&
+        !Object.hasOwn(listeners, request.id)
+      ) {
+        listeners[request.id] = {
+          listener: MonitorRequestId,
+        };
       }
 
       const loadChildrenRequests = async (parent_request: Request) => {
@@ -128,18 +146,10 @@ function RequestView({
           check_request.parent &&
           check_request.parent.id
         ) {
-          GetRequest(check_request.parent.id, {})
-            .then((root_request) => {
-              loadRootRequest(root_request);
-            })
-            .catch((error) => {
-              showToast({
-                severity: "error",
-                summary: "Error",
-                detail: `Error fetching parent request: ${error}`,
-                life: 3000,
-              });
-            });
+          const root_request = await GetRequest(check_request.parent.id, {});
+          await loadRootRequest(root_request).catch((error) => {
+            throw new error();
+          });
         } else {
           setRootRequest(check_request);
           if (check_request.id) {
@@ -152,12 +162,24 @@ function RequestView({
         }
       };
 
-      loadRootRequest(request);
+      if (rootRequest === undefined) {
+        loadRootRequest(request).catch((error) => {
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching parent request: ${error}`,
+            life: 3000,
+          });
+        });
+      }
     }
 
     return () => {
       if (requestId) {
         delete listeners[requestId];
+      }
+      if (request && request.id) {
+        delete listeners[request.id];
       }
       if (rootRequestId.current) {
         delete listeners[rootRequestId.current];
@@ -174,12 +196,13 @@ function RequestView({
         />
       ) : (
         <div>
-          {request && <h1>Request View: {request.id}</h1>}
+          {request && request.id && <h1>Request View: {request.id}</h1>}
 
           {rootRequest && (
             <RequestTreeChart
               rootRequest={rootRequest}
-              currentRequestId={requestId}
+              request={request}
+              setRequest={setRequest}
             />
           )}
 

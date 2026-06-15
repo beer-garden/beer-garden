@@ -31,7 +31,7 @@ function RequestViewMain({
   closeRequest,
 }: {
   request: Request;
-  setRequest: (request: Request | null) => void;
+  setRequest: (request: Request | undefined) => void;
   config: Config;
   showProjections: boolean;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
