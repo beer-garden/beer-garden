@@ -464,7 +464,6 @@ function IntervalForm({
               },
               input: {
                 autoComplete: "off",
-                // "aria-label": `${inputAreaAriaLabel}: Dropdown Select`,
               },
               select: {
                 autoComplete: "off",
