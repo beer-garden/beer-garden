@@ -1,7 +1,6 @@
 import { Message } from "primereact/message";
 import { Skeleton } from "primereact/skeleton";
-import { Stepper } from "primereact/stepper";
-import { StepperPanel } from "primereact/stepperpanel";
+import { TabPanel, TabView } from "primereact/tabview";
 import { useEffect, useRef, useState } from "react";
 
 import CommandForm from "../components/CommandForm";
@@ -40,7 +39,6 @@ function RequestViewMain({
   openRequest?: () => void;
   closeRequest?: () => void;
 }) {
-  const stepperRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [showCommandForm, setShowCommandForm] = useState(false);
   const [command, setCommand] = useState<any>(null);
@@ -117,40 +115,32 @@ function RequestViewMain({
   return (
     <div>
       {request && (
-        <Stepper
-          ref={stepperRef}
-          activeStep={activeIndex}
-          style={{ flexBasis: "50rem" }}
-        >
-          <StepperPanel
-            header="Request Parameters"
-            pt={{
-              action: {
-                id: `${request.id}_tab_1`,
-                "aria-controls": `${request.id}_stepper_1`,
-              },
-              content: {
-                id: `${request.id}_stepper_1`,
-                role: "tabpanel",
-                "aria-labelledby": `${request.id}_tab_1`,
-              },
-              number: {
-                style: {
-                  color: "var(--info-color)",
-                  backgroundColor: "var(--info-background-color)",
-                },
-              },
-              separator: {
-                "aria-hidden": undefined,
-                tabIndex: -1,
-                style: {
-                  color: "var(--info-background-color)",
-                },
-              },
-            }}
+        <div>
+          <div className="flex mb-2 gap-2 justify-content-end mt-2">
+            <RequestOptions
+              request={request}
+              setRequest={setRequest}
+              config={config}
+              addRequestItem={addRequestItem}
+              requestProjections={requestProjections}
+              requestProjectionSelected={requestProjectionSelected}
+              setRequestProjectionSelected={setRequestProjectionSelected}
+              requestProjectionSelectedRef={requestProjectionSelectedRef}
+              isCard={isCard}
+              openRequest={openRequest}
+              closeRequest={closeRequest}
+            />
+          </div>
+          <TabView
+            style={{ flexBasis: "85%" }}
+            className="mt-2"
+            activeIndex={activeIndex}
+            onTabChange={(e) => setActiveIndex(e.index)}
           >
-            {/* Need to determine if Read Only can still download values */}
-            <div className="flex">
+            <TabPanel
+              header="Request Parameters"
+              pt={{ headerAction: { tabIndex: 0 } }}
+            >
               {!showCommandForm && <Skeleton width="100%" height="10rem" />}
               {showCommandForm && command && (
                 <CommandForm
@@ -165,75 +155,15 @@ function RequestViewMain({
                 />
               )}
               {showCommandForm && !command && <UnformattedInput {...request} />}
-
-              {request && (
-                <div style={{ marginLeft: "auto" }}>
-                  <RequestOptions
-                    request={request}
-                    setRequest={setRequest}
-                    config={config}
-                    addRequestItem={addRequestItem}
-                    requestProjections={requestProjections}
-                    requestProjectionSelected={requestProjectionSelected}
-                    setRequestProjectionSelected={setRequestProjectionSelected}
-                    requestProjectionSelectedRef={requestProjectionSelectedRef}
-                    isCard={isCard}
-                    openRequest={openRequest}
-                    closeRequest={closeRequest}
-                  />
-                </div>
-              )}
-            </div>
-          </StepperPanel>
-          <StepperPanel
-            header="Request Output"
-            pt={{
-              action: {
-                id: `${request.id}_tab_2`,
-                "aria-controls": `${request.id}_stepper_2`,
-              },
-              content: {
-                id: `${request.id}_stepper_2`,
-                role: "tabpanel",
-                "aria-labelledby": `${request.id}_tab_2`,
-              },
-              number: {
-                style: {
-                  color: "var(--info-color)",
-                  backgroundColor: "var(--info-background-color)",
-                },
-              },
-              separator: {
-                "aria-hidden": undefined,
-                tabIndex: -1,
-                style: {
-                  color: "var(--info-background-color)",
-                },
-              },
-            }}
-          >
-            <div className="flex">
-              {request && <RequestOutput request={request} />}
-              {request && (
-                <div style={{ marginLeft: "auto" }}>
-                  <RequestOptions
-                    request={request}
-                    setRequest={setRequest}
-                    config={config}
-                    addRequestItem={addRequestItem}
-                    requestProjections={requestProjections}
-                    requestProjectionSelected={requestProjectionSelected}
-                    setRequestProjectionSelected={setRequestProjectionSelected}
-                    requestProjectionSelectedRef={requestProjectionSelectedRef}
-                    isCard={isCard}
-                    openRequest={openRequest}
-                    closeRequest={closeRequest}
-                  />
-                </div>
-              )}
-            </div>
-          </StepperPanel>
-        </Stepper>
+            </TabPanel>
+            <TabPanel
+              header="Request Output"
+              pt={{ headerAction: { tabIndex: 0 } }}
+            >
+              <RequestOutput request={request} />
+            </TabPanel>
+          </TabView>
+        </div>
       )}
     </div>
   );

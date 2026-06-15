@@ -3,13 +3,14 @@ import { Column } from "primereact/column";
 import { Tooltip } from "primereact/tooltip";
 import { TreeTable } from "primereact/treetable";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
-import { Config, RequestItem } from "../models/models";
-import { DeleteRequest } from "../services/request_service";
 import AccessButton from "./AccessButton";
+import { TreeNode } from "primereact/treenode";
+import { useEffect, useState } from "react";
 
-function parseRequest(request: Request, config: Config) {
+function parseRequest(request: Request): TreeNode {
   const item = {
     key: request.id,
     data: {
@@ -31,6 +32,7 @@ function parseRequest(request: Request, config: Config) {
       has_parent: request.has_parent,
     },
     children: [] as Array<any>,
+    expanded: true,
   };
 
   if (
@@ -39,8 +41,9 @@ function parseRequest(request: Request, config: Config) {
     request.children.length > 0
   ) {
     request.children.forEach((childRequest: Request) => {
-      const child_item = parseRequest(childRequest, config);
+      const child_item = parseRequest(childRequest);
       child_item.key = item.key + "-" + child_item.key;
+      // child_item.expanded = true;
       item.children.push(child_item);
     });
   }
@@ -48,24 +51,46 @@ function parseRequest(request: Request, config: Config) {
   return item;
 }
 
+function expandAllKeys(nodes: TreeNode[]) {
+  const expanded: Record<any, boolean>[] = [];
+  for (const node of nodes) {
+    if (node.key) {
+      expanded.push({ [node.key]: true });
+    }
+    if (node.children && node.children.length > 0) {
+      expanded.push(...expandAllKeys(node.children));
+    }
+  }
+  return expanded;
+}
+
 interface RequestTreeChartProps {
   rootRequest?: Request;
   currentRequestId?: string;
-  config: Config;
-  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }
 
 function RequestTreeChart({
   rootRequest,
   currentRequestId,
-  config,
-  addRequestItem,
 }: RequestTreeChartProps) {
-  let node = {};
-  if (rootRequest !== undefined && rootRequest !== null) {
-    node = parseRequest(rootRequest, config);
-  }
+  const [node, setNode] = useState(
+    rootRequest !== undefined && rootRequest !== null
+      ? parseRequest(rootRequest)
+      : {},
+  );
+  const [expandedKeys, setExpandedKeys] = useState(expandAllKeys([node]));
 
+  useEffect(() => {
+    if (rootRequest !== undefined && rootRequest !== null) {
+      setNode(parseRequest(rootRequest));
+    }
+  }, [rootRequest]);
+
+  useEffect(() => {
+    setExpandedKeys(expandAllKeys([node]));
+  }, [node]);
+
+  const navigate = useNavigate();
   const rowClassName = (node: any) => {
     return { "p-highlight": node.data.id === currentRequestId };
   };
@@ -118,22 +143,7 @@ function RequestTreeChart({
     );
   };
 
-  const pourAgain = (request: Request) => {
-    addRequestItem({ requestId: request.id, type: "REQUEST" });
-  };
-
-  const actionTemplate = (node: any, config: Config) => {
-    if (node.data.id === currentRequestId) {
-      return;
-    }
-    const permissions = {
-      config: config,
-      hasNamespace: rootRequest?.namespace,
-      hasSystemName: rootRequest?.system,
-      hasSystemVersion: rootRequest?.system_version,
-      hasInstanceName: rootRequest?.instance_name,
-      hasCommandName: rootRequest?.command,
-    };
+  const actionTemplate = (node: any) => {
     return (
       <div>
         <Link
@@ -146,58 +156,10 @@ function RequestTreeChart({
             <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
           </AccessButton>
         </Link>
-        {!["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
-          node.data.status,
-        ) && (
-          <AccessButton
-            rounded
-            raised
-            link
-            onClick={() => {}}
-            title="Cancel"
-            permission="OPERATOR"
-            {...permissions}
-          >
-            <FontAwesomeIcon icon="ban" />{" "}
-          </AccessButton>
-        )}
-        {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
-          node.data.status,
-        ) && (
-          <AccessButton
-            rounded
-            raised
-            link
-            onClick={() =>
-              DeleteRequest(node.data).catch((error) => {
-                console.error("Error deleting request:", error);
-              })
-            }
-            title="Delete"
-            {...permissions}
-            permission="OPERATOR"
-          >
-            <FontAwesomeIcon icon="trash" />{" "}
-          </AccessButton>
-        )}
-        {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
-          node.data.status,
-        ) && (
-          <AccessButton
-            rounded
-            raised
-            link
-            title="Pour Again"
-            {...permissions}
-            permission="OPERATOR"
-            onClick={() => pourAgain(node.data)}
-          >
-            <FontAwesomeIcon icon="rotate" />{" "}
-          </AccessButton>
-        )}
       </div>
     );
   };
+
   return (
     node && (
       <TreeTable
@@ -207,16 +169,21 @@ function RequestTreeChart({
         pt={{
           row: ({ context }: { context: any }) => ({
             "aria-checked": undefined,
-            tabIndex:
-              context?.node?.data?.children &&
-              context.node.data.children.length > 0
-                ? 0
-                : -1,
+            tabIndex: -1,
           }),
+          rowTogglerIcon: { tabIndex: 0 },
           root: {
             role: undefined,
           },
         }}
+        selectionMode="single"
+        onSelectionChange={(e) =>
+          navigate(
+            `/request/${e.value && typeof e.value === "string" ? e.value.split("-").at(-1) : ""}`,
+          )
+        }
+        expandedKeys={expandedKeys}
+        onToggle={(e) => setExpandedKeys(e.value)}
       >
         <Column
           field="command"
@@ -235,7 +202,9 @@ function RequestTreeChart({
         <Column field="status_updated_at" header="Status Updated"></Column>
         <Column field="updated_at" header="Updated"></Column>
         <Column field="comment" header="Comment"></Column>
-        <Column body={(node) => actionTemplate(node, config)}> </Column>
+        <Column body={actionTemplate} header="Action">
+          {" "}
+        </Column>
       </TreeTable>
     )
   );

@@ -1,5 +1,3 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { BreadCrumb } from "primereact/breadcrumb";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -9,61 +7,8 @@ import RequestViewMain from "../components/RequestViewMain";
 import { Request } from "../models/brewtils-types";
 import { Config, RequestItem } from "../models/models";
 import { useToast } from "../providers/ToastProvider";
-import { GetRequest } from "../services/request_service";
+import { GetRequest, GetRequestList } from "../services/request_service";
 import { getErrorCode } from "../services/util_service";
-
-function RequestHeader(request: Request) {
-  const iconItemTemplate = (item: any, options: any) => {
-    if (item.icon) {
-      return (
-        <span className={options.className}>
-          <FontAwesomeIcon icon={item.icon} />
-        </span>
-      );
-    }
-    return <span className={options.className}>{item.label}</span>;
-  };
-
-  const items = [
-    {
-      icon: "file-lines",
-      template: iconItemTemplate,
-    },
-    {
-      label: request.namespace,
-      template: iconItemTemplate,
-    },
-    {
-      label: request.system,
-      template: iconItemTemplate,
-    },
-    {
-      label: request.system_version,
-      template: iconItemTemplate,
-    },
-    {
-      label: request.instance_name,
-      template: iconItemTemplate,
-    },
-    {
-      label: request.command,
-      template: iconItemTemplate,
-    },
-    {
-      label: request.id,
-      template: iconItemTemplate,
-    },
-  ];
-
-  // ARC Toolkit Errors:
-  //     1) An element other than an <li> list item was found as the first child element of a list.
-  // PrimeReact CSS styling is `list-style-type:none` that hides it from check in DOM
-  return (
-    <h1>
-      <BreadCrumb model={items} />
-    </h1>
-  );
-}
 
 function RequestView({
   listeners,
@@ -91,14 +36,20 @@ function RequestView({
           message.payload.id &&
           message.payload.id === requestId
         ) {
-          setRequest(message.payload as Request);
+          setRequest({
+            ...message.payload,
+            children: request?.children,
+          } as Request);
         }
         if (
           rootRequestId.current &&
           message.payload.id &&
           message.payload.id === rootRequestId.current
         ) {
-          setRootRequest(message.payload as Request);
+          setRootRequest({
+            ...message.payload,
+            children: rootRequest?.children,
+          } as Request);
         }
       }
     },
@@ -142,7 +93,36 @@ function RequestView({
         }
       }
 
-      const loadRootRequest = (check_request: Request) => {
+      const loadChildrenRequests = async (parent_request: Request) => {
+        if (parent_request.children) {
+          const requestQueries = [];
+          const loadedChildren = [];
+          for (const childRequest of parent_request.children) {
+            if (
+              childRequest.id &&
+              (childRequest.children === undefined ||
+                childRequest.children.length === 0)
+            ) {
+              requestQueries.push(GetRequest(childRequest.id, {}));
+            } else {
+              loadedChildren.push(childRequest);
+            }
+          }
+
+          if (requestQueries.length > 0) {
+            parent_request.children = [
+              ...loadedChildren,
+              ...(await Promise.all(requestQueries)),
+            ];
+          }
+          for (const childRequest of parent_request.children) {
+            await loadChildrenRequests(childRequest);
+          }
+        }
+        return parent_request;
+      };
+
+      const loadRootRequest = async (check_request: Request) => {
         if (
           check_request.has_parent === true &&
           check_request.parent &&
@@ -168,6 +148,7 @@ function RequestView({
               listeners[check_request.id] = { listener: MonitorRequestId };
             }
           }
+          setRootRequest(await loadChildrenRequests(check_request));
         }
       };
 
@@ -193,14 +174,12 @@ function RequestView({
         />
       ) : (
         <div>
-          {request && <RequestHeader {...request} />}
+          {request && <h1>Request View: {request.id}</h1>}
 
           {rootRequest && (
             <RequestTreeChart
               rootRequest={rootRequest}
               currentRequestId={requestId}
-              config={config}
-              addRequestItem={addRequestItem}
             />
           )}
 

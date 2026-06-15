@@ -136,4 +136,8 @@
   color: var(--contrast-color);
 }
 
+.p-tabview-selected .p-tabview-title {
+  color: black;
+}
+
 /* End 508 Color Contrast Formatting */
