@@ -169,7 +169,7 @@ function FileForm({
             checked={fileTrigger?.recursive === true}
             pt={{
               input: {
-                "aria-label": `Recursive Checkbox`,
+                "aria-label": "Recursive Checkbox",
               },
               icon: {
                 role: "img",
