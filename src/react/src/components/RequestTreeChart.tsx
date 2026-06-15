@@ -31,7 +31,6 @@ function parseRequest(request: Request): TreeNode {
       raw_request: request,
     },
     children: [] as Array<any>,
-    expanded: true,
   };
 
   if (
@@ -42,7 +41,6 @@ function parseRequest(request: Request): TreeNode {
     request.children.forEach((childRequest: Request) => {
       const child_item = parseRequest(childRequest);
       child_item.key = item.key + "-" + child_item.key;
-      // child_item.expanded = true;
       item.children.push(child_item);
     });
   }
