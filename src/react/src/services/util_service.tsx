@@ -104,6 +104,10 @@ export const ThemeOptions = () => [
   "purple",
 ];
 
+export const ClearThemes = () => {
+  ChangeTheme("blue", false);
+};
+
 export const ChangeTheme = (color?: string, dark?: boolean) => {
   if (color === undefined) {
     color = localStorage.getItem("theme_color") || "blue";
