@@ -116,7 +116,7 @@ function RequestViewMain({
     <div>
       {request && (
         <div>
-          <div className="flex mb-2 gap-2 justify-content-end mt-2">
+          {/* <div className="flex mb-2 gap-2 justify-content-end mt-2">
             <RequestOptions
               request={request}
               setRequest={setRequest}
@@ -130,12 +130,13 @@ function RequestViewMain({
               openRequest={openRequest}
               closeRequest={closeRequest}
             />
-          </div>
+          </div> */}
           <TabView
             style={{ flexBasis: "85%" }}
             className="mt-2"
             activeIndex={activeIndex}
             onTabChange={(e) => setActiveIndex(e.index)}
+            
           >
             <TabPanel
               header="Request Parameters"

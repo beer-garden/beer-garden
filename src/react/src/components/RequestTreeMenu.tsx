@@ -1,16 +1,54 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Column } from "primereact/column";
+import { Tag } from "primereact/tag";
 import { Tooltip } from "primereact/tooltip";
+import { Tree } from "primereact/tree";
 import { TreeNode } from "primereact/treenode";
-import { TreeTable } from "primereact/treetable";
 import { useEffect, useState } from "react";
 
 import { Request } from "../models/brewtils-types";
+import { GetSeverity } from "../services/util_service";
 import AccessButton from "./AccessButton";
+
+function timeDelta(createdDate: Date, statusUpdated: Date) {
+  if (!createdDate || !statusUpdated) {
+    return "";
+  }
+
+  if (statusUpdated === createdDate) {
+    return "<1s";
+  }
+
+  if (statusUpdated < createdDate) {
+    return "<1s";
+  }
+
+  const diffInMs = statusUpdated.getTime() - createdDate.getTime();
+
+  const msHour = 60 * 60 * 1000;
+  const msMinutes = 60 * 1000;
+  const diffHours = Math.floor(diffInMs / msHour);
+  const diffMinutes = Math.floor((diffInMs - diffHours * msHour) / msMinutes);
+  const diffSeconds = Math.floor(
+    (diffInMs - diffHours * msHour - diffMinutes * msMinutes) / 1000,
+  );
+
+  if (diffHours > 0) {
+    return `${diffHours}h: ${diffMinutes}m: ${diffSeconds}s`;
+  }
+  if (diffMinutes > 0) {
+    return `${diffMinutes}m: ${diffSeconds}s`;
+  }
+  if (diffSeconds > 0) {
+    return `${diffSeconds}s`;
+  }
+  return "< 1s";
+}
 
 function parseRequest(request: Request): TreeNode {
   const item = {
     key: request.id,
+    label: request.command,
     data: {
       id: request.id,
       command: request.command,
@@ -28,6 +66,10 @@ function parseRequest(request: Request): TreeNode {
       comment: request.comment,
       parent: request.parent_id,
       has_parent: request.has_parent,
+      deltaTime: timeDelta(
+        new Date(request.created_at),
+        new Date(request.status_updated_at),
+      ),
       raw_request: request,
     },
     children: [] as Array<any>,
@@ -67,7 +109,7 @@ interface RequestTreeChartProps {
   setRequest: (request: Request) => void;
 }
 
-function RequestTreeChart({
+function RequestTreeMenu({
   rootRequest,
   request,
   setRequest,
@@ -175,59 +217,54 @@ function RequestTreeChart({
 
     return undefined;
   };
+  const [selectedKey, setSelectedKey] = useState<string>(request?.id ?? "");
+  const nodeTemplate = (node: any, options: any) => {
+    const label = <b>{node.label} </b>;
+    const statusSeverity = GetSeverity(node.data.status);
+
+    return (
+      <div className={options.className}>
+        <div className="flex">
+          <b>{node.label}</b>
+          <Tag
+            value={node.data.status}
+            severity={statusSeverity}
+            id={`status_${node.data.id}`}
+            className="ml-2"
+          />
+          {node.data?.status && ["SUCCESS"].includes(node.data?.status) && (
+            <>
+            <span className="ml-4">{node.data.deltaTime}</span>
+            <FontAwesomeIcon
+            icon="clock"
+            className="ml-2"
+            id={`request_duration_${node.data?.id}`}
+          />
+          </>
+          )}
+        </div>
+        <div className="flex">
+          <sub>
+            {node.data.namespace}-{node.data.system}-{node.data.system_version}-
+            {node.data.instance_name}
+          </sub>
+        </div>
+      </div>
+    );
+  };
 
   return (
     node && (
-      <TreeTable
+      <Tree
         value={[node]}
-        rowClassName={rowClassName}
-        tableStyle={{ minWidth: "50rem" }}
-        pt={{
-          row: {
-            "aria-checked": undefined,
-            tabIndex: -1,
-          },
-          rowTogglerIcon: { tabIndex: 0 },
-          root: {
-            role: undefined,
-          },
-        }}
         selectionMode="single"
-        onSelectionChange={(e) => {
-          if (e.value && typeof e.value === "string") {
-            const targetRequest = findNodeRequest(e.value, node);
-            if (targetRequest) {
-              setRequest(targetRequest);
-            }
-          }
-        }}
-        expandedKeys={expandedKeys}
-        onToggle={(e) => setExpandedKeys(e.value)}
-        // paginator
-      >
-        <Column
-          field="command"
-          header="Command"
-          expander
-          body={commandNameTemplate}
-        ></Column>
-
-        <Column field="status" header="status"></Column>
-        <Column field="namespace" header="Namespace"></Column>
-        <Column field="system" header="System"></Column>
-        <Column field="system_version" header="System Version"></Column>
-        <Column field="instance_name" header="Instance Name"></Column>
-
-        <Column field="created_at" header="Created"></Column>
-        <Column field="status_updated_at" header="Status Updated"></Column>
-        <Column field="updated_at" header="Updated"></Column>
-        <Column field="comment" header="Comment"></Column>
-        <Column body={actionTemplate} header="Action">
-          {" "}
-        </Column>
-      </TreeTable>
+        selectionKeys={selectedKey}
+        onSelectionChange={(e) => setSelectedKey(e.value)}
+        nodeTemplate={nodeTemplate}
+        className="w-full md:w-30rem"
+      />
     )
   );
 }
 
-export default RequestTreeChart;
+export default RequestTreeMenu;
