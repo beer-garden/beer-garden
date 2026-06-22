@@ -148,6 +148,7 @@ function RequestTreeChart({
           rounded
           raised
           link
+          basic
           title={`Open Request ${node.data?.command_display_name ?? node.data?.command} ${node.data?.id}`}
           onClick={() => setRequest(node.data?.raw_request)}
         >
