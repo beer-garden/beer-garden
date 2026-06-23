@@ -9,6 +9,7 @@ import { CompareObjects } from "../services/util_service";
 
 interface CommandSelectProps {
   systems: Array<System> | null;
+  setSelectedSystem: (system: System | undefined) => void;
   requestCommand: RequestCommand | undefined;
   setRequestCommand: (requestCommand: RequestCommand) => void;
   validCommand: boolean;
@@ -17,6 +18,7 @@ interface CommandSelectProps {
 
 function CommandSelect({
   systems,
+  setSelectedSystem,
   requestCommand,
   setRequestCommand,
   validCommand,
@@ -261,6 +263,14 @@ function CommandSelect({
         instance: selectedInstance,
         command: selectedCommand,
       });
+      setSelectedSystem(
+        systems?.find(
+          (system) =>
+            system.name === selectedSystemName &&
+            system.version === selectedVersion &&
+            system.namespace === selectedNamespace,
+        ),
+      );
     }
   }, [
     systems,
