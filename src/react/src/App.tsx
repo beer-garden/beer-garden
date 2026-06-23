@@ -16,7 +16,6 @@ import GardenDashboard from "./layouts/Dashboard";
 import JobIndex from "./layouts/JobIndex";
 import RequestIndex from "./layouts/RequestIndex";
 import RequestView from "./layouts/RequestView";
-import RequestViewSplit from "./layouts/RequestViewSplit";
 import RoleIndex from "./layouts/RoleIndex";
 import Swagger from "./layouts/Swagger";
 import TopicIndex from "./layouts/TopicIndex";
@@ -557,17 +556,7 @@ function App() {
                       <Route
                         path="/request/:requestId"
                         element={
-                          <RequestViewSplit
-                            listeners={listeners.current}
-                            config={config}
-                            addRequestItem={addRequestItem}
-                          />
-                        }
-                      />
-                      <Route
-                        path="/requestsplit/:requestId"
-                        element={
-                          <RequestViewSplit
+                          <RequestView
                             listeners={listeners.current}
                             config={config}
                             addRequestItem={addRequestItem}

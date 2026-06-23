@@ -1,5 +1,4 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Column } from "primereact/column";
 import { Tag } from "primereact/tag";
 import { Tooltip } from "primereact/tooltip";
 import { Tree, TreeSelectionEvent } from "primereact/tree";
@@ -8,7 +7,6 @@ import { useEffect, useState } from "react";
 
 import { Request } from "../models/brewtils-types";
 import { GetSeverity } from "../services/util_service";
-import AccessButton from "./AccessButton";
 
 function timeDelta(createdDate: Date, statusUpdated: Date) {
   if (!createdDate || !statusUpdated) {
@@ -82,7 +80,6 @@ function parseRequest(request: Request): TreeNode {
   ) {
     request.children.forEach((childRequest: Request) => {
       const child_item = parseRequest(childRequest);
-      // child_item.key = item.key + "-" + child_item.key;
       item.children.push(child_item);
     });
   }
@@ -200,27 +197,8 @@ function RequestTreeMenu({
     );
   };
 
-  const findNodeRequest = (
-    nodeKey: string,
-    node: TreeNode,
-  ): Request | undefined => {
-    if (node.key === nodeKey) {
-      return node.data.raw_request;
-    }
-    if (node?.children) {
-      for (const child of node.children) {
-        const childRequest = findNodeRequest(nodeKey, child);
-        if (childRequest) {
-          return childRequest;
-        }
-      }
-    }
-
-    return undefined;
-  };
   const [selectedKey, setSelectedKey] = useState<string>(request?.id ?? "");
   const nodeTemplate = (node: any, options: any) => {
-    const label = <b>{node.label} </b>;
     const statusSeverity = GetSeverity(node.data.status);
 
     return (
@@ -239,16 +217,34 @@ function RequestTreeMenu({
             />
           </div>
           <div>
-            {node.data?.status && ["SUCCESS"].includes(node.data?.status) && (
-              <div className="flex">
+            <div className="flex">
+              {node.data?.status && ["SUCCESS"].includes(node.data?.status) && (
                 <span className="ml-2">{node.data.deltaTime}</span>
-                <FontAwesomeIcon
-                  icon="clock"
-                  className="ml-2"
-                  id={`request_duration_${node.data?.id}`}
-                />
-              </div>
-            )}
+              )}
+              <Tooltip target={`#request_duration_${node.data?.id}`}>
+                <div>
+                  <div className="flex">
+                    <div className="flex-1">Created At:</div>
+                    <div className="ml-2 flex-2">{node.data?.created_at}</div>
+                  </div>
+                  <div className="flex">
+                    <div className="flex-1">Status Updated At:</div>
+                    <div className="ml-2 flex-2">
+                      {node.data?.status_updated_at}
+                    </div>
+                  </div>
+                  <div className="flex">
+                    <div className="flex-1">Last Updated At:</div>
+                    <div className="ml-2 flex-2">{node.data?.updated_at}</div>
+                  </div>
+                </div>
+              </Tooltip>
+              <FontAwesomeIcon
+                icon="clock"
+                className="ml-2"
+                id={`request_duration_${node.data?.id}`}
+              />
+            </div>
           </div>
         </div>
         <div className="flex">
@@ -270,6 +266,7 @@ function RequestTreeMenu({
         onSelectionChange={updateSelectedRequest}
         nodeTemplate={nodeTemplate}
         className="w-auto"
+        expandedKeys={expandedKeys}
       />
     )
   );
