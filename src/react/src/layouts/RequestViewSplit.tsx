@@ -1,24 +1,26 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Card } from "primereact/card";
+import { Divider } from "primereact/divider";
+import { Menubar } from "primereact/menubar";
+import { TabMenu } from "primereact/tabmenu";
+import { TabPanel, TabView } from "primereact/tabview";
 import { Tag } from "primereact/tag";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
+import AccessButton from "../components/AccessButton";
 import ErrorPage from "../components/ErrorPage";
 import RequestOptions from "../components/RequestOptions";
 import RequestTreeChart from "../components/RequestTreeChart";
 import RequestTreeMenu from "../components/RequestTreeMenu";
 import RequestViewMain from "../components/RequestViewMain";
 import { Request } from "../models/brewtils-types";
-import { Config, RequestCommand,RequestItem } from "../models/models";
+import { Config, RequestCommand, RequestItem } from "../models/models";
 import { useToast } from "../providers/ToastProvider";
 import { GetRequestProjections } from "../services/request_service";
 import { GetRequest } from "../services/request_service";
 import { getErrorCode } from "../services/util_service";
 import { GetSeverity } from "../services/util_service";
-import { Menubar } from "primereact/menubar";
-import { TabMenu } from "primereact/tabmenu";
-import { Divider } from "primereact/divider";
-import AccessButton from "../components/AccessButton";
 
 function RequestViewSplit({
   listeners,
@@ -43,16 +45,6 @@ function RequestViewSplit({
   );
 
   const rootRequestId = useRef<string | undefined>(undefined);
-
-  const [requestProjections, setRequestProjections] = useState<
-    RequestCommand[] | undefined
-  >(undefined);
-  const [requestProjectionSelected, setRequestProjectionSelected] = useState<
-    RequestCommand | undefined
-  >(undefined);
-  const requestProjectionSelectedRef = useRef<RequestCommand | undefined>(
-    undefined,
-  );
 
   const MonitorRequestId = useCallback(
     (message: any) => {
@@ -199,18 +191,6 @@ function RequestViewSplit({
           });
         });
       }
-
-      if (request !== undefined) {
-        GetRequestProjections(request)
-          .then((projections) => {
-            setRequestProjections(projections);
-            setRequestProjectionSelected(projections[0]);
-            requestProjectionSelectedRef.current = projections[0];
-          })
-          .catch((error) => {
-            console.error("Error fetching request projections:", error);
-          });
-      }
     }
 
     return () => {
@@ -226,12 +206,6 @@ function RequestViewSplit({
     };
   }, [request, requestId, listeners, MonitorRequestId]);
 
-  const requestMenuRenderer = (item: any) => {
-    return (<a className="flex align-items-center p-menuitem-link">
-      <span> {item.label}</span>
-    </a>)
-  }
-
   return (
     <>
       {error ? (
@@ -242,7 +216,7 @@ function RequestViewSplit({
       ) : (
         <div>
           <div className="flex">
-            <div className="mr-2">
+            <div className="mr-2" style={{ width: "auto" }}>
               {rootRequest && (
                 <RequestTreeMenu
                   rootRequest={rootRequest}
@@ -251,7 +225,7 @@ function RequestViewSplit({
                 />
               )}
             </div>
-            
+
             <Card
               className="mb-4"
               style={{ width: "100%" }}
@@ -261,6 +235,7 @@ function RequestViewSplit({
               <div className="flex ml-2">
                 <div className="flex-1">
                   <h1>{request?.command_display_name ?? request?.command}</h1>
+
                   <p>
                     {request?.namespace ?? "(NAMESPACE}"}-
                     {request?.system ?? "(SYSTEM}"}-
@@ -277,14 +252,24 @@ function RequestViewSplit({
                   </p>
                 </div>
 
-                <div className="flex-2 mr-2 mt-4">
+                <div className="flex-2 mr-2 mt-4 mb-4">
                   <div className="flex">
-                    <div className="flex-1">Request ID:</div>
+                    <div className="flex-1 mr-2">Request ID:</div>
                     <div className="flex-2">{request?.id}</div>
                   </div>
+                  <div className="flex">
+                    <div className="flex-1 mr-2">Command Type:</div>
+                    <div className="flex-2">{request?.command_type}</div>
+                  </div>
+                  {request?.metadata?._topic && (
+                    <div className="flex">
+                      <div className="flex-1 mr-2">Topic:</div>
+                      <div className="flex-2">{request?.metadata?._topic}</div>
+                    </div>
+                  )}
 
                   <div className="flex">
-                    <div className="flex-1">Created:</div>
+                    <div className="flex-1 mr-2">Created:</div>
                     <div className="flex-2">
                       {request?.created_at
                         ? new Date(request.created_at).toLocaleString()
@@ -293,7 +278,7 @@ function RequestViewSplit({
                   </div>
 
                   <div className="flex">
-                    <div className="flex-1">Status Updated:</div>
+                    <div className="flex-1 mr-2">Status Updated:</div>
                     <div className="flex-2">
                       {request?.status_updated_at
                         ? new Date(request.status_updated_at).toLocaleString()
@@ -302,114 +287,26 @@ function RequestViewSplit({
                   </div>
 
                   <div className="flex">
-                    <div className="flex-1">Last Updated:</div>
+                    <div className="flex-1 mr-2">Last Updated:</div>
                     <div className="flex-2">
                       {request?.updated_at
                         ? new Date(request.updated_at).toLocaleString()
                         : ""}
                     </div>
                   </div>
-
                 </div>
               </div>
 
-              <div className="flex">
-
-                <div className="flex-1">
-                  <AccessButton
-                  className="mt-2 mr-2"
-                    label="Request Parameters"
-                    />
-                    <AccessButton
-                    className="mt-2 mr-2"
-                    label="Request Output"
-                    disabled
-                    />
-
-                </div>
-                <div className="flex-2">
-                  {request && (<RequestOptions
-                    request={request}
-                    setRequest={setRequest}
-                    config={config}
-                    addRequestItem={addRequestItem}
-                    requestProjections={requestProjections}
-                    requestProjectionSelected={requestProjectionSelected}
-                    setRequestProjectionSelected={setRequestProjectionSelected}
-                    requestProjectionSelectedRef={requestProjectionSelectedRef}
-                    isCard={false}
-                    openRequest={() => {}}
-                    closeRequest={() => {}}
-                  />)}
-                </div>
-              </div>
-
-
-              {/* <div>
-                <Menubar model={[
-                  {
-                    label: "Request Parameters",
-                    template: requestMenuRenderer
-                  },
-                  {
-                    label: "Request Ouput",
-                    template: requestMenuRenderer
-                  }
-                ]} 
-                pt={{
-                  root:{
-                    style:{color:"transparent",
-                    backgroundColor:"transparent",
-                    border: "transparent"
-                  }
-                  },
-                  content:{
-                    style:{
-                      textDecorator:"underline"
-                    }
-                  }
-                }}
-                end={request && (<RequestOptions
-                    request={request}
-                    setRequest={setRequest}
-                    config={config}
-                    addRequestItem={addRequestItem}
-                    requestProjections={requestProjections}
-                    requestProjectionSelected={requestProjectionSelected}
-                    setRequestProjectionSelected={setRequestProjectionSelected}
-                    requestProjectionSelectedRef={requestProjectionSelectedRef}
-                    isCard={false}
-                    openRequest={() => {}}
-                    closeRequest={() => {}}
-                  />)}/>
-              </div> */}
-              <Divider/>
-
-              <p>Hello World!</p>
-              {/* <div>
-                <TabMenu model={[
-                  {
-                    label: "Request Parameters"
-                  },
-                  {
-                    label: "Request Ouput",
-                  }
-                ]} 
+              {request && (
+                <RequestViewMain
+                  request={request}
+                  setRequest={setRequest}
+                  addRequestItem={addRequestItem}
+                  showProjections={true}
+                  config={config}
+                  isCard={false}
                 />
-              </div> */}
-
-              {/* <div>
-                {request && (
-                  <RequestViewMain
-                    request={request}
-                    setRequest={setRequest}
-                    addRequestItem={addRequestItem}
-                    showProjections={true}
-                    config={config}
-                    isCard={false}
-                  />
-                )}
-              </div> */}
+              )}
             </Card>
           </div>
         </div>

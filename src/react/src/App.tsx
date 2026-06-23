@@ -557,7 +557,7 @@ function App() {
                       <Route
                         path="/request/:requestId"
                         element={
-                          <RequestView
+                          <RequestViewSplit
                             listeners={listeners.current}
                             config={config}
                             addRequestItem={addRequestItem}

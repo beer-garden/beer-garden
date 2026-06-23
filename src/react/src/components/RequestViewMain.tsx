@@ -116,32 +116,46 @@ function RequestViewMain({
     <div>
       {request && (
         <div>
-          {/* <div className="flex mb-2 gap-2 justify-content-end mt-2">
-            <RequestOptions
-              request={request}
-              setRequest={setRequest}
-              config={config}
-              addRequestItem={addRequestItem}
-              requestProjections={requestProjections}
-              requestProjectionSelected={requestProjectionSelected}
-              setRequestProjectionSelected={setRequestProjectionSelected}
-              requestProjectionSelectedRef={requestProjectionSelectedRef}
-              isCard={isCard}
-              openRequest={openRequest}
-              closeRequest={closeRequest}
-            />
-          </div> */}
-          <TabView
-            style={{ flexBasis: "85%" }}
-            className="mt-2"
-            activeIndex={activeIndex}
-            onTabChange={(e) => setActiveIndex(e.index)}
-            
-          >
-            <TabPanel
-              header="Request Parameters"
-              pt={{ headerAction: { tabIndex: 0 } }}
-            >
+          <div className="flex">
+            <div className="flex-1">
+              <TabView
+                style={{ flexBasis: "85%" }}
+                className="mt-2"
+                activeIndex={activeIndex}
+                onTabChange={(e) => setActiveIndex(e.index)}
+              >
+                <TabPanel
+                  header="Request Parameters"
+                  pt={{ headerAction: { tabIndex: 0 } }}
+                ></TabPanel>
+                <TabPanel
+                  header="Request Output"
+                  pt={{ headerAction: { tabIndex: 0 } }}
+                ></TabPanel>
+              </TabView>
+            </div>
+            <div className="flex-2">
+              {request && (
+                <>
+                  <RequestOptions
+                    request={request}
+                    setRequest={setRequest}
+                    config={config}
+                    addRequestItem={addRequestItem}
+                    requestProjections={requestProjections}
+                    requestProjectionSelected={requestProjectionSelected}
+                    setRequestProjectionSelected={setRequestProjectionSelected}
+                    requestProjectionSelectedRef={requestProjectionSelectedRef}
+                    isCard={isCard}
+                    openRequest={openRequest}
+                    closeRequest={closeRequest}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+          {activeIndex === 0 && (
+            <div>
               {!showCommandForm && <Skeleton width="100%" height="10rem" />}
               {showCommandForm && command && (
                 <CommandForm
@@ -156,14 +170,13 @@ function RequestViewMain({
                 />
               )}
               {showCommandForm && !command && <UnformattedInput {...request} />}
-            </TabPanel>
-            <TabPanel
-              header="Request Output"
-              pt={{ headerAction: { tabIndex: 0 } }}
-            >
+            </div>
+          )}
+          {activeIndex === 1 && (
+            <div>
               <RequestOutput request={request} />
-            </TabPanel>
-          </TabView>
+            </div>
+          )}
         </div>
       )}
     </div>

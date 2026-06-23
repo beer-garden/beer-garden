@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Column } from "primereact/column";
 import { Tag } from "primereact/tag";
 import { Tooltip } from "primereact/tooltip";
-import { Tree } from "primereact/tree";
+import { Tree, TreeSelectionEvent } from "primereact/tree";
 import { TreeNode } from "primereact/treenode";
 import { useEffect, useState } from "react";
 
@@ -34,15 +34,15 @@ function timeDelta(createdDate: Date, statusUpdated: Date) {
   );
 
   if (diffHours > 0) {
-    return `${diffHours}h: ${diffMinutes}m: ${diffSeconds}s`;
+    return `${diffHours}h:${diffMinutes}m:${diffSeconds}s`;
   }
   if (diffMinutes > 0) {
-    return `${diffMinutes}m: ${diffSeconds}s`;
+    return `${diffMinutes}m:${diffSeconds}s`;
   }
   if (diffSeconds > 0) {
     return `${diffSeconds}s`;
   }
-  return "< 1s";
+  return "<1s";
 }
 
 function parseRequest(request: Request): TreeNode {
@@ -82,7 +82,7 @@ function parseRequest(request: Request): TreeNode {
   ) {
     request.children.forEach((childRequest: Request) => {
       const child_item = parseRequest(childRequest);
-      child_item.key = item.key + "-" + child_item.key;
+      // child_item.key = item.key + "-" + child_item.key;
       item.children.push(child_item);
     });
   }
@@ -131,11 +131,29 @@ function RequestTreeMenu({
     setExpandedKeys(expandAllKeys([node]));
   }, [node]);
 
-  const rowClassName = (node: any) => {
-    return { "p-highlight": node?.data?.id === request?.id };
+  const findRequest = (requestId: string, request: Request) => {
+    if (request.id === requestId) {
+      setRequest(request);
+      return;
+    }
+
+    if (request.children) {
+      for (const child of request.children) {
+        findRequest(requestId, child);
+      }
+    }
   };
 
-  const commandNameTemplate = (node: any) => {
+  const updateSelectedRequest = (event: TreeSelectionEvent) => {
+    if (event.value && typeof event.value === "string") {
+      setSelectedKey(event.value);
+      if (rootRequest) {
+        findRequest(event.value, rootRequest);
+      }
+    }
+  };
+
+  const commandIcons = (node: any) => {
     return (
       <div>
         {node.data?.topic && (
@@ -178,23 +196,6 @@ function RequestTreeMenu({
             id={`ICON_${node.data?.id}`}
           />
         )}
-        <span>{node.data?.command}</span>
-      </div>
-    );
-  };
-
-  const actionTemplate = (node: any) => {
-    return (
-      <div>
-        <AccessButton
-          rounded
-          raised
-          link
-          title={`Open Request ${node.data?.command_display_name ?? node.data?.command} ${node.data?.id}`}
-          onClick={() => setRequest(node.data?.raw_request)}
-        >
-          <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
-        </AccessButton>
       </div>
     );
   };
@@ -225,23 +226,30 @@ function RequestTreeMenu({
     return (
       <div className={options.className}>
         <div className="flex">
-          <b>{node.label}</b>
-          <Tag
-            value={node.data.status}
-            severity={statusSeverity}
-            id={`status_${node.data.id}`}
-            className="ml-2"
-          />
-          {node.data?.status && ["SUCCESS"].includes(node.data?.status) && (
-            <>
-            <span className="ml-4">{node.data.deltaTime}</span>
-            <FontAwesomeIcon
-            icon="clock"
-            className="ml-2"
-            id={`request_duration_${node.data?.id}`}
-          />
-          </>
-          )}
+          <div>{commandIcons(node)}</div>
+          <div>
+            <b>{node.data?.command_display_name ?? node.data?.command}</b>
+          </div>
+          <div>
+            <Tag
+              value={node.data.status}
+              severity={statusSeverity}
+              id={`status_${node.data.id}`}
+              className="ml-2"
+            />
+          </div>
+          <div>
+            {node.data?.status && ["SUCCESS"].includes(node.data?.status) && (
+              <div className="flex">
+                <span className="ml-2">{node.data.deltaTime}</span>
+                <FontAwesomeIcon
+                  icon="clock"
+                  className="ml-2"
+                  id={`request_duration_${node.data?.id}`}
+                />
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex">
           <sub>
@@ -259,9 +267,9 @@ function RequestTreeMenu({
         value={[node]}
         selectionMode="single"
         selectionKeys={selectedKey}
-        onSelectionChange={(e) => setSelectedKey(e.value)}
+        onSelectionChange={updateSelectedRequest}
         nodeTemplate={nodeTemplate}
-        className="w-full md:w-30rem"
+        className="w-auto"
       />
     )
   );
