@@ -100,7 +100,7 @@ function expandAllKeys(nodes: TreeNode[]): Record<string, boolean> {
   return expanded;
 }
 
-interface RequestTreeChartProps {
+interface RequestTreeMenuProps {
   rootRequest?: Request | undefined;
   request?: Request;
   setRequest: (request: Request) => void;
@@ -110,7 +110,7 @@ function RequestTreeMenu({
   rootRequest,
   request,
   setRequest,
-}: RequestTreeChartProps) {
+}: RequestTreeMenuProps) {
   const [node, setNode] = useState(
     rootRequest !== undefined ? parseRequest(rootRequest) : {},
   );
@@ -206,13 +206,15 @@ function RequestTreeMenu({
         <div className="flex">
           <div>{commandIcons(node)}</div>
           <div>
-            <b>{node.data?.command_display_name ?? node.data?.command}</b>
+            <strong>
+              {node.data?.command_display_name ?? node.data?.command}
+            </strong>
           </div>
           <div>
             <Tag
               value={node.data.status}
               severity={statusSeverity}
-              id={`status_${node.data.id}`}
+              id={`request_menu_status_${node.data.id}`}
               className="ml-2"
             />
           </div>

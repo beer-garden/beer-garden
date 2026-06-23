@@ -112,7 +112,7 @@ function RequestViewMain({
       <Tag
         value={request?.status}
         severity={GetSeverity(request?.status)}
-        id={`status_${request?.id}`}
+        id={`request_view_status_${request?.id}`}
         className="ml-2"
       />
     );
