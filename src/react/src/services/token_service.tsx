@@ -195,4 +195,7 @@ export const LogoutCurrentUser = async () => {
 
   // Resets to default Blue/Light Mode
   ClearThemes();
+
+  // Reset Advance User Setting
+  localStorage.removeItem("user_advanced");
 };
