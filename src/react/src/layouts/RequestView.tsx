@@ -147,8 +147,8 @@ function RequestView({
           check_request.parent &&
           check_request.parent.id
         ) {
-          const root_request = await GetRequest(check_request.parent.id, {});
-          await loadRootRequest(root_request).catch((error) => {
+          const parentRequest = await GetRequest(check_request.parent.id, {});
+          await loadRootRequest(parentRequest).catch((error) => {
             throw new error();
           });
         } else {
