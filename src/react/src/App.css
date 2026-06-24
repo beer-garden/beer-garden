@@ -115,7 +115,8 @@
 .p-badge.p-badge-danger,
 .p-button.p-button-danger,
 .p-splitbutton.p-splitbutton-button.p-splitbutton-button-danger,
-.p-tag-danger {
+.p-tag-danger,
+.react-js-cron-clear-button {
   background-color: var(--danger-background-color);
   color: var(--danger-color);
 }

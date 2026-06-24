@@ -50,7 +50,7 @@ import { ChangeTheme } from "./services/util_service";
 function App() {
   const socketRef = useRef(null as null | any);
   const listeners = useRef<Record<string, Listener>>({});
-  const [config, setConfig] = useState<Config>({});
+  const [config, setConfig] = useState<Config | undefined>(undefined);
 
   const [reloadUI, setReloadUI] = useState(0);
   const [requestItem, setRequestItem] = useState<RequestItem | undefined>(
@@ -144,6 +144,35 @@ function App() {
     },
   };
 
+  const loadRootGarden = (config: Config) => {
+    GetRootGarden(config)
+      .then((garden) => {
+        const extractSystems = (garden: Garden): System[] => {
+          let systems: System[] = [];
+          if (garden.systems) {
+            garden.systems.forEach((system: System) => {
+              system.garden_name = garden.name;
+              systems.push(system);
+            });
+          }
+          if (garden.children) {
+            for (const subGarden of garden.children) {
+              systems = systems.concat(extractSystems(subGarden));
+            }
+          }
+          return systems;
+        };
+
+        updateSystems(extractSystems(garden));
+        updateRootGarden(garden);
+      })
+      .catch((error) => {
+        console.log("Unable to retrieve root garden", error);
+        updateSystems();
+        updateRootGarden();
+      });
+  };
+
   useEffect(() => {
     // might take a second to load in all of the data, so pushed it off to to allow for the page to load
     ChangeTheme();
@@ -162,30 +191,11 @@ function App() {
     GetConfig()
       .then((config) => {
         setConfig(config);
-        GetRootGarden(config)
-          .then((garden) => {
-            const extractSystems = (garden: Garden): System[] => {
-              let systems: System[] = [];
-              if (garden.systems) {
-                garden.systems.forEach((system: System) => {
-                  system.garden_name = garden.name;
-                  systems.push(system);
-                });
-              }
-              if (garden.children) {
-                for (const subGarden of garden.children) {
-                  systems = systems.concat(extractSystems(subGarden));
-                }
-              }
-              return systems;
-            };
 
-            updateSystems(extractSystems(garden));
-            updateRootGarden(garden);
-          })
-          .catch((error) => {
-            console.log("Unable to retrieve root garden", error);
-          });
+        if (config?.auth_enabled === true) {
+          preemptiveRefresh();
+        }
+        loadRootGarden(config);
       })
       .catch((error) => {
         console.log("Unable to retrieve configuration", error);
@@ -397,6 +407,25 @@ function App() {
     },
     [rootGardenRef, systemsRef],
   );
+
+  useEffect(() => {
+    if (config && config.auth_enabled === true) {
+      if (
+        (systemsRef.current !== undefined ||
+          rootGardenRef.current !== undefined) &&
+        GetToken() === null
+      ) {
+        updateSystems();
+        updateRootGarden();
+      } else if (
+        (systemsRef.current === undefined ||
+          rootGardenRef.current === undefined) &&
+        GetToken() !== null
+      ) {
+        loadRootGarden(config);
+      }
+    }
+  }, [reloadUI]);
 
   useEffect(() => {
     // Create WebSocket connection when component mounts

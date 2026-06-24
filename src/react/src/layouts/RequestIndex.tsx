@@ -365,7 +365,7 @@ function RequestIndex({
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <h1 className="text-xl text-900 font-bold">Requests</h1>
       <div className="flex align-items-center">
-        <label htmlFor="autoRefreshButton">
+        <label className="mr-2" htmlFor="autoRefreshButton">
           <Checkbox
             id="autoRefreshButton"
             onChange={(e: CheckboxChangeEvent) =>
@@ -377,8 +377,6 @@ function RequestIndex({
           />
           Auto Refresh
         </label>
-      </div>
-      <div className="flex align-items-center">
         <label className="mr-2" htmlFor="showHiddenButton">
           <Checkbox
             id="showHiddenButton"
