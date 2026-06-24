@@ -404,6 +404,7 @@ function RequestIndex({
         <AccessButton
           rounded
           raised
+          basic
           onClick={lazyLoadData}
           tooltip={recordsUpdated ? "New updates available" : "Refresh"}
           {...GenerateTourProps(RefreshTableTourStep)}
@@ -472,6 +473,7 @@ function RequestIndex({
             rounded
             raised
             link
+            basic
             tooltip={`Open Request ${request.command_display_name ?? request.command} ${request.id}`}
             className="mr-2"
             {...GenerateTourProps(OpenRequestTourStep)}
@@ -483,6 +485,7 @@ function RequestIndex({
           rounded
           raised
           link
+          basic
           onClick={() => PeekRequestView(request)}
           tooltip={`View Request ${request.command_display_name ?? request.command} ${request.id}`}
           className="mr-2"

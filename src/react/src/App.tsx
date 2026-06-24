@@ -1,8 +1,3 @@
-import "primereact/resources/primereact.min.css"; // Core CSS
-import "primeflex/primeflex.css";
-import "primeicons/primeicons.css";
-import "./App.css";
-
 import { PrimeReactProvider } from "primereact/api";
 import { ConfirmDialog } from "primereact/confirmdialog";
 import { Dialog } from "primereact/dialog";
@@ -41,6 +36,7 @@ import { InputTextareaPT } from "./passthrough/InputTextareaPT";
 import { InputTextPT } from "./passthrough/InputTextPT";
 import { MessagesPT } from "./passthrough/MessagesPT";
 import { MultiSelectPT } from "./passthrough/MultiSelectPT";
+import { PanelPT } from "./passthrough/PanelPT";
 import { SplitButtonPT } from "./passthrough/SplitButtonPT";
 import { TriStateCheckboxPT } from "./passthrough/TriStateCheckboxPT";
 import { ToastProvider } from "./providers/ToastProvider";
@@ -142,6 +138,7 @@ function App() {
       inputTextarea: InputTextareaPT,
       messages: MessagesPT,
       multiselect: MultiSelectPT,
+      panel: PanelPT,
       splitButton: SplitButtonPT,
       triStateCheckbox: TriStateCheckboxPT,
     },
@@ -476,7 +473,7 @@ function App() {
           </div>
         )}
         {config && Object.keys(config).length > 0 && (
-          <div className="flex">
+          <div className="flex" key={reloadUI}>
             <div className="flex-grow-1">
               <BrowserRouter basename={baseURL}>
                 {runTour && (
@@ -535,7 +532,6 @@ function App() {
                 )}
                 <div
                   className="flex-grow-1"
-                  key={reloadUI}
                   role="main"
                   id="main-content"
                   tabIndex={-1}

@@ -403,6 +403,7 @@ function NavigationMenu({
         onClick={toggleRunTour}
         tooltip="Start Tour"
         data-testid="start-tour"
+        basic
       >
         <FontAwesomeIcon className="fa-2x" icon="compass" />
       </AccessButton>
@@ -410,6 +411,7 @@ function NavigationMenu({
       <CurrentRequestsTemplate listeners={listeners} config={config} />
       <AccessButton
         tooltip="User Preferences Menu"
+        basic
         onClick={(e) => op.current?.toggle(e)}
         text
         title="Preferences"
