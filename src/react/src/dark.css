@@ -17,3 +17,6 @@
 .unassociated-runner-header {
   background-color: var(--red-900);
 }
+.p-tabview-selected .p-tabview-title {
+  color: var(--gray-50);
+}
