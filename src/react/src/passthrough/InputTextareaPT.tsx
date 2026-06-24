@@ -1,10 +1,5 @@
-import { FindPropLabel } from "../passthrough/HelperPT";
-
-export const InputTextareaPT = ({ props }: { props: any }) => {
-  return {
-    root: {
-      autoComplete: "off",
-      "aria-label": FindPropLabel(props),
-    },
-  };
+export const InputTextareaPT = {
+  root: {
+    autoComplete: "off",
+  },
 };

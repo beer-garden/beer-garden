@@ -2,10 +2,8 @@ import { FindPropLabel } from "../passthrough/HelperPT";
 
 export const AutoCompletePT = ({ props }: { props: any }) => {
   return {
-    root: {
-      "aria-description": `${FindPropLabel(props)}: Type to search available options, controls popup hidden from DOM until generated`,
-    },
     input: {
+      // Gets overrided by aria-controls
       "aria-label": `${FindPropLabel(props)}: String with Typeahead input`,
     },
     listwrapper: {

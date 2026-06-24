@@ -566,6 +566,7 @@ function RoleIndex({
             type="text"
             className="mb-2"
             value={roleName}
+            tooltip="Role Name"
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setRoleName(e.target.value)
             }
@@ -589,6 +590,11 @@ function RoleIndex({
           <label htmlFor="rolePermission" className="font-bold">
             Permission
           </label>
+          <datalist id="rolePermissionDropdown" aria-hidden="true">
+            {permissions?.map((value: any) => (
+              <option key={value.key} value={value.label} />
+            ))}
+          </datalist>
           <Dropdown
             required
             id="rolePermission"
@@ -599,6 +605,13 @@ function RoleIndex({
             placeholder="Select One"
             onChange={(e) => {
               setRolePermission(e.value);
+            }}
+            tooltip="Select Role Permission Level"
+            pt={{
+              input: {
+                "aria-controls": "rolePermissionDropdown",
+                "aria-label": undefined,
+              },
             }}
           />
         </div>

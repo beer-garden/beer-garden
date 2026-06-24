@@ -270,6 +270,11 @@ function CommandFormField({
     };
     return (
       <div key={parameter.key} className="p-field">
+        <datalist id={`${parameter.key}Dropdown`} aria-hidden="true">
+          {items?.map((value: string) => (
+            <option key={value} value={value} />
+          ))}
+        </datalist>
         <AutoComplete
           id={parameter.key}
           value={parameter.value}
@@ -290,6 +295,14 @@ function CommandFormField({
           dropdownIcon="pi pi-chevron-down"
           aria-label={`${inputAreaAriaLabel}: String with Typeahead`}
           tooltip={`${inputAreaAriaLabel}: String with Typeahead`}
+          pt={{
+            input: {
+              root: {
+                "aria-controls": `${parameter.key}Dropdown`,
+                "aria-label": `${parameter.key}: String with Typeahead input`,
+              },
+            },
+          }}
         />
         {loadingChoices &&
           loadingChoices.some((loading) => loading.key === parameter.key) && (

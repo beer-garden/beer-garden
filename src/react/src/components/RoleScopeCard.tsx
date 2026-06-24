@@ -137,6 +137,14 @@ function RoleScopeCard({
             <label className="font-bold" htmlFor={`${scopeName}Scope-${index}`}>
               Scope
             </label>
+            <datalist
+              id={`${scopeName}Scope-${index}-dropdown`}
+              aria-hidden="true"
+            >
+              {filteredItems?.map((value: string) => (
+                <option key={value} value={value} />
+              ))}
+            </datalist>
             <AutoComplete
               dropdown
               id={`${scopeName}Scope-${index}`}
@@ -144,6 +152,15 @@ function RoleScopeCard({
               suggestions={filteredItems}
               completeMethod={searchItems}
               onChange={(e) => handleUpdateScope(e.target.value, index)}
+              dropdownIcon="pi pi-chevron-down"
+              pt={{
+                input: {
+                  root: {
+                    "aria-controls": `${scopeName}Scope-${index}-dropdown`,
+                    "aria-label": `Selection values for ${scopeName}`,
+                  },
+                },
+              }}
             />
           </Card>
         ))}

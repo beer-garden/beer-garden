@@ -246,6 +246,7 @@ function SubscriberItem({
                   input: {
                     root: {
                       "aria-controls": "selectGardenDropdown",
+                      "aria-label": `garden-${index}: String with Typeahead input`,
                     },
                   },
                 }}
@@ -274,6 +275,7 @@ function SubscriberItem({
                   input: {
                     root: {
                       "aria-controls": "selectNamespaceDropdown",
+                      "aria-label": `namespace-${index}: String with Typeahead input`,
                     },
                   },
                 }}
@@ -302,6 +304,7 @@ function SubscriberItem({
                   input: {
                     root: {
                       "aria-controls": "selectSystemDropdown",
+                      "aria-label": `system-${index}: String with Typeahead input`,
                     },
                   },
                 }}
@@ -330,6 +333,7 @@ function SubscriberItem({
                   input: {
                     root: {
                       "aria-controls": "selectVersionDropdown",
+                      "aria-label": `version-${index}: String with Typeahead input`,
                     },
                   },
                 }}
@@ -358,6 +362,7 @@ function SubscriberItem({
                   input: {
                     root: {
                       "aria-controls": "selectInstanceDropdown",
+                      "aria-label": `instance-${index}: String with Typeahead input`,
                     },
                   },
                 }}
@@ -386,6 +391,7 @@ function SubscriberItem({
                   input: {
                     root: {
                       "aria-controls": "selectCommandDropdown",
+                      "aria-label": `command-${index}: String with Typeahead input`,
                     },
                   },
                 }}
