@@ -88,6 +88,12 @@ function RequestViewCard({
     }
   };
 
+  const closeRequest = () => {
+    if (requestItem.requestId) {
+      removeItem(requestItem.itemId);
+    }
+  };
+
   useEffect(() => {
     const MonitorRequestId = (message: any) => {
       if (message.payload_type === "Request") {
@@ -231,6 +237,7 @@ function RequestViewCard({
                 isCard={true}
                 config={config}
                 openRequest={openRequest}
+                closeRequest={closeRequest}
               />
             )}
           </div>

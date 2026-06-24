@@ -104,6 +104,10 @@ export const ThemeOptions = () => [
   "purple",
 ];
 
+export const ClearThemes = () => {
+  ChangeTheme("blue", false);
+};
+
 export const ChangeTheme = (color?: string, dark?: boolean) => {
   if (color === undefined) {
     color = localStorage.getItem("theme_color") || "blue";
@@ -125,6 +129,13 @@ export const ChangeTheme = (color?: string, dark?: boolean) => {
   const themeLink = document.getElementById("theme-link") as HTMLAnchorElement;
   if (themeLink) {
     themeLink.href = `${GetBaseURL()}/themes/lara-${dark ? "dark" : "light"}-${color}/theme.css`;
+  }
+
+  const appCSSLink = document.getElementById(
+    "app-css-link",
+  ) as HTMLAnchorElement;
+  if (appCSSLink) {
+    appCSSLink.href = `${GetBaseURL()}/src/${dark ? "dark" : "light"}.css`;
   }
 
   UpdateUserTheme(color).catch((error) => {

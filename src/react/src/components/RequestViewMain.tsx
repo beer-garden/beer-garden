@@ -29,6 +29,7 @@ function RequestViewMain({
   showProjections,
   isCard,
   openRequest,
+  closeRequest,
 }: {
   request: Request;
   setRequest: (request: Request | null) => void;
@@ -37,6 +38,7 @@ function RequestViewMain({
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
   isCard: boolean;
   openRequest?: () => void;
+  closeRequest?: () => void;
 }) {
   const stepperRef = useRef(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -177,6 +179,7 @@ function RequestViewMain({
                     requestProjectionSelectedRef={requestProjectionSelectedRef}
                     isCard={isCard}
                     openRequest={openRequest}
+                    closeRequest={closeRequest}
                   />
                 </div>
               )}
@@ -224,6 +227,7 @@ function RequestViewMain({
                     requestProjectionSelectedRef={requestProjectionSelectedRef}
                     isCard={isCard}
                     openRequest={openRequest}
+                    closeRequest={closeRequest}
                   />
                 </div>
               )}

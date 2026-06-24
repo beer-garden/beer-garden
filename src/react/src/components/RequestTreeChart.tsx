@@ -5,7 +5,7 @@ import { TreeTable } from "primereact/treetable";
 import { Link } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
-import { Config } from "../models/models";
+import { Config, RequestItem } from "../models/models";
 import { DeleteRequest } from "../services/request_service";
 import AccessButton from "./AccessButton";
 
@@ -52,16 +52,22 @@ interface RequestTreeChartProps {
   rootRequest?: Request;
   currentRequestId?: string;
   config: Config;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }
 
-function RequestTreeChart(props: RequestTreeChartProps) {
+function RequestTreeChart({
+  rootRequest,
+  currentRequestId,
+  config,
+  addRequestItem,
+}: RequestTreeChartProps) {
   let node = {};
-  if (props.rootRequest !== undefined && props.rootRequest !== null) {
-    node = parseRequest(props.rootRequest, props.config);
+  if (rootRequest !== undefined && rootRequest !== null) {
+    node = parseRequest(rootRequest, config);
   }
 
   const rowClassName = (node: any) => {
-    return { "p-highlight": node.data.id === props.currentRequestId };
+    return { "p-highlight": node.data.id === currentRequestId };
   };
 
   const commandNameTemplate = (node: any) => {
@@ -112,17 +118,21 @@ function RequestTreeChart(props: RequestTreeChartProps) {
     );
   };
 
+  const pourAgain = (request: Request) => {
+    addRequestItem({ requestId: request.id, type: "REQUEST" });
+  };
+
   const actionTemplate = (node: any, config: Config) => {
-    if (node.data.id === props.currentRequestId) {
+    if (node.data.id === currentRequestId) {
       return;
     }
     const permissions = {
       config: config,
-      hasNamespace: props?.rootRequest?.namespace,
-      hasSystemName: props?.rootRequest?.system,
-      hasSystemVersion: props?.rootRequest?.system_version,
-      hasInstanceName: props?.rootRequest?.instance_name,
-      hasCommandName: props?.rootRequest?.command,
+      hasNamespace: rootRequest?.namespace,
+      hasSystemName: rootRequest?.system,
+      hasSystemVersion: rootRequest?.system_version,
+      hasInstanceName: rootRequest?.instance_name,
+      hasCommandName: rootRequest?.command,
     };
     return (
       <div>
@@ -132,7 +142,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
           tabIndex={-1}
           style={{ textDecoration: "none" }}
         >
-          <AccessButton rounded raised link title="Open">
+          <AccessButton rounded raised link title="Open" basic>
             <FontAwesomeIcon icon="arrow-up-right-from-square" />{" "}
           </AccessButton>
         </Link>
@@ -143,6 +153,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
             rounded
             raised
             link
+            basic
             onClick={() => {}}
             title="Cancel"
             permission="OPERATOR"
@@ -158,6 +169,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
             rounded
             raised
             link
+            basic
             onClick={() =>
               DeleteRequest(node.data).catch((error) => {
                 console.error("Error deleting request:", error);
@@ -173,23 +185,18 @@ function RequestTreeChart(props: RequestTreeChartProps) {
         {["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(
           node.data.status,
         ) && (
-          <Link
-            to={`/recreate/${node.data.id}`}
-            aria-label={`Pour Again Request ${node.data.command_display_name ?? node.data.command} ${node.data.id}`}
-            tabIndex={-1}
-            style={{ textDecoration: "none" }}
+          <AccessButton
+            rounded
+            raised
+            link
+            title="Pour Again"
+            basic
+            {...permissions}
+            permission="OPERATOR"
+            onClick={() => pourAgain(node.data)}
           >
-            <AccessButton
-              rounded
-              raised
-              link
-              title="Pour Again"
-              {...permissions}
-              permission="OPERATOR"
-            >
-              <FontAwesomeIcon icon="rotate" />{" "}
-            </AccessButton>
-          </Link>
+            <FontAwesomeIcon icon="rotate" />{" "}
+          </AccessButton>
         )}
       </div>
     );
@@ -231,7 +238,7 @@ function RequestTreeChart(props: RequestTreeChartProps) {
         <Column field="status_updated_at" header="Status Updated"></Column>
         <Column field="updated_at" header="Updated"></Column>
         <Column field="comment" header="Comment"></Column>
-        <Column body={(node) => actionTemplate(node, props.config)}> </Column>
+        <Column body={(node) => actionTemplate(node, config)}> </Column>
       </TreeTable>
     )
   );

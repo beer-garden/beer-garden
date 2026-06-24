@@ -157,6 +157,7 @@ function UserChangePassword({
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setCurrentPassword(e.target.value)
               }
+              tooltip="Enter Current Password"
             />
           </>
         )}
@@ -172,6 +173,7 @@ function UserChangePassword({
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
             setNewPassword(e.target.value)
           }
+          tooltip="Enter New Password"
         />
         <label htmlFor="confirmPassword" className="font-bold">
           Confirm Password
@@ -187,6 +189,7 @@ function UserChangePassword({
             setConfirmPassword(e.target.value);
             setConfirmPasswordInvalid(e.target.value !== newPassword);
           }}
+          tooltip="Confirm New Password"
         />
       </div>
     </Dialog>

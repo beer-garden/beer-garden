@@ -27,6 +27,10 @@ export const FindPropLabel = (props: any) => {
     return FindPropLabel(props.pt);
   }
 
+  if (props?.label) {
+    return props.label;
+  }
+
   if (
     props?.__parentMetadata &&
     props.__parentMetadata?.parent &&

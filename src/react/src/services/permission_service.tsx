@@ -133,7 +133,6 @@ export const checkPermission = (
   const storedRoles = GetCurrentRoles();
 
   if (!storedRoles) {
-    console.log("No user logged in");
     return false;
   }
 
