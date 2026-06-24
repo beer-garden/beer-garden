@@ -5,7 +5,11 @@ import { Dropdown } from "primereact/dropdown";
 import { InputSwitch } from "primereact/inputswitch";
 import { useEffect, useRef, useState } from "react";
 
-import { ChangeTheme, ThemeOptions } from "../services/util_service";
+import {
+  ChangePowerUser,
+  ChangeTheme,
+  ThemeOptions,
+} from "../services/util_service";
 import AccessButton from "./AccessButton";
 import UserChangePassword from "./UserChangePassword";
 
@@ -37,13 +41,19 @@ function UserOverlay({
 
   useEffect(() => {
     if (
+      (localStorage.getItem("user_advanced") === "true") !==
+      showAdvancedOption
+    ) {
+      ChangePowerUser(showAdvancedOption);
+    }
+    if (
       (localStorage.getItem("theme_dark") === "true") !== dark ||
       localStorage.getItem("theme_color") !== color
     ) {
       ChangeTheme(color, dark);
       window.dispatchEvent(new Event("storage"));
     }
-  }, [color, dark]);
+  }, [color, dark, showAdvancedOption]);
 
   return (
     <>
@@ -122,7 +132,6 @@ function UserOverlay({
             checked={showAdvancedOption}
             onChange={(e) => {
               setShowAdvancedOption(e.value);
-              localStorage.setItem("user_advanced", JSON.stringify(e.value));
             }}
             className="align-self-center"
             pt={{

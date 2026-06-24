@@ -1,7 +1,7 @@
 import { jwtDecode } from "jwt-decode";
 
 import { CustomJwtPayload } from "../models/models";
-import { ChangeTheme, GetBaseURL } from "./util_service";
+import { ChangePowerUser, ChangeTheme, GetBaseURL } from "./util_service";
 
 export const UserLogin = async (
   username: string,
@@ -148,6 +148,17 @@ const SetToken = (token: string) => {
     localStorage.setItem("theme_dark", decode.preferences.dark_mode.toString());
   }
   ChangeTheme();
+  ChangePowerUser();
+
+  if (
+    decode.preferences &&
+    typeof decode.preferences.power_user === "boolean"
+  ) {
+    localStorage.setItem(
+      "user_advanced",
+      decode.preferences.power_user.toString(),
+    );
+  }
 };
 
 export const GetToken = (): string | null => {

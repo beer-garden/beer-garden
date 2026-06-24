@@ -107,6 +107,45 @@ export const UpdateUserDarkMode = async (darkMode: boolean): Promise<void> => {
   }
 };
 
+export const GetPowerUserMode = (): boolean | undefined => {
+  const token = GetToken();
+  if (token !== null) {
+    const decode = jwtDecode<CustomJwtPayload>(token);
+    if (
+      decode.preferences &&
+      typeof decode.preferences.power_user === "boolean"
+    ) {
+      return decode.preferences.power_user;
+    }
+  }
+  return undefined;
+};
+
+export const UpdatePowerUserMode = async (
+  powerUser: boolean,
+): Promise<void> => {
+  const headers = GetAuthHeaders();
+  const username = GetCurrentUser();
+  if (!username) {
+    return;
+  }
+  headers.append("Content-Type", "application/json");
+  const fetch_url = `${GetBaseURL()}/api/v1/users/${username}`;
+  const response = await fetch(fetch_url, {
+    headers: headers,
+    method: "PATCH",
+    body: JSON.stringify({
+      operation: "set",
+      path: "/preferences/power_user",
+      value: powerUser,
+    }),
+  });
+  if (!response.ok) {
+    // Handle non-OK responses (e.g., 404, 500)
+    throw new Error(`HTTP error: Status ${response.status}`);
+  }
+};
+
 export const GetUsers = async (): Promise<Array<User>> => {
   const headers = GetAuthHeaders();
   headers.append("Content-Type", "application/json");

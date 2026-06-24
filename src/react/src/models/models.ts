@@ -137,5 +137,6 @@ export interface CustomJwtPayload extends JwtPayload {
   preferences?: {
     theme?: string;
     dark_mode: boolean;
+    power_user: boolean;
   };
 }
