@@ -1,6 +1,12 @@
+import { CalendarPassThroughOptions } from "primereact/calendar";
+
 import { FindPropLabel } from "../passthrough/HelperPT";
 
-export const CalendarPT = ({ props }: { props: any }) => {
+export const CalendarPT = ({
+  props,
+}: {
+  props: any;
+}): CalendarPassThroughOptions => {
   return {
     input: {
       root: ({ context }: { context: any }) => {

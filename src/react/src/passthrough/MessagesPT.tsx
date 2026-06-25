@@ -1,4 +1,6 @@
-export const MessagesPT = {
+import { MessagesPassThroughOptions } from "primereact/messages";
+
+export const MessagesPT: MessagesPassThroughOptions = {
   icon: {
     role: "img",
     "aria-label": "Message information icon",

@@ -1,6 +1,12 @@
+import { FileUploadPassThroughOptions } from "primereact/fileupload";
+
 import { FindPropLabel } from "../passthrough/HelperPT";
 
-export const FileUploadPT = ({ props }: { props: any }) => {
+export const FileUploadPT = ({
+  props,
+}: {
+  props: any;
+}): FileUploadPassThroughOptions => {
   return {
     root: {
       tabIndex: -1,

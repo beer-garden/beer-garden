@@ -1,6 +1,12 @@
+import { InputNumberPassThroughOptions } from "primereact/inputnumber";
+
 import { FindPropLabel } from "../passthrough/HelperPT";
 
-export const InputNumberPT = ({ props }: { props: any }) => {
+export const InputNumberPT = ({
+  props,
+}: {
+  props: any;
+}): InputNumberPassThroughOptions => {
   return {
     input: {
       root: {

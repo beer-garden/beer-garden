@@ -1,17 +1,25 @@
+import { AutoCompletePassThroughOptions } from "primereact/autocomplete";
+
 import { FindPropLabel } from "../passthrough/HelperPT";
 
-export const AutoCompletePT = ({ props }: { props: any }) => {
+export const AutoCompletePT = ({
+  props,
+}: {
+  props: any;
+}): AutoCompletePassThroughOptions => {
   return {
     root: {
       "aria-description": `${FindPropLabel(props)}: Type to search available options, controls popup hidden from DOM until generated`,
+      listwrapper: {
+        role: "region",
+        "aria-label": `${FindPropLabel(props)}: Available options`,
+        tabIndex: 0,
+      },
     },
     input: {
-      "aria-label": `${FindPropLabel(props)}: String with Typeahead input`,
-    },
-    listwrapper: {
-      role: "region",
-      "aria-label": `${FindPropLabel(props)}: Available options`,
-      tabIndex: 0,
+      root: {
+        "aria-label": `${FindPropLabel(props)}: String with Typeahead input`,
+      },
     },
     list: {
       "aria-label": `${FindPropLabel(props)}: List of available options`,

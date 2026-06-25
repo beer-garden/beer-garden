@@ -1,6 +1,12 @@
+import { InputTextPassThroughOptions } from "primereact/inputtext";
+
 import { FindPropLabel } from "../passthrough/HelperPT";
 
-export const InputTextareaPT = ({ props }: { props: any }) => {
+export const InputTextareaPT = ({
+  props,
+}: {
+  props: any;
+}): InputTextPassThroughOptions => {
   return {
     root: {
       autoComplete: "off",

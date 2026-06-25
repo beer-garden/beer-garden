@@ -1,4 +1,6 @@
-export const DataTablePT = {
+import { DataTablePassThroughOptions } from "primereact/datatable";
+
+export const DataTablePT: DataTablePassThroughOptions = {
   paginator: {
     firstPageIcon: {
       role: "img",

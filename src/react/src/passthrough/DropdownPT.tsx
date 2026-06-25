@@ -1,10 +1,18 @@
+import { DropdownPassThroughOptions } from "primereact/dropdown";
+
 import { FindPropLabel } from "../passthrough/HelperPT";
 
-export const DropdownPT = ({ props }: { props: any }) => {
+export const DropdownPT = ({
+  props,
+}: {
+  props: any;
+}): DropdownPassThroughOptions => {
   return {
-    dropdownIcon: {
-      role: "img",
-      "aria-label": `${FindPropLabel(props)}: Dropdown Icon`,
+    root: {
+      dropdownIcon: {
+        role: "img",
+        "aria-label": `${FindPropLabel(props)}: Dropdown Icon`,
+      },
     },
     input: {
       autoComplete: "off",

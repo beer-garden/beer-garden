@@ -1,6 +1,12 @@
+import { ButtonPassThroughOptions } from "primereact/button";
+
 import { FindPropLabel } from "../passthrough/HelperPT";
 
-export const ButtonPT = ({ props }: { props: any }) => {
+export const ButtonPT = ({
+  props,
+}: {
+  props: any;
+}): ButtonPassThroughOptions => {
   return {
     icon: {
       role: "img",

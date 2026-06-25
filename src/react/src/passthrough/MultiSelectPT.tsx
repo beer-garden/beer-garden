@@ -1,6 +1,12 @@
+import { MultiSelectPassThroughOptions } from "primereact/multiselect";
+
 import { FindPropLabel } from "../passthrough/HelperPT";
 
-export const MultiSelectPT = ({ props }: { props: any }) => {
+export const MultiSelectPT = ({
+  props,
+}: {
+  props: any;
+}): MultiSelectPassThroughOptions => {
   return {
     dropdownIcon: {
       role: "img",
