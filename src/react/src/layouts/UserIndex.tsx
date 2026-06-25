@@ -681,7 +681,7 @@ function UserIndex({
         <RoleCard
           targetRole={showRole}
           disabled={true}
-          setDialogVisible={() => {
+          onClose={() => {
             setShowViewRolesDialog(false);
           }}
         />

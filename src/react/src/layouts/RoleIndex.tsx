@@ -373,7 +373,10 @@ function RoleIndex({
           isEdit={isEdit.current}
           roleId={roleId.current}
           updateRoles={updateRoles}
-          setDialogVisible={setDialogVisible}
+          onClose={() => {
+            setDialogVisible(false);
+            loadRoles();
+          }}
         />
       )}
       <RoleHeader />

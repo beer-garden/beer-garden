@@ -17,14 +17,14 @@ function RoleCard({
   isEdit,
   disabled = false,
   updateRoles,
-  setDialogVisible,
+  onClose,
 }: {
   roleId?: string;
   targetRole?: Role;
   isEdit?: boolean;
   disabled?: boolean;
   updateRoles?: (role: Role) => void;
-  setDialogVisible: (visible: boolean) => void;
+  onClose: () => void;
 }) {
   const showToast = useToast();
 
@@ -49,10 +49,6 @@ function RoleCard({
     { label: "OPERATOR", value: "OPERATOR" },
     { label: "READ_ONLY", value: "READ_ONLY" },
   ];
-
-  function handleDialogClose() {
-    setDialogVisible(false);
-  }
 
   function setRole(role: Role) {
     setRoleName(isEdit === true || disabled ? role.name || "" : "");
@@ -146,13 +142,13 @@ function RoleCard({
           .then((updatedRole: Role) => {
             updateRoles(updatedRole);
 
-            setDialogVisible(false);
             showToast({
               severity: "info",
               summary: "Role Updated",
               detail: `Role updated: ${roleObj.name}`,
               life: 3000,
             });
+            onClose();
           })
           .catch((error) => {
             showToast({
@@ -168,13 +164,13 @@ function RoleCard({
           .then((createdRole: Role) => {
             updateRoles(createdRole);
 
-            setDialogVisible(false);
             showToast({
               severity: "info",
               summary: "Role Created",
               detail: `New role created: ${roleObj.name}`,
               life: 3000,
             });
+            onClose();
           })
           .catch((error) => {
             showToast({
@@ -214,7 +210,7 @@ function RoleCard({
       }
       footer={
         <>
-          <AccessButton onClick={handleDialogClose} label="Close" />
+          <AccessButton onClick={onClose} label="Close" />
           {!disabled && updateRoles !== undefined && (
             <AccessButton
               data-testid={`submit-btn-dialog`}
@@ -228,7 +224,7 @@ function RoleCard({
       style={{ width: "50vw" }}
       visible
       onHide={() => {
-        handleDialogClose();
+        onClose();
       }}
     >
       <Messages ref={msgs} />
