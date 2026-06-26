@@ -19,14 +19,4 @@ export const DataTablePT: DataTablePassThroughOptions = {
       "aria-label": "Last Paginator Icon",
     },
   },
-  column: ({ props }: { props: any }) => {
-    if (props && props?.sortable === true) {
-      return {
-        sortIcon: {
-          role: "img",
-          "aria-label": `Toggle Sort for Column ${props.header ?? props.field}`,
-        },
-      };
-    }
-  },
 };

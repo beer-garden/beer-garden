@@ -27,6 +27,7 @@ import { AutoCompletePT } from "./passthrough/AutoCompletePT";
 import { ButtonPT } from "./passthrough/ButtonPT";
 import { CalendarPT } from "./passthrough/CalendarPT";
 import { CheckboxPT } from "./passthrough/CheckboxPT";
+import { ColumnPT } from "./passthrough/ColumnPT";
 import { DataTablePT } from "./passthrough/DataTablePT";
 import { DialogPT } from "./passthrough/DialogPT";
 import { DropdownPT } from "./passthrough/DropdownPT";
@@ -128,6 +129,7 @@ function App() {
       autocomplete: AutoCompletePT,
       button: ButtonPT,
       calendar: CalendarPT,
+      column: ColumnPT,
       checkbox: CheckboxPT,
       datatable: DataTablePT,
       dialog: DialogPT,
@@ -493,6 +495,7 @@ function App() {
   }
 
   return (
+    // @ts-expect-error Ignore error calling PassThroughOptions with props
     <PrimeReactProvider value={primeValue}>
       <ToastProvider>
         {config && Object.keys(config).length === 0 && (
