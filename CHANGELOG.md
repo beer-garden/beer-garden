@@ -3,7 +3,7 @@
 # TBD
 TBD
 
-- Fixed but where upstream Gardens did not process publish topics with `_propagated=true` (#) 
+- Fixed but where upstream Gardens did not process publish topics with `_propagated=true` (#2240) 
 
 # 3.33.1
 4/27/2026
