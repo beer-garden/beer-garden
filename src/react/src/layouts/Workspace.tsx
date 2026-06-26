@@ -197,6 +197,8 @@ function Workspace({
     <div>
       <h1>Workspace</h1>
       <AccessButton
+        basic
+        raised
         onClick={() => addItem()}
         aria-label="Add Request"
         tooltip="Add Request"
