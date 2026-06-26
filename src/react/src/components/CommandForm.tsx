@@ -43,6 +43,11 @@ function CommandForm({
     parameter: InputParam,
     lookupParameters: Array<InputParam>,
   ) => {
+    // Skip choice generation if disabled
+    if (disabled) {
+      return;
+    }
+
     const timestamp = Date.now();
 
     const mapChoices = (
