@@ -210,17 +210,18 @@ export const ForceDeleteSystem = async (system: System): Promise<void> => {
 
 export const DetermineLatestSystemVersion = (
   systems: System[],
-  systemName: string | null,
-  systemNameSpace: string | null,
-  systemVersion: string | null,
+  systemName: string | undefined,
+  systemNameSpace: string | undefined,
+  systemVersion: string | undefined,
 ): System => {
   return systems
     .filter((system) => {
       return (
-        (system.namespace === systemNameSpace || systemNameSpace === null) &&
-        (system.name === systemName || systemName === null) &&
+        (system.namespace === systemNameSpace ||
+          systemNameSpace === undefined) &&
+        (system.name === systemName || systemName === undefined) &&
         (system.version === systemVersion ||
-          systemVersion === null ||
+          systemVersion === undefined ||
           systemVersion === "latest")
       );
     })
@@ -230,14 +231,14 @@ export const DetermineLatestSystemVersion = (
           ? currentSystem.version
           : validate(currentSystem.version.replace(".dev", "-dev"))
             ? currentSystem.version.replace(".dev", "-dev")
-            : null;
+            : undefined;
         const latestValid = validate(latestSystem.version)
           ? latestSystem.version
           : validate(latestSystem.version.replace(".dev", "-dev"))
             ? latestSystem.version.replace(".dev", "-dev")
-            : null;
+            : undefined;
 
-        if (currentValid === null && latestValid === null) {
+        if (currentValid === undefined && latestValid === undefined) {
           if (currentSystem.version.localeCompare(latestSystem.version) > 0) {
             return currentSystem;
           } else {
@@ -245,11 +246,11 @@ export const DetermineLatestSystemVersion = (
           }
         }
 
-        if (currentValid === null) {
+        if (currentValid === undefined) {
           return latestSystem;
         }
 
-        if (latestValid === null) {
+        if (latestValid === undefined) {
           return currentSystem;
         }
 

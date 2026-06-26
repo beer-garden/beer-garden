@@ -49,7 +49,7 @@ function CommandForm({
       values:
         | Array<{ text: string; value: string } | string>
         | { [key: string]: Array<{ text: string; value: string } | string> },
-    ): Promise<Array<{ label: string; value: string }>> => {
+    ): Promise<Array<{ label: string; value: string | number }>> => {
       return new Promise((resolve, reject) => {
         if (values === null || values === undefined) {
           resolve([]);
