@@ -1,5 +1,10 @@
 # Beer Garden Changelog
 
+# TBD
+TBD
+
+- Fixed but where upstream Gardens did not process publish topics with `_propagated=true` (#) 
+
 # 3.33.1
 4/27/2026
 
