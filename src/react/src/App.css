@@ -51,6 +51,18 @@
   margin-left: 5px;
 }
 
+/* Condense Tree Menu on Dashboard */
+
+/* Reduce spacing between successive nodes */
+.compact-tree .p-tree-container .p-treenode {
+  padding: 0.1rem 0;
+}
+
+/* Reduce internal padding inside each individual node */
+.compact-tree .p-treenode-content {
+  padding: 0.25rem 0;
+}
+
 /* Start 508 Color Contrast Formatting */
 
 :root {

@@ -261,6 +261,7 @@ function GardenDashboard({
     garden: Garden,
     systems: System[] | undefined,
     upstreamRouting: boolean = true,
+    depth: number = 0,
   ) => {
     const receiving = receivingStatus(garden);
     const publishing = publishingStatus(garden);
@@ -270,6 +271,7 @@ function GardenDashboard({
       statusCounts: generateStatusCounts(garden, systems),
       gardenIcon: gardenIcon(garden, receiving, publishing, upstreamRouting),
       expanded: true,
+      depth: depth,
       children:
         garden?.children && garden.children.length > 0
           ? garden.children.map((child: Garden) =>
@@ -277,6 +279,7 @@ function GardenDashboard({
                 child,
                 systems,
                 upstreamRouting && receiving && publishing,
+                depth + 1,
               ),
             )
           : [],
@@ -560,8 +563,26 @@ function GardenDashboard({
 
   const gardenTreeNode = (node: any, options: any) => {
     return (
-      <div className={options.className}>
+      <div className={`${options.className ?? ""}`}>
         <div>
+          {node.depth === 1 && (
+            <FontAwesomeIcon
+              icon="arrow-turn-up"
+              className={`ml-${node.depth + 1} mr-2 fa-rotate-90 fa-sm`}
+            />
+          )}
+          {node.depth === 2 && (
+            <FontAwesomeIcon
+              icon="arrow-turn-up"
+              className={`ml-${node.depth + 1} mr-2 fa-rotate-90 fa-xs`}
+            />
+          )}
+          {node.depth > 2 && (
+            <FontAwesomeIcon
+              icon="arrow-turn-up"
+              className={`ml-${node.depth + 1} mr-2 fa-rotate-90 fa-2xs`}
+            />
+          )}
           {node.gardenIcon}
           <span className="ml-1">{node.label}</span>
         </div>
@@ -595,6 +616,7 @@ function GardenDashboard({
               }
             }}
             togglerTemplate={<></>}
+            className="compact-tree"
           />
         </div>
 
