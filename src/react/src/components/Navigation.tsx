@@ -11,6 +11,7 @@ import { Config, RequestItem, TourStepProps } from "../models/models";
 import {
   ClearRefresh,
   ClearToken,
+  GetRefresh,
   LogoutCurrentUser,
 } from "../services/token_service";
 import {
@@ -19,6 +20,7 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { GetCurrentUser } from "../services/user_service";
+import { ClearThemes } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import UserOverlay from "./UserOverlay";
 
@@ -57,6 +59,14 @@ function NavigationMenu({
     updateUserName(undefined);
     runReloadUI();
 
+    op.current?.hide();
+  };
+
+  const onClearSession = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    ClearThemes();
+    runReloadUI();
     op.current?.hide();
   };
 
@@ -379,7 +389,11 @@ function NavigationMenu({
   }, [config, authEnabled, username, iconDefault, applicationName]);
 
   useEffect(() => {
-    if (authEnabled && GetCurrentUser() === undefined) {
+    if (
+      authEnabled &&
+      GetCurrentUser() === undefined &&
+      GetRefresh() !== null
+    ) {
       LogoutCurrentUser()
         .then(() => runReloadUI())
         .catch((error) => console.error("Error logging out user:", error));
@@ -439,7 +453,11 @@ function NavigationMenu({
         )}
       </AccessButton>
       <OverlayPanel ref={op} style={{ width: "400px" }}>
-        <UserOverlay username={username} onLogout={onLogout} />
+        <UserOverlay
+          username={username}
+          onLogout={onLogout}
+          onClearSession={onClearSession}
+        />
       </OverlayPanel>
     </div>
   );

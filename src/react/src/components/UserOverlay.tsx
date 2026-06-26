@@ -12,9 +12,11 @@ import UserChangePassword from "./UserChangePassword";
 function UserOverlay({
   username,
   onLogout,
+  onClearSession,
 }: {
   username: string | undefined;
   onLogout: any;
+  onClearSession: any;
 }) {
   const [color, setColor] = useState<string>(
     localStorage.getItem("theme_color") || "blue",
@@ -170,6 +172,20 @@ function UserOverlay({
           </div>
         </>
       )}
+
+      <div>
+        <Divider />
+        <AccessButton
+          size="small"
+          severity="warning"
+          className="mr-2"
+          onClick={onClearSession}
+          data-testid="clear-session-overlay"
+        >
+          <FontAwesomeIcon className="mr-2" icon="eraser" />
+          <span>Clear Browser Data</span>
+        </AccessButton>
+      </div>
     </>
   );
 }
