@@ -5,6 +5,8 @@ TBD
 
 - Fixed bug where GARDEN_UPDATED event of local garden would not return children in 
   websocket event objects (#2146)
+- Fixed bug where Beer Garden creates "Generated/Annotated" topics for downstream systems locally. Causing
+  downstream systems to be triggered by topics that they don't have the scope for. (#2133)
 
 # 3.33.1
 4/27/2026

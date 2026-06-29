@@ -8,7 +8,7 @@ from brewtils.models import Topic as BrewtilsTopic
 
 import beer_garden
 from beer_garden.db.mongo.models import Garden, System, Topic
-from beer_garden.garden import create_garden, update_garden
+from beer_garden.garden import create_garden
 from beer_garden.systems import create_system, remove_system
 from beer_garden.topic import (
     create_topic,
@@ -215,14 +215,7 @@ class TestTopic:
         topics_generated = Topic.objects().count()
         assert topics_generated == 0
 
-    def test_background_garden_topic_prune(self, remote_garden):
-
-        topics_generated = Topic.objects().count()
-        assert topics_generated == 1
-
-        remote_garden.systems = []
-
-        update_garden(remote_garden)
+    def test_remote_no_topics(self, remote_garden):
 
         topics_generated = Topic.objects().count()
         assert topics_generated == 0
