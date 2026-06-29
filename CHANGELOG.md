@@ -1,6 +1,6 @@
 # Beer Garden Changelog
 
-# TBD
+# 3.34.0
 TBD
 
 - Fixed bug where GARDEN_UPDATED event of local garden would not return children in 
