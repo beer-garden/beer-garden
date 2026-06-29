@@ -3,6 +3,7 @@
 # 3.34.0
 TBD
 
+- Fixed but where upstream Gardens did not process publish topics with `_propagated=true` (#2240) 
 - Updated the Request API to support Filters passed directly (#2136)
 - Updated Requests spawned by Jobs metadata to have association by `bg_job_id` instead of `_bg_job_id` (#2136)
 - Fixed bug where Beer Garden creates "Generated/Annotated" topics for downstream systems locally. Causing
