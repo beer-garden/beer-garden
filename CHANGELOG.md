@@ -3,6 +3,8 @@
 # 3.34.0
 TBD
 
+- Updated the Request API to support Filters passed directly (#2136)
+- Updated Requests spawned by Jobs metadata to have association by `bg_job_id` instead of `_bg_job_id` (#2136)
 - Fixed bug where Beer Garden creates "Generated/Annotated" topics for downstream systems locally. Causing
   downstream systems to be triggered by topics that they don't have the scope for. (#2133)
 
