@@ -274,7 +274,7 @@ function App() {
                 !compareGarden.children.some(
                   (child: Garden) => child.id === updatedGarden.id,
                 )
-              ) {                
+              ) {
                 compareGarden.children.push(updatedGarden);
               }
             }
@@ -307,7 +307,7 @@ function App() {
         if (message.payload.systems) {
           updateSystems(upsertSystems(message.payload, systemsRef.current));
         }
-        updateRootGarden(       
+        updateRootGarden(
           upsertGarden(message.payload, rootGardenRef.current as Garden),
         );
       } else if (message.name === "SYSTEM_REMOVED") {
