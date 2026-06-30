@@ -574,12 +574,12 @@ function GardenSummary({
                       <div key={`${status}_Summary`}>
                         <Tooltip
                           content={`${status} Count ${count}`}
-                          target={`#${status}_${selectedGarden?.name}_severity_system_summary`}
+                          target={`#${status}_${selectedGarden?.id}_severity_system_summary`}
                           position="bottom"
                         />
                         <Badge
                           data-testid={`${status}_severity_system_summary`}
-                          id={`${status}_${selectedGarden?.name}_severity_system_summary`}
+                          id={`${status}_${selectedGarden?.id}_severity_system_summary`}
                           value={count}
                           severity={statusSeverity}
                           key={status}
