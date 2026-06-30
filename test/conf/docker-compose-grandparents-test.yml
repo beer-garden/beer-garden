@@ -72,7 +72,7 @@ services:
             - "2337:2337"
             - "2338:2338"
         volumes:
-            - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
+            - ./data/app-logging.yaml:/conf/app-logging.yaml
             - ./data/localplugins:/plugins
             - ./beer_garden_grandparent_children:/children
         environment:
@@ -119,7 +119,7 @@ services:
             - "2347:2337"
             - "2348:2338"
         volumes:
-            - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
+            - ./data/app-logging.yaml:/conf/app-logging.yaml
             - ./data/localplugins:/plugins
             - ./beer_garden_parent_children:/children
         environment:
@@ -181,7 +181,7 @@ services:
             - "2357:2337"
             - "2358:2338"
         volumes:
-            - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
+            - ./data/app-logging.yaml:/conf/app-logging.yaml
             - ./data/localplugins:/plugins
         environment:
             <<: *env

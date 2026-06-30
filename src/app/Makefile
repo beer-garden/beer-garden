@@ -147,59 +147,38 @@ parse_branch_name:
 
 # Docker
 docker-build:
-	docker build -t $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION) -f docker/Dockerfile.alpine --build-arg VERSION=$(VERSION) --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .	
+	docker build -t $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION) -f docker/Dockerfile --build-arg VERSION=$(VERSION) --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .	
 	docker tag $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION) $(DOCKER_NAME):$(SHORT_VERSION)-python$(PYTHON_VERSION)
-
-	docker build -t $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION)-debian -f docker/Dockerfile.debian --build-arg VERSION=$(VERSION) --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
-	docker tag $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION)-debian $(DOCKER_NAME):$(SHORT_VERSION)-python$(PYTHON_VERSION)-debian
 
 docker-tag-latest: docker-build
 	docker tag $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION) $(DOCKER_NAME):latest
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)
-	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)-alpine
-	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)-alpine
-
-	docker tag $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION)-debian $(DOCKER_NAME):$(VERSION)-debian
-	docker tag $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION)-debian $(DOCKER_NAME):$(SHORT_VERSION)-debian
 
 docker-build-unstable: package clean-python
-	docker build -t $(DOCKER_NAME):unstable-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .
-	docker build -t $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)-debian -f docker/Dockerfile.unstable-debian --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
+	docker build -t $(DOCKER_NAME):unstable-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
 
 docker-tag-latest-unstable: docker-build-unstable
 	docker tag $(DOCKER_NAME):unstable-python$(PYTHON_VERSION) $(DOCKER_NAME):unstable
-	docker tag $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)-debian $(DOCKER_NAME):unstable-debian
 
 publish-docker: docker-build
 	docker push $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION)
 	docker push $(DOCKER_NAME):$(SHORT_VERSION)-python$(PYTHON_VERSION)
-	docker push $(DOCKER_NAME):$(VERSION)-python$(PYTHON_VERSION)-debian
-	docker push $(DOCKER_NAME):$(SHORT_VERSION)-python$(PYTHON_VERSION)-debian
 
 publish-docker-latest: docker-tag-latest publish-docker
 	docker push $(DOCKER_NAME):latest
 	docker push $(DOCKER_NAME):$(VERSION)
 	docker push $(DOCKER_NAME):$(SHORT_VERSION)
-	docker push $(DOCKER_NAME):$(VERSION)-alpine
-	docker push $(DOCKER_NAME):$(SHORT_VERSION)-alpine
-	docker push $(DOCKER_NAME):$(VERSION)-debian
-	docker push $(DOCKER_NAME):$(SHORT_VERSION)-debian
 
 publish-docker-unstable: docker-build-unstable ## push the unstable docker image
 	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)
-	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)-debian
 
 publish-docker-unstable-latest: docker-tag-latest-unstable publish-docker-unstable ## push the unstable docker image
 	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)
-	docker push $(DOCKER_NAME):unstable-python$(PYTHON_VERSION)-debian
 
 publish-branch-docker-unstable: parse_branch_name package clean-python
-	docker build -t $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-alpine .
+	docker build -t $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION) -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
 	docker push $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION)
-
-	docker build -t $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION)-debian -f docker/Dockerfile.unstable-debian --build-arg PYTHON_IMAGE=python:$(PYTHON_VERSION)-slim .
-	docker push $(DOCKER_NAME):$(BRANCH_NAME)-$(VERSION)-python$(PYTHON_VERSION)-debian 
 
 # Publishing
 publish-package-test: package ## upload a package to the testpypi

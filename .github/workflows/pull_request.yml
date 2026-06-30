@@ -402,7 +402,7 @@ jobs:
           pip install setuptools wheel
           make package
           make clean-python
-          docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
+          docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-slim .
         working-directory: ./src/app
 
       - name: Update Docker Compose
@@ -537,7 +537,7 @@ jobs:
           pip install setuptools wheel
           make package
           make clean-python
-          docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
+          docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-slim .
           docker tag bgio/beer-garden:unstable bgio/beer-garden:grandparent
           if [ "${{ matrix.parent }}" != "unstable" ]; then
             docker pull bgio/beer-garden:${{ matrix.parent }}
@@ -736,7 +736,7 @@ jobs:
           pip install setuptools wheel
           make package
           make clean-python
-          docker build -t bgio/beer-garden:test -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
+          docker build -t bgio/beer-garden:test -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-slim .
         working-directory: ./src/app
 
       - name: Start Docker Swarm
@@ -1004,7 +1004,7 @@ jobs:
           pip install setuptools wheel
           make package
           make clean-python
-          docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
+          docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-slim .
         working-directory: ./src/app
 
       - name: Update Docker Compose
@@ -1124,7 +1124,7 @@ jobs:
           pip install setuptools wheel
           make package
           make clean-python
-          docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-alpine .
+          docker build -t bgio/beer-garden:unstable -f docker/Dockerfile.unstable --build-arg PYTHON_IMAGE=python:${{ matrix.python-version }}-slim .
           docker tag bgio/beer-garden:unstable bgio/beer-garden:parent
           if [ "${{ matrix.child }}" != "unstable" ]; then
             docker pull bgio/beer-garden:${{ matrix.child }}

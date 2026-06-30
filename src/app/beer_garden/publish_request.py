@@ -158,7 +158,7 @@ def handle_event_filter(event):
 
     if event.name == Events.REQUEST_TOPIC_PUBLISH.name and (
         event.garden == config.get("garden.name")
-        or event.metadata.get("_propagate", False)
+        or event.metadata.get("propagate", False)
     ):
         return False
 
@@ -176,7 +176,7 @@ def handle_event(event: Event):
 
     if event.name == Events.REQUEST_TOPIC_PUBLISH.name and (
         event.garden == config.get("garden.name")
-        or event.metadata.get("_propagate", False)
+        or event.metadata.get("propagate", False)
     ):
 
         topics = get_topics_regex(event.metadata["topic"])

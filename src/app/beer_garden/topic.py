@@ -6,6 +6,7 @@ from brewtils.errors import PluginError
 from brewtils.models import Event, Garden, Subscriber, System, Topic
 from mongoengine import DoesNotExist
 
+import beer_garden.config as config
 import beer_garden.db.api as db
 
 logger = logging.getLogger(__name__)
@@ -363,6 +364,7 @@ def sync_topics_batch():
 
     for system in db.query(
         System,
+        garden_name=config.get("garden.name"),
         include_fields=[
             "garden_name",
             "namespace",
