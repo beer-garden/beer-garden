@@ -28,7 +28,7 @@ services:
             - "2337:2337"
             - "2338:2338"
         volumes:
-            - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
+            - ./data/app-logging.yaml:/conf/app-logging.yaml
             - ./data/localplugins:/plugins
         environment:
             <<: *env
@@ -57,6 +57,14 @@ services:
             # link in our About section if it is defined.
             BG_METRICS_URL: http://localhost:3000
             BG_METRICS_PROMETHEUS_ENABLED: "false"
+
+            # Docker File Defined Variables
+            BG_LOG_CONFIG_FILE: "/conf/app-logging.yaml"
+            BG_PLUGIN_LOCAL_LOGGING_CONFIG_FILE: "/conf/local-plugin-logging.yaml"         
+            BG_PLUGIN_REMOTE_LOGGING_CONFIG_FILE: "/conf/remote-plugin-logging.yaml"
+            BG_PLUGIN_LOCAL_DIRECTORY: "/plugins"
+            BG_CHILDREN_CONFIG_DIRECTORY: "/conf/children"
+
         healthcheck:
             test:
                 [
