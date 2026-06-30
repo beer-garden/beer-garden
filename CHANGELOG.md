@@ -5,6 +5,7 @@ TBD
 
 - Updated the Request API to support Filters passed directly (#2136)
 - Updated Requests spawned by Jobs metadata to have association by `bg_job_id` instead of `_bg_job_id` (#2136)
+- Updated Docker files and Docker Compose to be consistent in Log file and define all environemnt variables (#2249) 
 - Fixed bug where GARDEN_UPDATED event of local garden would not return children in 
   websocket event objects (#2146)
 - Fixed but where upstream Gardens did not process publish topics with `_propagated=true` (#2240) 
