@@ -10,6 +10,9 @@ TBD
 - Fixed but where upstream Gardens did not process publish topics with `_propagated=true` (#2240) 
 - Fixed bug where Beer Garden creates "Generated/Annotated" topics for downstream systems locally. Causing
   downstream systems to be triggered by topics that they don't have the scope for. (#2133)
+  - Fixed issue where RPM install would override select configuration values. Going forward,
+  any CLI arguments provided to `migrate_config` will be treated as default values instead
+  of override values. (#2135)
 
 # 3.33.1
 4/27/2026

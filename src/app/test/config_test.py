@@ -181,6 +181,25 @@ class TestUpdateConfig(object):
         beer_garden.config.load(["-c", config_file], force=True)
         assert beer_garden.config.get("scheduler.job_startup_file") == "new_default"
 
+    def test_migrate_update_defaults_keep_existing(self, tmpdir):
+        config_file = os.path.join(str(tmpdir), "config.yaml")
+
+        with open(config_file, "w") as f:
+            f.write(
+                '{"scheduler":{"max_workers":11, "job_startup_file":"old_value"},'
+                ' "db": {"ttl": {"in_progress":600}}}'
+            )
+
+        beer_garden.config.migrate(
+            ["-c", config_file, "--scheduler-job-startup-file", "new_default"]
+        )
+
+        assert os.path.exists(config_file)
+
+        beer_garden.config.load(["-c", config_file], force=True)
+        assert beer_garden.config.get("scheduler.job_startup_file") != "new_default"
+        assert beer_garden.config.get("scheduler.job_startup_file") == "old_value"
+
 
 class TestGenerateAppLogging(object):
     def test_no_file(self, capsys):
