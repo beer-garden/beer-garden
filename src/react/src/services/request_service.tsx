@@ -96,6 +96,18 @@ export const PostRequest = async (
 ): Promise<Request> => {
   try {
     const headers = GetAuthHeaders();
+    if (
+      request.target_garden &&
+      encodeURI(request.target_garden) == request.target_garden
+    ) {
+      headers.append("Target-Garden", request.target_garden);
+    }
+    if (
+      request.source_garden &&
+      encodeURI(request.source_garden) == request.source_garden
+    ) {
+      headers.append("Source-Garden", request.source_garden);
+    }
 
     for (const [key, value] of Object.entries(headerData || {})) {
       headers.append(key, value as string);

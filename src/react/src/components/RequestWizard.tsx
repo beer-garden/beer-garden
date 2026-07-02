@@ -225,6 +225,11 @@ function RequestWizard({
             s.version == system_version,
         );
         setSelectedSystem(chosenSystem);
+        updateRequestValue({
+          ...request,
+          target_garden: chosenSystem?.garden_name,
+          source_garden: config.garden_name,
+        });
         if (instance_name) {
           if (chosenSystem?.instances?.find((i) => i.name == instance_name)) {
             setSelectedInstance({
@@ -436,6 +441,11 @@ function RequestWizard({
 
   const systemListButtonClick = (system: System) => {
     setSelectedSystem(system);
+    updateRequestValue({
+      ...request,
+      target_garden: selectedSystem?.garden_name,
+      source_garden: config.garden_name,
+    });
     stepperRef.current?.nextCallback();
   };
 

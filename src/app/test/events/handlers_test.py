@@ -164,7 +164,7 @@ class TestHandlers:
         bg_event.payload_type = "Request"
         bg_event.metadata = {
             "topic": "topic",
-            "_propagate": False,
+            "propagate": False,
         }
 
         bg_event.garden = "localgarden"
@@ -172,7 +172,7 @@ class TestHandlers:
         bg_event.garden = "remotegaren"
         self.run_event_handler_test(bg_event, [], monkeypatch)
 
-        bg_event.metadata["_propagate"] = True
+        bg_event.metadata["propagate"] = True
 
         bg_event.garden = "localgarden"
         self.run_event_handler_test(bg_event, ["Publish Requests"], monkeypatch)
