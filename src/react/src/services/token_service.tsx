@@ -162,16 +162,6 @@ const SetToken = (token: string) => {
     );
   }
   ChangePowerUser();
-
-  if (
-    decode.preferences &&
-    typeof decode.preferences.power_user === "boolean"
-  ) {
-    localStorage.setItem(
-      "user_advanced",
-      decode.preferences.power_user.toString(),
-    );
-  }
 };
 
 export const GetToken = (): string | null => {
