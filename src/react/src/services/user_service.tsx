@@ -36,17 +36,6 @@ export const GetCurrentRoles = (): Array<Role> | undefined => {
   return undefined;
 };
 
-export const GetUserTheme = (): string | undefined => {
-  const token = GetToken();
-  if (token !== null) {
-    const decode = jwtDecode<CustomJwtPayload>(token);
-    if (decode.preferences && decode.preferences.theme) {
-      return decode.preferences.theme;
-    }
-  }
-  return undefined;
-};
-
 export const UpdateUserTheme = async (theme: string): Promise<void> => {
   const headers = GetAuthHeaders();
   const username = GetCurrentUser();
@@ -70,20 +59,6 @@ export const UpdateUserTheme = async (theme: string): Promise<void> => {
   }
 };
 
-export const GetUserDarkMode = (): boolean | undefined => {
-  const token = GetToken();
-  if (token !== null) {
-    const decode = jwtDecode<CustomJwtPayload>(token);
-    if (
-      decode.preferences &&
-      typeof decode.preferences.dark_mode === "boolean"
-    ) {
-      return decode.preferences.dark_mode;
-    }
-  }
-  return undefined;
-};
-
 export const UpdateUserDarkMode = async (darkMode: boolean): Promise<void> => {
   const headers = GetAuthHeaders();
   const username = GetCurrentUser();
@@ -105,20 +80,6 @@ export const UpdateUserDarkMode = async (darkMode: boolean): Promise<void> => {
     // Handle non-OK responses (e.g., 404, 500)
     throw new Error(`HTTP error: Status ${response.status}`);
   }
-};
-
-export const GetPowerUserMode = (): boolean | undefined => {
-  const token = GetToken();
-  if (token !== null) {
-    const decode = jwtDecode<CustomJwtPayload>(token);
-    if (
-      decode.preferences &&
-      typeof decode.preferences.power_user === "boolean"
-    ) {
-      return decode.preferences.power_user;
-    }
-  }
-  return undefined;
 };
 
 export const UpdatePowerUserMode = async (

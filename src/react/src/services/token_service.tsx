@@ -148,6 +148,16 @@ const SetToken = (token: string) => {
     localStorage.setItem("theme_dark", decode.preferences.dark_mode.toString());
   }
   ChangeTheme();
+
+  if (
+    decode.preferences &&
+    typeof decode.preferences.power_user === "boolean"
+  ) {
+    localStorage.setItem(
+      "user_advanced",
+      decode.preferences.power_user.toString(),
+    );
+  }
   ChangePowerUser();
 
   if (

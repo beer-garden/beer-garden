@@ -148,7 +148,7 @@ export const ChangeTheme = (color?: string, dark?: boolean) => {
 
 export const ChangePowerUser = (powerUser?: boolean) => {
   if (powerUser === undefined) {
-    powerUser = localStorage.getItem("user_advance") === "true";
+    powerUser = localStorage.getItem("user_advanced") === "true";
   } else {
     localStorage.setItem("user_advanced", powerUser.toString());
   }
