@@ -155,7 +155,9 @@ function SubscriberItem({
       const filtered = gardenItems.current.filter((item) =>
         item.toLowerCase().includes(query),
       );
-      setFilteredGardenItems(filtered.sort((a: string, b: string) => a.localeCompare(b)));
+      setFilteredGardenItems(
+        filtered.sort((a: string, b: string) => a.localeCompare(b)),
+      );
     }
   };
 
@@ -165,7 +167,9 @@ function SubscriberItem({
       const filtered = namespaceItems.current.filter((item) =>
         item.toLowerCase().includes(query),
       );
-      setFilteredNamespaceItems(filtered.sort((a: string, b: string) => a.localeCompare(b)));
+      setFilteredNamespaceItems(
+        filtered.sort((a: string, b: string) => a.localeCompare(b)),
+      );
     }
   };
 
@@ -175,7 +179,9 @@ function SubscriberItem({
       const filtered = systemItems.current.filter((item) =>
         item.toLowerCase().includes(query),
       );
-      setFilteredSystemItems(filtered.sort((a: string, b: string) => a.localeCompare(b)));
+      setFilteredSystemItems(
+        filtered.sort((a: string, b: string) => a.localeCompare(b)),
+      );
     }
   };
 
@@ -185,7 +191,9 @@ function SubscriberItem({
       const filtered = versionItems.current.filter((item) =>
         item.toLowerCase().includes(query),
       );
-      setFilteredVersionItems(filtered.sort((a: string, b: string) => a.localeCompare(b)));
+      setFilteredVersionItems(
+        filtered.sort((a: string, b: string) => a.localeCompare(b)),
+      );
     }
   };
 
@@ -195,7 +203,9 @@ function SubscriberItem({
       const filtered = instanceItems.current.filter((item) =>
         item.toLowerCase().includes(query),
       );
-      setFilteredInstanceItems(filtered.sort((a: string, b: string) => a.localeCompare(b)));
+      setFilteredInstanceItems(
+        filtered.sort((a: string, b: string) => a.localeCompare(b)),
+      );
     }
   };
 
@@ -205,7 +215,9 @@ function SubscriberItem({
       const filtered = commandItems.current.filter((item) =>
         item.toLowerCase().includes(query),
       );
-      setFilteredCommandItems(filtered.sort((a: string, b: string) => a.localeCompare(b)));
+      setFilteredCommandItems(
+        filtered.sort((a: string, b: string) => a.localeCompare(b)),
+      );
     }
   };
 

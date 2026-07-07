@@ -98,11 +98,15 @@ function CommandSelect({
 
     // Check if change
     if (!CompareObjects(namespaces, namespaceList)) {
-      setNamespaces(namespaceList.sort((a: string, b: string) => a.localeCompare(b)),);
+      setNamespaces(
+        namespaceList.sort((a: string, b: string) => a.localeCompare(b)),
+      );
     }
 
     if (!CompareObjects(systemNames, systemNameList)) {
-      setSystemNames(systemNameList.sort((a: string, b: string) => a.localeCompare(b)),);
+      setSystemNames(
+        systemNameList.sort((a: string, b: string) => a.localeCompare(b)),
+      );
     }
 
     const generateLatestSystemVersions = (
@@ -124,9 +128,15 @@ function CommandSelect({
       !CompareObjects(versions, generateLatestSystemVersions(systemVersionList))
     ) {
       if (systemVersionList.includes("latest")) {
-        setVersions(systemVersionList.sort((a: string, b: string) => a.localeCompare(b)));
+        setVersions(
+          systemVersionList.sort((a: string, b: string) => a.localeCompare(b)),
+        );
       } else {
-        setVersions(generateLatestSystemVersions(systemVersionList).sort((a: string, b: string) => a.localeCompare(b)));
+        setVersions(
+          generateLatestSystemVersions(systemVersionList).sort(
+            (a: string, b: string) => a.localeCompare(b),
+          ),
+        );
       }
     }
 
@@ -137,7 +147,9 @@ function CommandSelect({
     }
 
     if (!CompareObjects(commands, commandList)) {
-      setCommands(commandList.sort((a: string, b: string) => a.localeCompare(b)));
+      setCommands(
+        commandList.sort((a: string, b: string) => a.localeCompare(b)),
+      );
     }
 
     if (namespaceList.length === 1 && selectedNamespace !== namespaceList[0]) {
