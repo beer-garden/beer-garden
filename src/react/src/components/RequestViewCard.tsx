@@ -1,9 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Badge } from "primereact/badge";
 import { Card } from "primereact/card";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
-import { Toast } from "primereact/toast";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -34,53 +30,11 @@ function RequestViewCard({
   const requestId = useRef<string | null | undefined>(
     requestItem?.requestId ?? null,
   );
-  const [request, setRequest] = useState<Request | null>(
-    requestItem?.request ?? null,
+  const [request, setRequest] = useState<Request | undefined>(
+    requestItem?.request ?? undefined,
   );
 
-  const toast = useRef(null as null | any);
-
   const navigate = useNavigate();
-
-  const SeverityCheck = (status?: string) => {
-    if (!status) {
-      return "danger";
-    }
-    if (["CREATED"].includes(status)) {
-      return "info";
-    }
-    if (["IN_PROGRESS"].includes(status)) {
-      return "warning";
-    }
-    if (["SUCCESS"].includes(status)) {
-      return "success";
-    }
-    return "danger";
-  };
-
-  const statusTemplate = (request: Request) => {
-    return (
-      <Badge value={request.status} severity={SeverityCheck(request?.status)} />
-    );
-  };
-
-  const CardTitle = () => {
-    let title = "Request View";
-    if (request?.namespace && request?.system && request?.instance_name) {
-      title =
-        request.namespace +
-        " / " +
-        request.system +
-        " / " +
-        request.instance_name;
-    }
-    if (request?.command_display_name) {
-      title += " / " + request.command_display_name;
-    } else if (request?.command) {
-      title += " / " + request.command;
-    }
-    return title;
-  };
 
   const openRequest = () => {
     if (request) {
@@ -88,6 +42,12 @@ function RequestViewCard({
       if (isDialog) {
         removeItem(requestItem.itemId);
       }
+    }
+  };
+
+  const closeRequest = () => {
+    if (requestItem.requestId) {
+      removeItem(requestItem.itemId);
     }
   };
 
@@ -118,7 +78,7 @@ function RequestViewCard({
       ) {
         // First load, force a refresh of data to ensure latest is rendered in case the completed
         // event has already been received before the listener was registered
-        setRequest(null);
+        setRequest(undefined);
       }
     }
 
@@ -196,7 +156,6 @@ function RequestViewCard({
 
   return (
     <Card
-      title={CardTitle()}
       unstyled={isDialog}
       header={
         !isDialog && (
@@ -211,7 +170,6 @@ function RequestViewCard({
         )
       }
     >
-      <Toast ref={toast} />
       {error ? (
         <ErrorPage
           errorCode={getErrorCode(error?.message)}
@@ -221,11 +179,6 @@ function RequestViewCard({
       ) : (
         request && (
           <div>
-            <DataTable value={[request]}>
-              <Column field="command" header="Command"></Column>
-              <Column header="Status" body={statusTemplate}></Column>
-            </DataTable>
-
             {request && (
               <RequestViewMain
                 request={request}
@@ -235,6 +188,7 @@ function RequestViewCard({
                 isCard={true}
                 config={config}
                 openRequest={openRequest}
+                closeRequest={closeRequest}
               />
             )}
           </div>

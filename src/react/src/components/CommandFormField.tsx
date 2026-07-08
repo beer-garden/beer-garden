@@ -13,11 +13,11 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { TriStateCheckbox } from "primereact/tristatecheckbox";
 import { classNames } from "primereact/utils";
 import { useEffect, useRef, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 import { InputParam } from "../models/models";
 import { uploadFile } from "../services/file_service";
 import AccessButton from "./AccessButton";
-
 interface CommandFormFieldParams {
   parameter: InputParam;
   disabled: boolean;
@@ -35,10 +35,10 @@ function CommandFormField({
   loadingChoices,
   resetForm,
 }: CommandFormFieldParams) {
-  //AutoComplete Objects
+  // AutoComplete Objects
   const [items, setItems] = useState<Array<string>>([]);
 
-  //Base64 Stateful Objects
+  // Base64 Stateful Objects
   const [uploadPercentage, setUploadPercentage] = useState(0);
   const fileUploadRef = useRef<FileUpload>(null);
 
@@ -71,6 +71,20 @@ function CommandFormField({
         handleChange(key, param.value);
       }
     });
+  };
+
+  const getMultiValue = (key: any, index: any) => {
+    parametersFields.forEach((param: InputParam) => {
+      if (param.key === key) {
+        if (param.value[index]) {
+          return param.value[index];
+        }
+        if (param.default) {
+          return param.default;
+        }
+      }
+    });
+    return undefined;
   };
 
   const removeMultiItem = (key: any, index: any) => {
@@ -109,11 +123,19 @@ function CommandFormField({
   if (!parameter.key) return null;
 
   if (parameter.multi && !Array.isArray(parameter.default)) {
-    parameter.default = [parameter.default];
+    if (parameter.default === undefined || parameter.default === null) {
+      parameter.default = [];
+    } else {
+      parameter.default = [parameter.default];
+    }
   }
 
   if (parameter.multi && !Array.isArray(parameter.value)) {
-    parameter.value = [parameter.value];
+    if (parameter.value === undefined || parameter.value === null) {
+      parameter.value = [];
+    } else {
+      parameter.value = [parameter.value];
+    }
   }
 
   // Choices = command, static, url
@@ -137,9 +159,16 @@ function CommandFormField({
                   parameter.value === "")) ||
               undefined
             }
-            onChange={(e) => handleChange(e.target.id, e.value)}
+            onChange={(e) =>
+              handleChange(
+                e.target.id,
+                e.value.filter((option: string) =>
+                  parameter.options?.some((opt) => opt.value === option),
+                ),
+              )
+            }
             placeholder={`Select ${parameter.key}`}
-            aria-label={`${inputAreaAriaLabel}: Multi Select`}
+            selectAllLabel={`Select all options for ${parameter.display_name ?? parameter.key}`}
             tooltip={`${inputAreaAriaLabel}: Multi Select`}
             disabled={
               disabled ||
@@ -148,6 +177,27 @@ function CommandFormField({
               loadingChoices.some((loading) => loading.key === parameter.key) ||
               parameter.error
             }
+            pt={{
+              checkbox: (data: any) => {
+                if (
+                  data?.context?.index &&
+                  parameter.options &&
+                  parameter.options[data.context.index]
+                ) {
+                  return {
+                    input: {
+                      "aria-label": `${inputAreaAriaLabel}: Multiselect Option Checkbox: ${parameter.options[data.context.index].label}`,
+                    },
+                  };
+                } else {
+                  return {
+                    input: {
+                      "aria-label": `${inputAreaAriaLabel}: Multiselect Option Checkbox with random UUID generated ${uuidv4()}`,
+                    },
+                  };
+                }
+              },
+            }}
           />
           {loadingChoices &&
             loadingChoices.some((loading) => loading.key === parameter.key) && (
@@ -164,6 +214,11 @@ function CommandFormField({
     }
     return (
       <div key={parameter.key} className="p-field">
+        <datalist id={`select${parameter.key}Dropdown`} aria-hidden="true">
+          {parameter.options?.map((status: any) => (
+            <option key={status.label} value={status.value} />
+          ))}
+        </datalist>
         <Dropdown
           id={parameter.key}
           value={parameter.value}
@@ -178,7 +233,6 @@ function CommandFormField({
           }
           onChange={(e) => handleChange(e.target.id, e.value)}
           placeholder={`Select ${parameter.key}`}
-          aria-label={`${inputAreaAriaLabel}: Dropdown Select`}
           tooltip={`${inputAreaAriaLabel}: Dropdown Select`}
           disabled={
             disabled ||
@@ -186,6 +240,11 @@ function CommandFormField({
             parameter.options.length === 0 ||
             loadingChoices.some((loading) => loading.key === parameter.key)
           }
+          pt={{
+            select: {
+              "aria-controls": `select${parameter.key}Dropdown`,
+            },
+          }}
         />
         {loadingChoices &&
           loadingChoices.some((loading) => loading.key === parameter.key) && (
@@ -228,6 +287,7 @@ function CommandFormField({
           disabled={disabled}
           multiple={parameter.multi}
           dropdown
+          dropdownIcon="pi pi-chevron-down"
           aria-label={`${inputAreaAriaLabel}: String with Typeahead`}
           tooltip={`${inputAreaAriaLabel}: String with Typeahead`}
         />
@@ -250,7 +310,7 @@ function CommandFormField({
     case "String": {
       if (parameter.multi) {
         return (
-          <div key={parameter.key} className="p-field">
+          <div id={parameter.key} key={parameter.key} className="p-field">
             <div className="container">
               {parameter.value?.map((item: any, index: any) => (
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">
@@ -267,15 +327,14 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.target.value, index)
                     }
                     disabled={disabled}
-                    aria-label={`${inputAreaAriaLabel} Index ${index}}: String`}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}}: String`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}: String`}
                   />
                   <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   />
                 </div>
               ))}
@@ -304,16 +363,24 @@ function CommandFormField({
             }
             onChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
-            aria-label={`${inputAreaAriaLabel}: String`}
             tooltip={`${inputAreaAriaLabel}: String`}
           />
         </div>
       );
     }
     case "Dictionary": {
+      const canParseJSON = (str: string) => {
+        try {
+          JSON.parse(str);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
       if (parameter.multi) {
         return (
-          <div key={parameter.key} className="p-field">
+          <div id={parameter.key} key={parameter.key} className="p-field">
             <div className="container">
               {parameter.value?.map((item: any, index: any) => (
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">
@@ -323,22 +390,25 @@ function CommandFormField({
                     invalid={
                       (!disabled &&
                         !parameter.optional &&
-                        (item === undefined || item === null || item === "")) ||
+                        (item === undefined ||
+                          item === null ||
+                          item === "" ||
+                          !canParseJSON(item))) ||
                       undefined
                     }
                     onChange={(e) =>
                       handleMultiChange(parameter.key, e.target.value, index)
                     }
                     disabled={disabled}
-                    aria-label={`${inputAreaAriaLabel} Index ${index}}: Dictionary`}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}}: Dictionary`}
+                    aria-label={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
                   />
                   <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   />
                 </div>
               ))}
@@ -362,13 +432,13 @@ function CommandFormField({
                 !parameter.optional &&
                 (parameter.value === undefined ||
                   parameter.value === null ||
-                  parameter.value === "")) ||
+                  parameter.value === "" ||
+                  !canParseJSON(parameter.value))) ||
               undefined
             }
             onChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
             className={classNames({ "p-invalid": parameter.isInvalid })}
-            aria-label={`${inputAreaAriaLabel}: Dictionary`}
             tooltip={`${inputAreaAriaLabel}: Dictionary`}
           />
         </div>
@@ -377,13 +447,15 @@ function CommandFormField({
     case "Integer": {
       if (parameter.multi) {
         return (
-          <div key={parameter.key} className="p-field">
+          <div id={parameter.key} key={parameter.key} className="p-field">
             <div className="container">
               {parameter.value?.map((item: any, index: any) => (
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">
                   <InputNumber
                     id={`${parameter.key}-${index}`}
-                    value={item ?? parameter.default}
+                    value={
+                      getMultiValue(parameter.key, index) ?? parameter.default
+                    }
                     invalid={
                       (!disabled &&
                         !parameter.optional &&
@@ -404,15 +476,14 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
-                    aria-label={`${inputAreaAriaLabel} Index ${index}}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                   />
                   <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   />
                 </div>
               ))}
@@ -447,7 +518,6 @@ function CommandFormField({
             }
             onValueChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
-            aria-label={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
             tooltip={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
           />
         </div>
@@ -456,7 +526,7 @@ function CommandFormField({
     case "Float": {
       if (parameter.multi) {
         return (
-          <div key={parameter.key} className="p-field">
+          <div id={parameter.key} key={parameter.key} className="p-field">
             <div className="container">
               {parameter.value?.map((item: any, index: any) => (
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">
@@ -484,15 +554,14 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
-                    aria-label={`${inputAreaAriaLabel} Index ${index}}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                   />
                   <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   />
                 </div>
               ))}
@@ -528,7 +597,6 @@ function CommandFormField({
             minFractionDigits={2}
             onValueChange={(e) => handleChange(e.target.id, e.target.value)}
             disabled={disabled}
-            aria-label={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
             tooltip={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
           />
         </div>
@@ -538,7 +606,7 @@ function CommandFormField({
       if (parameter.multi) {
         if (parameter.nullable || parameter.optional) {
           return (
-            <div key={parameter.key} className="p-field">
+            <div id={parameter.key} key={parameter.key} className="p-field">
               <div className="container">
                 {parameter.value?.map((item: any, index: any) => (
                   <div
@@ -561,8 +629,7 @@ function CommandFormField({
                         handleMultiChange(parameter.key, e.value, index)
                       }
                       disabled={disabled}
-                      aria-label={`${inputAreaAriaLabel} Index ${index}}: Boolean`}
-                      tooltip={`${inputAreaAriaLabel} Index ${index}}: Boolean`}
+                      tooltip={`${inputAreaAriaLabel} Index ${index}: Boolean`}
                     />
 
                     <AccessButton
@@ -570,7 +637,7 @@ function CommandFormField({
                       severity="danger"
                       onClick={() => removeMultiItem(parameter.key, index)}
                       disabled={disabled}
-                      tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                      tooltip={`${removeInputAriaLabel} Index ${index}`}
                     />
                   </div>
                 ))}
@@ -585,7 +652,7 @@ function CommandFormField({
           );
         }
         return (
-          <div key={parameter.key} className="p-field">
+          <div id={parameter.key} key={parameter.key} className="p-field">
             <div className="container">
               {parameter.value?.map((item: any, index: any) => (
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">
@@ -603,8 +670,7 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.checked, index)
                     }
                     disabled={disabled}
-                    aria-label={`${inputAreaAriaLabel} Index ${index}}: Boolean`}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}}: Boolean`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}: Boolean`}
                   />
 
                   <AccessButton
@@ -612,7 +678,7 @@ function CommandFormField({
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   />
                 </div>
               ))}
@@ -643,7 +709,6 @@ function CommandFormField({
               value={parameter.value}
               onChange={(e) => handleChange(e.target.id, e.value)}
               disabled={disabled}
-              aria-label={`${inputAreaAriaLabel}: Boolean`}
               tooltip={`${inputAreaAriaLabel}: Boolean`}
             />
           </div>
@@ -665,7 +730,6 @@ function CommandFormField({
             checked={parameter.value}
             onChange={(e) => handleChange(e.target.id, e.checked)}
             disabled={disabled}
-            aria-label={`${inputAreaAriaLabel}: Boolean`}
             tooltip={`${inputAreaAriaLabel}: Boolean`}
           />
         </div>
@@ -674,7 +738,7 @@ function CommandFormField({
     case "Date": {
       if (parameter.multi) {
         return (
-          <div key={parameter.key} className="p-field">
+          <div id={parameter.key} key={parameter.key} className="p-field">
             <div className="container">
               {parameter.value?.map((item: any, index: any) => (
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">
@@ -692,15 +756,14 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
-                    aria-label={`${inputAreaAriaLabel} Index ${index}}: Date`}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}}: Date`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}: Date`}
                   />
                   <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   />
                 </div>
               ))}
@@ -730,7 +793,6 @@ function CommandFormField({
             hourFormat="24"
             onChange={(e: any) => handleChange(e.target.id, e.value)}
             disabled={disabled}
-            aria-label={`${inputAreaAriaLabel}: Date`}
             tooltip={`${inputAreaAriaLabel}: Date`}
           />
         </div>
@@ -739,7 +801,7 @@ function CommandFormField({
     case "DateTime": {
       if (parameter.multi) {
         return (
-          <div key={parameter.key} className="p-field">
+          <div id={parameter.key} key={parameter.key} className="p-field">
             <div className="container">
               {parameter.value?.map((item: any, index: any) => (
                 <div key={`${parameter.key}-${index}`} className="dynamic-item">
@@ -758,15 +820,14 @@ function CommandFormField({
                       handleMultiChange(parameter.key, e.value, index)
                     }
                     disabled={disabled}
-                    aria-label={`${inputAreaAriaLabel} Index ${index}}: DateTime`}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}}: DateTime`}
+                    tooltip={`${inputAreaAriaLabel} Index ${index}: DateTime`}
                   />
                   <AccessButton
                     label="Remove"
                     severity="danger"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}}`}
+                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   />
                 </div>
               ))}
@@ -797,7 +858,6 @@ function CommandFormField({
             }
             onChange={(e: any) => handleChange(e.target.id, e.value)}
             disabled={disabled}
-            aria-label={`${inputAreaAriaLabel}: DateTime`}
             tooltip={`${inputAreaAriaLabel}: DateTime`}
           />
         </div>
@@ -810,15 +870,14 @@ function CommandFormField({
       };
 
       return (
-        <div key={parameter.key} className="p-field">
+        <div id={parameter.key} key={parameter.key} className="p-field">
           <FileUpload
-            ref={bytesUploadRef}
             id={parameter.key}
+            ref={bytesUploadRef}
             mode="basic"
             customUpload
             onSelect={customBytesUploader}
             disabled={disabled}
-            aria-label={`${inputAreaAriaLabel}: File Upload Bytes`}
           />
         </div>
       );
@@ -849,10 +908,10 @@ function CommandFormField({
       };
 
       return (
-        <div key={parameter.key} className="p-field">
+        <div id={parameter.key} key={parameter.key} className="p-field">
           <FileUpload
-            ref={fileUploadRef}
             id={parameter.key}
+            ref={fileUploadRef}
             // mode="basic"
             customUpload
             auto
@@ -865,7 +924,6 @@ function CommandFormField({
                 displayValueTemplate={() => `${uploadPercentage}%`}
               />
             }
-            aria-label={`${inputAreaAriaLabel}: File Upload Base64`}
           />
         </div>
       );

@@ -1,12 +1,12 @@
 import { ScrollPanel } from "primereact/scrollpanel";
 import { Skeleton } from "primereact/skeleton";
-import { Toast } from "primereact/toast";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import CommandForm from "../components/CommandForm";
 import CommandSelect from "../components/CommandSelect";
 import { Command, Request, System } from "../models/brewtils-types";
-import { RequestCommand } from "../models/models";
+import { Config, RequestCommand } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import {
   DetermineLatestSystemVersion,
   GetSystemList,
@@ -21,6 +21,7 @@ function CommandCreate({
   setResetForm,
   setIsFormValid,
   callback,
+  config,
 }: {
   request?: Request;
   setRequest: (request: Request) => void;
@@ -30,14 +31,20 @@ function CommandCreate({
   setResetForm: (reset: boolean) => void;
   setIsFormValid: (isValid: boolean) => void;
   callback?: () => void;
+  config: Config;
 }) {
-  const toast = useRef(null as null | any);
-
   const [systems, setSystems] = useState<Array<System>>([]);
+
+  // Need to get selected system from child component
+  const [selectedSystem, setSelectedSystem] = useState<System | undefined>(
+    undefined,
+  );
 
   // Command Panel
   const [showCommand, setShowCommand] = useState<boolean>(false);
   const [command, setCommand] = useState<Command | null>(null);
+
+  const showToast = useToast();
 
   // Effect only runs at startup to get systems
   useEffect(() => {
@@ -46,7 +53,12 @@ function CommandCreate({
         setSystems(data);
       })
       .catch((error) => {
-        console.error("Error fetching system list:", error);
+        showToast({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching system list: ${error}`,
+          life: 3000,
+        });
       });
   }, []);
 
@@ -102,7 +114,11 @@ function CommandCreate({
           });
         }
       }
-      setRequest(updatedRequest);
+      setRequest({
+        ...updatedRequest,
+        target_garden: selectedSystem?.garden_name,
+        source_garden: config.garden_name,
+      });
       setShowCommand(true);
       if (callback) {
         callback();
@@ -173,10 +189,10 @@ function CommandCreate({
 
   return (
     <div>
-      <Toast ref={toast} />
       {systems && systems.length > 0 && (
         <CommandSelect
           systems={systems}
+          setSelectedSystem={setSelectedSystem}
           requestCommand={requestCommand}
           setRequestCommand={setRequestCommand}
           validCommand={true}

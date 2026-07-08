@@ -5,8 +5,7 @@ import { confirmDialog } from "primereact/confirmdialog";
 import { DataTable, SortOrder } from "primereact/datatable";
 import { Message } from "primereact/message";
 import { Tag } from "primereact/tag";
-import { Toast } from "primereact/toast";
-import { RefObject, useCallback, useEffect, useRef, useState } from "react";
+import { RefObject, useCallback, useEffect, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
 import UserChangeAccountMapping from "../components/UserChangeAccountMapping";
@@ -15,6 +14,7 @@ import UserChangeRoles from "../components/UserChangeRoles";
 import UserCreate from "../components/UserCreate";
 import { Role, User } from "../models/brewtils-types";
 import { Config, TourStepProps } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { RevokeToken } from "../services/token_service";
 import {
   AddTourStep,
@@ -22,7 +22,7 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { DeleteUser, GetUsers, RescanUsers } from "../services/user_service";
-import { ColumnPassThrough, PaginatorTemplate } from "../services/util_service";
+import { PaginatorTemplate } from "../services/util_service";
 
 function UserIndex({
   config,
@@ -31,7 +31,7 @@ function UserIndex({
   config: Config;
   tourStepsRef: RefObject<Array<TourStepProps>>;
 }) {
-  const toast = useRef<Toast>(null);
+  const showToast = useToast();
   const [users, setUsers] = useState<Array<User>>([]);
   const [loading, setLoading] = useState(false);
   const [first, setFirst] = useState<number>(0);
@@ -348,7 +348,7 @@ function UserIndex({
                 rowData.metadata?.has_token === undefined ||
                 rowData.metadata?.has_token === false
               ) {
-                toast.current?.show({
+                showToast({
                   severity: "warn",
                   summary: "Revoke Token",
                   detail: `No active token to revoke for ${rowData?.username}`,
@@ -359,7 +359,7 @@ function UserIndex({
               RevokeToken(rowData.username)
                 .then(() => {
                   loadUsers();
-                  toast.current?.show({
+                  showToast({
                     severity: "info",
                     summary: "Revoke Token",
                     detail: `Successfully revoked token for ${rowData.username}`,
@@ -368,7 +368,7 @@ function UserIndex({
                 })
                 .catch((error) => {
                   console.error("Error Revoking Token", error);
-                  toast.current?.show({
+                  showToast({
                     severity: "error",
                     summary: "Revoke Token",
                     detail: `Error revoking token for ${rowData.username}`,
@@ -446,7 +446,7 @@ function UserIndex({
                 if (rowData.username) {
                   DeleteUser(rowData.username)
                     .then(() => {
-                      toast.current?.show({
+                      showToast({
                         severity: "info",
                         summary: "Delete User",
                         detail: `Successfully deleted ${rowData.username}`,
@@ -455,7 +455,7 @@ function UserIndex({
                       loadUsers();
                     })
                     .catch((error) =>
-                      toast.current?.show({
+                      showToast({
                         severity: "error",
                         summary: "Error",
                         detail: `Error attempting to delete user: ${error}`,
@@ -516,7 +516,7 @@ function UserIndex({
     RescanUsers()
       .then(() => {
         loadUsers();
-        toast.current?.show({
+        showToast({
           severity: "info",
           summary: "Confirmation",
           detail: "Rescan complete",
@@ -524,7 +524,7 @@ function UserIndex({
         });
       })
       .catch((error) => {
-        toast.current?.show({
+        showToast({
           severity: "error",
           summary: "Error",
           detail: `Error rescanning users: ${error}`,
@@ -543,7 +543,7 @@ function UserIndex({
       })
       .catch((error) => {
         setLoading(false);
-        toast.current?.show({
+        showToast({
           severity: "error",
           summary: "Error",
           detail: `Error fetching users: ${error}`,
@@ -596,7 +596,6 @@ function UserIndex({
 
   return (
     <div>
-      <Toast ref={toast} />
       <div className="flex items-end ml-2 page-header">
         <h1 className="flex-1">User Management</h1>
 
@@ -651,7 +650,6 @@ function UserIndex({
           isAdmin={true}
           showPasswordDialog={showPasswordDialog}
           setShowPasswordDialog={setShowPasswordDialog}
-          toast={toast}
           callback={loadUsers}
         />
       )}
@@ -660,7 +658,6 @@ function UserIndex({
           user={rolesUser}
           showRolesDialog={showRolesDialog}
           setShowRolesDialog={setShowRolesDialog}
-          toast={toast}
           callback={loadUsers}
         />
       )}
@@ -671,7 +668,6 @@ function UserIndex({
           config={config}
           showAccountMappingDialog={showAccountMappingDialog}
           setShowAccountMappingDialog={setShowAccountMappingDialog}
-          toast={toast}
           callback={loadUsers}
         />
       )}
@@ -680,7 +676,6 @@ function UserIndex({
         <UserCreate
           showCreateUserDialog={showCreateUserDialog}
           setShowCreateUserDialog={setShowCreateUserDialog}
-          toast={toast}
           callback={loadUsers}
         />
       )}
@@ -712,7 +707,6 @@ function UserIndex({
           sortable
           header="Username"
           body={userNameTemplate}
-          pt={ColumnPassThrough("username")}
         />
         <Column header="Max Permission" body={maxPermissionTemplate} />
         <Column header="Last Authenticated" body={lastAuthenticatedTemplate} />

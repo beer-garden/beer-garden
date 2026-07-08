@@ -4,7 +4,6 @@ import { Badge } from "primereact/badge";
 import { MultiSelect } from "primereact/multiselect";
 import { Skeleton } from "primereact/skeleton";
 import { Tag } from "primereact/tag";
-import { Toast } from "primereact/toast";
 import { Tooltip } from "primereact/tooltip";
 import { Tree } from "primereact/tree";
 import { RefObject, useEffect, useRef, useState } from "react";
@@ -57,7 +56,6 @@ function GardenDashboard({
   );
 
   const [gardenMenu, setGardenMenu] = useState<Array<any>>();
-  const toast = useRef<Toast>(null);
 
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -439,12 +437,12 @@ function GardenDashboard({
           <div key={`${status}_${garden?.name}_count`}>
             <Tooltip
               content={`${status} Count ${count} for ${garden?.name}`}
-              target={`#${status}_${garden?.name}_menu_severity_system_summary`}
+              target={`#${status}_${garden?.id}_menu_severity_system_summary`}
               position="bottom"
             />
             <Badge
               value={count}
-              id={`${status}_${garden?.name}_menu_severity_system_summary`}
+              id={`${status}_${garden?.id}_menu_severity_system_summary`}
               severity={statusSeverity}
               key={`${status}_${garden?.name}`}
             />
@@ -576,7 +574,6 @@ function GardenDashboard({
 
   return (
     <div>
-      <Toast ref={toast} />
       {/* LEFT NAV TREE */}
       <div className="flex flex-wrap">
         <div
@@ -653,7 +650,6 @@ function GardenDashboard({
                     >
                       <UnassociatedRunnerCard
                         runnerGroup={runnerGroup}
-                        toast={toast}
                         config={config}
                       />
                     </div>
@@ -666,7 +662,6 @@ function GardenDashboard({
                     >
                       <SystemCard
                         system={system}
-                        toast={toast}
                         tourStepsRef={tourStepsRef}
                         selectedGarden={selectedGarden?.name}
                         addRequestItem={addRequestItem}

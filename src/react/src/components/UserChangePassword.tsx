@@ -1,9 +1,9 @@
 import { Dialog } from "primereact/dialog";
 import { Messages } from "primereact/messages";
 import { Password } from "primereact/password";
-import { Toast } from "primereact/toast";
-import { ChangeEvent, RefObject, useRef, useState } from "react";
+import { ChangeEvent, useRef, useState } from "react";
 
+import { useToast } from "../providers/ToastProvider";
 import {
   AdminUpdatePassword,
   UserUpdatePassword,
@@ -15,16 +15,15 @@ function UserChangePassword({
   isAdmin,
   showPasswordDialog,
   setShowPasswordDialog,
-  toast,
   callback,
 }: {
   username: string;
   isAdmin: boolean;
   showPasswordDialog: boolean;
   setShowPasswordDialog: (show: boolean) => void;
-  toast: RefObject<Toast | null>;
   callback?: () => void;
 }) {
+  const showToast = useToast();
   const [currentPassword, setCurrentPassword] = useState<string | undefined>(
     undefined,
   );
@@ -61,7 +60,7 @@ function UserChangePassword({
             callback();
           }
           handleUserPasswordDialogClose();
-          toast.current?.show({
+          showToast({
             severity: "success",
             summary: "Success",
             detail: `Password updated for user ${username}`,
@@ -95,7 +94,7 @@ function UserChangePassword({
             callback();
           }
           handleUserPasswordDialogClose();
-          toast.current?.show({
+          showToast({
             severity: "success",
             summary: "Success",
             detail: `Password updated for user ${username}`,
@@ -158,6 +157,7 @@ function UserChangePassword({
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setCurrentPassword(e.target.value)
               }
+              tooltip="Enter Current Password"
             />
           </>
         )}
@@ -173,6 +173,7 @@ function UserChangePassword({
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
             setNewPassword(e.target.value)
           }
+          tooltip="Enter New Password"
         />
         <label htmlFor="confirmPassword" className="font-bold">
           Confirm Password
@@ -188,6 +189,7 @@ function UserChangePassword({
             setConfirmPassword(e.target.value);
             setConfirmPasswordInvalid(e.target.value !== newPassword);
           }}
+          tooltip="Confirm New Password"
         />
       </div>
     </Dialog>

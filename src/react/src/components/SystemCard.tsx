@@ -5,7 +5,6 @@ import { Divider } from "primereact/divider";
 import { Menu } from "primereact/menu";
 import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
-import { Toast } from "primereact/toast";
 import { Tooltip } from "primereact/tooltip";
 import { RefObject, useEffect, useRef, useState } from "react";
 
@@ -16,6 +15,7 @@ import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
 import { Instance, Runner, System } from "../models/brewtils-types";
 import { Config, PermissionCheck } from "../models/models";
 import { RequestCommand, RequestItem, TourStepProps } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { StartInstance, StopInstance } from "../services/instance_service";
 import { checkPermission } from "../services/permission_service";
 import { DeleteSystem, ReloadSystem } from "../services/system_service";
@@ -28,7 +28,6 @@ import {
 interface SystemCardProps {
   system: System;
   selectedGarden?: string;
-  toast?: RefObject<Toast | null>;
   config: Config;
   tourStepsRef?: RefObject<Array<TourStepProps>>;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
@@ -38,12 +37,12 @@ interface SystemCardProps {
 function SystemCard({
   system,
   selectedGarden,
-  toast,
   config,
   tourStepsRef,
   addRequestItem,
   associatedRunners,
 }: SystemCardProps) {
+  const showToast = useToast();
   const instanceConfigMenu = useRef<Menu>(null);
 
   const [logsVisible, setLogsVisible] = useState(false);
@@ -267,14 +266,12 @@ function SystemCard({
     const accept = () => {
       DeleteSystem(system)
         .then(() => {
-          if (toast && toast.current) {
-            toast.current?.show({
-              severity: "info",
-              summary: "Confirmation",
-              detail: `Deleted system ${system.name}`,
-              life: 3000,
-            });
-          }
+          showToast({
+            severity: "info",
+            summary: "Confirmation",
+            detail: `Deleted system ${system.name}`,
+            life: 3000,
+          });
         })
         .catch((error) => {
           console.error("Error deleting system:", error);
@@ -458,23 +455,25 @@ function SystemCard({
       <div>
         <ButtonGroup>
           <AccessButton
-            severity="success"
             size="small"
             onClick={() => handleStartInstance(instance, system)}
             title={`Start Instance ${instance.name} in ${system.namespace}.${system.name}.${system.version}`}
             {...GenerateTourProps(startInstanceTourStep)}
             {...permissions}
+            raised
+            basic
             permission="PLUGIN_ADMIN"
           >
             <FontAwesomeIcon icon="play" />
           </AccessButton>
           <AccessButton
-            severity="warning"
             size="small"
             onClick={() => handleStopInstance(instance, system)}
             title={`Stop Instance ${instance.name} in ${system.namespace}.${system.name}.${system.version}`}
             {...GenerateTourProps(stopInstanceTourStep)}
             {...permissions}
+            raised
+            basic
             permission="PLUGIN_ADMIN"
           >
             <FontAwesomeIcon icon="stop" />
@@ -505,12 +504,13 @@ function SystemCard({
             onClose={closeCancelDeleteDialog}
           />
           <AccessButton
-            severity="info"
             size="small"
             title={`Admin Tools for ${instance.name}`}
             onClick={(e) => instanceConfigMenu?.current?.toggle(e)}
             {...permissions}
             permission="OPERATOR"
+            raised
+            basic
           >
             <FontAwesomeIcon icon="bars" />
           </AccessButton>
@@ -549,65 +549,63 @@ function SystemCard({
   };
   return (
     <>
-      <Panel
-        key={system.id}
-        id={system.id}
-        headerTemplate={headerTemplate}
-        pt={{
-          content: { "aria-labelledby": undefined },
-          header: { "aria-labelledby": undefined },
-          toggleableContent: { "aria-labelledby": undefined },
-        }}
-      >
+      <Panel key={system.id} id={system.id} headerTemplate={headerTemplate}>
         <div className="mb-3">
           <div style={{ float: "right", marginLeft: "2px" }}>
             <ButtonGroup>
               <AccessButton
-                severity="success"
                 size="small"
                 title={`Start System ${system.namespace}.${system.name}.${system.version}`}
                 onClick={() => startSystem(system)}
                 {...GenerateTourProps(startInstancesTourStep)}
                 {...permissions}
                 permission="PLUGIN_ADMIN"
+                raised
+                basic
               >
                 <FontAwesomeIcon icon="play" />
               </AccessButton>
               <AccessButton
-                severity="warning"
                 size="small"
                 title={`Stop System ${system.namespace}.${system.name}.${system.version}`}
                 onClick={() => stopSystem(system)}
+                className="mr-2"
                 {...GenerateTourProps(stopInstancesTourStep)}
                 {...permissions}
                 permission="PLUGIN_ADMIN"
+                raised
+                basic
               >
                 <FontAwesomeIcon icon="stop" />
               </AccessButton>
+            </ButtonGroup>
+            <ButtonGroup>
               <AccessButton
-                severity="info"
                 size="small"
-                title={`Refresh System ${system.namespace}.${system.name}.${system.version}`}
+                title={`Reload configuration for System ${system.namespace}.${system.name}.${system.version}`}
                 onClick={() => reloadSystem(system)}
-                className="mr-2"
                 {...GenerateTourProps(restartSystemTourStep)}
                 {...permissions}
                 permission="PLUGIN_ADMIN"
+                raised
+                basic
               >
                 <FontAwesomeIcon icon="refresh" />
               </AccessButton>
+
+              <AccessButton
+                size="small"
+                title={`Delete System ${system.namespace}.${system.name}.${system.version}`}
+                onClick={() => deleteSystem(system)}
+                {...GenerateTourProps(deleteSystemTourStep)}
+                {...permissions}
+                permission="PLUGIN_ADMIN"
+                raised
+                basic
+              >
+                <FontAwesomeIcon icon="trash" />
+              </AccessButton>
             </ButtonGroup>
-            <AccessButton
-              severity="danger"
-              size="small"
-              title={`Delete System ${system.namespace}.${system.name}.${system.version}`}
-              onClick={() => deleteSystem(system)}
-              {...GenerateTourProps(deleteSystemTourStep)}
-              {...permissions}
-              permission="PLUGIN_ADMIN"
-            >
-              <FontAwesomeIcon icon="trash" />
-            </AccessButton>
           </div>
 
           <div style={{ minHeight: "40px" }}>{system.description}</div>

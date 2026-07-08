@@ -1,7 +1,12 @@
 import { jwtDecode } from "jwt-decode";
 
 import { CustomJwtPayload } from "../models/models";
-import { ChangeTheme, GetBaseURL } from "./util_service";
+import {
+  ChangePowerUser,
+  ChangeTheme,
+  ClearThemes,
+  GetBaseURL,
+} from "./util_service";
 
 export const UserLogin = async (
   username: string,
@@ -61,10 +66,8 @@ export const DoRefresh = async (headerData?: any) => {
     });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
-      ClearRefresh().catch((error) => {
-        console.error("Error Clearing Refresh Token:", error);
-      });
-      ClearToken();
+      await LogoutCurrentUser();
+
       throw new Error(`HTTP error: Status ${response.status}`);
     }
     const data = await response.json();
@@ -86,7 +89,7 @@ const SetRefresh = (refresh: string) => {
   localStorage.setItem("refresh", refresh);
 };
 
-const GetRefresh = () => {
+export const GetRefresh = () => {
   return localStorage.getItem("refresh");
 };
 
@@ -115,7 +118,7 @@ export const ClearRefresh = async () => {
 export const preemptiveRefresh = () => {
   const token = GetToken();
 
-  if (token) {
+  if (token != null) {
     const exp = jwtDecode(token).exp;
     if (exp) {
       const expDate = new Date(exp * 1000);
@@ -148,6 +151,17 @@ const SetToken = (token: string) => {
     localStorage.setItem("theme_dark", decode.preferences.dark_mode.toString());
   }
   ChangeTheme();
+
+  if (
+    decode.preferences &&
+    typeof decode.preferences.power_user === "boolean"
+  ) {
+    localStorage.setItem(
+      "user_advanced",
+      decode.preferences.power_user.toString(),
+    );
+  }
+  ChangePowerUser();
 };
 
 export const GetToken = (): string | null => {
@@ -161,7 +175,7 @@ export const ClearToken = () => {
 export const GetAuthHeaders = () => {
   const headers = new Headers();
   const token = GetToken();
-  if (token) {
+  if (token !== null) {
     headers.append("Authorization", `Bearer ${token}`);
   }
   return headers;
@@ -179,4 +193,25 @@ export const RevokeToken = async (username: string) => {
     // Handle non-OK responses (e.g., 404, 500)
     throw new Error(`HTTP error: Status ${response.status}`);
   }
+};
+
+export const LogoutCurrentUser = async () => {
+  // Logout for tokens/refresh
+  if (GetToken() !== null) {
+    ClearToken();
+  }
+  if (GetRefresh()) {
+    await ClearRefresh().catch((error) => {
+      console.error("Error clearing Refresh Token:", error);
+    });
+  }
+
+  // Remove Gardens and Systems cached
+  sessionStorage.clear();
+
+  // Resets to default Blue/Light Mode
+  ClearThemes();
+
+  // Reset Advance User Setting
+  localStorage.removeItem("user_advanced");
 };

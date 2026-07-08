@@ -75,21 +75,30 @@ function RequestWizard({
 
   // Input Request
   const [request, setRequest] = useState<Request | undefined>(
-    (requestItem?.request ?? requestItem.requestCommandInput)
-      ? {
-          system: requestItem.requestCommandInput?.systemName,
-          system_version: requestItem.requestCommandInput?.version,
-          namespace: requestItem.requestCommandInput?.namespace,
-          instance_name: requestItem.requestCommandInput?.instance,
-          command: requestItem.requestCommandInput?.command,
-        }
-      : undefined,
+    requestItem?.request ??
+      (requestItem.requestCommandInput
+        ? {
+            system: requestItem.requestCommandInput?.systemName,
+            system_version: requestItem.requestCommandInput?.version,
+            namespace: requestItem.requestCommandInput?.namespace,
+            instance_name: requestItem.requestCommandInput?.instance,
+            command: requestItem.requestCommandInput?.command,
+          }
+        : undefined),
   );
+
   const updateRequestValue = (requestValue: Request | undefined) => {
     setRequest(requestValue);
     updateRequestItem({
       ...requestItem,
       request: requestValue,
+      requestCommandInput: {
+        namespace: requestValue?.namespace,
+        systemName: requestValue?.system,
+        version: requestValue?.system_version,
+        instance: requestValue?.instance_name,
+        command: requestValue?.command,
+      },
     });
   };
 
@@ -216,6 +225,11 @@ function RequestWizard({
             s.version == system_version,
         );
         setSelectedSystem(chosenSystem);
+        updateRequestValue({
+          ...request,
+          target_garden: chosenSystem?.garden_name,
+          source_garden: config.garden_name,
+        });
         if (instance_name) {
           if (chosenSystem?.instances?.find((i) => i.name == instance_name)) {
             setSelectedInstance({
@@ -364,7 +378,10 @@ function RequestWizard({
         .catch((error) => {
           console.error("Error fetching job:", error);
         });
-    } else if (requestItem?.job !== undefined) {
+    } else if (
+      requestItem?.job !== undefined &&
+      requestItem.job?.request_template !== undefined
+    ) {
       const job = requestItem.job;
       findSelectedSystem(
         job.request_template?.namespace,
@@ -424,6 +441,11 @@ function RequestWizard({
 
   const systemListButtonClick = (system: System) => {
     setSelectedSystem(system);
+    updateRequestValue({
+      ...request,
+      target_garden: selectedSystem?.garden_name,
+      source_garden: config.garden_name,
+    });
     stepperRef.current?.nextCallback();
   };
 
@@ -551,16 +573,48 @@ function RequestWizard({
             nav: {
               "aria-label":
                 "Three step process of finding and executing create request",
+              "aria-description":
+                "Step 1: Pick System, Step 2: Pick Command, Step 3: Populate Create Request Form. Framework utilizes <ul> to generate breadcrumbs, this could confuses screen readers",
+              role: "tablist",
+            },
+            root: {
+              role: undefined,
             },
           }}
           onChangeStep={handleChangeStep}
         >
           <StepperPanel
             header="Pick System"
-            aria-label="Pick System Step"
             pt={{
-              action: {
-                "aria-label": "Pick System Step",
+              action: ({ context }: { context: any }) => {
+                return {
+                  id: `${requestItem.itemId}_tab_1`,
+                  "aria-controls": context.active
+                    ? `${requestItem.itemId}_stepper_1`
+                    : undefined,
+                  "aria-label": `${requestItem.itemId} Pick System Step`,
+                  "aria-description": context.active
+                    ? "First step in creating a request where you select the system for your request."
+                    : "First step in creating a request where you select the system for your request, currently inactive.",
+                };
+              },
+              content: {
+                id: `${requestItem.itemId}_stepper_1`,
+                role: "tabpanel",
+                "aria-labelledby": `${requestItem.itemId}_tab_1`,
+              },
+              number: {
+                style: {
+                  color: "var(--info-color)",
+                  backgroundColor: "var(--info-background-color)",
+                },
+              },
+              separator: {
+                "aria-hidden": undefined,
+                tabIndex: -1,
+                style: {
+                  color: "var(--info-background-color)",
+                },
               },
             }}
           >
@@ -569,13 +623,50 @@ function RequestWizard({
           <StepperPanel
             header="Pick Command"
             pt={{
-              action: {
-                "aria-label": "Pick Command Step",
+              action: ({ context }: { context: any }) => {
+                return {
+                  id: `${requestItem.itemId}_tab_2`,
+                  "aria-controls": context.active
+                    ? `${requestItem.itemId}_stepper_2`
+                    : undefined,
+                  "aria-label": `${requestItem.itemId} Pick Command Step`,
+                  "aria-description": context.active
+                    ? "Second step in creating a request where you select the command for your request."
+                    : "Second step in creating a request where you select the command for your request, currently inactive.",
+                };
+              },
+              content: {
+                id: `${requestItem.itemId}_stepper_2`,
+                role: "tabpanel",
+                "aria-labelledby": `${requestItem.itemId}_tab_2`,
+              },
+              number: {
+                style: {
+                  color: "var(--info-color)",
+                  backgroundColor: "var(--info-background-color)",
+                },
+              },
+              separator: {
+                "aria-hidden": undefined,
+                tabIndex: -1,
+                style: {
+                  color: "var(--info-background-color)",
+                },
               },
               header: stepperPanel1Options,
             }}
           >
-            <BreadCrumb model={breadcrumbs} className="mb-2" />
+            <BreadCrumb
+              model={breadcrumbs}
+              className="mb-2"
+              aria-label="test"
+              pt={{
+                menu: {
+                  "aria-description":
+                    "Breadcrumb navigation for system and instance selection steps of request creation. Items in list has CSS injected list-style-type:none causing screen testers to fail",
+                },
+              }}
+            />
             <CommandList
               selectedSystem={selectedSystem}
               commandListButtonClick={commandListButtonClick}
@@ -604,19 +695,63 @@ function RequestWizard({
           <StepperPanel
             header="Form"
             pt={{
-              action: {
-                "aria-label": "Populate Create Request Form Step",
+              action: ({ context }: { context: any }) => {
+                return {
+                  id: `${requestItem.itemId}_tab_3`,
+                  "aria-controls": context.active
+                    ? `${requestItem.itemId}_stepper_3`
+                    : undefined,
+                  "aria-label": `${requestItem.itemId} Populate Create Request Form Step`,
+                  "aria-description": context.active
+                    ? "Third step in creating a request where you populate the form for your request."
+                    : "Third step in creating a request where you populate the form for your request, currently inactive.",
+                };
+              },
+              content: {
+                id: `${requestItem.itemId}_stepper_3`,
+                role: "tabpanel",
+                "aria-labelledby": `${requestItem.itemId}_tab_3`,
+              },
+              number: {
+                style: {
+                  color: "var(--info-color)",
+                  backgroundColor: "var(--info-background-color)",
+                },
+              },
+              separator: {
+                "aria-hidden": undefined,
+                tabIndex: -1,
+                style: {
+                  color: "var(--info-background-color)",
+                },
               },
               header: stepperPanel2Options,
             }}
           >
-            <BreadCrumb model={commandBreadcrumbs} className="mb-2" />
+            <BreadCrumb
+              model={commandBreadcrumbs}
+              className="mb-2"
+              pt={{
+                menu: {
+                  "aria-description":
+                    "Breadcrumb navigation for command selection step of request creation. Items in list has CSS injected list-style-type:none causing screen testers to fail",
+                },
+              }}
+            />
             <div className="flex ml-4">
               <span className="mr-2 align-self-center">Scheduled</span>
               <InputSwitch
                 checked={showScheduleJob}
                 onChange={(e) => updateShowScheduleJob(e.value)}
-                aria-label="Toggle for creating Scheduled Job"
+                pt={{
+                  root: {
+                    role: undefined,
+                    "aria-checked": undefined,
+                  },
+                  input: {
+                    "aria-label": "Toggle for creating Scheduled Job",
+                  },
+                }}
               />
             </div>
             {showScheduleJob && (

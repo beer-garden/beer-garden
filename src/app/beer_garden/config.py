@@ -112,6 +112,15 @@ def migrate_dict(d1: dict, d2: dict):
     return d1
 
 
+def migrate_spec_defaults(spec: dict, d1: dict):
+    for k, v in d1.items():
+        if k in spec.children:
+            if isinstance(v, dict):
+                migrate_spec_defaults(spec.children[k], v)
+            else:
+                spec.children[k].default = v
+
+
 def migrate(args: Sequence[str]):
     """Updates a configuration file in-place.
 
@@ -127,6 +136,13 @@ def migrate(args: Sequence[str]):
     spec, cli_vars = _parse_args(args)
 
     config = spec.load_config(cli_vars, "ENVIRONMENT")
+
+    # Apply any cli_vars overrides for defaults
+    for k, v in cli_vars.items():
+        if v is not None:
+            spec_item = spec.get_item(k)
+            if spec_item is not None:
+                migrate_spec_defaults(spec_item, v)
 
     if not config.configuration.file:
         raise SystemExit(
@@ -166,12 +182,8 @@ def migrate(args: Sequence[str]):
     else:
         os.remove(new_file)
 
-    # Apply any cli_vars overrides
     current_config = spec._get_config_if_exists(final_file, True, new_type)
-    for k, v in cli_vars.items():
-        if v is not None:
-            if current_config.get(k):
-                migrate_dict(current_config[k], v)
+
     dump_data(current_config, final_file, new_type)
 
 

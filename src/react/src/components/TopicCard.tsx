@@ -1,5 +1,4 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
@@ -9,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { Request, Topic } from "../models/brewtils-types";
 import { RequestItem } from "../models/models";
 import { GetRequestList } from "../services/request_service";
+import { PaginatorTemplate } from "../services/util_service";
+import AccessButton from "./AccessButton";
 
 function TopicCard({
   requestItem,
@@ -180,7 +181,7 @@ function TopicCard({
   const commandNameTemplate = (request: Request) => {
     return (
       <div>
-        <Button
+        <AccessButton
           rounded
           raised
           link
@@ -192,7 +193,7 @@ function TopicCard({
           className="mr-2"
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />
-        </Button>{" "}
+        </AccessButton>
         {request.command_display_name ?? request.command ?? request.id}
       </div>
     );
@@ -201,7 +202,7 @@ function TopicCard({
   const tableHeader = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <span className="text-xl text-900 font-bold">Associated Requests</span>
-      <Button
+      <AccessButton
         rounded
         raised
         onClick={queryTopicRequests}
@@ -209,7 +210,7 @@ function TopicCard({
       >
         {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
         <FontAwesomeIcon icon="refresh" />
-      </Button>
+      </AccessButton>
     </div>
   );
 
@@ -220,14 +221,14 @@ function TopicCard({
       title={!isDialog && requestItem?.topic?.name}
       header={
         !isDialog && (
-          <Button
+          <AccessButton
             onClick={() => {
               removeItem(requestItem.itemId);
             }}
             tooltip={`Close Topic View for ${topic?.name ?? "Unknown Topic"}`}
           >
             <FontAwesomeIcon icon="xmark" />
-          </Button>
+          </AccessButton>
         )
       }
     >
@@ -251,6 +252,7 @@ function TopicCard({
                     </div>
                   }
                   paginator
+                  paginatorTemplate={PaginatorTemplate}
                   rows={5}
                 >
                   <Column
@@ -329,6 +331,7 @@ function TopicCard({
               loading={loading}
               lazy
               paginator
+              paginatorTemplate={PaginatorTemplate}
               header={tableHeader}
               rows={lazyParams.rows}
               first={lazyParams.first}

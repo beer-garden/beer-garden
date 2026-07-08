@@ -8,13 +8,13 @@ import { Dialog } from "primereact/dialog";
 import { Divider } from "primereact/divider";
 import { InputText } from "primereact/inputtext";
 import { Messages } from "primereact/messages";
-import { Toast } from "primereact/toast";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
 import SubscriberItem from "../components/SubscriberItem";
 import { Subscriber, Topic } from "../models/brewtils-types";
 import { Config, RequestItem } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import {
   AddSubscriber,
   CreateTopic,
@@ -24,7 +24,7 @@ import {
   ResetCount,
   SyncTopics,
 } from "../services/topic_service";
-import { ColumnPassThrough, PaginatorTemplate } from "../services/util_service";
+import { PaginatorTemplate } from "../services/util_service";
 
 interface TopicSubscriber {
   topic?: Topic;
@@ -39,7 +39,7 @@ function TopicIndex({
   listeners: Record<string, any>;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
-  const toast = useRef<Toast>(null);
+  const showToast = useToast();
   const [topicSubscribers, setTopicSubscribers] = useState<
     Array<TopicSubscriber>
   >([]);
@@ -109,7 +109,7 @@ function TopicIndex({
       })
       .catch((error) => {
         setLoading(false);
-        toast.current?.show({
+        showToast({
           severity: "error",
           summary: "Error",
           detail: `Error fetching topics: ${error}`,
@@ -150,7 +150,7 @@ function TopicIndex({
       SyncTopics()
         .then(() => {
           loadTopics();
-          toast.current?.show({
+          showToast({
             severity: "info",
             summary: "Confirmation",
             detail: "Sync Topics complete",
@@ -158,7 +158,7 @@ function TopicIndex({
           });
         })
         .catch((error) => {
-          toast.current?.show({
+          showToast({
             severity: "error",
             summary: "Error",
             detail: `Error syncing topics: ${error}`,
@@ -173,18 +173,22 @@ function TopicIndex({
 
         <div>
           <AccessButton
+            raised
             onClick={handleSync}
             label="Sync Topics"
             data-testid="rescan-btn"
             config={config}
             permission="PLUGIN_ADMIN"
+            className="mr-2"
           />
           <AccessButton
+            raised
             onClick={openTopicDialog}
             label="Create Topic"
             data-testid="create-btn"
             config={config}
             permission="PLUGIN_ADMIN"
+            className="mr-2"
           />
         </div>
       </div>
@@ -233,17 +237,15 @@ function TopicIndex({
                 return newTopicSubscribers;
               });
             }
-            if (toast && toast.current) {
-              toast.current?.show({
-                severity: "info",
-                summary: "Confirmation",
-                detail: `Cleared ${subscriber ? "consumer" : "publisher"} count for ${topic.name}`,
-                life: 3000,
-              });
-            }
+            showToast({
+              severity: "info",
+              summary: "Confirmation",
+              detail: `Cleared ${subscriber ? "consumer" : "publisher"} count for ${topic.name}`,
+              life: 3000,
+            });
           })
           .catch((error) => {
-            toast.current?.show({
+            showToast({
               severity: "error",
               summary: "Error",
               detail: `Error clearing count: ${error}`,
@@ -280,7 +282,7 @@ function TopicIndex({
             );
             return newTopicSubs;
           });
-          toast.current?.show({
+          showToast({
             severity: "info",
             summary: "Removed Subscriber",
             detail: `Topic updated: ${topic.name}`,
@@ -288,7 +290,7 @@ function TopicIndex({
           });
         })
         .catch((error) => {
-          toast.current?.show({
+          showToast({
             severity: "error",
             summary: "Error",
             detail: `Error removing subscriber from topic ${topic.name}: ${error}`,
@@ -306,6 +308,9 @@ function TopicIndex({
             topicSubscriber.topic.publisher_count) ||
             0) > 0 && (
             <AccessButton
+              basic
+              rounded
+              raised
               size="small"
               aria-label={`Clear Publisher Count ${topicSubscriber.topic?.publisher_count} from Topic ${topicSubscriber.topic?.name}`}
               tooltip="Clear Publisher Count"
@@ -313,7 +318,7 @@ function TopicIndex({
               config={config}
               permission="PLUGIN_ADMIN"
             >
-              <FontAwesomeIcon icon="0" />
+              <FontAwesomeIcon icon="trash-can" />
             </AccessButton>
           )}
         </div>
@@ -333,17 +338,15 @@ function TopicIndex({
                 (ts: TopicSubscriber) => ts.topic?.id !== topic.id,
               );
             });
-            if (toast && toast.current) {
-              toast.current?.show({
-                severity: "info",
-                summary: "Confirmation",
-                detail: `Deleted topic ${topic.name}`,
-                life: 3000,
-              });
-            }
+            showToast({
+              severity: "info",
+              summary: "Confirmation",
+              detail: `Deleted topic ${topic.name}`,
+              life: 3000,
+            });
           })
           .catch((error) => {
-            toast.current?.show({
+            showToast({
               severity: "error",
               summary: "Error",
               detail: `Error deleting topic ${topic.name}: ${error}`,
@@ -418,6 +421,9 @@ function TopicIndex({
             topicSubscriber.subscriber.consumer_count != undefined &&
             (topicSubscriber.subscriber.consumer_count || 0) > 0 && (
               <AccessButton
+                basic
+                rounded
+                raised
                 size="small"
                 className="ml-2"
                 aria-label={`Clear Count of ${topicSubscriber.subscriber.consumer_count} for Topic ${topicSubscriber?.topic?.name} Subscriber ${topicSubscriber.subscriber.garden ?? "*"} ${topicSubscriber.subscriber.namespace ?? "*"} ${topicSubscriber.subscriber.system ?? "*"} ${topicSubscriber.subscriber.version ?? "*"} ${topicSubscriber.subscriber.instance ?? "*"} ${topicSubscriber.subscriber.command ?? "*"}`}
@@ -431,7 +437,7 @@ function TopicIndex({
                 config={config}
                 permission="PLUGIN_ADMIN"
               >
-                <FontAwesomeIcon icon="0" />
+                <FontAwesomeIcon icon="trash-can" />
               </AccessButton>
             )}
         </div>
@@ -446,6 +452,9 @@ function TopicIndex({
           {topicSubscriber.subscriber !== undefined &&
             topicSubscriber.subscriber.subscriber_type == "DYNAMIC" && (
               <AccessButton
+                basic
+                rounded
+                raised
                 onClick={() =>
                   removeSubscriber(
                     topicSubscriber.topic!,
@@ -475,6 +484,9 @@ function TopicIndex({
       return (
         <div className="flex">
           <AccessButton
+            basic
+            rounded
+            raised
             onClick={() =>
               addRequestItem({
                 topic: topicSubscriber.topic,
@@ -482,6 +494,7 @@ function TopicIndex({
               })
             }
             tooltip="View Topic"
+            className="mr-2"
             aria-label={`ViewTopic ${topicSubscriber.topic?.name}`}
             config={config}
             permission="PLUGIN_ADMIN"
@@ -489,9 +502,13 @@ function TopicIndex({
             <FontAwesomeIcon icon="eye" />
           </AccessButton>
           <AccessButton
+            basic
+            rounded
+            raised
             onClick={() => addSubscriber(topicSubscriber.topic!)}
             aria-label={`Add Subscriber to Topic ${topicSubscriber.topic?.name}`}
             tooltip="Add Subscriber"
+            className="mr-2"
             config={config}
             permission="PLUGIN_ADMIN"
           >
@@ -499,6 +516,9 @@ function TopicIndex({
           </AccessButton>
           {has_only_dynamic_subscribers && (
             <AccessButton
+              basic
+              rounded
+              raised
               onClick={() => deleteTopic(topicSubscriber.topic!)}
               aria-label={`Delete Topic ${topicSubscriber.topic?.name}`}
               tooltip="Delete Topic"
@@ -592,7 +612,6 @@ function TopicIndex({
             style={{ maxWidth: "400px", overflowWrap: "break-word" }}
             showFilterMenu={false}
             filterElement={filterElement}
-            pt={ColumnPassThrough("Topic")}
           />
           <Column field="topic.name" header="" body={topicButtonTemplate} />
           <Column
@@ -603,7 +622,6 @@ function TopicIndex({
             body={publisherCountTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
-            pt={ColumnPassThrough("Publisher_Count")}
           />
           <Column
             field="subscriber.garden"
@@ -613,7 +631,6 @@ function TopicIndex({
             body={gardenTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
-            pt={ColumnPassThrough("Garden")}
           />
           <Column
             field="subscriber.namespace"
@@ -623,7 +640,6 @@ function TopicIndex({
             body={namespaceTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
-            pt={ColumnPassThrough("Namespace")}
           />
           <Column
             field="subscriber.system"
@@ -633,7 +649,6 @@ function TopicIndex({
             body={systemTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
-            pt={ColumnPassThrough("System")}
           />
           <Column
             field="subscriber.version"
@@ -643,7 +658,6 @@ function TopicIndex({
             body={versionTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
-            pt={ColumnPassThrough("Version")}
           />
           <Column
             field="subscriber.instance"
@@ -653,7 +667,6 @@ function TopicIndex({
             body={instanceTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
-            pt={ColumnPassThrough("Instance")}
           />
           <Column
             field="subscriber.command"
@@ -664,7 +677,6 @@ function TopicIndex({
             style={{ maxWidth: "300px", overflowWrap: "break-word" }}
             showFilterMenu={false}
             filterElement={filterElement}
-            pt={ColumnPassThrough("Command")}
           />
           <Column
             field="subscriber.consumer_count"
@@ -674,7 +686,6 @@ function TopicIndex({
             body={consumerCountTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
-            pt={ColumnPassThrough("Consumer_Count")}
           />
           <Column
             field="subscriber.subscriber_type"
@@ -684,7 +695,6 @@ function TopicIndex({
             body={subscriberTypeTemplate}
             showFilterMenu={false}
             filterElement={filterElement}
-            pt={ColumnPassThrough("Subscriber_Type")}
           />
         </DataTable>
       </>
@@ -712,7 +722,7 @@ function TopicIndex({
           .then(() => {
             loadTopics();
             setDialogVisible(false);
-            toast.current?.show({
+            showToast({
               severity: "info",
               summary: "Added Subscriber(s)",
               detail: `Topic updated: ${topicObj.name}`,
@@ -720,7 +730,7 @@ function TopicIndex({
             });
           })
           .catch((error) => {
-            toast.current?.show({
+            showToast({
               severity: "error",
               summary: "Error",
               detail: `Error updating topic ${topicObj.name}: ${error}`,
@@ -745,7 +755,7 @@ function TopicIndex({
             ]);
             topicId.current = undefined;
             setDialogVisible(false);
-            toast.current?.show({
+            showToast({
               severity: "info",
               summary: "Topic Created",
               detail: `New topic created: ${topicObj.name}`,
@@ -753,7 +763,7 @@ function TopicIndex({
             });
           })
           .catch((error) => {
-            toast.current?.show({
+            showToast({
               severity: "error",
               summary: "Error",
               detail: `Error creating topic: ${error}`,
@@ -776,8 +786,6 @@ function TopicIndex({
 
   return (
     <div>
-      <Toast ref={toast} />
-
       <Dialog
         data-testid="topic-dialog"
         appendTo={"self"}
@@ -813,6 +821,12 @@ function TopicIndex({
               setTopicName(e.target.value)
             }
             disabled={isEdit.current}
+            pt={{
+              root: {
+                "aria-label": undefined,
+                required: undefined,
+              },
+            }}
           />
         </div>
         <Divider />

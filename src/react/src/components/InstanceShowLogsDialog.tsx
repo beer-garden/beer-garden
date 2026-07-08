@@ -152,6 +152,8 @@ function InstanceShowLogsDialog({
           sticky: true,
         });
       }}
+      // Framework adds hidden focusable spans. Unable to edit these
+      pt={{}}
       onHide={onClose}
     >
       <Messages ref={msgs} />
@@ -179,7 +181,6 @@ function InstanceShowLogsDialog({
             defaultValue={20}
             name="tail_line_start"
             onChange={updateTailLineStart}
-            aria-label="Input Tail line start"
           />
         </div>
         <div>
@@ -188,7 +189,7 @@ function InstanceShowLogsDialog({
             download={filename}
           >
             <AccessButton
-              aria-label="Download Full Logs File"
+              tooltip="Download Full Logs File"
               label="Get Full Logs"
             />
           </a>

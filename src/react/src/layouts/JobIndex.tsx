@@ -3,12 +3,12 @@ import { Column } from "primereact/column";
 import { confirmDialog } from "primereact/confirmdialog";
 import { DataTable } from "primereact/datatable";
 import { FileUpload } from "primereact/fileupload";
-import { Toast } from "primereact/toast";
 import { RefObject, useEffect, useRef, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
 import { Job } from "../models/brewtils-types";
 import { Config, RequestItem, TourStepProps } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import {
   DeleteJob,
   ExportJobs,
@@ -36,6 +36,7 @@ function JobIndex({
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
   config: Config;
 }) {
+  const showToast = useToast();
   const [jobs, setJobs] = useState<Array<Job>>([]);
   const tourUuid = "job_index_tour";
   const tourPrefix = "job_index";
@@ -131,7 +132,6 @@ function JobIndex({
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
     };
   }, [jobs]);
-  const toast = useRef(null as null | Toast);
   const jobImportFileRef = useRef<FileUpload | null>(null);
 
   useEffect(() => {
@@ -178,7 +178,7 @@ function JobIndex({
         setJobs(responseJobs);
       })
       .catch((error) => {
-        toast.current?.show({
+        showToast({
           severity: "error",
           summary: "Error",
           detail: `Error fetching jobs: ${error}`,
@@ -217,6 +217,7 @@ function JobIndex({
           rounded
           raised
           link
+          basic
           onClick={() => addRequestItem({ jobId: job.id, type: "VIEW_JOB" })}
           title={"View Job " + job.name}
           className="mr-2"
@@ -229,10 +230,11 @@ function JobIndex({
             rounded
             raised
             link
+            basic
             onClick={() => {
               if (job.id) {
                 RunAdhocJob(job.id).catch((error) => {
-                  toast.current?.show({
+                  showToast({
                     severity: "error",
                     summary: "Error",
                     detail: `Error running job: ${error}`,
@@ -254,6 +256,7 @@ function JobIndex({
             rounded
             raised
             link
+            basic
             onClick={() => {
               if (job.id) {
                 editJob(job.id);
@@ -272,6 +275,7 @@ function JobIndex({
               rounded
               raised
               link
+              basic
               onClick={() => {
                 PauseJob(job)
                   .then((updatedJob) => {
@@ -282,7 +286,7 @@ function JobIndex({
                     );
                   })
                   .catch((error) => {
-                    toast.current?.show({
+                    showToast({
                       severity: "error",
                       summary: "Error",
                       detail: `Error pausing job: ${error}`,
@@ -304,6 +308,7 @@ function JobIndex({
               rounded
               raised
               link
+              basic
               onClick={() => {
                 ResumeJob(job)
                   .then((updatedJob) => {
@@ -314,7 +319,7 @@ function JobIndex({
                     );
                   })
                   .catch((error) => {
-                    toast.current?.show({
+                    showToast({
                       severity: "error",
                       summary: "Error",
                       detail: `Error resuming job: ${error}`,
@@ -335,6 +340,7 @@ function JobIndex({
             rounded
             raised
             link
+            basic
             onClick={() => {
               const accept = () => {
                 DeleteJob(job)
@@ -344,7 +350,7 @@ function JobIndex({
                     );
                   })
                   .catch((error) => {
-                    toast.current?.show({
+                    showToast({
                       severity: "error",
                       summary: "Error",
                       detail: `Error deleting job: ${error}`,
@@ -386,7 +392,7 @@ function JobIndex({
     const file = event?.files?.[0];
 
     if (!file) {
-      toast.current?.show({
+      showToast({
         severity: "error",
         summary: "Error",
         detail: "No file selected for import",
@@ -401,7 +407,7 @@ function JobIndex({
       if (typeof contents === "string") {
         try {
           await ImportJobs(JSON.parse(contents));
-          toast.current?.show({
+          showToast({
             severity: "success",
             summary: "Success",
             detail: "Jobs imported successfully",
@@ -419,7 +425,7 @@ function JobIndex({
               setJobs(responseJobs);
             })
             .catch((error) => {
-              toast.current?.show({
+              showToast({
                 severity: "error",
                 summary: "Error",
                 detail: `Error fetching jobs: ${error}`,
@@ -428,7 +434,7 @@ function JobIndex({
             });
         } catch (error) {
           if (error instanceof Error) {
-            toast.current?.show({
+            showToast({
               severity: "error",
               summary: "Error",
               detail: `Failed to import jobs: ${error}`,
@@ -446,7 +452,6 @@ function JobIndex({
   const header = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <h1 className="text-xl text-900 font-bold">Requests Scheduler</h1>
-      <Toast ref={toast} />
 
       <div className="flex">
         <AccessButton
@@ -484,7 +489,7 @@ function JobIndex({
           raised
           onClick={() =>
             ExportJobs().catch((error) =>
-              toast.current?.show({
+              showToast({
                 severity: "error",
                 summary: "Error",
                 detail: `Error exporting jobs: ${error}`,

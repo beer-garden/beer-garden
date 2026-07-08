@@ -123,6 +123,11 @@ function FileForm({
               fileTrigger?.path === null ||
               fileTrigger?.path === ""
             }
+            pt={{
+              root: {
+                autoComplete: "off",
+              },
+            }}
           />
         </div>
       </div>
@@ -140,6 +145,11 @@ function FileForm({
                 ...{ pattern: e.target.value },
               });
             }}
+            pt={{
+              root: {
+                autoComplete: "off",
+              },
+            }}
           />
         </div>
       </div>
@@ -149,13 +159,23 @@ function FileForm({
         </div>
         <div style={{ width: layoutProps.valueWidth }}>
           <Checkbox
+            id="recursive"
             onChange={(e) => {
               setFileTrigger({
                 ...fileTrigger,
-                ...{ recursive: e.target.value },
+                ...{ recursive: e.checked },
               });
             }}
             checked={fileTrigger?.recursive === true}
+            pt={{
+              input: {
+                "aria-label": "Recursive Checkbox",
+              },
+              icon: {
+                role: "img",
+                "aria-label": "Selection for Recursive Checkbox",
+              },
+            }}
           ></Checkbox>
         </div>
       </div>
@@ -165,6 +185,7 @@ function FileForm({
         </div>
         <div style={{ width: layoutProps.valueWidth }}>
           <MultiSelect
+            id="eventTypes"
             value={selectedTypes}
             onChange={(e) => setSelectedTypes(e.value)}
             options={typeOptions}
@@ -214,6 +235,7 @@ function DateForm({
         </div>
         <div style={{ width: layoutProps.valueWidth }}>
           <Calendar
+            id="runDate"
             value={runDate}
             showTime
             hourFormat="24"
@@ -221,6 +243,24 @@ function DateForm({
             invalid={
               runDate === undefined || runDate === null || runDate === ""
             }
+            pt={{
+              input: {
+                root: ({ context }: { context: any }) => {
+                  if (!context.disabled) {
+                    return {
+                      "aria-label": `Run Date`,
+                      "aria-controls": undefined,
+                      "aria-description":
+                        "Select Date and Time, aria-controls removed when popup is not in DOM",
+                    };
+                  }
+                  return {
+                    "aria-label": `Run Date`,
+                    "aria-description": "Select Date and Time",
+                  };
+                },
+              },
+            }}
           />
         </div>
       </div>
@@ -230,12 +270,18 @@ function DateForm({
         </div>
         <div style={{ width: layoutProps.valueWidth }}>
           <InputText
+            id="timezone"
             value={dateTrigger?.timezone}
             onChange={(e) => {
               setDateTrigger({
                 ...dateTrigger,
                 ...{ timezone: e.target.value },
               });
+            }}
+            pt={{
+              root: {
+                autoComplete: "off",
+              },
             }}
           />
         </div>
@@ -365,6 +411,34 @@ function IntervalForm({
             value={intervalNumber}
             onChange={(e) => setIntervalNumber(e.value)}
             min={1}
+            incrementButtonIcon="pi pi-chevron-up"
+            decrementButtonIcon="pi pi-chevron-down"
+            pt={{
+              input: {
+                root: {
+                  "aria-label": `Interval Number`,
+                  autoComplete: "off",
+                },
+              },
+              incrementButton: {
+                tabIndex: 0,
+                "aria-label": `Increase Interval Number by 1`,
+                "aria-hidden": "false",
+              },
+              decrementButton: {
+                tabIndex: 0,
+                "aria-label": `Decrease Interval Number by 1`,
+                "aria-hidden": "false",
+              },
+              incrementIcon: {
+                role: "img",
+                "aria-label": "Increase Interval Number",
+              },
+              decrementIcon: {
+                role: "img",
+                "aria-label": "Decrease Interval Number",
+              },
+            }}
           />
         </div>
       </div>
@@ -373,11 +447,30 @@ function IntervalForm({
           <label htmlFor="intervalType">Interval Type</label>
         </div>
         <div style={{ width: layoutProps.valueWidth }}>
+          <datalist id={`selectIntervalTypeDropdown`} aria-hidden="true">
+            {typeOptions.map((intervalType: string) => (
+              <option key={intervalType} value={intervalType} />
+            ))}
+          </datalist>
           <Dropdown
             id="intervalType"
             options={typeOptions || []}
             value={intervalType}
             onChange={(e) => setIntervalType(e.value)}
+            pt={{
+              dropdownIcon: {
+                role: "img",
+                "aria-label": `Interval Type Select Icon`,
+              },
+              input: {
+                autoComplete: "off",
+              },
+              select: {
+                autoComplete: "off",
+                "aria-controls": `selectIntervalTypeDropdown`,
+                "aria-label": ` Select Interval Type for Dropdown Select`,
+              },
+            }}
           />
         </div>
       </div>
@@ -392,6 +485,25 @@ function IntervalForm({
             showTime
             hourFormat="24"
             onChange={(e: any) => setStartDate(e.value)}
+            tooltip={`Scheduler Start Date`}
+            pt={{
+              input: {
+                root: ({ context }: { context: any }) => {
+                  if (!context.disabled) {
+                    return {
+                      "aria-label": `Scheduler Start Date`,
+                      "aria-controls": undefined,
+                      "aria-description":
+                        "Select Date and Time, aria-controls removed when popup is not in DOM",
+                    };
+                  }
+                  return {
+                    "aria-label": `Scheduler Start Date`,
+                    "aria-description": "Select Date and Time",
+                  };
+                },
+              },
+            }}
           />
         </div>
       </div>
@@ -406,6 +518,25 @@ function IntervalForm({
             showTime
             hourFormat="24"
             onChange={(e: any) => setEndDate(e.value)}
+            tooltip={`Scheduler End Date`}
+            pt={{
+              input: {
+                root: ({ context }: { context: any }) => {
+                  if (!context.disabled) {
+                    return {
+                      "aria-label": `Scheduler End Date`,
+                      "aria-controls": undefined,
+                      "aria-description":
+                        "Select Date and Time, aria-controls removed when popup is not in DOM",
+                    };
+                  }
+                  return {
+                    "aria-label": `Scheduler End Date`,
+                    "aria-description": "Select Date and Time",
+                  };
+                },
+              },
+            }}
           />
         </div>
       </div>
@@ -422,6 +553,11 @@ function IntervalForm({
                 ...intervalTrigger,
                 ...{ timezone: e.target.value },
               });
+            }}
+            pt={{
+              root: {
+                autoComplete: "off",
+              },
             }}
           />
         </div>
@@ -527,7 +663,7 @@ function CronForm({
         <div style={{ width: layoutProps.labelWidth }}>
           <label htmlFor="cron">CRON</label>
         </div>
-        <div style={{ width: layoutProps.valueWidth }}>
+        <div id="cron" style={{ width: layoutProps.valueWidth }}>
           <Cron
             value={cronValue}
             setValue={setCronValue}
@@ -548,6 +684,35 @@ function CronForm({
               setCronTrigger({ ...cronTrigger, ...{ jitter: e.target.value } });
             }}
             min={0}
+            incrementButtonIcon="pi pi-chevron-up"
+            decrementButtonIcon="pi pi-chevron-down"
+            pt={{
+              input: {
+                root: {
+                  "aria-label": `CRON Jitter`,
+                  autoComplete: "off",
+                },
+              },
+              incrementButton: {
+                tabIndex: 0,
+                "aria-label": `Increase CRON Jitter by 1`,
+                "aria-hidden": "false",
+              },
+
+              decrementButton: {
+                tabIndex: 0,
+                "aria-label": `Decrease CRON Jitter by 1`,
+                "aria-hidden": "false",
+              },
+              incrementIcon: {
+                role: "img",
+                "aria-label": "Increase CRON Jitter",
+              },
+              decrementIcon: {
+                role: "img",
+                "aria-label": "Decrease CRON Jitter",
+              },
+            }}
           />
         </div>
       </div>
@@ -562,6 +727,24 @@ function CronForm({
             showTime
             hourFormat="24"
             onChange={(e: any) => setStartDate(e.value)}
+            pt={{
+              input: {
+                root: ({ context }: { context: any }) => {
+                  if (!context.disabled) {
+                    return {
+                      "aria-label": `CRON Start Date`,
+                      "aria-controls": undefined,
+                      "aria-description":
+                        "Select Date and Time, aria-controls removed when popup is not in DOM",
+                    };
+                  }
+                  return {
+                    "aria-label": `CRON Start Date`,
+                    "aria-description": "Select Date and Time",
+                  };
+                },
+              },
+            }}
           />
         </div>
       </div>
@@ -576,6 +759,24 @@ function CronForm({
             showTime
             hourFormat="24"
             onChange={(e: any) => setEndDate(e.value)}
+            pt={{
+              input: {
+                root: ({ context }: { context: any }) => {
+                  if (!context.disabled) {
+                    return {
+                      "aria-label": `CRON End Date`,
+                      "aria-controls": undefined,
+                      "aria-description":
+                        "Select Date and Time, aria-controls removed when popup is not in DOM",
+                    };
+                  }
+                  return {
+                    "aria-label": `CRON End Date`,
+                    "aria-description": "Select Date and Time",
+                  };
+                },
+              },
+            }}
           />
         </div>
       </div>
@@ -592,6 +793,11 @@ function CronForm({
                 ...cronTrigger,
                 ...{ timezone: e.target.value },
               });
+            }}
+            pt={{
+              root: {
+                autoComplete: "off",
+              },
             }}
           />
         </div>
@@ -752,6 +958,11 @@ function SchedulerForm({
                   scheduledJob?.name === null ||
                   scheduledJob?.name === ""
                 }
+                pt={{
+                  root: {
+                    autoComplete: "off",
+                  },
+                }}
               />
             </div>
           </div>
@@ -766,10 +977,19 @@ function SchedulerForm({
                 onChange={(e) => {
                   setScheduledJob({
                     ...scheduledJob,
-                    ...{ coalesce: e.value },
+                    ...{ coalesce: e.checked },
                   });
                 }}
                 checked={scheduledJob?.coalesce === true}
+                pt={{
+                  input: {
+                    "aria-label": `Coalesce Requests Checkbox`,
+                  },
+                  icon: {
+                    role: "img",
+                    "aria-label": "Selection for Coalesce Requests Checkbox",
+                  },
+                }}
               ></Checkbox>
             </div>
           </div>
@@ -789,6 +1009,35 @@ function SchedulerForm({
                 }}
                 showButtons
                 min={0}
+                incrementButtonIcon="pi pi-chevron-up"
+                decrementButtonIcon="pi pi-chevron-down"
+                pt={{
+                  input: {
+                    root: {
+                      "aria-label": `Misfire Grace Time`,
+                      autoComplete: "off",
+                    },
+                  },
+                  incrementButton: {
+                    tabIndex: 0,
+                    "aria-label": `Increase Misfire Grace Time by 1`,
+                    "aria-hidden": "false",
+                  },
+
+                  decrementButton: {
+                    tabIndex: 0,
+                    "aria-label": `Decrease Misfire Grace Time by 1`,
+                    "aria-hidden": "false",
+                  },
+                  incrementIcon: {
+                    role: "img",
+                    "aria-label": "Increase Misfire Grace Time",
+                  },
+                  decrementIcon: {
+                    role: "img",
+                    "aria-label": "Decrease Misfire Grace Time",
+                  },
+                }}
               />
             </div>
           </div>
@@ -808,6 +1057,26 @@ function SchedulerForm({
                 }}
                 showButtons
                 min={1}
+                incrementButtonIcon="pi pi-chevron-up"
+                decrementButtonIcon="pi pi-chevron-down"
+                pt={{
+                  input: {
+                    root: {
+                      "aria-label": `Max Instances`,
+                      autoComplete: "off",
+                    },
+                  },
+                  incrementButton: {
+                    tabIndex: 0,
+                    "aria-label": `Increase Max Instances by 1`,
+                    "aria-hidden": "false",
+                  },
+                  decrementButton: {
+                    tabIndex: 0,
+                    "aria-label": `Decrease Max Instances by 1`,
+                    "aria-hidden": "false",
+                  },
+                }}
               />
             </div>
           </div>
@@ -824,6 +1093,35 @@ function SchedulerForm({
                 }}
                 showButtons
                 min={0}
+                incrementButtonIcon="pi pi-chevron-up"
+                decrementButtonIcon="pi pi-chevron-down"
+                pt={{
+                  input: {
+                    root: {
+                      "aria-label": `Timeout`,
+                      autoComplete: "off",
+                      "aria-valuenow": scheduledJob?.timeout ?? undefined,
+                    },
+                  },
+                  incrementButton: {
+                    tabIndex: 0,
+                    "aria-label": `Increase Timeout by 1`,
+                    "aria-hidden": "false",
+                  },
+                  decrementButton: {
+                    tabIndex: 0,
+                    "aria-label": `Decrease Timeout by 1`,
+                    "aria-hidden": "false",
+                  },
+                  incrementIcon: {
+                    role: "img",
+                    "aria-label": "Increase Timeout",
+                  },
+                  decrementIcon: {
+                    role: "img",
+                    "aria-label": "Decrease Timeout",
+                  },
+                }}
               />
             </div>
           </div>

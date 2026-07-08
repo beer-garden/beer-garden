@@ -2,10 +2,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
-import { Toast } from "primereact/toast";
-import { RefObject, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Role, User } from "../models/brewtils-types";
+import { useToast } from "../providers/ToastProvider";
 import { GetRoles } from "../services/role_service";
 import { UpdateUserRoles } from "../services/user_service";
 import AccessButton from "./AccessButton";
@@ -14,15 +14,14 @@ function UserChangeRoles({
   user,
   showRolesDialog,
   setShowRolesDialog,
-  toast,
   callback,
 }: {
   user: User;
   showRolesDialog: boolean;
   setShowRolesDialog: (show: boolean) => void;
-  toast: RefObject<Toast | null>;
   callback?: () => void;
 }) {
+  const showToast = useToast();
   const [roles, setRoles] = useState<Array<Role> | undefined>(undefined);
   const [selectedRoles, setSelectedRoles] = useState<Array<Role>>([]);
 
@@ -84,7 +83,7 @@ function UserChangeRoles({
         })
         .catch((error) => {
           console.error("Error updating user roles:", error);
-          toast.current?.show({
+          showToast({
             severity: "error",
             summary: "Error",
             detail: `Failed to update roles for user ${user.username}`,

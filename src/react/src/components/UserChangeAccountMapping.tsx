@@ -1,12 +1,12 @@
 import { Column } from "primereact/column";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
-import { Toast } from "primereact/toast";
 import { TreeTable } from "primereact/treetable";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { AliasUserMap, Garden, User } from "../models/brewtils-types";
 import { Config } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { GetRootGarden } from "../services/garden_service";
 import { UpdateUserAliasMapping } from "../services/user_service";
 import AccessButton from "./AccessButton";
@@ -16,16 +16,15 @@ function UserChangeAccountMapping({
   config,
   showAccountMappingDialog,
   setShowAccountMappingDialog,
-  toast,
   callback,
 }: {
   user: User;
   config: Config;
   showAccountMappingDialog: boolean;
   setShowAccountMappingDialog: (show: boolean) => void;
-  toast: RefObject<Toast | null>;
   callback?: () => void;
 }) {
+  const showToast = useToast();
   const [gardenAccounts, setGardenAccounts] = useState<Array<any>>([]);
   const gardenAccountsRef = useRef<Array<any>>([]);
   const seenGardens = useRef<Set<string>>(new Set());
@@ -123,7 +122,7 @@ function UserChangeAccountMapping({
         })
         .catch((error) => {
           console.error("Error updating user account mapping:", error);
-          toast.current?.show({
+          showToast({
             severity: "error",
             summary: "Error",
             detail: `Failed to update account mapping for user ${user.username}`,

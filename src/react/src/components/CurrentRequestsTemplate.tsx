@@ -322,6 +322,7 @@ function CurrentRequestsTemplate({
         className="fa-layers fa-fw fa-2x"
         onClick={confirm}
         text
+        basic
       >
         <FontAwesomeIcon
           icon="envelope"

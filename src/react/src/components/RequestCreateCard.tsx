@@ -272,7 +272,15 @@ function RequestCreateCard({
             checked={showScheduleJob}
             onChange={(e) => updateShowScheduleJob(e.value)}
             className="align-self-center"
-            aria-label="Toggle for creating Scheduled Job"
+            pt={{
+              root: {
+                role: undefined,
+                "aria-checked": undefined,
+              },
+              input: {
+                "aria-label": "Toggle for creating Scheduled Job",
+              },
+            }}
           />
         </div>
       }
@@ -366,6 +374,7 @@ function RequestCreateCard({
                 resetForm={resetForm}
                 setResetForm={setResetForm}
                 setIsFormValid={setIsFormValid}
+                config={config}
               />
             )}
             {!showCreateRequest && (

@@ -12,6 +12,7 @@ import {
 import { CommandFormProps, InputParam } from "../models/models";
 import { PostRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
+import { CompareObjects } from "../services/util_service";
 import CommandFormField from "./CommandFormField";
 
 function CommandForm({
@@ -43,13 +44,18 @@ function CommandForm({
     parameter: InputParam,
     lookupParameters: Array<InputParam>,
   ) => {
+    // Skip choice generation if disabled
+    if (disabled) {
+      return;
+    }
+
     const timestamp = Date.now();
 
     const mapChoices = (
       values:
         | Array<{ text: string; value: string } | string>
         | { [key: string]: Array<{ text: string; value: string } | string> },
-    ): Promise<Array<{ label: string; value: string }>> => {
+    ): Promise<Array<{ label: string; value: string | number }>> => {
       return new Promise((resolve, reject) => {
         if (values === null || values === undefined) {
           resolve([]);
@@ -117,19 +123,23 @@ function CommandForm({
     };
 
     const mapChoice = (
-      choice: string | { text: string; value: string },
-    ): { label: string; value: string } => {
-      if (
-        choice !== null &&
-        choice !== undefined &&
-        typeof choice !== "string" &&
-        "text" in choice &&
-        "value" in choice
-      ) {
-        return {
-          label: choice.text,
-          value: choice.value,
-        };
+      choice: string | { text: string; value: string } | number,
+    ): { label: string; value: string | number } => {
+      if (choice !== null && choice !== undefined) {
+        if (typeof choice === "number") {
+          return { label: choice.toString(), value: choice };
+        }
+
+        if (
+          typeof choice === "object" &&
+          "text" in choice &&
+          "value" in choice
+        ) {
+          return {
+            label: choice.text,
+            value: choice.value,
+          };
+        }
       }
       return {
         label: choice,
@@ -450,6 +460,28 @@ function CommandForm({
         valid = false;
         break;
       }
+      if (parameter.type === "Dictionary") {
+        if (parameter.multi) {
+          for (const param of parameter.value) {
+            try {
+              JSON.parse(param);
+            } catch {
+              valid = false;
+              break;
+            }
+          }
+          if (!valid) {
+            break;
+          }
+        } else {
+          try {
+            JSON.parse(parameter.value);
+          } catch {
+            valid = false;
+            break;
+          }
+        }
+      }
     }
     setIsFormValid(valid);
   };
@@ -501,7 +533,7 @@ function CommandForm({
             sticky: true,
             severity: "error",
             summary: "Garden Check",
-            detail: `Target Garden for command is not routable`,
+            detail: "Target Garden for command is not routable",
             life: 3000,
           });
         }
@@ -549,7 +581,7 @@ function CommandForm({
               sticky: true,
               severity: "error",
               summary: "System Check",
-              detail: `Target System has a status of ${targetInstance?.status} `,
+              detail: `Target System has a status of ${targetInstance?.status}`,
               life: 3000,
             });
           }
@@ -622,15 +654,23 @@ function CommandForm({
       if (inputParameter.key === null || inputParameter.key === undefined) {
         return;
       }
+      let parameterValue = inputParameter.value;
+
+      if (inputParameter.type === "Dictionary") {
+        try {
+          parameterValue = JSON.parse(inputParameter.value);
+        } catch {
+          parameterValue = undefined;
+          console.log("Failed Parsing JSON");
+        }
+      }
+
       if (
         request &&
         request.parameters &&
         inputParameter.key in request.parameters
       ) {
-        if (
-          inputParameter.value === null ||
-          inputParameter.value === undefined
-        ) {
+        if (parameterValue === null || parameterValue === undefined) {
           delete request.parameters[inputParameter.key];
           updated = true;
           changedFields.push(inputParameter.key);
@@ -641,18 +681,19 @@ function CommandForm({
         request.parameters = {};
         updated = true;
       }
-      if (inputParameter.value === null || inputParameter.value === undefined) {
+      if (parameterValue === null || parameterValue === undefined) {
         return;
       }
+
       if (request && request.parameters) {
         if (
           inputParameter.key in request.parameters &&
-          request.parameters[inputParameter.key] === inputParameter.value
+          CompareObjects(request.parameters[inputParameter.key], parameterValue)
         ) {
           return;
         }
 
-        request.parameters[inputParameter.key] = inputParameter.value;
+        request.parameters[inputParameter.key] = parameterValue;
         updated = true;
         changedFields.push(inputParameter.key);
       }
@@ -720,9 +761,16 @@ function CommandForm({
         key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMAND_TYPE`}
       >
         <div style={{ width: "20%" }}>
-          <label htmlFor="COMMAND_TYPE">Command Type</label>
+          <label id="command-type-label" htmlFor="COMMAND_TYPE">
+            Command Type
+          </label>
         </div>
         <div style={{ width: "80%" }}>
+          <datalist id="selectCommandTypeDropdown" aria-hidden="true">
+            {["ACTION", "INFO", "TEMP"]?.map((status: any) => (
+              <option key={status.label} value={status.value} />
+            ))}
+          </datalist>
           <Dropdown
             id="COMMAND_TYPE"
             value={request?.command_type}
@@ -732,6 +780,11 @@ function CommandForm({
             options={["ACTION", "INFO", "TEMP"]}
             disabled={disabled}
             style={{ maxWidth: "75%" }}
+            pt={{
+              select: {
+                "aria-controls": "selectCommandTypeDropdown",
+              },
+            }}
           />
         </div>
       </div>
@@ -757,27 +810,29 @@ function CommandForm({
             </div>
           </div>
         ))}
-      <div
-        className="flex justify-content-between mb-3"
-        key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMENT`}
-      >
-        <div style={{ width: "20%" }}>
-          <label htmlFor="COMMAND_COMMENT">Comment</label>
-        </div>
-        <div style={{ width: "80%" }}>
-          <InputTextarea
-            id="COMMAND_COMMENT"
-            value={request?.comment}
-            onChange={(e) =>
-              setRequest({ ...request, comment: e.target.value })
-            }
-            disabled={disabled}
-            style={{ maxWidth: "75%" }}
-            aria-label="Comment Field"
-            tooltip="Comment Field"
-          />
-        </div>
-      </div>
+      {(() => {
+        const commentId = `${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMENT`;
+        return (
+          <div className="flex justify-content-between mb-3" key={commentId}>
+            <div style={{ width: "20%" }}>
+              <label htmlFor={commentId}>Comment</label>
+            </div>
+            <div style={{ width: "80%" }}>
+              <InputTextarea
+                id={commentId}
+                name={commentId}
+                value={request?.comment}
+                onChange={(e) =>
+                  setRequest({ ...request, comment: e.target.value })
+                }
+                disabled={disabled}
+                style={{ maxWidth: "75%" }}
+                tooltip="Comment Field"
+              />
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
