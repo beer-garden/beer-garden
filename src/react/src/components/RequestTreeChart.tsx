@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
 import { Config } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { DeleteRequest } from "../services/request_service";
 import AccessButton from "./AccessButton";
 
@@ -55,6 +56,7 @@ interface RequestTreeChartProps {
 }
 
 function RequestTreeChart(props: RequestTreeChartProps) {
+  const showToast = useToast();
   let node = {};
   if (props.rootRequest !== undefined && props.rootRequest !== null) {
     node = parseRequest(props.rootRequest, props.config);
