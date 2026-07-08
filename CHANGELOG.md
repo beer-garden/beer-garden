@@ -1,7 +1,7 @@
 # Beer Garden Changelog
 
-#TBD
-TBD
+# 3.34.1
+7/8/2026
 
 - Fixed bug where Topic Publish Requests were not forwarded from downstream Gardens properly (#2254)
 
