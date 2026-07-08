@@ -3,7 +3,7 @@
 #TBD
 TBD
 
-- Fixed bug where Topic Publish Requests were not forwarded from downstream Gardens properly (#)
+- Fixed bug where Topic Publish Requests were not forwarded from downstream Gardens properly (#2254)
 
 # 3.34.0
 6/30/2026
