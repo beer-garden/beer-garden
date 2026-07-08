@@ -43,7 +43,10 @@ class HttpParentUpdater(QueueListener):
     def process(self, event: Event):
 
         if event.error or (event.garden and event.garden != conf.get("garden.name")):
-            return
+            if event.name != Events.REQUEST_TOPIC_PUBLISH.name:
+                return
+            if event.metadata.get("propagate", False) is False:
+                return
 
         if "REQUEST" in event.name and event.payload.command_type == "TEMP":
             # If this is a temporary request, we don't want to publish it
