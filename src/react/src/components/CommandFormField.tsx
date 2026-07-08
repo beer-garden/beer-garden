@@ -369,6 +369,15 @@ function CommandFormField({
       );
     }
     case "Dictionary": {
+      const canParseJSON = (str: string) => {
+        try {
+          JSON.parse(str);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
       if (parameter.multi) {
         return (
           <div id={parameter.key} key={parameter.key} className="p-field">
@@ -381,7 +390,10 @@ function CommandFormField({
                     invalid={
                       (!disabled &&
                         !parameter.optional &&
-                        (item === undefined || item === null || item === "")) ||
+                        (item === undefined ||
+                          item === null ||
+                          item === "" ||
+                          !canParseJSON(item))) ||
                       undefined
                     }
                     onChange={(e) =>
@@ -420,7 +432,8 @@ function CommandFormField({
                 !parameter.optional &&
                 (parameter.value === undefined ||
                   parameter.value === null ||
-                  parameter.value === "")) ||
+                  parameter.value === "" ||
+                  !canParseJSON(parameter.value))) ||
               undefined
             }
             onChange={(e) => handleChange(e.target.id, e.target.value)}

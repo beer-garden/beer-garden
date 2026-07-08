@@ -3,7 +3,6 @@ import { ButtonGroup } from "primereact/buttongroup";
 import { Divider } from "primereact/divider";
 import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
-import { useEffect, useState } from "react";
 
 import { Runner } from "../models/brewtils-types";
 import { Config, RunnerGroup } from "../models/models";
@@ -24,32 +23,13 @@ function UnassociatedRunnerCard({
   config: Config;
 }) {
   const showToast = useToast();
-  const [darkMode, setDarkMode] = useState(
-    localStorage.getItem("theme_dark") === "true",
-  );
-  const [reloadUI, setReloadUI] = useState(0);
-
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const newDarkMode = localStorage.getItem("theme_dark") === "true";
-      if (newDarkMode !== darkMode) {
-        setDarkMode(newDarkMode);
-        setReloadUI(reloadUI + 1);
-      }
-    };
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
-  }, []);
 
   const headerTemplate = (options: any) => {
     const className = `${options.className} justify-content-space-between`;
 
-    const backgroundColor = darkMode ? "var(--red-900)" : "var(--red-100)";
-
     return (
       <div
-        className={`${className} flex align-items-center gap-2`}
-        style={{ backgroundColor: backgroundColor }}
+        className={`${className} flex align-items-center gap-2 unassociated-runner-header`}
       >
         <label className="max-w-20rem font-semibold">
           Unassociated Runners: {runnerGroup.path}
@@ -193,7 +173,7 @@ function UnassociatedRunnerCard({
 
   return (
     <>
-      <Panel headerTemplate={headerTemplate} key={reloadUI}>
+      <Panel headerTemplate={headerTemplate}>
         <div className="mb-3">
           <div style={{ float: "right", marginLeft: "2px" }}>
             <ButtonGroup>

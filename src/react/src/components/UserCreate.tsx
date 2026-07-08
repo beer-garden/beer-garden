@@ -117,6 +117,7 @@ function UserCreate({
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
             setNewPassword(e.target.value)
           }
+          tooltip="Enter New Password"
         />
         <label htmlFor="confirmPassword" className="font-bold">
           Confirm Password
@@ -131,6 +132,7 @@ function UserCreate({
             setConfirmPassword(e.target.value);
             setConfirmPasswordInvalid(e.target.value !== newPassword);
           }}
+          tooltip="Confirm New Password"
         />
       </div>
     </Dialog>

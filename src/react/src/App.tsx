@@ -1,8 +1,3 @@
-import "primereact/resources/primereact.min.css"; // Core CSS
-import "primeflex/primeflex.css";
-import "primeicons/primeicons.css";
-import "./App.css";
-
 import { PrimeReactProvider } from "primereact/api";
 import { ConfirmDialog } from "primereact/confirmdialog";
 import { Dialog } from "primereact/dialog";
@@ -41,6 +36,8 @@ import { InputTextareaPT } from "./passthrough/InputTextareaPT";
 import { InputTextPT } from "./passthrough/InputTextPT";
 import { MessagesPT } from "./passthrough/MessagesPT";
 import { MultiSelectPT } from "./passthrough/MultiSelectPT";
+import { PanelPT } from "./passthrough/PanelPT";
+import { SplitButtonPT } from "./passthrough/SplitButtonPT";
 import { TriStateCheckboxPT } from "./passthrough/TriStateCheckboxPT";
 import { ToastProvider } from "./providers/ToastProvider";
 import { GetConfig } from "./services/config_service";
@@ -53,7 +50,7 @@ import { ChangeTheme } from "./services/util_service";
 function App() {
   const socketRef = useRef(null as null | any);
   const listeners = useRef<Record<string, Listener>>({});
-  const [config, setConfig] = useState<Config>({});
+  const [config, setConfig] = useState<Config | undefined>(undefined);
 
   const [reloadUI, setReloadUI] = useState(0);
   const [requestItem, setRequestItem] = useState<RequestItem | undefined>(
@@ -128,22 +125,52 @@ function App() {
   const primeValue = {
     hideOverlaysOnDocumentScrolling: true,
     pt: {
-      datatable: DataTablePT,
-      dropdown: DropdownPT,
-      multiselect: MultiSelectPT,
-
-      inputText: InputTextPT,
-      inputTextarea: InputTextareaPT,
-      inputNumber: InputNumberPT,
-      triStateCheckbox: TriStateCheckboxPT,
-      checkbox: CheckboxPT,
-      calendar: CalendarPT,
-      fileUpload: FileUploadPT,
-      messages: MessagesPT,
-      dialog: DialogPT,
       autocomplete: AutoCompletePT,
       button: ButtonPT,
+      calendar: CalendarPT,
+      checkbox: CheckboxPT,
+      datatable: DataTablePT,
+      dialog: DialogPT,
+      dropdown: DropdownPT,
+      fileUpload: FileUploadPT,
+      inputNumber: InputNumberPT,
+      inputText: InputTextPT,
+      inputTextarea: InputTextareaPT,
+      messages: MessagesPT,
+      multiselect: MultiSelectPT,
+      panel: PanelPT,
+      splitButton: SplitButtonPT,
+      triStateCheckbox: TriStateCheckboxPT,
     },
+  };
+
+  const loadRootGarden = (config: Config) => {
+    GetRootGarden(config)
+      .then((garden) => {
+        const extractSystems = (garden: Garden): System[] => {
+          let systems: System[] = [];
+          if (garden.systems) {
+            garden.systems.forEach((system: System) => {
+              system.garden_name = garden.name;
+              systems.push(system);
+            });
+          }
+          if (garden.children) {
+            for (const subGarden of garden.children) {
+              systems = systems.concat(extractSystems(subGarden));
+            }
+          }
+          return systems;
+        };
+
+        updateSystems(extractSystems(garden));
+        updateRootGarden(garden);
+      })
+      .catch((error) => {
+        console.log("Unable to retrieve root garden", error);
+        updateSystems();
+        updateRootGarden();
+      });
   };
 
   useEffect(() => {
@@ -164,30 +191,11 @@ function App() {
     GetConfig()
       .then((config) => {
         setConfig(config);
-        GetRootGarden(config)
-          .then((garden) => {
-            const extractSystems = (garden: Garden): System[] => {
-              let systems: System[] = [];
-              if (garden.systems) {
-                garden.systems.forEach((system: System) => {
-                  system.garden_name = garden.name;
-                  systems.push(system);
-                });
-              }
-              if (garden.children) {
-                for (const subGarden of garden.children) {
-                  systems = systems.concat(extractSystems(subGarden));
-                }
-              }
-              return systems;
-            };
 
-            updateSystems(extractSystems(garden));
-            updateRootGarden(garden);
-          })
-          .catch((error) => {
-            console.log("Unable to retrieve root garden", error);
-          });
+        if (config?.auth_enabled === true) {
+          preemptiveRefresh();
+        }
+        loadRootGarden(config);
       })
       .catch((error) => {
         console.log("Unable to retrieve configuration", error);
@@ -260,7 +268,7 @@ function App() {
             if (
               !updatedGarden.has_parent &&
               updatedGarden.connection_type === "Remote" &&
-              compareGarden.connection_type !== "Remote"
+              compareGarden.connection_type === "LOCAL"
             ) {
               if (
                 !compareGarden.children.some(
@@ -401,6 +409,25 @@ function App() {
   );
 
   useEffect(() => {
+    if (config && config.auth_enabled === true) {
+      if (
+        (systemsRef.current !== undefined ||
+          rootGardenRef.current !== undefined) &&
+        GetToken() === null
+      ) {
+        updateSystems();
+        updateRootGarden();
+      } else if (
+        (systemsRef.current === undefined ||
+          rootGardenRef.current === undefined) &&
+        GetToken() !== null
+      ) {
+        loadRootGarden(config);
+      }
+    }
+  }, [reloadUI]);
+
+  useEffect(() => {
     // Create WebSocket connection when component mounts
     socketRef.current = new WebSocket("/api/v1/socket/events/");
     const handleMessage = (event: any) => {
@@ -475,7 +502,7 @@ function App() {
           </div>
         )}
         {config && Object.keys(config).length > 0 && (
-          <div className="flex">
+          <div className="flex" key={reloadUI}>
             <div className="flex-grow-1">
               <BrowserRouter basename={baseURL}>
                 {runTour && (
@@ -534,7 +561,6 @@ function App() {
                 )}
                 <div
                   className="flex-grow-1"
-                  key={reloadUI}
                   role="main"
                   id="main-content"
                   tabIndex={-1}

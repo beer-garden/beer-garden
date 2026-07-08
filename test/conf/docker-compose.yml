@@ -31,7 +31,7 @@ services:
             - "2337:2337"
             - "2338:2338"
         volumes:
-            - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
+            - ./data/app-logging.yaml:/conf/app-logging.yaml
             - ./data/localplugins:/plugins
         environment:
             <<: *env

@@ -224,6 +224,36 @@ class TestGardenSetup(object):
         response = wait_for_response(self.grand_parent_easy_client, request, timeout=30)
         assert_successful_request(response, output="test_string!!!!!!!!!")
 
+    def test_local_topic_generation(self):
+        # Only test Parent/Grandparent since Child may not
+        # have any local topics if it is a older garden
+
+        grand_parent_topics = self.grand_parent_easy_client.get_topics()
+        parent_topics = self.parent_easy_client.get_topics()
+
+        # Assert both gardens have topics
+        assert len(grand_parent_topics) > 0
+        assert len(parent_topics) > 0
+
+        # Assert both made the same amount from same plugins folder
+        assert len(grand_parent_topics) == len(parent_topics)
+
+        # Assert all topics are difference because of different garden names
+        for grand_parent_topic in grand_parent_topics:
+            generated_subscribers = True
+            if (
+                grand_parent_topic.subscribers is not None
+                and len(grand_parent_topic.subscribers) > 0
+            ):
+                for subscriber in grand_parent_topic.subscribers:
+                    if subscriber.subscriber_type != "GENERATED":
+                        generated_subscribers = False
+                        break
+
+            if generated_subscribers:
+                for parent_topic in parent_topics:
+                    assert grand_parent_topic.name != parent_topic.name
+
     # def test_update_garden_connection_info(self):
     #     response = self.easy_client.client.session.get(
     #         self.easy_client.client.base_url + "api/v1/gardens/"
