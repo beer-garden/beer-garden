@@ -173,18 +173,22 @@ function TopicIndex({
 
         <div>
           <AccessButton
+            raised
             onClick={handleSync}
             label="Sync Topics"
             data-testid="rescan-btn"
             config={config}
             permission="PLUGIN_ADMIN"
+            className="mr-2"
           />
           <AccessButton
+            raised
             onClick={openTopicDialog}
             label="Create Topic"
             data-testid="create-btn"
             config={config}
             permission="PLUGIN_ADMIN"
+            className="mr-2"
           />
         </div>
       </div>
@@ -304,6 +308,9 @@ function TopicIndex({
             topicSubscriber.topic.publisher_count) ||
             0) > 0 && (
             <AccessButton
+              basic
+              rounded
+              raised
               size="small"
               aria-label={`Clear Publisher Count ${topicSubscriber.topic?.publisher_count} from Topic ${topicSubscriber.topic?.name}`}
               tooltip="Clear Publisher Count"
@@ -311,7 +318,7 @@ function TopicIndex({
               config={config}
               permission="PLUGIN_ADMIN"
             >
-              <FontAwesomeIcon icon="0" />
+              <FontAwesomeIcon icon="trash-can" />
             </AccessButton>
           )}
         </div>
@@ -414,6 +421,9 @@ function TopicIndex({
             topicSubscriber.subscriber.consumer_count != undefined &&
             (topicSubscriber.subscriber.consumer_count || 0) > 0 && (
               <AccessButton
+                basic
+                rounded
+                raised
                 size="small"
                 className="ml-2"
                 aria-label={`Clear Count of ${topicSubscriber.subscriber.consumer_count} for Topic ${topicSubscriber?.topic?.name} Subscriber ${topicSubscriber.subscriber.garden ?? "*"} ${topicSubscriber.subscriber.namespace ?? "*"} ${topicSubscriber.subscriber.system ?? "*"} ${topicSubscriber.subscriber.version ?? "*"} ${topicSubscriber.subscriber.instance ?? "*"} ${topicSubscriber.subscriber.command ?? "*"}`}
@@ -427,7 +437,7 @@ function TopicIndex({
                 config={config}
                 permission="PLUGIN_ADMIN"
               >
-                <FontAwesomeIcon icon="0" />
+                <FontAwesomeIcon icon="trash-can" />
               </AccessButton>
             )}
         </div>
@@ -442,6 +452,9 @@ function TopicIndex({
           {topicSubscriber.subscriber !== undefined &&
             topicSubscriber.subscriber.subscriber_type == "DYNAMIC" && (
               <AccessButton
+                basic
+                rounded
+                raised
                 onClick={() =>
                   removeSubscriber(
                     topicSubscriber.topic!,
@@ -471,6 +484,9 @@ function TopicIndex({
       return (
         <div className="flex">
           <AccessButton
+            basic
+            rounded
+            raised
             onClick={() =>
               addRequestItem({
                 topic: topicSubscriber.topic,
@@ -478,6 +494,7 @@ function TopicIndex({
               })
             }
             tooltip="View Topic"
+            className="mr-2"
             aria-label={`ViewTopic ${topicSubscriber.topic?.name}`}
             config={config}
             permission="PLUGIN_ADMIN"
@@ -485,9 +502,13 @@ function TopicIndex({
             <FontAwesomeIcon icon="eye" />
           </AccessButton>
           <AccessButton
+            basic
+            rounded
+            raised
             onClick={() => addSubscriber(topicSubscriber.topic!)}
             aria-label={`Add Subscriber to Topic ${topicSubscriber.topic?.name}`}
             tooltip="Add Subscriber"
+            className="mr-2"
             config={config}
             permission="PLUGIN_ADMIN"
           >
@@ -495,6 +516,9 @@ function TopicIndex({
           </AccessButton>
           {has_only_dynamic_subscribers && (
             <AccessButton
+              basic
+              rounded
+              raised
               onClick={() => deleteTopic(topicSubscriber.topic!)}
               aria-label={`Delete Topic ${topicSubscriber.topic?.name}`}
               tooltip="Delete Topic"
@@ -797,6 +821,12 @@ function TopicIndex({
               setTopicName(e.target.value)
             }
             disabled={isEdit.current}
+            pt={{
+              root: {
+                "aria-label": undefined,
+                required: undefined,
+              },
+            }}
           />
         </div>
         <Divider />

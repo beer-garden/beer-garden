@@ -13,6 +13,7 @@ import { CommandFormProps, InputParam } from "../models/models";
 import { useToast } from "../providers/ToastProvider";
 import { PostRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
+import { CompareObjects } from "../services/util_service";
 import CommandFormField from "./CommandFormField";
 
 function CommandForm({
@@ -45,6 +46,11 @@ function CommandForm({
     parameter: InputParam,
     lookupParameters: Array<InputParam>,
   ) => {
+    // Skip choice generation if disabled
+    if (disabled) {
+      return;
+    }
+
     const timestamp = Date.now();
 
     const mapChoices = (
@@ -486,6 +492,28 @@ function CommandForm({
         valid = false;
         break;
       }
+      if (parameter.type === "Dictionary") {
+        if (parameter.multi) {
+          for (const param of parameter.value) {
+            try {
+              JSON.parse(param);
+            } catch {
+              valid = false;
+              break;
+            }
+          }
+          if (!valid) {
+            break;
+          }
+        } else {
+          try {
+            JSON.parse(parameter.value);
+          } catch {
+            valid = false;
+            break;
+          }
+        }
+      }
     }
     setIsFormValid(valid);
   };
@@ -658,15 +686,23 @@ function CommandForm({
       if (inputParameter.key === null || inputParameter.key === undefined) {
         return;
       }
+      let parameterValue = inputParameter.value;
+
+      if (inputParameter.type === "Dictionary") {
+        try {
+          parameterValue = JSON.parse(inputParameter.value);
+        } catch {
+          parameterValue = undefined;
+          console.log("Failed Parsing JSON");
+        }
+      }
+
       if (
         request &&
         request.parameters &&
         inputParameter.key in request.parameters
       ) {
-        if (
-          inputParameter.value === null ||
-          inputParameter.value === undefined
-        ) {
+        if (parameterValue === null || parameterValue === undefined) {
           delete request.parameters[inputParameter.key];
           updated = true;
           changedFields.push(inputParameter.key);
@@ -677,18 +713,19 @@ function CommandForm({
         request.parameters = {};
         updated = true;
       }
-      if (inputParameter.value === null || inputParameter.value === undefined) {
+      if (parameterValue === null || parameterValue === undefined) {
         return;
       }
+
       if (request && request.parameters) {
         if (
           inputParameter.key in request.parameters &&
-          request.parameters[inputParameter.key] === inputParameter.value
+          CompareObjects(request.parameters[inputParameter.key], parameterValue)
         ) {
           return;
         }
 
-        request.parameters[inputParameter.key] = inputParameter.value;
+        request.parameters[inputParameter.key] = parameterValue;
         updated = true;
         changedFields.push(inputParameter.key);
       }

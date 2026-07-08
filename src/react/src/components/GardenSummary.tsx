@@ -3,6 +3,7 @@ import { Badge } from "primereact/badge";
 import { Card } from "primereact/card";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
+import { Message } from "primereact/message";
 import { Skeleton } from "primereact/skeleton";
 import { Tag } from "primereact/tag";
 import { Tooltip } from "primereact/tooltip";
@@ -80,6 +81,7 @@ function GardenSummary({
     return new Map();
   };
 
+  const [invalidRouting, setInvalidRouting] = useState(false);
   const [publishingConnections, setPublishingConnections] = useState<
     Array<Connection>
   >(getPublishingConnections());
@@ -151,6 +153,41 @@ function GardenSummary({
     pos: 6,
   };
 
+  const parentRoutingCheck = (
+    garden: Garden,
+    targetParent: string,
+    upstreamRouting: boolean,
+  ) => {
+    let isValid = true;
+
+    if (garden.name !== gardenRef.current?.name) {
+      isValid =
+        garden?.receiving_connections.every(
+          (connection: Connection) =>
+            connection.status !== undefined &&
+            ["NOT_CONFIGURED", "PUBLISHING", "RECEIVING"].includes(
+              connection.status,
+            ),
+        ) &&
+        garden?.publishing_connections.every(
+          (connection: Connection) =>
+            connection.status !== undefined &&
+            ["NOT_CONFIGURED", "PUBLISHING", "RECEIVING"].includes(
+              connection.status,
+            ),
+        );
+    }
+    if (garden.name === targetParent) {
+      setInvalidRouting(!(isValid && upstreamRouting));
+      return;
+    }
+    if (garden?.children) {
+      for (const child of garden.children) {
+        parentRoutingCheck(child, targetParent, isValid && upstreamRouting);
+      }
+    }
+  };
+
   useEffect(() => {
     setPublishingConnections(getPublishingConnections());
     setReceivingonnections(getReceivingConnections());
@@ -167,6 +204,9 @@ function GardenSummary({
         if (gardenRef.current.name === selectedGarden?.name) {
           AddTourStep(tourStepsRef, syncAllTourStep);
         } else {
+          if (selectedGarden?.parent) {
+            parentRoutingCheck(gardenRef.current, selectedGarden?.parent, true);
+          }
           AddTourStep(tourStepsRef, syncGardenTourStep);
           AddTourStep(tourStepsRef, syncUsersTourStep);
           AddTourStep(tourStepsRef, deleteGardenTourStep);
@@ -286,85 +326,95 @@ function GardenSummary({
     return <Tag value={row.status} severity={severity} />;
   };
 
-  const connectionActions = (node: Connection, type: string) => (
-    <div className="flex gap-2">
-      <AccessButton
-        data-testid={type + "_" + node?.api + "_START"}
-        {...GenerateTourProps({
-          prefix: tourPrefix,
-          uuid: tourUuid,
-          label: `${type} START ${node?.api}`,
-        })}
-        onClick={() => {
-          if (selectedGarden?.name && node?.status && node?.api) {
-            UpdateApiGarden(selectedGarden.name, type, node.api, type)
-              .then(() => {
-                showToast({
-                  severity: "success",
-                  summary: "Success",
-                  detail: `Started Garden API connection ${node.api}`,
-                  life: 3000,
+  const connectionActions = (node: Connection, type: string) => {
+    if (
+      gardenRef.current?.name === selectedGarden?.name ||
+      (selectedGarden?.has_parent === true &&
+        selectedGarden.parent !== undefined &&
+        selectedGarden.parent !== gardenRef.current?.name)
+    ) {
+      return <></>;
+    }
+    return (
+      <div className="flex gap-2">
+        <AccessButton
+          data-testid={type + "_" + node?.api + "_START"}
+          {...GenerateTourProps({
+            prefix: tourPrefix,
+            uuid: tourUuid,
+            label: `${type} START ${node?.api}`,
+          })}
+          onClick={() => {
+            if (selectedGarden?.name && node?.status && node?.api) {
+              UpdateApiGarden(selectedGarden.name, type, node.api, type)
+                .then(() => {
+                  showToast({
+                    severity: "success",
+                    summary: "Success",
+                    detail: `Stopped Garden API connection ${node.api}`,
+                    life: 3000,
+                  });
+                })
+                .catch((error) => {
+                  console.error("Error Updating Garden API Connection:", error);
+                  showToast({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Error Updating Garden API Connection: ${error}`,
+                    life: 3000,
+                  });
                 });
-              })
-              .catch((error) => {
-                console.error("Error Updating Garden API Connection:", error);
-                showToast({
-                  severity: "error",
-                  summary: "Error",
-                  detail: `Error Updating Garden API Connection: ${error}`,
-                  life: 3000,
+            } else if (node?.api === null || node?.api === undefined) {
+              throw Error(`Error missing ${JSON.stringify(node)}`);
+            }
+          }}
+          tooltip={`${type} START ${node?.api}`}
+          config={config}
+          permission="GARDEN_ADMIN"
+          hasGardenName={selectedGarden?.name}
+        >
+          <FontAwesomeIcon icon="play" />
+        </AccessButton>
+        <AccessButton
+          severity="warning"
+          data-testid={type + "_" + node?.api + "_STOP"}
+          {...GenerateTourProps({
+            prefix: tourPrefix,
+            uuid: tourUuid,
+            label: `${type} STOP ${node?.api}`,
+          })}
+          onClick={() => {
+            if (selectedGarden?.name && node?.status && node?.api) {
+              UpdateApiGarden(selectedGarden.name, "DISABLED", node.api, type)
+                .then(() => {
+                  showToast({
+                    severity: "success",
+                    summary: "Success",
+                    detail: `Started Garden API connection ${node.api}`,
+                    life: 3000,
+                  });
+                })
+                .catch((error) => {
+                  console.error("Error Updating Garden API Connection:", error);
+                  showToast({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Error Updating Garden API Connection: ${error}`,
+                    life: 3000,
+                  });
                 });
-              });
-          } else if (node?.api === null || node?.api === undefined) {
-            throw Error(`Error missing ${JSON.stringify(node)}`);
-          }
-        }}
-        tooltip={`${type} START ${node?.api}`}
-        config={config}
-        permission="GARDEN_ADMIN"
-        hasGardenName={selectedGarden?.name}
-      >
-        <FontAwesomeIcon icon="play" />
-      </AccessButton>
-      <AccessButton
-        severity="warning"
-        data-testid={type + "_" + node?.api + "_STOP"}
-        {...GenerateTourProps({
-          prefix: tourPrefix,
-          uuid: tourUuid,
-          label: `${type} STOP ${node?.api}`,
-        })}
-        onClick={() => {
-          if (selectedGarden?.name && node?.status && node?.api) {
-            UpdateApiGarden(selectedGarden.name, "DISABLED", node.api, type)
-              .then(() => {
-                showToast({
-                  severity: "success",
-                  summary: "Success",
-                  detail: `Stopped Garden API connection ${node.api}`,
-                  life: 3000,
-                });
-              })
-              .catch((error) => {
-                console.error("Error Updating Garden API Connection:", error);
-                showToast({
-                  severity: "error",
-                  summary: "Error",
-                  detail: `Error Updating Garden API Connection: ${error}`,
-                  life: 3000,
-                });
-              });
-          }
-        }}
-        tooltip={`${type} STOP ${node?.api}`}
-        config={config}
-        permission="GARDEN_ADMIN"
-        hasGardenName={selectedGarden?.name}
-      >
-        <FontAwesomeIcon icon="stop" />
-      </AccessButton>
-    </div>
-  );
+            }
+          }}
+          tooltip={`${type} STOP ${node?.api}`}
+          config={config}
+          permission="GARDEN_ADMIN"
+          hasGardenName={selectedGarden?.name}
+        >
+          <FontAwesomeIcon icon="stop" />
+        </AccessButton>
+      </div>
+    );
+  };
 
   return (
     <Card
@@ -627,6 +677,24 @@ function GardenSummary({
       </div>
       {selectedGarden?.name ? (
         <div>
+          {invalidRouting && (
+            <Message
+              className="mx-2 mb-2"
+              severity="warn"
+              text="Warning - Upstream routing error. Requests or Syncs might be interrupted or missed. Please contact your Garden Admin"
+              pt={{
+                icon: {
+                  role: "img",
+                  "aria-label": "Close Alert Message",
+                  style: { color: "var(--warning-color)" },
+                },
+              }}
+              style={{
+                backgroundColor: "var(--warning-background-color)",
+                color: "var(--warning-color)",
+              }}
+            />
+          )}
           <div className="grid">
             <div className="col-3">
               <h2>Version</h2>
@@ -642,12 +710,12 @@ function GardenSummary({
                       <div key={`${status}_Summary`}>
                         <Tooltip
                           content={`${status} Count ${count}`}
-                          target={`#${status}_${selectedGarden?.name}_severity_system_summary`}
+                          target={`#${status}_${selectedGarden?.id}_severity_system_summary`}
                           position="bottom"
                         />
                         <Badge
                           data-testid={`${status}_severity_system_summary`}
-                          id={`${status}_${selectedGarden?.name}_severity_system_summary`}
+                          id={`${status}_${selectedGarden?.id}_severity_system_summary`}
                           value={count}
                           severity={statusSeverity}
                           key={status}

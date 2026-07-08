@@ -81,7 +81,7 @@ services:
         ports:
             - "2337:2337"
         volumes:
-            - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
+            - ./data/app-logging.yaml:/conf/app-logging.yaml
             - ./beer_garden_jmeter_parent_children:/children
         environment:
             <<: *env
@@ -133,7 +133,7 @@ services:
             - "2357:2337"
             - "2358:2338"
         volumes:
-            - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
+            - ./data/app-logging.yaml:/conf/app-logging.yaml
         environment:
             <<: *env
 

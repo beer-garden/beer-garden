@@ -28,7 +28,7 @@ function UserOverlay({
 
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
-  const focusRef = useRef<HTMLInputElement>(null);
+  const focusRef = useRef<InputSwitch>(null);
 
   useEffect(() => {
     // Focus the element when the component mounts
@@ -99,8 +99,8 @@ function UserOverlay({
             )}
           </span>
           <datalist id="selectThemeColorDropdown" aria-hidden="true">
-            {ThemeOptions().map((status: any) => (
-              <option key={status.label} value={status.value} />
+            {ThemeOptions().map((color: string) => (
+              <option key={color} value={color} />
             ))}
           </datalist>
           <Dropdown

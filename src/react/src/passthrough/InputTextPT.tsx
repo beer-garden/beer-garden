@@ -4,7 +4,10 @@ export const InputTextPT = ({ props }: { props: any }) => {
   return {
     root: {
       autoComplete: "off",
-      type: "text",
+      type:
+        Object.hasOwn(props, "type") && props.type === "password"
+          ? props.type
+          : "text",
       "aria-label": FindPropLabel(props),
     },
   };

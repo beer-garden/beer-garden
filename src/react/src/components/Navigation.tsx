@@ -9,7 +9,11 @@ import CurrentRequestsTemplate from "../components/CurrentRequestsTemplate";
 import UserLogin from "../components/UserLogin";
 import { Config, RequestItem, TourStepProps } from "../models/models";
 import { useToast } from "../providers/ToastProvider";
-import { ClearRefresh, ClearToken } from "../services/token_service";
+import {
+  ClearRefresh,
+  ClearToken,
+  LogoutCurrentUser,
+} from "../services/token_service";
 import {
   AddTourStep,
   ClearTourSteps,
@@ -34,6 +38,7 @@ function NavigationMenu({
   toggleRunTour: () => void;
   tourStepsRef: RefObject<Array<TourStepProps>>;
 }) {
+  const showToast = useToast();
   const [iconDefault, setIconDefault] = useState<string>(
     config?.icon_default ?? "beer-mug-empty",
   );
@@ -47,23 +52,12 @@ function NavigationMenu({
   const [showAdmin, setShowAdmin] = useState<boolean>(false);
   const op = useRef<OverlayPanel>(null);
 
-  const showToast = useToast();
-
-  const onLogout = () => {
-    ClearToken();
-    ClearRefresh()
-      .finally(() => {
-        updateUserName(undefined);
-      })
-      .catch((error) => {
-        console.error("Error clearing Refresh Token:", error);
-        showToast({
-          severity: "error",
-          summary: "Error",
-          detail: `Error clearing Refresh Token: ${error}`,
-          life: 3000,
-        });
-      });
+  const onLogout = async () => {
+    await LogoutCurrentUser().catch((error) => {
+      console.error("Error logging out user:", error);
+    });
+    updateUserName(undefined);
+    runReloadUI();
 
     op.current?.hide();
   };
@@ -356,6 +350,9 @@ function NavigationMenu({
           setUserName(tokenUserName);
         } else {
           setLoginVisible(true);
+          LogoutCurrentUser().catch((error) =>
+            console.error("Error logging out user:", error),
+          );
         }
       } else if (!config.auth_enabled) {
         ClearToken();
@@ -389,6 +386,14 @@ function NavigationMenu({
     };
   }, [config, authEnabled, username, iconDefault, applicationName]);
 
+  useEffect(() => {
+    if (authEnabled && GetCurrentUser() === undefined) {
+      LogoutCurrentUser()
+        .then(() => runReloadUI())
+        .catch((error) => console.error("Error logging out user:", error));
+    }
+  }, []);
+
   const end = (
     <div className="flex">
       {authEnabled === true && (
@@ -418,6 +423,7 @@ function NavigationMenu({
         onClick={toggleRunTour}
         tooltip="Start Tour"
         data-testid="start-tour"
+        basic
       >
         <FontAwesomeIcon className="fa-2x" icon="compass" />
       </AccessButton>
@@ -425,6 +431,7 @@ function NavigationMenu({
       <CurrentRequestsTemplate listeners={listeners} config={config} />
       <AccessButton
         tooltip="User Preferences Menu"
+        basic
         onClick={(e) => op.current?.toggle(e)}
         text
         title="Preferences"

@@ -412,6 +412,7 @@ function RequestCreateCard({
                 resetForm={resetForm}
                 setResetForm={setResetForm}
                 setIsFormValid={setIsFormValid}
+                config={config}
               />
             )}
             {!showCreateRequest && (
