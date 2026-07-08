@@ -59,7 +59,7 @@ function RequestOptions({
   closeRequest,
 }: {
   request: Request;
-  setRequest: (request: Request | null) => void;
+  setRequest: (request: Request | undefined) => void;
   requestProjections?: RequestCommand[];
   requestProjectionSelected?: RequestCommand;
   setRequestProjectionSelected: (value: RequestCommand | undefined) => void;
@@ -151,7 +151,7 @@ function RequestOptions({
       label: "Reload Request",
       icon: <FontAwesomeIcon icon="arrows-rotate" />,
       command: () => {
-        setRequest(null);
+        setRequest(undefined);
       },
     });
   }
