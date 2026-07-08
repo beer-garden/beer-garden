@@ -15,9 +15,6 @@ jobs:
       matrix:
         python-version: ["3.12","3.13", "3.14"]
         os: ["ubuntu-latest"]
-        include:
-          - python-version: "3.7"
-            os: "ubuntu-22.04"
 
     defaults:
       run:
