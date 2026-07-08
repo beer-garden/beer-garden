@@ -17,8 +17,11 @@ const AccessButton = ({
   isLoading,
   renderAuthFailed,
   children,
+  basic,
   ...props
-}: PropsWithChildren<ButtonProps & HasAccessProps>) => {
+}: PropsWithChildren<
+  ButtonProps & HasAccessProps & { basic?: boolean | undefined }
+>) => {
   if (!Object.hasOwn(props, "tooltip")) {
     if (Object.hasOwn(props, "aria-label")) {
       props["tooltip"] = props["aria-label"];
@@ -59,6 +62,19 @@ const AccessButton = ({
       props["label"],
     );
     props["aria-label"] = props["label"];
+  }
+
+  if (!Object.hasOwn(props, "style") || props.style === undefined) {
+    props.style = {};
+  }
+
+  // Custom Class Styles
+  if (basic) {
+    if (Object.hasOwn(props, "className") && props.className) {
+      props.className = `${props.className} basic`;
+    } else {
+      props.className = "basic";
+    }
   }
 
   if (permission && config && config?.auth_enabled === true) {

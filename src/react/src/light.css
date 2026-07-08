@@ -1,0 +1,19 @@
+@import "./App.css";
+
+.p-panel-header {
+  background-color: var(--surface-b);
+}
+
+.basic.p-button {
+  color: var(--contrast-color);
+  background-color: transparent;
+}
+
+.basic.p-button.p-button-raised {
+  border-color: var(--surface-b);
+  background-color: var(--surface-b);
+}
+
+.unassociated-runner-header {
+  background-color: var(--red-100);
+}

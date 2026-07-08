@@ -437,12 +437,12 @@ function GardenDashboard({
           <div key={`${status}_${garden?.name}_count`}>
             <Tooltip
               content={`${status} Count ${count} for ${garden?.name}`}
-              target={`#${status}_${garden?.name}_menu_severity_system_summary`}
+              target={`#${status}_${garden?.id}_menu_severity_system_summary`}
               position="bottom"
             />
             <Badge
               value={count}
-              id={`${status}_${garden?.name}_menu_severity_system_summary`}
+              id={`${status}_${garden?.id}_menu_severity_system_summary`}
               severity={statusSeverity}
               key={`${status}_${garden?.name}`}
             />
