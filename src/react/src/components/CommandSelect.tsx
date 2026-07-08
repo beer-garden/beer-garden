@@ -100,11 +100,15 @@ function CommandSelect({
 
     // Check if change
     if (!CompareObjects(namespaces, namespaceList)) {
-      setNamespaces(namespaceList);
+      setNamespaces(
+        namespaceList.sort((a: string, b: string) => a.localeCompare(b)),
+      );
     }
 
     if (!CompareObjects(systemNames, systemNameList)) {
-      setSystemNames(systemNameList);
+      setSystemNames(
+        systemNameList.sort((a: string, b: string) => a.localeCompare(b)),
+      );
     }
 
     const generateLatestSystemVersions = (
@@ -126,18 +130,28 @@ function CommandSelect({
       !CompareObjects(versions, generateLatestSystemVersions(systemVersionList))
     ) {
       if (systemVersionList.includes("latest")) {
-        setVersions(systemVersionList);
+        setVersions(
+          systemVersionList.sort((a: string, b: string) => a.localeCompare(b)),
+        );
       } else {
-        setVersions(generateLatestSystemVersions(systemVersionList));
+        setVersions(
+          generateLatestSystemVersions(systemVersionList).sort(
+            (a: string, b: string) => a.localeCompare(b),
+          ),
+        );
       }
     }
 
     if (!CompareObjects(instances, instanceList)) {
-      setInstances(instanceList);
+      setInstances(
+        instanceList.sort((a: string, b: string) => a.localeCompare(b)),
+      );
     }
 
     if (!CompareObjects(commands, commandList)) {
-      setCommands(commandList);
+      setCommands(
+        commandList.sort((a: string, b: string) => a.localeCompare(b)),
+      );
     }
 
     if (namespaceList.length === 1 && selectedNamespace !== namespaceList[0]) {
