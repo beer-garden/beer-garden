@@ -185,7 +185,13 @@ class StompManager(BaseProcessor):
                     garden_name=event.payload.name, skip_key=skip_key
                 )
 
-        if not event.error and event.garden == config.get("garden.name"):
+        if not event.error and (
+            event.garden == config.get("garden.name")
+            or (
+                event.name == Events.REQUEST_TOPIC_PUBLISH.name
+                and event.metadata.get("propagate", False)
+            )
+        ):
             # Keep filter list in sync with HTTP Parent Updater
             if event.name in accepted_forwarding_events:
                 for value in self.conn_dict.values():
