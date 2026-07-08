@@ -173,19 +173,21 @@ function UserOverlay({
         </>
       )}
 
-      <div>
-        <Divider />
-        <AccessButton
-          size="small"
-          severity="warning"
-          className="mr-2"
-          onClick={onClearSession}
-          data-testid="clear-session-overlay"
-        >
-          <FontAwesomeIcon className="mr-2" icon="eraser" />
-          <span>Clear Browser Data</span>
-        </AccessButton>
-      </div>
+      {username === undefined && (
+        <div>
+          <Divider />
+          <AccessButton
+            size="small"
+            severity="warning"
+            className="mr-2"
+            onClick={onClearSession}
+            data-testid="clear-session-overlay"
+          >
+            <FontAwesomeIcon className="mr-2" icon="eraser" />
+            <span>Clear Session Data</span>
+          </AccessButton>
+        </div>
+      )}
     </>
   );
 }
