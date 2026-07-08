@@ -281,7 +281,7 @@ class TestSubscriptionEvent(object):
 
         event = Event(
             name=Events.REQUEST_TOPIC_PUBLISH.name,
-            metadata={"_propagate": True, "topic": "topic_1"},
+            metadata={"propagate": True, "topic": "topic_1"},
             garden="remote_garden",
             payload=Request(),
         )

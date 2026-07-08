@@ -37,7 +37,7 @@ export const CompareObjects = (obj1: any, obj2: any) => {
 
 export const GetVersion = async (): Promise<Version> => {
   try {
-    const response = await fetch(`/version`);
+    const response = await fetch(`${GetBaseURL()}/version`);
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);

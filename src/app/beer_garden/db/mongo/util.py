@@ -130,7 +130,7 @@ def prune_topics():
 
     command_hash = []
 
-    for system in System.objects().only(
+    for system in System.objects(garden_name=config.get("garden.name")).only(
         "garden_name",
         "name",
         "namespace",

@@ -268,7 +268,7 @@ function App() {
             if (
               !updatedGarden.has_parent &&
               updatedGarden.connection_type === "Remote" &&
-              compareGarden.connection_type !== "Remote"
+              compareGarden.connection_type === "LOCAL"
             ) {
               if (
                 !compareGarden.children.some(

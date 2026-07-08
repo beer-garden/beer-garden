@@ -12,7 +12,7 @@ x-definitions: &env
 
     # IMPORTANT!!
     # If you are connection to a Parent BG instance, toggle true
-    BG_PARENT_HTTP_ENABLE: "false"
+    BG_PARENT_HTTP_ENABLED: "false"
 
     # IMPORTANT !!
     # If you are connecting to a Parent BG instance, change this the resolvable DNS entry
@@ -28,7 +28,7 @@ services:
             - "2337:2337"
             - "2338:2338"
         volumes:
-            - ./data/logging-config.yaml:/src/example_configs/logging-config.yaml
+            - ./data/app-logging.yaml:/conf/app-logging.yaml
             - ./data/localplugins:/plugins
         environment:
             <<: *env
@@ -57,6 +57,26 @@ services:
             # link in our About section if it is defined.
             BG_METRICS_URL: http://localhost:3000
             BG_METRICS_PROMETHEUS_ENABLED: "false"
+
+            # Docker File Defined Variables
+            BG_LOG_CONFIG_FILE: "/conf/app-logging.yaml"
+            BG_PLUGIN_LOCAL_LOGGING_CONFIG_FILE: "/conf/local-plugin-logging.yaml"         
+            BG_PLUGIN_REMOTE_LOGGING_CONFIG_FILE: "/conf/remote-plugin-logging.yaml"
+            BG_PLUGIN_LOCAL_DIRECTORY: "/plugins"
+            BG_CHILDREN_CONFIG_DIRECTORY: "/conf/children"
+
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "python",
+                    "-c",
+                    "import urllib.request; urllib.request.urlopen('http://127.0.0.1:2337/version', timeout=5).read()"
+                ]
+            interval: 10s
+            timeout: 10s
+            retries: 5
+            start_period: 10s
         depends_on:
             - mongodb
             - rabbitmq
@@ -71,6 +91,16 @@ services:
         environment:
             BEERGARDEN_HOST: "beer-garden"
             BEERGARDEN_PORT: "2337"
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "curl -k -f http://127.0.0.1 >/dev/null 2>&1 || exit 1"
+                ]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 20s
         depends_on:
             - beer-garden
 

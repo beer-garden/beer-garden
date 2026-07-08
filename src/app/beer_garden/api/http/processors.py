@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 import logging
 
+from brewtils.models import (
+    Events,
+)
+
 import beer_garden.api.http
 import beer_garden.config as config
 from beer_garden.api.http.handlers.v1.event import EventSocket
@@ -22,6 +26,10 @@ def websocket_publish(event):
     """Publish an event to all websocket endpoints"""
     if event.garden != config.get("garden.name") or event.error:
         return
+
+    # Required for UI event triggering to ensure the full object is returned
+    if event.name == Events.GARDEN_UPDATED.name and event.payload.children is None:
+        beer_garden.garden.get_children_garden(event.payload)
 
     try:
         beer_garden.api.http.io_loop.add_callback(EventSocket.publish, event)
