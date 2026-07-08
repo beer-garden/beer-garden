@@ -1,5 +1,10 @@
 # Beer Garden Changelog
 
+#TBD
+TBD
+
+- Fixed bug where Topic Publish Requests were not forwarded from downstream Gardens properly (#2254)
+
 # 3.34.0
 6/30/2026
 
@@ -8,7 +13,7 @@
 - Updated Docker files and Docker Compose to be consistent in Log file and define all environemnt variables (#2249) 
 - Fixed bug where GARDEN_UPDATED event of local garden would not return children in 
   websocket event objects (#2146)
-- Fixed but where upstream Gardens did not process publish topics with `_propagated=true` (#2240) 
+- Fixed bug where upstream Gardens did not process publish topics with `_propagated=true` (#2240) 
 - Fixed bug where Beer Garden creates "Generated/Annotated" topics for downstream systems locally. Causing
   downstream systems to be triggered by topics that they don't have the scope for. (#2133)
   - Fixed issue where RPM install would override select configuration values. Going forward,
