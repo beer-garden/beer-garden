@@ -175,74 +175,80 @@ function RequestOptions({
   return (
     <div className="card justify-content-end">
       <div className="flex flex-end">
-        {execute_authority && (
-          <SplitButton
-            label={isCard ? "Open Request" : "Pour Again"}
-            icon={
-              isCard ? (
-                <FontAwesomeIcon icon="up-right-from-square" className="mr-2" />
-              ) : (
-                <FontAwesomeIcon icon="plus" className="mr-2" />
-              )
-            }
-            model={items}
-            className="p-button-secondary"
-            onClick={() => {
-              if (isCard) {
-                if (openRequest) {
-                  openRequest();
-                }
-              } else {
-                pourAgain(request);
+        {execute_authority &&
+          requestProjections &&
+          requestProjections.length > 0 && (
+            <div className="card mb-2 mr-2">
+              <Dropdown
+                value={requestProjectionSelected}
+                options={requestProjections}
+                valueTemplate={commandTemplate}
+                itemTemplate={commandTemplate}
+                onChange={(e) => {
+                  requestProjectionSelectedRef.current = e.value;
+                  setRequestProjectionSelected(e.value);
+                }}
+                placeholder="Select a command to run next"
+                className="mr-1"
+              />
+              <AccessButton
+                label="Run Next"
+                basic
+                onClick={() => {
+                  if (requestProjectionSelectedRef.current) {
+                    addRequestItem({
+                      type: "REQUEST",
+                      requestCommandInput: requestProjectionSelectedRef.current,
+                    });
+                  }
+                }}
+              />
+            </div>
+          )}
+        <div>
+          {execute_authority && (
+            <SplitButton
+              label={isCard ? "Open Request" : "Pour Again"}
+              icon={
+                isCard ? (
+                  <FontAwesomeIcon
+                    icon="up-right-from-square"
+                    className="mr-2"
+                  />
+                ) : (
+                  <FontAwesomeIcon icon="plus" className="mr-2" />
+                )
               }
-            }}
-            severity="success"
-            style={{ marginLeft: "auto" }}
-            pt={{
-              icon: {
-                role: "img",
-                "aria-label": `Split Button Options for Request ${request.id}`,
-              },
-            }}
-          />
-        )}
-        {!execute_authority && (
-          <AccessButton
-            icon={<FontAwesomeIcon icon="download" />}
-            label="Download Output"
-            onClick={() => handleDownload(request)}
-          />
-        )}
-      </div>
-      {execute_authority &&
-        requestProjections &&
-        requestProjections.length > 0 && (
-          <div className="card">
-            <h5>Run Next</h5>
-            <Dropdown
-              value={requestProjectionSelected}
-              options={requestProjections}
-              valueTemplate={commandTemplate}
-              itemTemplate={commandTemplate}
-              onChange={(e) => {
-                requestProjectionSelectedRef.current = e.value;
-                setRequestProjectionSelected(e.value);
-              }}
-              placeholder="Select a command to run next"
-            />
-            <AccessButton
-              label="Run"
+              model={items}
+              className="p-button-secondary"
               onClick={() => {
-                if (requestProjectionSelectedRef.current) {
-                  addRequestItem({
-                    type: "REQUEST",
-                    requestCommandInput: requestProjectionSelectedRef.current,
-                  });
+                if (isCard) {
+                  if (openRequest) {
+                    openRequest();
+                  }
+                } else {
+                  pourAgain(request);
                 }
               }}
+              severity="success"
+              style={{ marginLeft: "auto" }}
+              pt={{
+                icon: {
+                  role: "img",
+                  "aria-label": `Split Button Options for Request ${request.id}`,
+                },
+              }}
             />
-          </div>
-        )}
+          )}
+          {!execute_authority && (
+            <AccessButton
+              icon={<FontAwesomeIcon icon="download" />}
+              label="Download Output"
+              onClick={() => handleDownload(request)}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

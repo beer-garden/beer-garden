@@ -1,8 +1,9 @@
+import { Card } from "primereact/card";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import ErrorPage from "../components/ErrorPage";
-import RequestTreeChart from "../components/RequestTreeChart";
+import RequestTreeMenu from "../components/RequestTreeMenu";
 import RequestViewMain from "../components/RequestViewMain";
 import { Request } from "../models/brewtils-types";
 import { Config, RequestItem } from "../models/models";
@@ -196,26 +197,35 @@ function RequestView({
         />
       ) : (
         <div>
-          {request && request.id && <h1>Request View: {request.id}</h1>}
+          <div className="flex">
+            <div className="mr-2" style={{ width: "auto" }}>
+              {rootRequest && (
+                <RequestTreeMenu
+                  rootRequest={rootRequest}
+                  request={request}
+                  setRequest={setRequest}
+                />
+              )}
+            </div>
 
-          {rootRequest && (
-            <RequestTreeChart
-              rootRequest={rootRequest}
-              request={request}
-              setRequest={setRequest}
-            />
-          )}
-
-          {request && (
-            <RequestViewMain
-              request={request}
-              setRequest={setRequest}
-              addRequestItem={addRequestItem}
-              showProjections={true}
-              config={config}
-              isCard={false}
-            />
-          )}
+            <Card
+              className="mb-4"
+              style={{ width: "100%" }}
+              unstyled
+              key={request?.id}
+            >
+              {request && (
+                <RequestViewMain
+                  request={request}
+                  setRequest={setRequest}
+                  addRequestItem={addRequestItem}
+                  showProjections={true}
+                  config={config}
+                  isCard={false}
+                />
+              )}
+            </Card>
+          </div>
         </div>
       )}
     </>

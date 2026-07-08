@@ -1,8 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Badge } from "primereact/badge";
 import { Card } from "primereact/card";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -38,46 +35,6 @@ function RequestViewCard({
   );
 
   const navigate = useNavigate();
-
-  const SeverityCheck = (status?: string) => {
-    if (!status) {
-      return "danger";
-    }
-    if (["CREATED"].includes(status)) {
-      return "info";
-    }
-    if (["IN_PROGRESS"].includes(status)) {
-      return "warning";
-    }
-    if (["SUCCESS"].includes(status)) {
-      return "success";
-    }
-    return "danger";
-  };
-
-  const statusTemplate = (request: Request) => {
-    return (
-      <Badge value={request.status} severity={SeverityCheck(request?.status)} />
-    );
-  };
-
-  const CardTitle = () => {
-    let title = "Request View";
-    if (request?.namespace && request?.system && request?.instance_name) {
-      title =
-        request.namespace +
-        " / " +
-        request.system +
-        " / " +
-        request.instance_name;
-    }
-    if (request?.command_display_name) {
-      title += " / " + request.command_display_name;
-    } else if (request?.command) {
-      title += " / " + request.command;
-    }
-    return title;
-  };
 
   const openRequest = () => {
     if (request) {
@@ -199,7 +156,6 @@ function RequestViewCard({
 
   return (
     <Card
-      title={CardTitle()}
       unstyled={isDialog}
       header={
         !isDialog && (
@@ -223,11 +179,6 @@ function RequestViewCard({
       ) : (
         request && (
           <div>
-            <DataTable value={[request]}>
-              <Column field="command" header="Command"></Column>
-              <Column header="Status" body={statusTemplate}></Column>
-            </DataTable>
-
             {request && (
               <RequestViewMain
                 request={request}
