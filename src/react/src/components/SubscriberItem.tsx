@@ -3,7 +3,12 @@ import { AutoComplete } from "primereact/autocomplete";
 import { Card } from "primereact/card";
 import React, { useEffect, useRef, useState } from "react";
 
-import { Subscriber } from "../models/brewtils-types";
+import {
+  Command,
+  Instance,
+  Subscriber,
+  System,
+} from "../models/brewtils-types";
 import { GetSystemList } from "../services/system_service";
 import AccessButton from "./AccessButton";
 
@@ -18,6 +23,8 @@ function SubscriberItem({
   setSubscriberList,
   isEdit,
 }: SubscriberItemProps) {
+  const allSystems = useRef<Array<System>>([]);
+
   const [filteredGardenItems, setFilteredGardenItems] = useState(
     [] as Array<string>,
   );
@@ -43,9 +50,20 @@ function SubscriberItem({
   const instanceItems = useRef<Array<string>>([]);
   const commandItems = useRef<Array<string>>([]);
 
+  const [selectedGardenName, setSelectedGardenName] = useState<
+    string | undefined
+  >(undefined);
+  const [selectedNamespaceName, setSelectedNamespaceName] = useState<
+    string | undefined
+  >(undefined);
+  const [selectedSystemName, setSelectedSystemName] = useState<
+    string | undefined
+  >(undefined);
+
   useEffect(() => {
     GetSystemList()
       .then((data) => {
+        allSystems.current = data;
         //Gardens
         const gardens = new Set(
           data
@@ -132,7 +150,13 @@ function SubscriberItem({
   }
 
   function handleUpdateSubscriber(
-    inputKey: "namespace" | "garden" | "system" | "version" | "instance",
+    inputKey:
+      | "namespace"
+      | "garden"
+      | "system"
+      | "version"
+      | "instance"
+      | "command",
     inputValue: any,
     inputIndex: number,
   ) {
@@ -141,6 +165,23 @@ function SubscriberItem({
         const newList = currentList.map((subscriber, index) => {
           if (index == inputIndex) {
             subscriber[inputKey] = inputValue;
+            if (inputKey == "garden") {
+              subscriber["namespace"] = "";
+              setSelectedNamespaceName(undefined);
+            }
+            if (inputKey == "garden" || inputKey == "namespace") {
+              subscriber["system"] = "";
+              setSelectedSystemName(undefined);
+            }
+            if (
+              inputKey == "garden" ||
+              inputKey == "namespace" ||
+              inputKey == "system"
+            ) {
+              subscriber["version"] = "";
+              subscriber["instance"] = "";
+              subscriber["command"] = "";
+            }
           }
           return subscriber;
         });
@@ -164,7 +205,25 @@ function SubscriberItem({
   const searchNamespaceItems = (event: any) => {
     if (namespaceItems.current) {
       const query = event.query.toLowerCase();
-      const filtered = namespaceItems.current.filter((item) =>
+      let gardenNamespaceList: Array<string> = [];
+
+      // Show only systems with a matching namespace if selected Namespace
+      if (selectedGardenName) {
+        allSystems.current.forEach((system: System) => {
+          if (
+            system.name !== null &&
+            system.garden_name === selectedGardenName
+          ) {
+            if (!gardenNamespaceList.includes(system.namespace as string)) {
+              gardenNamespaceList.push(system.namespace as string);
+            }
+          }
+        });
+      } else {
+        gardenNamespaceList = namespaceItems.current;
+      }
+
+      const filtered = gardenNamespaceList.filter((item) =>
         item.toLowerCase().includes(query),
       );
       setFilteredNamespaceItems(
@@ -176,7 +235,27 @@ function SubscriberItem({
   const searchSystemItems = (event: any) => {
     if (systemItems.current) {
       const query = event.query.toLowerCase();
-      const filtered = systemItems.current.filter((item) =>
+      let namespaceSystemList: Array<string> = [];
+
+      // Show only systems with a matching namespace if selected Namespace
+      if (selectedNamespaceName || selectedGardenName) {
+        allSystems.current.forEach((system: System) => {
+          if (
+            system.name !== null &&
+            (system.namespace === selectedNamespaceName ||
+              (system.garden_name === selectedGardenName &&
+                selectedNamespaceName === undefined))
+          ) {
+            if (!namespaceSystemList.includes(system.name as string)) {
+              namespaceSystemList.push(system.name as string);
+            }
+          }
+        });
+      } else {
+        namespaceSystemList = systemItems.current;
+      }
+
+      const filtered = namespaceSystemList.filter((item) =>
         item.toLowerCase().includes(query),
       );
       setFilteredSystemItems(
@@ -188,7 +267,29 @@ function SubscriberItem({
   const searchVersionItems = (event: any) => {
     if (systemItems.current) {
       const query = event.query.toLowerCase();
-      const filtered = versionItems.current.filter((item) =>
+      let systemVersionList: Array<string> = [];
+
+      if (selectedNamespaceName || selectedSystemName) {
+        allSystems.current.forEach((system: System) => {
+          if (
+            system.version !== null &&
+            (system.name === selectedSystemName ||
+              (system.namespace === selectedNamespaceName &&
+                selectedSystemName === undefined) ||
+              (system.garden_name === selectedGardenName &&
+                selectedNamespaceName === undefined &&
+                selectedSystemName === undefined))
+          ) {
+            if (!systemVersionList.includes(system.version as string)) {
+              systemVersionList.push(system.version as string);
+            }
+          }
+        });
+      } else {
+        systemVersionList = versionItems.current;
+      }
+
+      const filtered = systemVersionList?.filter((item) =>
         item.toLowerCase().includes(query),
       );
       setFilteredVersionItems(
@@ -200,7 +301,36 @@ function SubscriberItem({
   const searchInstanceItems = (event: any) => {
     if (instanceItems.current) {
       const query = event.query.toLowerCase();
-      const filtered = instanceItems.current.filter((item) =>
+      let systemInstanceList: Array<string> = [];
+
+      if (selectedGardenName || selectedNamespaceName || selectedSystemName) {
+        allSystems.current.forEach((system: System) => {
+          if (
+            system.version !== null &&
+            (system.name === selectedSystemName ||
+              (system.namespace === selectedNamespaceName &&
+                selectedSystemName === undefined) ||
+              (system.garden_name === selectedGardenName &&
+                selectedNamespaceName === undefined &&
+                selectedSystemName === undefined))
+          ) {
+            if (system.instances) {
+              system.instances.forEach((instance: Instance) => {
+                if (
+                  instance.name &&
+                  !systemInstanceList.includes(instance.name)
+                ) {
+                  systemInstanceList.push(instance.name);
+                }
+              });
+            }
+          }
+        });
+      } else {
+        systemInstanceList = instanceItems.current;
+      }
+
+      const filtered = systemInstanceList.filter((item) =>
         item.toLowerCase().includes(query),
       );
       setFilteredInstanceItems(
@@ -212,7 +342,33 @@ function SubscriberItem({
   const searchCommandItems = (event: any) => {
     if (commandItems.current) {
       const query = event.query.toLowerCase();
-      const filtered = commandItems.current.filter((item) =>
+      let systemCommandList: Array<string> = [];
+
+      if (selectedGardenName || selectedNamespaceName || selectedSystemName) {
+        allSystems.current.forEach((system: System) => {
+          if (
+            system.version !== null &&
+            (system.name === selectedSystemName ||
+              (system.namespace === selectedNamespaceName &&
+                selectedSystemName === undefined) ||
+              (system.garden_name === selectedGardenName &&
+                selectedNamespaceName === undefined &&
+                selectedSystemName === undefined))
+          ) {
+            if (system.commands) {
+              system.commands.forEach((command: Command) => {
+                if (command.name && !systemCommandList.includes(command.name)) {
+                  systemCommandList.push(command.name);
+                }
+              });
+            }
+          }
+        });
+      } else {
+        systemCommandList = commandItems.current;
+      }
+
+      const filtered = systemCommandList.filter((item) =>
         item.toLowerCase().includes(query),
       );
       setFilteredCommandItems(
@@ -245,9 +401,10 @@ function SubscriberItem({
                 value={subscriber.garden}
                 suggestions={filteredGardenItems}
                 completeMethod={searchGardenItems}
-                onChange={(e) =>
-                  handleUpdateSubscriber("garden", e.target.value, index)
-                }
+                onChange={(e) => {
+                  setSelectedGardenName(e.target.value);
+                  handleUpdateSubscriber("garden", e.target.value, index);
+                }}
               />
             </div>
             <div className="mb-2">
@@ -260,9 +417,10 @@ function SubscriberItem({
                 value={subscriber.namespace}
                 suggestions={filteredNamespaceItems}
                 completeMethod={searchNamespaceItems}
-                onChange={(e) =>
-                  handleUpdateSubscriber("namespace", e.target.value, index)
-                }
+                onChange={(e) => {
+                  setSelectedNamespaceName(e.target.value as string);
+                  handleUpdateSubscriber("namespace", e.target.value, index);
+                }}
               />
             </div>
             <div className="mb-2">
@@ -275,9 +433,11 @@ function SubscriberItem({
                 value={subscriber.system}
                 suggestions={filteredSystemItems}
                 completeMethod={searchSystemItems}
-                onChange={(e) =>
-                  handleUpdateSubscriber("system", e.target.value, index)
-                }
+                onChange={(e) => {
+                  setSelectedSystemName(e.target.value as string);
+                  // TODO: Clear out version, instance, command on change
+                  handleUpdateSubscriber("system", e.target.value, index);
+                }}
               />
             </div>
             <div className="mb-2">
