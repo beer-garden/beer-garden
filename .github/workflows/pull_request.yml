@@ -206,7 +206,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.11"]
         os: ["ubuntu-latest"]
 
     env:
