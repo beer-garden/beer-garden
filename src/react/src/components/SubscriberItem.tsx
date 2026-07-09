@@ -50,15 +50,9 @@ function SubscriberItem({
   const instanceItems = useRef<Array<string>>([]);
   const commandItems = useRef<Array<string>>([]);
 
-  const [selectedGardenName, setSelectedGardenName] = useState<
-    string | undefined
-  >(undefined);
-  const [selectedNamespaceName, setSelectedNamespaceName] = useState<
-    string | undefined
-  >(undefined);
-  const [selectedSystemName, setSelectedSystemName] = useState<
-    string | undefined
-  >(undefined);
+  const selectedGardenName = useRef<string | undefined>(undefined);
+  const selectedNamespaceName = useRef<string | undefined>(undefined);
+  const selectedSystemName = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     GetSystemList()
@@ -167,11 +161,11 @@ function SubscriberItem({
             subscriber[inputKey] = inputValue;
             if (inputKey == "garden") {
               subscriber["namespace"] = "";
-              setSelectedNamespaceName(undefined);
+              selectedNamespaceName.current = undefined;
             }
             if (inputKey == "garden" || inputKey == "namespace") {
               subscriber["system"] = "";
-              setSelectedSystemName(undefined);
+              selectedSystemName.current = undefined;
             }
             if (
               inputKey == "garden" ||
@@ -208,11 +202,11 @@ function SubscriberItem({
       let gardenNamespaceList: Array<string> = [];
 
       // Show only systems with a matching namespace if selected Namespace
-      if (selectedGardenName) {
+      if (selectedGardenName.current) {
         allSystems.current.forEach((system: System) => {
           if (
             system.name !== null &&
-            system.garden_name === selectedGardenName
+            system.garden_name === selectedGardenName.current
           ) {
             if (!gardenNamespaceList.includes(system.namespace as string)) {
               gardenNamespaceList.push(system.namespace as string);
@@ -238,13 +232,13 @@ function SubscriberItem({
       let namespaceSystemList: Array<string> = [];
 
       // Show only systems with a matching namespace if selected Namespace
-      if (selectedNamespaceName || selectedGardenName) {
+      if (selectedNamespaceName.current || selectedGardenName.current) {
         allSystems.current.forEach((system: System) => {
           if (
             system.name !== null &&
-            (system.namespace === selectedNamespaceName ||
-              (system.garden_name === selectedGardenName &&
-                selectedNamespaceName === undefined))
+            (system.namespace === selectedNamespaceName.current ||
+              (system.garden_name === selectedGardenName.current &&
+                selectedNamespaceName.current === undefined))
           ) {
             if (!namespaceSystemList.includes(system.name as string)) {
               namespaceSystemList.push(system.name as string);
@@ -269,16 +263,16 @@ function SubscriberItem({
       const query = event.query.toLowerCase();
       let systemVersionList: Array<string> = [];
 
-      if (selectedNamespaceName || selectedSystemName) {
+      if (selectedNamespaceName.current || selectedSystemName.current) {
         allSystems.current.forEach((system: System) => {
           if (
             system.version !== null &&
-            (system.name === selectedSystemName ||
-              (system.namespace === selectedNamespaceName &&
-                selectedSystemName === undefined) ||
-              (system.garden_name === selectedGardenName &&
-                selectedNamespaceName === undefined &&
-                selectedSystemName === undefined))
+            (system.name === selectedSystemName.current ||
+              (system.namespace === selectedNamespaceName.current &&
+                selectedSystemName.current === undefined) ||
+              (system.garden_name === selectedGardenName.current &&
+                selectedNamespaceName.current === undefined &&
+                selectedSystemName.current === undefined))
           ) {
             if (!systemVersionList.includes(system.version as string)) {
               systemVersionList.push(system.version as string);
@@ -303,16 +297,20 @@ function SubscriberItem({
       const query = event.query.toLowerCase();
       let systemInstanceList: Array<string> = [];
 
-      if (selectedGardenName || selectedNamespaceName || selectedSystemName) {
+      if (
+        selectedGardenName.current ||
+        selectedNamespaceName.current ||
+        selectedSystemName.current
+      ) {
         allSystems.current.forEach((system: System) => {
           if (
             system.version !== null &&
-            (system.name === selectedSystemName ||
-              (system.namespace === selectedNamespaceName &&
-                selectedSystemName === undefined) ||
-              (system.garden_name === selectedGardenName &&
-                selectedNamespaceName === undefined &&
-                selectedSystemName === undefined))
+            (system.name === selectedSystemName.current ||
+              (system.namespace === selectedNamespaceName.current &&
+                selectedSystemName.current === undefined) ||
+              (system.garden_name === selectedGardenName.current &&
+                selectedNamespaceName.current === undefined &&
+                selectedSystemName.current === undefined))
           ) {
             if (system.instances) {
               system.instances.forEach((instance: Instance) => {
@@ -344,16 +342,20 @@ function SubscriberItem({
       const query = event.query.toLowerCase();
       let systemCommandList: Array<string> = [];
 
-      if (selectedGardenName || selectedNamespaceName || selectedSystemName) {
+      if (
+        selectedGardenName.current ||
+        selectedNamespaceName.current ||
+        selectedSystemName.current
+      ) {
         allSystems.current.forEach((system: System) => {
           if (
             system.version !== null &&
-            (system.name === selectedSystemName ||
-              (system.namespace === selectedNamespaceName &&
-                selectedSystemName === undefined) ||
-              (system.garden_name === selectedGardenName &&
-                selectedNamespaceName === undefined &&
-                selectedSystemName === undefined))
+            (system.name === selectedSystemName.current ||
+              (system.namespace === selectedNamespaceName.current &&
+                selectedSystemName.current === undefined) ||
+              (system.garden_name === selectedGardenName.current &&
+                selectedNamespaceName.current === undefined &&
+                selectedSystemName.current === undefined))
           ) {
             if (system.commands) {
               system.commands.forEach((command: Command) => {
@@ -407,7 +409,7 @@ function SubscriberItem({
                 suggestions={filteredGardenItems}
                 completeMethod={searchGardenItems}
                 onChange={(e) => {
-                  setSelectedGardenName(e.target.value as string);
+                  selectedGardenName.current = e.target.value as string;
                   handleUpdateSubscriber("garden", e.target.value, index);
                 }}
                 dropdownIcon="pi pi-chevron-down"
@@ -436,7 +438,7 @@ function SubscriberItem({
                 suggestions={filteredNamespaceItems}
                 completeMethod={searchNamespaceItems}
                 onChange={(e) => {
-                  setSelectedNamespaceName(e.target.value as string);
+                  selectedNamespaceName.current = e.target.value as string;
                   handleUpdateSubscriber("namespace", e.target.value, index);
                 }}
                 dropdownIcon="pi pi-chevron-down"
@@ -465,7 +467,7 @@ function SubscriberItem({
                 suggestions={filteredSystemItems}
                 completeMethod={searchSystemItems}
                 onChange={(e) => {
-                  setSelectedSystemName(e.target.value as string);
+                  selectedSystemName.current = e.target.value as string;
                   handleUpdateSubscriber("system", e.target.value, index);
                 }}
                 dropdownIcon="pi pi-chevron-down"
