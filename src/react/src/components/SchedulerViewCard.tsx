@@ -15,6 +15,7 @@ import {
   Request,
 } from "../models/brewtils-types";
 import { Config } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import {
   GetJob,
   PauseJob,
@@ -54,6 +55,7 @@ function SchedulerViewCard({
   const [recordsUpdated, setRecordsUpdated] = useState(false);
 
   const navigate = useNavigate();
+  const showToast = useToast();
 
   useEffect(() => {
     if (job === undefined && jobId !== undefined) {
@@ -63,6 +65,12 @@ function SchedulerViewCard({
         })
         .catch((error) => {
           console.error("Error fetching job:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching job: ${error}`,
+            life: 3000,
+          });
         });
     } else {
       queryJobRequests();
@@ -185,6 +193,12 @@ function SchedulerViewCard({
       })
       .catch((error) => {
         console.error("Error fetching request list:", error);
+        showToast({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching request list: ${error}`,
+          life: 3000,
+        });
         setLoading(false);
       });
   };
@@ -295,6 +309,12 @@ function SchedulerViewCard({
               if (job?.id) {
                 RunAdhocJob(job.id).catch((error) => {
                   console.error("Error running job:", error);
+                  showToast({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Error running job: ${error}`,
+                    life: 3000,
+                  });
                 });
               }
             }}
@@ -332,6 +352,12 @@ function SchedulerViewCard({
                   })
                   .catch((error) => {
                     console.error("Error pausing job:", error);
+                    showToast({
+                      severity: "error",
+                      summary: "Error",
+                      detail: `Error pausing job: ${error}`,
+                      life: 3000,
+                    });
                   });
               }}
               title={"Pause Job " + job?.name}
@@ -354,6 +380,12 @@ function SchedulerViewCard({
                   })
                   .catch((error) => {
                     console.error("Error resuming job:", error);
+                    showToast({
+                      severity: "error",
+                      summary: "Error",
+                      detail: `Error resuming job: ${error}`,
+                      life: 3000,
+                    });
                   });
               }}
               title={"Resume Job " + job?.name}

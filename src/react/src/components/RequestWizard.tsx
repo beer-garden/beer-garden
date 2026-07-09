@@ -15,6 +15,7 @@ import {
   System,
 } from "../models/brewtils-types";
 import { Config, RequestCommand, RequestItem } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
@@ -40,6 +41,7 @@ function RequestWizard({
   isDialog: boolean;
   config: Config;
 }) {
+  const showToast = useToast();
   const stepperRef = useRef<Stepper>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const stepperPanelOptions: any = {
@@ -130,6 +132,12 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error creating request:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error creating request: ${error}`,
+            life: 3000,
+          });
         });
     }
   };
@@ -145,6 +153,12 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error creating request:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error creating request: ${error}`,
+            life: 3000,
+          });
         });
     }
   };
@@ -164,6 +178,12 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error creating job:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error creating request: ${error}`,
+            life: 3000,
+          });
         });
     }
   };
@@ -183,6 +203,12 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error updating job:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error updating job: ${error}`,
+            life: 3000,
+          });
         });
     }
   };
@@ -259,7 +285,21 @@ function RequestWizard({
       })
       .catch((error) => {
         console.error("Error fetching systems:", error);
+        showToast({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching systems: ${error}`,
+          life: 3000,
+        });
       });
+  };
+
+  const updateSelectedInstance = (instance: Record<string, any>) => {
+    setSelectedInstance(instance);
+    updateRequestValue({
+      ...request,
+      instance_name: instance?.name,
+    });
   };
 
   useEffect(() => {
@@ -338,6 +378,12 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error fetching request:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching request: ${error}`,
+            life: 3000,
+          });
         });
     } else if (
       requestItem?.jobId !== null &&
@@ -377,6 +423,12 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error fetching job:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching job: ${error}`,
+            life: 3000,
+          });
         });
     } else if (
       requestItem?.job !== undefined &&
@@ -679,7 +731,7 @@ function RequestWizard({
                   : []
               }
               selectedInstance={selectedInstance}
-              setSelectedInstance={setSelectedInstance}
+              setSelectedInstance={updateSelectedInstance}
             />
             <div className="flex pt-4 justify-content-between">
               <AccessButton

@@ -9,6 +9,7 @@ import {
   Subscriber,
   System,
 } from "../models/brewtils-types";
+import { useToast } from "../providers/ToastProvider";
 import { GetSystemList } from "../services/system_service";
 import AccessButton from "./AccessButton";
 
@@ -53,6 +54,8 @@ function SubscriberItem({
   const selectedGardenName = useRef<string | undefined>(undefined);
   const selectedNamespaceName = useRef<string | undefined>(undefined);
   const selectedSystemName = useRef<string | undefined>(undefined);
+
+  const showToast = useToast();
 
   useEffect(() => {
     GetSystemList()
@@ -104,6 +107,12 @@ function SubscriberItem({
       })
       .catch((error) => {
         console.error("Error fetching system list:", error);
+        showToast({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching system list: ${error}`,
+          life: 3000,
+        });
       });
   }, []);
 

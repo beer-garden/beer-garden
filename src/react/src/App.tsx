@@ -697,10 +697,22 @@ function App() {
                         <Route
                           path="/roles"
                           element={
+                            <HasAccess
+                            config={config}
+                            permission="GARDEN_ADMIN"
+                            isGlobal={true}
+                            renderAuthFailed={
+                              <ErrorPage
+                                errorCode={401}
+                                errorMsg="Insufficient Access for Roles Management. Please contact Garden Administrator"
+                              />
+                            }
+                          >
                             <RoleIndex
                               config={config}
                               tourStepsRef={tourStepsRef}
                             />
+                          </HasAccess>
                           }
                         />
                         <Route

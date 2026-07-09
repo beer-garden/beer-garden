@@ -10,6 +10,7 @@ import {
   Request,
 } from "../models/brewtils-types";
 import { CommandFormProps, InputParam } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { PostRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
 import { CompareObjects } from "../services/util_service";
@@ -29,6 +30,7 @@ function CommandForm({
     [] as Array<InputParam>,
   );
   const altParametersFields = useRef<Array<InputParam>>([]);
+  const showToast = useToast();
 
   const [initialized, setInitialized] = useState(false);
 
@@ -201,6 +203,12 @@ function CommandForm({
         .then((options) => resolveOptions(options))
         .catch((error) => {
           console.error("Error fetching choices:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching choices: ${error}`,
+            life: 3000,
+          });
           resolveOptions([], `Error fetching choices: ${error}`);
         });
     }
@@ -254,11 +262,23 @@ function CommandForm({
             .then((choices) => resolveOptions(choices))
             .catch((error) => {
               console.error("Error fetching choices:", error);
+              showToast({
+                severity: "error",
+                summary: "Error",
+                detail: `Error fetching choices: ${error}`,
+                life: 3000,
+              });
               resolveOptions([], `Error fetching choices: ${error}`);
             });
         })
         .catch((error) => {
           console.error("Error fetching choices:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching choices: ${error}`,
+            life: 3000,
+          });
           resolveOptions([], `Error fetching choices: ${error}`);
         });
     } else if (
@@ -311,6 +331,12 @@ function CommandForm({
               .then((choices) => resolveOptions(choices))
               .catch((error) => {
                 console.error("Error fetching choices:", error);
+                showToast({
+                  severity: "error",
+                  summary: "Error",
+                  detail: `Error fetching choices: ${error}`,
+                  life: 3000,
+                });
                 resolveOptions([], `Error fetching choices: ${error}`);
               });
           } else {
@@ -319,6 +345,12 @@ function CommandForm({
         })
         .catch((error) => {
           console.error("Error fetching choices:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching choices: ${error}`,
+            life: 3000,
+          });
           resolveOptions([], `Error fetching choices: ${error}`);
         });
     }

@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Dialog } from "primereact/dialog";
 
 import { Request } from "../models/brewtils-types";
+import { useToast } from "../providers/ToastProvider";
 import AccessButton from "./AccessButton";
 
 function CodeExample({
@@ -13,6 +14,8 @@ function CodeExample({
   visibleCodeExample: boolean;
   setVisibleCodeExample: (visibleCodeExample: boolean) => void;
 }) {
+  const showToast = useToast();
+
   const CodeBlock = (codeType: string) => {
     const getHostName = () => {
       return window.location.hostname;
@@ -121,6 +124,12 @@ function CodeExample({
     const copyToClipboard = () => {
       navigator.clipboard.writeText(code()).catch((error) => {
         console.error("Error copying to clipboard:", error);
+        showToast({
+          severity: "error",
+          summary: "Error",
+          detail: `Error copying to clipboard: ${error}`,
+          life: 3000,
+        });
       });
     };
 

@@ -8,6 +8,7 @@ import { NavLink } from "react-router-dom";
 import CurrentRequestsTemplate from "../components/CurrentRequestsTemplate";
 import UserLogin from "../components/UserLogin";
 import { Config, RequestItem, TourStepProps } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import {
   ClearRefresh,
   ClearToken,
@@ -22,6 +23,7 @@ import {
 import { GetCurrentUser } from "../services/user_service";
 import { ClearThemes } from "../services/util_service";
 import AccessButton from "./AccessButton";
+import HasAccess from "./HasAccess";
 import UserOverlay from "./UserOverlay";
 
 function NavigationMenu({
@@ -39,6 +41,7 @@ function NavigationMenu({
   toggleRunTour: () => void;
   tourStepsRef: RefObject<Array<TourStepProps>>;
 }) {
+  const showToast = useToast();
   const [iconDefault, setIconDefault] = useState<string>(
     config?.icon_default ?? "beer-mug-empty",
   );
@@ -49,7 +52,6 @@ function NavigationMenu({
     config?.auth_enabled === true,
   );
 
-  const [showAdmin, setShowAdmin] = useState<boolean>(false);
   const op = useRef<OverlayPanel>(null);
 
   const onLogout = async () => {
@@ -271,18 +273,19 @@ function NavigationMenu({
       label: "Roles",
       template: (item: any) => {
         return (
-          <NavLink
-            to="/roles"
-            className="p-menuitem-link"
-            onKeyDown={handleKeyDown}
-            {...GenerateTourProps(rolesTourStep)}
-          >
-            <FontAwesomeIcon className="mr-2" icon="user-gear" />
-            <span>{item.label}</span>
-          </NavLink>
+          <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
+            <NavLink
+              to="/roles"
+              className="p-menuitem-link"
+              onKeyDown={handleKeyDown}
+              {...GenerateTourProps(rolesTourStep)}
+            >
+              <FontAwesomeIcon className="mr-2" icon="user-gear" />
+              <span>{item.label}</span>
+            </NavLink>
+          </HasAccess>
         );
       },
-      command: () => setShowAdmin(!showAdmin),
       visible: authEnabled,
     },
     {
@@ -366,6 +369,12 @@ function NavigationMenu({
         ClearToken();
         ClearRefresh().catch((error) => {
           console.error("Error Clearing Refresh Token:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error Clearing Refresh Token: ${error}`,
+            life: 3000,
+          });
         });
       }
     }

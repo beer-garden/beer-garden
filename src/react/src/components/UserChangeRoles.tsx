@@ -101,6 +101,12 @@ function UserChangeRoles({
         })
         .catch((error) => {
           console.error("Error fetching roles:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching roles: ${error}`,
+            life: 3000,
+          });
           setRoles([]);
         });
     }

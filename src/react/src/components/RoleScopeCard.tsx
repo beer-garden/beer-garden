@@ -3,6 +3,7 @@ import { AutoComplete } from "primereact/autocomplete";
 import { Card } from "primereact/card";
 import React, { useEffect, useRef, useState } from "react";
 
+import { useToast } from "../providers/ToastProvider";
 import { GetSystemList } from "../services/system_service";
 import AccessButton from "./AccessButton";
 
@@ -10,15 +11,19 @@ interface RoleScopeCardProps {
   scopeName: string;
   scopeList: Array<string>;
   setScopeList: React.Dispatch<React.SetStateAction<Array<string>>>;
+  disabled: boolean;
 }
 
 function RoleScopeCard({
   scopeName,
   scopeList,
   setScopeList,
+  disabled,
 }: RoleScopeCardProps) {
   const [filteredItems, setFilteredItems] = useState([] as Array<string>);
   const items = useRef<Array<string>>([]);
+
+  const showToast = useToast();
 
   useEffect(() => {
     GetSystemList()
@@ -71,10 +76,19 @@ function RoleScopeCard({
       })
       .catch((error) => {
         console.error("Error fetching system list:", error);
+        showToast({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching system list: ${error}`,
+          life: 3000,
+        });
       });
   }, []);
 
   function header(index: number) {
+    if (disabled) {
+      return <></>;
+    }
     return (
       <div className="flex justify-content-between p-3 pb-0 items-end">
         <div className="flex flex-1"></div>
@@ -144,16 +158,19 @@ function RoleScopeCard({
               suggestions={filteredItems}
               completeMethod={searchItems}
               onChange={(e) => handleUpdateScope(e.target.value, index)}
+              disabled={disabled}
             />
           </Card>
         ))}
-        <div className="flex">
-          <AccessButton
-            className="mt-1 mb-3"
-            label={`Add ${scopeName}`}
-            onClick={handleAddScope}
-          />
-        </div>
+        {!disabled && (
+          <div className="flex">
+            <AccessButton
+              className="mt-1 mb-3"
+              label={`Add ${scopeName}`}
+              onClick={handleAddScope}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
