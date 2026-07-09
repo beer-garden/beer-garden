@@ -29,7 +29,12 @@ function RequestView({
     undefined,
   );
 
-  const rootRequestId = useRef<string | undefined>(undefined);
+  const rootRequestRef = useRef<Request | undefined>(undefined);
+
+  const updateRootRequest = (request: Request) => {
+    rootRequestRef.current = request;
+    setRootRequest(request);
+  };
 
   const MonitorRequestId = useCallback(
     (message: any) => {
@@ -41,23 +46,71 @@ function RequestView({
         ) {
           setRequest({
             ...message.payload,
-            children: request?.children,
           } as Request);
         }
         if (
-          rootRequestId.current &&
+          rootRequestRef.current?.id &&
           message.payload.id &&
-          message.payload.id === rootRequestId.current
+          message.payload.id === rootRequestRef.current?.id
         ) {
-          setRootRequest({
+          updateRootRequest({
             ...message.payload,
-            children: rootRequest?.children,
+            children: rootRequestRef.current?.children,
           } as Request);
+        } else if (rootRequestRef.current) {
+          updateRootRequest(
+            updateNestedRequest(message.payload, rootRequestRef.current),
+          );
         }
       }
     },
     [requestId],
   );
+
+  const updateNestedRequest = (
+    updatedRequest: Request,
+    parentRequest: Request,
+  ) => {
+    // Only check requests that have parents
+    const parent_id = updatedRequest?.parent_id ?? updatedRequest?.parent?.id;
+
+    if (parent_id) {
+      if (parent_id === parentRequest.id) {
+        if (
+          parentRequest?.children &&
+          parentRequest.children.some(
+            (childRequest: Request) => childRequest.id === updatedRequest.id,
+          )
+        ) {
+          // Replace Request
+          parentRequest.children = parentRequest.children.map(
+            (childRequest: Request) => {
+              if (childRequest.id !== updatedRequest.id) {
+                return childRequest;
+              }
+              return { ...updatedRequest, children: childRequest.children };
+            },
+          );
+          return parentRequest;
+        } else {
+          // Insert Request
+          if (parentRequest?.children) {
+            parentRequest.children.push(updatedRequest);
+          } else {
+            parentRequest.children = [updatedRequest];
+          }
+          return parentRequest;
+        }
+      } else if (parentRequest?.children) {
+        // Check Children
+        parentRequest.children.map((childRequest: Request) => {
+          return updateNestedRequest(updatedRequest, childRequest);
+        });
+      }
+    }
+
+    return parentRequest;
+  };
 
   useEffect(() => {
     if (!request || request.id === undefined) {
@@ -65,7 +118,6 @@ function RequestView({
         GetRequest(requestId, {})
           .then((data: Request) => {
             setRequest(data);
-
             if (
               !(requestId in listeners) &&
               data.status &&
@@ -90,7 +142,7 @@ function RequestView({
       if (
         requestId &&
         request.id !== requestId &&
-        rootRequestId.current !== requestId
+        rootRequestRef.current?.id !== requestId
       ) {
         delete listeners[requestId];
       }
@@ -152,14 +204,24 @@ function RequestView({
             throw new error();
           });
         } else {
-          setRootRequest(check_request);
+          updateRootRequest(check_request);
           if (check_request.id) {
-            rootRequestId.current = check_request.id;
             if (!(check_request.id in listeners)) {
               listeners[check_request.id] = { listener: MonitorRequestId };
             }
           }
-          setRootRequest(await loadChildrenRequests(check_request));
+          await loadChildrenRequests(check_request)
+            .then((updatedRequest) => {
+              updateRootRequest(updatedRequest);
+            })
+            .catch((error) => {
+              showToast({
+                severity: "error",
+                summary: "Error",
+                detail: `Error fetching children requests: ${error}`,
+                life: 3000,
+              });
+            });
         }
       };
 
@@ -182,8 +244,8 @@ function RequestView({
       if (request && request.id) {
         delete listeners[request.id];
       }
-      if (rootRequestId.current) {
-        delete listeners[rootRequestId.current];
+      if (rootRequestRef.current?.id) {
+        delete listeners[rootRequestRef.current?.id];
       }
     };
   }, [request, requestId, listeners, MonitorRequestId]);
