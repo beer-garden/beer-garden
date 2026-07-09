@@ -376,7 +376,7 @@ function GardenSummary({
           <FontAwesomeIcon icon="play" />
         </AccessButton>
         <AccessButton
-          severity="warning"
+          color="warning"
           data-testid={type + "_" + node?.api + "_STOP"}
           {...GenerateTourProps({
             prefix: tourPrefix,
@@ -465,7 +465,7 @@ function GardenSummary({
               config={config}
               permission="GARDEN_ADMIN"
               hasGardenName={selectedGarden?.name}
-            />
+            >Rescan Plugins</AccessButton>
             <AccessButton
               label="Rescan Downstream"
               tooltip={`Rescan Downstream for Garden ${selectedGarden?.name}`}
@@ -497,7 +497,7 @@ function GardenSummary({
               config={config}
               permission="GARDEN_ADMIN"
               hasGardenName={selectedGarden?.name}
-            />
+            >Rescan Downstream</AccessButton>
             <AccessButton
               label="Clear Plugin Queues"
               tooltip={`Clear Plugin Queues for Garden ${selectedGarden?.name}`}
@@ -530,7 +530,7 @@ function GardenSummary({
               config={config}
               permission="GARDEN_ADMIN"
               hasGardenName={selectedGarden?.name}
-            />
+            >Clear Plugin Queues</AccessButton>
             {gardenRef.current &&
               gardenRef.current.name !== selectedGarden?.name && (
                 <AccessButton
@@ -564,7 +564,7 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                />
+                >Sync</AccessButton>
               )}
             {gardenRef.current &&
               gardenRef.current.name === selectedGarden?.name && (
@@ -596,7 +596,7 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                />
+                >Sync All</AccessButton>
               )}
             {gardenRef.current &&
               gardenRef.current.name !== selectedGarden?.name && (
@@ -634,7 +634,7 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                />
+                >Sync Users</AccessButton>
               )}
             {gardenRef.current &&
               gardenRef.current.name !== selectedGarden?.name && (
@@ -643,7 +643,7 @@ function GardenSummary({
                   tooltip={`Delete Garden ${selectedGarden?.name}`}
                   {...GenerateTourProps(deleteGardenTourStep)}
                   data-testid={"DELETE_GARDEN"}
-                  severity="danger"
+                  color="error"
                   className="mr-2"
                   onClick={() => {
                     if (selectedGarden?.name) {
@@ -670,7 +670,7 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                />
+                >Delete Garden</AccessButton>
               )}
           </div>
         )}
@@ -680,7 +680,7 @@ function GardenSummary({
           {invalidRouting && (
             <Message
               className="mx-2 mb-2"
-              severity="warn"
+              color="warning"
               text="Warning - Upstream routing error. Requests or Syncs might be interrupted or missed. Please contact your Garden Admin"
               pt={{
                 icon: {

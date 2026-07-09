@@ -1,10 +1,12 @@
-import { Button, ButtonProps } from "primereact/button";
+import { Button, ButtonProps, Tooltip } from "@mui/material";
 import { PropsWithChildren } from "react";
 
 import { HasAccessProps } from "../models/models";
 import HasAccess from "./HasAccess";
 
 const AccessButton = ({
+  label,
+  tooltip,
   config,
   permission,
   isGlobal,
@@ -24,21 +26,21 @@ const AccessButton = ({
 >) => {
   if (!Object.hasOwn(props, "tooltip")) {
     if (Object.hasOwn(props, "aria-label")) {
-      props["tooltip"] = props["aria-label"];
+      tooltip = props["aria-label"];
     } else if (Object.hasOwn(props, "title")) {
-      props["tooltip"] = props.title;
-    } else if (Object.hasOwn(props, "label")) {
-      props["tooltip"] = props.label;
+      tooltip = props.title;
+    } else if (label) {
+      tooltip = label;
     } else if (Object.hasOwn(props, "name")) {
-      props["tooltip"] = props.name;
+      tooltip = props.name;
     }
   }
 
   if (!Object.hasOwn(props, "aria-label")) {
-    if (Object.hasOwn(props, "label")) {
-      props["aria-label"] = props.label;
-    } else if (Object.hasOwn(props, "tooltip")) {
-      props["aria-label"] = props.tooltip;
+    if (label) {
+      props["aria-label"] = label;
+    } else if (tooltip) {
+      props["aria-label"] = tooltip;
     }
   }
 
@@ -46,22 +48,22 @@ const AccessButton = ({
     props.title = undefined;
   }
 
-  if (!Object.hasOwn(props, "tooltipOptions")) {
-    props.tooltipOptions = { position: "bottom" };
+  if (!Object.hasOwn(props, "variant")) {
+    props.variant = "contained";
   }
 
   if (
     Object.hasOwn(props, "aria-label") &&
-    Object.hasOwn(props, "label") &&
-    props["aria-label"] !== props["label"]
+    label &&
+    props["aria-label"] !== label
   ) {
     console.error(
       "Mismatched Label and Aria-Label, migrating for 508 compliance to Label value:",
       props["aria-label"],
       " !== ",
-      props["label"],
+      label,
     );
-    props["aria-label"] = props["label"];
+    props["aria-label"] = label;
   }
 
   if (!Object.hasOwn(props, "style") || props.style === undefined) {
@@ -104,7 +106,7 @@ const AccessButton = ({
       </HasAccess>
     );
   } else {
-    return <Button {...props}>{children}</Button>;
+    return <Tooltip title={tooltip} placement="bottom" arrow><Button {...props}>{children}</Button></Tooltip>;
   }
 };
 

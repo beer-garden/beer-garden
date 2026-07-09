@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ButtonGroup } from "primereact/buttongroup";
+import { ButtonGroup } from "@mui/material";
 import { confirmDialog } from "primereact/confirmdialog";
 import { Divider } from "primereact/divider";
 import { Menu } from "primereact/menu";
