@@ -294,6 +294,14 @@ function RequestWizard({
       });
   };
 
+  const updateSelectedInstance = (instance: Record<string, any>) => {
+    setSelectedInstance(instance);
+    updateRequestValue({
+      ...request,
+      instance_name: instance?.name,
+    });
+  };
+
   useEffect(() => {
     if (selectedSystem) {
       updateRequestValue({
@@ -723,7 +731,7 @@ function RequestWizard({
                   : []
               }
               selectedInstance={selectedInstance}
-              setSelectedInstance={setSelectedInstance}
+              setSelectedInstance={updateSelectedInstance}
             />
             <div className="flex pt-4 justify-content-between">
               <AccessButton
