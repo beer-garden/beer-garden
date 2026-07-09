@@ -250,7 +250,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.12"]
+        python-version: ["3.11"]
         os: ["ubuntu-latest"]
 
     env:
@@ -301,7 +301,7 @@ jobs:
 
       - name: Generate coverage report
         run: |
-          coverage run --source beer_garden -m pytest test --tb=no --ignore $(TEST_DIR)/api/http/unit/handlers/v1/event_test.py
+          coverage run --source beer_garden -m pytest test --tb=no --ignore test/api/http/unit/handlers/v1/event_test.py
           coverage report -m
           coverage xml
 
