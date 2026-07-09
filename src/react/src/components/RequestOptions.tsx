@@ -13,37 +13,10 @@ import {
   RequestCommand,
   RequestItem,
 } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { checkPermission } from "../services/permission_service";
 import { CancelRequest, DeleteRequest } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
-
-const handleDownload = (request: Request) => {
-  // Example: fetch a file from a URL
-  const fileUrl = `${GetBaseURL()}/api/v1/requests/output/${request.id}`;
-  let filename = `${request.id}.txt`;
-  if (request.output_type == "HTML") {
-    filename = `${request.id}.html`;
-  } else if (request.output_type == "JSON") {
-    filename = `${request.id}.json`;
-  }
-
-  fetch(fileUrl)
-    .then((response) => response.blob())
-    .then((blob) => {
-      // Create blob link to download
-      const url = window.URL.createObjectURL(new Blob([blob]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", filename); // Set the custom download name
-      document.body.appendChild(link);
-      link.click(); // Trigger the download
-      link?.parentNode?.removeChild(link); // Clean up the link
-      window.URL.revokeObjectURL(url); // Free up the memory
-    })
-    .catch((error) => {
-      console.error("Error fetching the file:", error);
-    });
-};
 
 function RequestOptions({
   request,
@@ -72,6 +45,41 @@ function RequestOptions({
 }) {
   const navigate = useNavigate();
   const items: MenuItem[] = [];
+  const showToast = useToast();
+
+  const handleDownload = (request: Request) => {
+    // Example: fetch a file from a URL
+    const fileUrl = `${GetBaseURL()}/api/v1/requests/output/${request.id}`;
+    let filename = `${request.id}.txt`;
+    if (request.output_type == "HTML") {
+      filename = `${request.id}.html`;
+    } else if (request.output_type == "JSON") {
+      filename = `${request.id}.json`;
+    }
+
+    fetch(fileUrl)
+      .then((response) => response.blob())
+      .then((blob) => {
+        // Create blob link to download
+        const url = window.URL.createObjectURL(new Blob([blob]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", filename); // Set the custom download name
+        document.body.appendChild(link);
+        link.click(); // Trigger the download
+        link?.parentNode?.removeChild(link); // Clean up the link
+        window.URL.revokeObjectURL(url); // Free up the memory
+      })
+      .catch((error) => {
+        console.error("Error fetching the file:", error);
+        showToast({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching the file: ${error}`,
+          life: 3000,
+        });
+      });
+  };
 
   const execute_authority = checkPermission(config, "OPERATOR", {
     gardenName: request?.target_garden,
@@ -88,6 +96,12 @@ function RequestOptions({
         command: () => {
           CancelRequest(request).catch((error) => {
             console.error("Error canceling request:", error);
+            showToast({
+              severity: "error",
+              summary: "Error",
+              detail: `Error canceling request: ${error}`,
+              life: 3000,
+            });
           });
         },
       });
@@ -129,6 +143,12 @@ function RequestOptions({
                 })
                 .catch((error) => {
                   console.error("Error deleting request:", error);
+                  showToast({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Error deleting request: ${error}`,
+                    life: 3000,
+                  });
                 });
             };
             const reject = () => {};

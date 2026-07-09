@@ -61,7 +61,15 @@ function UserCreate({
           }
           handleUserCreateDialogClose();
         })
-        .catch((error) => console.error("Failed creating user", error));
+        .catch((error) => {
+          console.error("Failed creating user", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error creating user: ${error}`,
+            life: 3000,
+          });
+        });
     }
   }
 

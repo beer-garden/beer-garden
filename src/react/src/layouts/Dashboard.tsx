@@ -14,6 +14,7 @@ import UnassociatedRunnerCard from "../components/UnassociatedRunnerCard";
 import { Garden, Runner, System } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { RequestItem, RunnerGroup, TourStepProps } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { GetRunnerList } from "../services/runner_service";
 import {
   AddTourStep,
@@ -58,6 +59,8 @@ function GardenDashboard({
   const [gardenMenu, setGardenMenu] = useState<Array<any>>();
 
   const [loading, setLoading] = useState<boolean>(true);
+
+  const showToast = useToast();
 
   const instanceStatuses = [
     "RUNNING",
@@ -547,7 +550,15 @@ function GardenDashboard({
           setAssociatedRunners(associatedRunnersRef.current);
           setUnassociatedRunners(getUnassociatedRunners());
         })
-        .catch((error) => console.error("Error loading runners", error));
+        .catch((error) => {
+          console.error("Error loading runners", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error loading runners: ${error}`,
+            life: 3000,
+          });
+        });
     }
 
     return () => {

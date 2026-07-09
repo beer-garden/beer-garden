@@ -218,6 +218,12 @@ function UserChangeAccountMapping({
       })
       .catch((error) => {
         console.error("Error fetching root garden accounts:", error);
+        showToast({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching root garden accounts: ${error}`,
+          life: 3000,
+        });
       });
   }, []);
 

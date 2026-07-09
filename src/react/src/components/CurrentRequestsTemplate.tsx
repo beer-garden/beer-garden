@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
 import { Config } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
 import { DeleteRequest, GetRequestList } from "../services/request_service";
 import { GetCurrentUser } from "../services/user_service";
 import { PaginatorTemplate } from "../services/util_service";
@@ -22,6 +23,7 @@ function CurrentRequestsTemplate({
 }) {
   const [currentRequests, setCurrentRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
+  const showToast = useToast();
 
   const setAllRequests = (requests: Array<Request>) => {
     altRequests.current = requests.map((req) => {
@@ -111,6 +113,12 @@ function CurrentRequestsTemplate({
         })
         .catch((error) => {
           console.error("Error fetching current requests:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching current requests: ${error}`,
+            life: 3000,
+          });
         });
     } else {
       setAllRequests([] as Array<Request>);
@@ -251,6 +259,12 @@ function CurrentRequestsTemplate({
               })
               .catch((error) => {
                 console.error("Error deleting request:", error);
+                showToast({
+                  severity: "error",
+                  summary: "Error",
+                  detail: `Error deleting request: ${error}`,
+                  life: 3000,
+                });
               });
           }}
           tooltip={`Delete Request for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
