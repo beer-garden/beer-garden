@@ -217,6 +217,7 @@ function JobIndex({
           rounded
           raised
           link
+          basic
           onClick={() => addRequestItem({ jobId: job.id, type: "VIEW_JOB" })}
           title={"View Job " + job.name}
           className="mr-2"
@@ -229,6 +230,7 @@ function JobIndex({
             rounded
             raised
             link
+            basic
             onClick={() => {
               if (job.id) {
                 RunAdhocJob(job.id).catch((error) => {
@@ -254,6 +256,7 @@ function JobIndex({
             rounded
             raised
             link
+            basic
             onClick={() => {
               if (job.id) {
                 editJob(job.id);
@@ -272,6 +275,7 @@ function JobIndex({
               rounded
               raised
               link
+              basic
               onClick={() => {
                 PauseJob(job)
                   .then((updatedJob) => {
@@ -304,6 +308,7 @@ function JobIndex({
               rounded
               raised
               link
+              basic
               onClick={() => {
                 ResumeJob(job)
                   .then((updatedJob) => {
@@ -335,6 +340,7 @@ function JobIndex({
             rounded
             raised
             link
+            basic
             onClick={() => {
               const accept = () => {
                 DeleteJob(job)

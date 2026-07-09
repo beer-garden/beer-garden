@@ -2,7 +2,7 @@ import { FilterMatchMode } from "primereact/api";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Dropdown } from "primereact/dropdown";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Command, Instance, System } from "../models/brewtils-types";
 import AccessButton from "./AccessButton";
@@ -67,6 +67,10 @@ function CommandList({
     }
   }, []);
 
+  const sortedInstances = useMemo(() => {
+    return [...instances].sort((a, b) => a.name.localeCompare(b.name));
+  }, [instances]);
+
   function actionTemplate(command: Command) {
     return (
       <AccessButton
@@ -96,7 +100,7 @@ function CommandList({
           buttonsDisabled.current = false;
         }}
         invalid={!selectedInstance || undefined}
-        options={instances}
+        options={sortedInstances}
         aria-label="Select Instance"
       />
       <DataTable

@@ -5,7 +5,11 @@ import { RefObject } from "react";
 
 import { Garden, Instance, Runner, System } from "../models/brewtils-types";
 import { Version } from "../models/models";
-import { UpdateUserDarkMode, UpdateUserTheme } from "./user_service";
+import {
+  UpdatePowerUserMode,
+  UpdateUserDarkMode,
+  UpdateUserTheme,
+} from "./user_service";
 
 export const CompareObjects = (obj1: any, obj2: any) => {
   if (obj1 === obj2) return true; // Check if they are the same reference
@@ -37,7 +41,7 @@ export const CompareObjects = (obj1: any, obj2: any) => {
 
 export const GetVersion = async (): Promise<Version> => {
   try {
-    const response = await fetch(`/version`);
+    const response = await fetch(`${GetBaseURL()}/version`);
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
@@ -104,6 +108,10 @@ export const ThemeOptions = () => [
   "purple",
 ];
 
+export const ClearThemes = () => {
+  ChangeTheme("blue", false);
+};
+
 export const ChangeTheme = (color?: string, dark?: boolean) => {
   if (color === undefined) {
     color = localStorage.getItem("theme_color") || "blue";
@@ -127,11 +135,30 @@ export const ChangeTheme = (color?: string, dark?: boolean) => {
     themeLink.href = `${GetBaseURL()}/themes/lara-${dark ? "dark" : "light"}-${color}/theme.css`;
   }
 
+  const appCSSLink = document.getElementById(
+    "app-css-link",
+  ) as HTMLAnchorElement;
+  if (appCSSLink) {
+    appCSSLink.href = `${GetBaseURL()}/src/${dark ? "dark" : "light"}.css`;
+  }
+
   UpdateUserTheme(color).catch((error) => {
     console.error("Error updating user theme:", error);
   });
   UpdateUserDarkMode(dark).catch((error) => {
     console.error("Error updating user dark mode:", error);
+  });
+};
+
+export const ChangePowerUser = (powerUser?: boolean) => {
+  if (powerUser === undefined) {
+    powerUser = localStorage.getItem("user_advanced") === "true";
+  } else {
+    localStorage.setItem("user_advanced", powerUser.toString());
+  }
+
+  UpdatePowerUserMode(powerUser).catch((error) => {
+    console.error("Error updating power user mode:", error);
   });
 };
 

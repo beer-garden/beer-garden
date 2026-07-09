@@ -8,13 +8,19 @@ import { NavLink } from "react-router-dom";
 import CurrentRequestsTemplate from "../components/CurrentRequestsTemplate";
 import UserLogin from "../components/UserLogin";
 import { Config, RequestItem, TourStepProps } from "../models/models";
-import { ClearRefresh, ClearToken } from "../services/token_service";
+import {
+  ClearRefresh,
+  ClearToken,
+  GetRefresh,
+  LogoutCurrentUser,
+} from "../services/token_service";
 import {
   AddTourStep,
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
 import { GetCurrentUser } from "../services/user_service";
+import { ClearThemes } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import HasAccess from "./HasAccess";
 import UserOverlay from "./UserOverlay";
@@ -46,16 +52,21 @@ function NavigationMenu({
 
   const op = useRef<OverlayPanel>(null);
 
-  const onLogout = () => {
-    ClearToken();
-    ClearRefresh()
-      .finally(() => {
-        updateUserName(undefined);
-      })
-      .catch((error) => {
-        console.error("Error clearing Refresh Token:", error);
-      });
+  const onLogout = async () => {
+    await LogoutCurrentUser().catch((error) => {
+      console.error("Error logging out user:", error);
+    });
+    updateUserName(undefined);
+    runReloadUI();
 
+    op.current?.hide();
+  };
+
+  const onClearSession = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    ClearThemes();
+    runReloadUI();
     op.current?.hide();
   };
 
@@ -348,6 +359,9 @@ function NavigationMenu({
           setUserName(tokenUserName);
         } else {
           setLoginVisible(true);
+          LogoutCurrentUser().catch((error) =>
+            console.error("Error logging out user:", error),
+          );
         }
       } else if (!config.auth_enabled) {
         ClearToken();
@@ -374,6 +388,18 @@ function NavigationMenu({
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
     };
   }, [config, authEnabled, username, iconDefault, applicationName]);
+
+  useEffect(() => {
+    if (
+      authEnabled &&
+      GetCurrentUser() === undefined &&
+      GetRefresh() !== null
+    ) {
+      LogoutCurrentUser()
+        .then(() => runReloadUI())
+        .catch((error) => console.error("Error logging out user:", error));
+    }
+  }, []);
 
   const end = (
     <div className="flex">
@@ -404,6 +430,7 @@ function NavigationMenu({
         onClick={toggleRunTour}
         tooltip="Start Tour"
         data-testid="start-tour"
+        basic
       >
         <FontAwesomeIcon className="fa-2x" icon="compass" />
       </AccessButton>
@@ -411,6 +438,7 @@ function NavigationMenu({
       <CurrentRequestsTemplate listeners={listeners} config={config} />
       <AccessButton
         tooltip="User Preferences Menu"
+        basic
         onClick={(e) => op.current?.toggle(e)}
         text
         title="Preferences"
@@ -426,7 +454,11 @@ function NavigationMenu({
         )}
       </AccessButton>
       <OverlayPanel ref={op} style={{ width: "400px" }}>
-        <UserOverlay username={username} onLogout={onLogout} />
+        <UserOverlay
+          username={username}
+          onLogout={onLogout}
+          onClearSession={onClearSession}
+        />
       </OverlayPanel>
     </div>
   );

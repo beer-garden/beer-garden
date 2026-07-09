@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import CommandForm from "../components/CommandForm";
 import CommandSelect from "../components/CommandSelect";
 import { Command, Request, System } from "../models/brewtils-types";
-import { RequestCommand } from "../models/models";
+import { Config, RequestCommand } from "../models/models";
 import { useToast } from "../providers/ToastProvider";
 import {
   DetermineLatestSystemVersion,
@@ -21,6 +21,7 @@ function CommandCreate({
   setResetForm,
   setIsFormValid,
   callback,
+  config,
 }: {
   request?: Request;
   setRequest: (request: Request) => void;
@@ -30,8 +31,14 @@ function CommandCreate({
   setResetForm: (reset: boolean) => void;
   setIsFormValid: (isValid: boolean) => void;
   callback?: () => void;
+  config: Config;
 }) {
   const [systems, setSystems] = useState<Array<System>>([]);
+
+  // Need to get selected system from child component
+  const [selectedSystem, setSelectedSystem] = useState<System | undefined>(
+    undefined,
+  );
 
   // Command Panel
   const [showCommand, setShowCommand] = useState<boolean>(false);
@@ -107,7 +114,11 @@ function CommandCreate({
           });
         }
       }
-      setRequest(updatedRequest);
+      setRequest({
+        ...updatedRequest,
+        target_garden: selectedSystem?.garden_name,
+        source_garden: config.garden_name,
+      });
       setShowCommand(true);
       if (callback) {
         callback();
@@ -181,6 +192,7 @@ function CommandCreate({
       {systems && systems.length > 0 && (
         <CommandSelect
           systems={systems}
+          setSelectedSystem={setSelectedSystem}
           requestCommand={requestCommand}
           setRequestCommand={setRequestCommand}
           validCommand={true}

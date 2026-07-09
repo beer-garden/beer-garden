@@ -5,16 +5,22 @@ import { Dropdown } from "primereact/dropdown";
 import { InputSwitch } from "primereact/inputswitch";
 import { useEffect, useRef, useState } from "react";
 
-import { ChangeTheme, ThemeOptions } from "../services/util_service";
+import {
+  ChangePowerUser,
+  ChangeTheme,
+  ThemeOptions,
+} from "../services/util_service";
 import AccessButton from "./AccessButton";
 import UserChangePassword from "./UserChangePassword";
 
 function UserOverlay({
   username,
   onLogout,
+  onClearSession,
 }: {
   username: string | undefined;
   onLogout: any;
+  onClearSession: any;
 }) {
   const [color, setColor] = useState<string>(
     localStorage.getItem("theme_color") || "blue",
@@ -28,7 +34,7 @@ function UserOverlay({
 
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
-  const focusRef = useRef<HTMLInputElement>(null);
+  const focusRef = useRef<InputSwitch>(null);
 
   useEffect(() => {
     // Focus the element when the component mounts
@@ -37,13 +43,19 @@ function UserOverlay({
 
   useEffect(() => {
     if (
+      (localStorage.getItem("user_advanced") === "true") !==
+      showAdvancedOption
+    ) {
+      ChangePowerUser(showAdvancedOption);
+    }
+    if (
       (localStorage.getItem("theme_dark") === "true") !== dark ||
       localStorage.getItem("theme_color") !== color
     ) {
       ChangeTheme(color, dark);
       window.dispatchEvent(new Event("storage"));
     }
-  }, [color, dark]);
+  }, [color, dark, showAdvancedOption]);
 
   return (
     <>
@@ -99,8 +111,8 @@ function UserOverlay({
             )}
           </span>
           <datalist id="selectThemeColorDropdown" aria-hidden="true">
-            {ThemeOptions().map((status: any) => (
-              <option key={status.label} value={status.value} />
+            {ThemeOptions().map((color: string) => (
+              <option key={color} value={color} />
             ))}
           </datalist>
           <Dropdown
@@ -122,7 +134,6 @@ function UserOverlay({
             checked={showAdvancedOption}
             onChange={(e) => {
               setShowAdvancedOption(e.value);
-              localStorage.setItem("user_advanced", JSON.stringify(e.value));
             }}
             className="align-self-center"
             pt={{
@@ -169,6 +180,22 @@ function UserOverlay({
             </AccessButton>
           </div>
         </>
+      )}
+
+      {username === undefined && (
+        <div>
+          <Divider />
+          <AccessButton
+            size="small"
+            severity="warning"
+            className="mr-2"
+            onClick={onClearSession}
+            data-testid="clear-session-overlay"
+          >
+            <FontAwesomeIcon className="mr-2" icon="eraser" />
+            <span>Clear Session Data</span>
+          </AccessButton>
+        </div>
       )}
     </>
   );
