@@ -106,7 +106,11 @@ const AccessButton = ({
       </HasAccess>
     );
   } else {
-    return <Tooltip title={tooltip} placement="bottom" arrow><Button {...props}>{children}</Button></Tooltip>;
+    return (
+      <Tooltip title={tooltip} placement="bottom" arrow>
+        <Button {...props}>{children}</Button>
+      </Tooltip>
+    );
   }
 };
 

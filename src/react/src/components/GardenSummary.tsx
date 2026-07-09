@@ -465,7 +465,9 @@ function GardenSummary({
               config={config}
               permission="GARDEN_ADMIN"
               hasGardenName={selectedGarden?.name}
-            >Rescan Plugins</AccessButton>
+            >
+              Rescan Plugins
+            </AccessButton>
             <AccessButton
               label="Rescan Downstream"
               tooltip={`Rescan Downstream for Garden ${selectedGarden?.name}`}
@@ -497,7 +499,9 @@ function GardenSummary({
               config={config}
               permission="GARDEN_ADMIN"
               hasGardenName={selectedGarden?.name}
-            >Rescan Downstream</AccessButton>
+            >
+              Rescan Downstream
+            </AccessButton>
             <AccessButton
               label="Clear Plugin Queues"
               tooltip={`Clear Plugin Queues for Garden ${selectedGarden?.name}`}
@@ -530,7 +534,9 @@ function GardenSummary({
               config={config}
               permission="GARDEN_ADMIN"
               hasGardenName={selectedGarden?.name}
-            >Clear Plugin Queues</AccessButton>
+            >
+              Clear Plugin Queues
+            </AccessButton>
             {gardenRef.current &&
               gardenRef.current.name !== selectedGarden?.name && (
                 <AccessButton
@@ -564,7 +570,9 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                >Sync</AccessButton>
+                >
+                  Sync
+                </AccessButton>
               )}
             {gardenRef.current &&
               gardenRef.current.name === selectedGarden?.name && (
@@ -596,7 +604,9 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                >Sync All</AccessButton>
+                >
+                  Sync All
+                </AccessButton>
               )}
             {gardenRef.current &&
               gardenRef.current.name !== selectedGarden?.name && (
@@ -634,7 +644,9 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                >Sync Users</AccessButton>
+                >
+                  Sync Users
+                </AccessButton>
               )}
             {gardenRef.current &&
               gardenRef.current.name !== selectedGarden?.name && (
@@ -670,7 +682,9 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                >Delete Garden</AccessButton>
+                >
+                  Delete Garden
+                </AccessButton>
               )}
           </div>
         )}
