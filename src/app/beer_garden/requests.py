@@ -1303,10 +1303,13 @@ def handle_event_create(event):
 
 
 def handle_event(event):
-    if event.name == Events.REQUEST_DELETED.name and event.garden != config.get(
-        "garden.name"
-    ):
-        delete_request(**event.payload)
+    if event.name == Events.REQUEST_DELETED.name and event.garden != config.get("garden.name"):
+        if event.payload.status in [
+                    "IN_PROGRESS",
+                    "CREATED",
+                    "RECEIVED",
+                ] and event.payload.target_garden == event.garden:
+            cancel_request(event.payload)
 
     if event.garden == config.get("garden.name"):
 
