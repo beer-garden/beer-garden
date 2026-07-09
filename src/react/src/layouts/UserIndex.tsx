@@ -1,5 +1,4 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Chip } from "primereact/chip";
 import { Column } from "primereact/column";
 import { confirmDialog } from "primereact/confirmdialog";
 import { DataTable, SortOrder } from "primereact/datatable";
@@ -8,6 +7,7 @@ import { Tag } from "primereact/tag";
 import { RefObject, useCallback, useEffect, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
+import RoleCard from "../components/RoleCard";
 import UserChangeAccountMapping from "../components/UserChangeAccountMapping";
 import UserChangePassword from "../components/UserChangePassword";
 import UserChangeRoles from "../components/UserChangeRoles";
@@ -46,6 +46,9 @@ function UserIndex({
 
   const [showRolesDialog, setShowRolesDialog] = useState(false);
   const [rolesUser, setRolesUser] = useState<User | undefined>(undefined);
+
+  const [showViewRolesDialog, setShowViewRolesDialog] = useState(false);
+  const [showRole, setShowRole] = useState<Role | undefined>(undefined);
 
   const [accountMappingUser, setAccountMappingUser] = useState<
     User | undefined
@@ -291,10 +294,16 @@ function UserIndex({
     return (
       <div {...GenerateTourProps(localRolesUserTourStep)}>
         {rowData?.local_roles?.map((role: Role) => (
-          <Chip
-            key={role.id}
+          <AccessButton
+            id={role.id}
             label={role.name}
-            pt={{ root: { "aria-label": undefined } }}
+            onClick={() => {
+              setShowRole(role);
+              setShowViewRolesDialog(true);
+            }}
+            rounded
+            severity="info"
+            tooltip={`View Local Role: ${role.name}`}
           />
         ))}
       </div>
@@ -305,10 +314,16 @@ function UserIndex({
     return (
       <div {...GenerateTourProps(upstreamRolesUserTourStep)}>
         {rowData?.upstream_roles?.map((role: Role) => (
-          <Chip
-            key={role.id}
+          <AccessButton
+            id={role.id}
             label={role.name}
-            pt={{ root: { "aria-label": undefined } }}
+            onClick={() => {
+              setShowRole(role);
+              setShowViewRolesDialog(true);
+            }}
+            rounded
+            severity="secondary"
+            tooltip={`View Upstream Role: ${role.name}`}
           />
         ))}
       </div>
@@ -659,6 +674,16 @@ function UserIndex({
           showRolesDialog={showRolesDialog}
           setShowRolesDialog={setShowRolesDialog}
           callback={loadUsers}
+        />
+      )}
+
+      {showViewRolesDialog && showRole && (
+        <RoleCard
+          targetRole={showRole}
+          disabled={true}
+          onClose={() => {
+            setShowViewRolesDialog(false);
+          }}
         />
       )}
 

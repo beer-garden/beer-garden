@@ -1,47 +1,22 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Column } from "primereact/column";
 import { DataTable, SortOrder } from "primereact/datatable";
-import { Dialog } from "primereact/dialog";
-import { Divider } from "primereact/divider";
-import { Dropdown } from "primereact/dropdown";
-import { InputText } from "primereact/inputtext";
 import { Message } from "primereact/message";
-import { Messages } from "primereact/messages";
-import {
-  ChangeEvent,
-  RefObject,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { RefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
-import RoleScopeCard from "../components/RoleScopeCard";
+import RoleCard from "../components/RoleCard";
 import { Role } from "../models/brewtils-types";
 import { Config, TourStepProps } from "../models/models";
 import { useToast } from "../providers/ToastProvider";
 import { checkPermission } from "../services/permission_service";
-import {
-  CreateRole,
-  DeleteRole,
-  EditRole,
-  GetRoles,
-  Rescan,
-} from "../services/role_service";
+import { DeleteRole, GetRoles, Rescan } from "../services/role_service";
 import {
   AddTourStep,
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
 import { PaginatorTemplate } from "../services/util_service";
-
-const permissions = [
-  { label: "GARDEN_ADMIN", value: "GARDEN_ADMIN" },
-  { label: "PLUGIN_ADMIN", value: "PLUGIN_ADMIN" },
-  { label: "OPERATOR", value: "OPERATOR" },
-  { label: "READ_ONLY", value: "READ_ONLY" },
-];
 
 function RoleIndex({
   config,
@@ -59,22 +34,8 @@ function RoleIndex({
   const [sortOrder, setSortOrder] = useState<SortOrder>(undefined);
 
   const [dialogVisible, setDialogVisible] = useState(false);
-  const isEdit = useRef<boolean>(false);
   const roleId = useRef<string | undefined>(undefined);
-  const [roleName, setRoleName] = useState<string>("");
-  const [roleDescription, setRoleDescription] = useState<string>("");
-  const [rolePermission, setRolePermission] = useState<string>("");
-  const [gardenScopeList, setGardenScopeList] = useState<Array<string>>([""]);
-  const [namespaceScopeList, setNamespaceScopeList] = useState<Array<string>>([
-    "",
-  ]);
-  const [systemScopeList, setSystemScopeList] = useState<Array<string>>([""]);
-  const [versionScopeList, setVersionScopeList] = useState<Array<string>>([""]);
-  const [instanceScopeList, setInstanceScopeList] = useState<Array<string>>([
-    "",
-  ]);
-  const [commandScopeList, setCommandScopeList] = useState<Array<string>>([""]);
-  const msgs = useRef<Messages>(null);
+  const isEdit = useRef<boolean>(false);
 
   const tourUuid = "role_index_tour";
   const tourPrefix = "role_index";
@@ -170,112 +131,6 @@ function RoleIndex({
     };
   }, [roles]);
 
-  function handleDialogClose() {
-    //Dismiss dialog
-    setDialogVisible(false);
-    //Reset all values to defaults
-    roleId.current = undefined;
-    isEdit.current = false;
-    setRolePermission("");
-    setGardenScopeList([""]);
-    setNamespaceScopeList([""]);
-    setSystemScopeList([""]);
-    setVersionScopeList([""]);
-    setInstanceScopeList([""]);
-    setCommandScopeList([""]);
-  }
-
-  function handleDialogSubmit() {
-    if (roleName && rolePermission) {
-      const roleObj = {
-        name: roleName,
-        description: roleDescription || "",
-        permission: rolePermission,
-        scope_gardens: gardenScopeList.filter((i) => i.length > 0),
-        scope_namespaces: namespaceScopeList.filter((i) => i.length > 0),
-        scope_systems: systemScopeList.filter((i) => i.length > 0),
-        scope_versions: versionScopeList.filter((i) => i.length > 0),
-        scope_instances: instanceScopeList.filter((i) => i.length > 0),
-        scope_commands: commandScopeList.filter((i) => i.length > 0),
-      } as Role;
-      if (roleId && roleId.current && isEdit.current) {
-        //Editing existing role
-        roleObj.id = roleId.current;
-        EditRole(roleObj)
-          .then((updatedRole: Role) => {
-            setRoles((currentRoles) => {
-              const newRoles = currentRoles.map((role) => {
-                if (role.id == updatedRole.id) {
-                  role = updatedRole;
-                }
-                return { ...role };
-              });
-              return newRoles;
-            });
-            setDialogVisible(false);
-            showToast({
-              severity: "info",
-              summary: "Role Updated",
-              detail: `Role updated: ${roleObj.name}`,
-              life: 3000,
-            });
-          })
-          .catch((error) => {
-            showToast({
-              severity: "error",
-              summary: "Error",
-              detail: `Error editing the role: ${error}`,
-              life: 3000,
-            });
-          });
-      } else {
-        // Create new role
-        CreateRole(roleObj)
-          .then((createdRole: Role) => {
-            setRoles([...roles, createdRole]);
-            roleId.current = undefined;
-            setDialogVisible(false);
-            showToast({
-              severity: "info",
-              summary: "Role Created",
-              detail: `New role created: ${roleObj.name}`,
-              life: 3000,
-            });
-          })
-          .catch((error) => {
-            showToast({
-              severity: "error",
-              summary: "Error",
-              detail: `Error creating the role: ${error}`,
-              life: 3000,
-            });
-          });
-      }
-      setRoleName("");
-      setRoleDescription("");
-      setRolePermission("");
-      setGardenScopeList([""]);
-      setNamespaceScopeList([""]);
-      setSystemScopeList([""]);
-      setVersionScopeList([""]);
-      setInstanceScopeList([""]);
-      setCommandScopeList([""]);
-    } else {
-      const reqs = [];
-      if (!roleName) {
-        reqs.push("Name");
-      }
-      if (!rolePermission) {
-        reqs.push("Permission");
-      }
-      msgs.current?.show({
-        severity: "error",
-        detail: `Missing required field(s): ${reqs.join(", ")}`,
-        sticky: true,
-      });
-    }
-  }
-
   function RoleHeader() {
     function handleRescan() {
       Rescan()
@@ -356,41 +211,8 @@ function RoleIndex({
     }
 
     function handleLoadRole(role: Role, isNew = true) {
-      setRoleName(role.name || "");
-      setRoleDescription(role.description || "");
-      setRolePermission(role.permission || "");
-      setGardenScopeList(
-        role.scope_gardens && role.scope_gardens.length > 0
-          ? role.scope_gardens
-          : [""],
-      );
-      setNamespaceScopeList(
-        role.scope_namespaces && role.scope_namespaces.length > 0
-          ? role.scope_namespaces
-          : [""],
-      );
-      setSystemScopeList(
-        role.scope_systems && role.scope_systems.length > 0
-          ? role.scope_systems
-          : [""],
-      );
-      setVersionScopeList(
-        role.scope_versions && role.scope_versions.length > 0
-          ? role.scope_versions
-          : [""],
-      );
-      setInstanceScopeList(
-        role.scope_instances && role.scope_instances.length > 0
-          ? role.scope_instances
-          : [""],
-      );
-      setCommandScopeList(
-        role.scope_commands && role.scope_commands.length > 0
-          ? role.scope_commands
-          : [""],
-      );
-      isEdit.current = !isNew;
       roleId.current = role.id;
+      isEdit.current = !isNew;
       setDialogVisible(true);
     }
 
@@ -532,108 +354,31 @@ function RoleIndex({
     );
   }
 
+  function updateRoles(updatedRole: Role) {
+    setRoles((currentRoles) => {
+      const newRoles = currentRoles.map((role) => {
+        if (role.id == updatedRole.id) {
+          role = updatedRole;
+        }
+        return { ...role };
+      });
+      return newRoles;
+    });
+  }
+
   return (
     <div>
-      <Dialog
-        data-testid="role-dialog"
-        appendTo={"self"}
-        header={isEdit.current ? "Edit Role" : "Create Role"}
-        footer={
-          <>
-            <AccessButton onClick={handleDialogClose} label="Close" />
-            <AccessButton
-              data-testid={`submit-btn-dialog`}
-              severity="danger"
-              onClick={handleDialogSubmit}
-              label="Submit"
-            />
-          </>
-        }
-        visible={dialogVisible}
-        style={{ width: "50vw" }}
-        onHide={() => {
-          handleDialogClose();
-        }}
-      >
-        <Messages ref={msgs} />
-        <div className="flex flex-column gap-2">
-          <label htmlFor="roleName" className="font-bold">
-            Name
-          </label>
-          <InputText
-            required
-            id="roleName"
-            type="text"
-            className="mb-2"
-            value={roleName}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setRoleName(e.target.value)
-            }
-          />
-        </div>
-        <div className="flex flex-column gap-2">
-          <label htmlFor="roleDescription" className="font-bold">
-            Description
-          </label>
-          <InputText
-            id="roleDescription"
-            type="text"
-            className="mb-2"
-            value={roleDescription}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setRoleDescription(e.target.value)
-            }
-          />
-        </div>
-        <div className="flex flex-column gap-2">
-          <label htmlFor="rolePermission" className="font-bold">
-            Permission
-          </label>
-          <Dropdown
-            required
-            id="rolePermission"
-            className="mb-2"
-            options={permissions}
-            value={rolePermission}
-            optionLabel="label"
-            placeholder="Select One"
-            onChange={(e) => {
-              setRolePermission(e.value);
-            }}
-          />
-        </div>
-        <Divider />
-        <RoleScopeCard
-          scopeName="garden"
-          scopeList={gardenScopeList}
-          setScopeList={setGardenScopeList}
+      {dialogVisible && (
+        <RoleCard
+          isEdit={isEdit.current}
+          roleId={roleId.current}
+          updateRoles={updateRoles}
+          onClose={() => {
+            setDialogVisible(false);
+            loadRoles();
+          }}
         />
-        <RoleScopeCard
-          scopeName="namespace"
-          scopeList={namespaceScopeList}
-          setScopeList={setNamespaceScopeList}
-        />
-        <RoleScopeCard
-          scopeName="system"
-          scopeList={systemScopeList}
-          setScopeList={setSystemScopeList}
-        />
-        <RoleScopeCard
-          scopeName="version"
-          scopeList={versionScopeList}
-          setScopeList={setVersionScopeList}
-        />
-        <RoleScopeCard
-          scopeName="instance"
-          scopeList={instanceScopeList}
-          setScopeList={setInstanceScopeList}
-        />
-        <RoleScopeCard
-          scopeName="command"
-          scopeList={commandScopeList}
-          setScopeList={setCommandScopeList}
-        />
-      </Dialog>
+      )}
       <RoleHeader />
       <RoleTable />
     </div>
