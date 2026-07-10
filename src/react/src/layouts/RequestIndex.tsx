@@ -18,6 +18,8 @@ import {
 import { Link } from "react-router-dom";
 
 import AccessButton from "../components/AccessButton";
+import { ColumnField } from "../components/EnhancedTable";
+import EnhancedTable from "../components/EnhancedTable";
 import { Request } from "../models/brewtils-types";
 import { RequestItem } from "../models/models";
 import { TourStepProps } from "../models/models";
@@ -600,8 +602,85 @@ function RequestIndex({
     },
   };
 
+  interface HeadCell {
+    disablePadding: boolean;
+    id: keyof Request;
+    label: string;
+    numeric: boolean;
+  }
+
+  const tableColumns: ColumnField[] = [
+    {
+      id: "action",
+      label: "Action",
+      template: commandActionTemplate,
+    },
+    {
+      id: "command",
+      label: "Command",
+      template: commandNameTemplate,
+      sortable: true,
+      filterable: true,
+    },
+    {
+      id: "namespace",
+      label: "Namespace",
+      field: "namespace",
+      sortable: true,
+      filterable: true,
+    },
+    {
+      id: "system",
+      label: "System",
+      field: "system",
+      sortable: true,
+      filterable: true,
+    },
+    {
+      id: "system_version",
+      label: "Version",
+      field: "system_version",
+      sortable: true,
+      filterable: true,
+    },
+    {
+      id: "instance_name",
+      label: "Instance",
+      field: "instance_name",
+      sortable: true,
+      filterable: true,
+    },
+    {
+      id: "status",
+      label: "Status",
+      sortable: true,
+      filterable: true,
+      field: "status",
+    },
+    {
+      id: "created_at",
+      label: "Created",
+      field: "created_at",
+      isDate: true,
+      sortable: true,
+      filterable: true,
+    },
+    {
+      id: "comment",
+      label: "Comment",
+      field: "comment",
+      sortable: true,
+      filterable: true,
+    },
+  ];
+
   return (
     <div>
+      <EnhancedTable
+        data={requests}
+        columns={tableColumns}
+        header={header}
+      />
       <DataTable
         value={requests}
         loading={loading}
