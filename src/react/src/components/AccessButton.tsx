@@ -93,16 +93,26 @@ const AccessButton = ({
         hasInstanceName={hasInstanceName}
         isLoading={
           isLoading ?? (
-            <Button {...{ ...props, ...{ disabled: true } }}>{children}</Button>
+            <Tooltip title={tooltip} placement="bottom" arrow>
+              <Button {...{ ...props, ...{ disabled: true } }}>
+                {children}
+              </Button>
+            </Tooltip>
           )
         }
         renderAuthFailed={
           renderAuthFailed ?? (
-            <Button {...{ ...props, ...{ disabled: true } }}>{children}</Button>
+            <Tooltip title={tooltip} placement="bottom" arrow>
+              <Button {...{ ...props, ...{ disabled: true } }}>
+                {children}
+              </Button>
+            </Tooltip>
           )
         }
       >
-        <Button {...props}>{children}</Button>
+        <Tooltip title={tooltip} placement="bottom" arrow>
+          <Button {...props}>{children}</Button>
+        </Tooltip>
       </HasAccess>
     );
   } else {
