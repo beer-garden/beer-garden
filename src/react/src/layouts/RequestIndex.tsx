@@ -676,11 +676,7 @@ function RequestIndex({
 
   return (
     <div>
-      <EnhancedTable
-        data={requests}
-        columns={tableColumns}
-        header={header}
-      />
+      <EnhancedTable data={requests} columns={tableColumns} header={header} />
       <DataTable
         value={requests}
         loading={loading}
