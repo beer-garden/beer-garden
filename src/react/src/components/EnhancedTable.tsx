@@ -218,6 +218,7 @@ const EnhancedTable = ({
     setPage(0);
   };
 
+  // Data Updated Externally
   useEffect(() => {
     if (remoteFilter) {
       // Accept remote updates
@@ -226,13 +227,16 @@ const EnhancedTable = ({
       // Local Filter
       setDisplayData(filterSortData(data));
     }
-  }, [data, columnFilters, order, orderBy, page, rowsPerPage]);
+  }, [data]);
 
+  // Table Filtering Changes or external reload requests
   useEffect(() => {
     if (remoteFilter) {
       remoteFilter(columnFilters, orderBy, order, page, rowsPerPage);
+    } else {
+      setDisplayData(filterSortData(data));
     }
-  }, [reloadTable]);
+  }, [reloadTable, columnFilters, order, orderBy, page, rowsPerPage]);
 
   return (
     <TableContainer component={Paper}>
