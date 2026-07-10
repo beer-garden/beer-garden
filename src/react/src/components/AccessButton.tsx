@@ -24,7 +24,7 @@ const AccessButton = ({
 }: PropsWithChildren<
   ButtonProps & HasAccessProps & { basic?: boolean | undefined }
 >) => {
-  if (!Object.hasOwn(props, "tooltip")) {
+  if (!tooltip) {
     if (Object.hasOwn(props, "aria-label")) {
       tooltip = props["aria-label"];
     } else if (Object.hasOwn(props, "title")) {
