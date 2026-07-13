@@ -621,6 +621,7 @@ function RequestIndex({
       template: commandNameTemplate,
       sortable: true,
       filterable: true,
+      isString: true,
     },
     {
       id: "namespace",
@@ -628,6 +629,7 @@ function RequestIndex({
       field: "namespace",
       sortable: true,
       filterable: true,
+      isString: true,
     },
     {
       id: "system",
@@ -635,6 +637,7 @@ function RequestIndex({
       field: "system",
       sortable: true,
       filterable: true,
+      isString: true,
     },
     {
       id: "system_version",
@@ -642,6 +645,7 @@ function RequestIndex({
       field: "system_version",
       sortable: true,
       filterable: true,
+      isString: true,
     },
     {
       id: "instance_name",
@@ -649,6 +653,7 @@ function RequestIndex({
       field: "instance_name",
       sortable: true,
       filterable: true,
+      isString: true,
     },
     {
       id: "status",
@@ -656,6 +661,7 @@ function RequestIndex({
       sortable: true,
       filterable: true,
       field: "status",
+      isString: true,
     },
     {
       id: "created_at",
@@ -671,6 +677,7 @@ function RequestIndex({
       field: "comment",
       sortable: true,
       filterable: true,
+      isString: true,
     },
   ];
 
