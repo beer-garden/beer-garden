@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { Config, RequestItem } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { DeleteJob } from "../services/job_service";
 import RequestCreateCard from "./RequestCreateCard";
 import RequestViewCard from "./RequestViewCard";
@@ -28,7 +28,7 @@ function RequestItemCard({
     localStorage.getItem("user_advanced") === "true" ? false : true,
   );
 
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   return (
     <>
@@ -82,7 +82,7 @@ function RequestItemCard({
                 })
                 .catch((error) => {
                   console.error("Error deleting job:", error);
-                  showToast({
+                  showSnackbar({
                     severity: "error",
                     summary: "Error",
                     detail: `Error deleting job: ${error}`,

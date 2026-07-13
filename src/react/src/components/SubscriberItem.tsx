@@ -4,7 +4,7 @@ import { Card } from "primereact/card";
 import React, { useEffect, useRef, useState } from "react";
 
 import { Subscriber } from "../models/brewtils-types";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetSystemList } from "../services/system_service";
 import AccessButton from "./AccessButton";
 
@@ -44,7 +44,7 @@ function SubscriberItem({
   const instanceItems = useRef<Array<string>>([]);
   const commandItems = useRef<Array<string>>([]);
 
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   useEffect(() => {
     GetSystemList()
@@ -95,7 +95,7 @@ function SubscriberItem({
       })
       .catch((error) => {
         console.error("Error fetching system list:", error);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching system list: ${error}`,

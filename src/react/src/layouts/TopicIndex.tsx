@@ -14,7 +14,7 @@ import AccessButton from "../components/AccessButton";
 import SubscriberItem from "../components/SubscriberItem";
 import { Subscriber, Topic } from "../models/brewtils-types";
 import { Config, RequestItem } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import {
   AddSubscriber,
   CreateTopic,
@@ -39,7 +39,7 @@ function TopicIndex({
   listeners: Record<string, any>;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [topicSubscribers, setTopicSubscribers] = useState<
     Array<TopicSubscriber>
   >([]);
@@ -109,7 +109,7 @@ function TopicIndex({
       })
       .catch((error) => {
         setLoading(false);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching topics: ${error}`,
@@ -150,7 +150,7 @@ function TopicIndex({
       SyncTopics()
         .then(() => {
           loadTopics();
-          showToast({
+          showSnackbar({
             severity: "info",
             summary: "Confirmation",
             detail: "Sync Topics complete",
@@ -158,7 +158,7 @@ function TopicIndex({
           });
         })
         .catch((error) => {
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error syncing topics: ${error}`,
@@ -237,7 +237,7 @@ function TopicIndex({
                 return newTopicSubscribers;
               });
             }
-            showToast({
+            showSnackbar({
               severity: "info",
               summary: "Confirmation",
               detail: `Cleared ${subscriber ? "consumer" : "publisher"} count for ${topic.name}`,
@@ -245,7 +245,7 @@ function TopicIndex({
             });
           })
           .catch((error) => {
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error clearing count: ${error}`,
@@ -282,7 +282,7 @@ function TopicIndex({
             );
             return newTopicSubs;
           });
-          showToast({
+          showSnackbar({
             severity: "info",
             summary: "Removed Subscriber",
             detail: `Topic updated: ${topic.name}`,
@@ -290,7 +290,7 @@ function TopicIndex({
           });
         })
         .catch((error) => {
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error removing subscriber from topic ${topic.name}: ${error}`,
@@ -338,7 +338,7 @@ function TopicIndex({
                 (ts: TopicSubscriber) => ts.topic?.id !== topic.id,
               );
             });
-            showToast({
+            showSnackbar({
               severity: "info",
               summary: "Confirmation",
               detail: `Deleted topic ${topic.name}`,
@@ -346,7 +346,7 @@ function TopicIndex({
             });
           })
           .catch((error) => {
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error deleting topic ${topic.name}: ${error}`,
@@ -722,7 +722,7 @@ function TopicIndex({
           .then(() => {
             loadTopics();
             setDialogVisible(false);
-            showToast({
+            showSnackbar({
               severity: "info",
               summary: "Added Subscriber(s)",
               detail: `Topic updated: ${topicObj.name}`,
@@ -730,7 +730,7 @@ function TopicIndex({
             });
           })
           .catch((error) => {
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error updating topic ${topicObj.name}: ${error}`,
@@ -755,7 +755,7 @@ function TopicIndex({
             ]);
             topicId.current = undefined;
             setDialogVisible(false);
-            showToast({
+            showSnackbar({
               severity: "info",
               summary: "Topic Created",
               detail: `New topic created: ${topicObj.name}`,
@@ -763,7 +763,7 @@ function TopicIndex({
             });
           })
           .catch((error) => {
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error creating topic: ${error}`,

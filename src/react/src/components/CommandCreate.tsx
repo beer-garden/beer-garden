@@ -6,7 +6,7 @@ import CommandForm from "../components/CommandForm";
 import CommandSelect from "../components/CommandSelect";
 import { Command, Request, System } from "../models/brewtils-types";
 import { Config, RequestCommand } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import {
   DetermineLatestSystemVersion,
   GetSystemList,
@@ -44,7 +44,7 @@ function CommandCreate({
   const [showCommand, setShowCommand] = useState<boolean>(false);
   const [command, setCommand] = useState<Command | null>(null);
 
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   // Effect only runs at startup to get systems
   useEffect(() => {
@@ -53,7 +53,7 @@ function CommandCreate({
         setSystems(data);
       })
       .catch((error) => {
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching system list: ${error}`,

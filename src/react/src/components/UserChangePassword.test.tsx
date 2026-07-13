@@ -8,7 +8,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { ToastProvider } from "../providers/ToastProvider";
+import { SnackbarProvider } from "../providers/SnackbarProvider";
 import * as userService from "../services/user_service";
 import UserChangePassword from "./UserChangePassword";
 
@@ -22,14 +22,14 @@ describe("UserChangePassword", () => {
 
   test("renders admin fields", async () => {
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UserChangePassword
           username={"username"}
           isAdmin={true}
           showPasswordDialog={true}
           setShowPasswordDialog={() => {}}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -41,14 +41,14 @@ describe("UserChangePassword", () => {
 
   test("renders user fields", async () => {
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UserChangePassword
           username={"username"}
           isAdmin={false}
           showPasswordDialog={true}
           setShowPasswordDialog={() => {}}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -60,14 +60,14 @@ describe("UserChangePassword", () => {
 
   test("renders invalid match password", async () => {
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UserChangePassword
           username={"username"}
           isAdmin={true}
           showPasswordDialog={true}
           setShowPasswordDialog={() => {}}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -86,14 +86,14 @@ describe("UserChangePassword", () => {
 
   test("renders valid match password", async () => {
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UserChangePassword
           username={"username"}
           isAdmin={true}
           showPasswordDialog={true}
           setShowPasswordDialog={() => {}}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -114,14 +114,14 @@ describe("UserChangePassword", () => {
     vi.mocked(userService.AdminUpdatePassword).mockResolvedValue();
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UserChangePassword
           username={"username"}
           isAdmin={true}
           showPasswordDialog={true}
           setShowPasswordDialog={() => {}}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -150,14 +150,14 @@ describe("UserChangePassword", () => {
     vi.mocked(userService.UserUpdatePassword).mockResolvedValue();
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UserChangePassword
           username={"username"}
           isAdmin={false}
           showPasswordDialog={true}
           setShowPasswordDialog={() => {}}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {

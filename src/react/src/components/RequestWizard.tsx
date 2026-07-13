@@ -15,7 +15,7 @@ import {
   System,
 } from "../models/brewtils-types";
 import { Config, RequestCommand, RequestItem } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
@@ -41,7 +41,7 @@ function RequestWizard({
   isDialog: boolean;
   config: Config;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const stepperRef = useRef<Stepper>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const stepperPanelOptions: any = {
@@ -132,7 +132,7 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error creating request:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error creating request: ${error}`,
@@ -153,7 +153,7 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error creating request:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error creating request: ${error}`,
@@ -178,7 +178,7 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error creating job:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error creating request: ${error}`,
@@ -203,7 +203,7 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error updating job:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error updating job: ${error}`,
@@ -285,7 +285,7 @@ function RequestWizard({
       })
       .catch((error) => {
         console.error("Error fetching systems:", error);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching systems: ${error}`,
@@ -378,7 +378,7 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error fetching request:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching request: ${error}`,
@@ -423,7 +423,7 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error fetching job:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching job: ${error}`,

@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
 import { Config } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { DeleteRequest, GetRequestList } from "../services/request_service";
 import { GetCurrentUser } from "../services/user_service";
 import { PaginatorTemplate } from "../services/util_service";
@@ -23,7 +23,7 @@ function CurrentRequestsTemplate({
 }) {
   const [currentRequests, setCurrentRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   const setAllRequests = (requests: Array<Request>) => {
     altRequests.current = requests.map((req) => {
@@ -113,7 +113,7 @@ function CurrentRequestsTemplate({
         })
         .catch((error) => {
           console.error("Error fetching current requests:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching current requests: ${error}`,
@@ -259,7 +259,7 @@ function CurrentRequestsTemplate({
               })
               .catch((error) => {
                 console.error("Error deleting request:", error);
-                showToast({
+                showSnackbar({
                   severity: "error",
                   summary: "Error",
                   detail: `Error deleting request: ${error}`,

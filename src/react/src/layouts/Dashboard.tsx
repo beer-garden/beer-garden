@@ -14,7 +14,7 @@ import UnassociatedRunnerCard from "../components/UnassociatedRunnerCard";
 import { Garden, Runner, System } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { RequestItem, RunnerGroup, TourStepProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRunnerList } from "../services/runner_service";
 import {
   AddTourStep,
@@ -60,7 +60,7 @@ function GardenDashboard({
 
   const [loading, setLoading] = useState<boolean>(true);
 
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   const instanceStatuses = [
     "RUNNING",
@@ -552,7 +552,7 @@ function GardenDashboard({
         })
         .catch((error) => {
           console.error("Error loading runners", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error loading runners: ${error}`,
