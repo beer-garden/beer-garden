@@ -1,12 +1,12 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ButtonGroup } from "primereact/buttongroup";
+import { ButtonGroup, MenuItem } from "@mui/material";
+import { Menu } from "@mui/material";
 import { confirmDialog } from "primereact/confirmdialog";
 import { Divider } from "primereact/divider";
-import { Menu } from "primereact/menu";
 import { Panel } from "primereact/panel";
 import { Tag } from "primereact/tag";
 import { Tooltip } from "primereact/tooltip";
-import { RefObject, useEffect, useRef, useState } from "react";
+import React, { RefObject, useEffect, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
 import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteRequestsDialog";
@@ -43,7 +43,18 @@ function SystemCard({
   associatedRunners,
 }: SystemCardProps) {
   const showToast = useToast();
-  const instanceConfigMenu = useRef<Menu>(null);
+  const [instanceMenuAnchor, setInstanceMenuAnchor] = useState<
+    HTMLElement | undefined
+  >(undefined);
+  const instanceMenuOpen = Boolean(instanceMenuAnchor);
+  const handleInstanceMenuOpen = (
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    setInstanceMenuAnchor(event.currentTarget);
+  };
+  const handleInstanceMenuClose = () => {
+    setInstanceMenuAnchor(undefined);
+  };
 
   const [logsVisible, setLogsVisible] = useState(false);
   const closeLogsDialog = () => setLogsVisible(false);
@@ -403,45 +414,6 @@ function SystemCard({
       return <></>;
     }
 
-    const instanceMenuItems = [
-      {
-        label: "Create Requests",
-        command: () => {
-          addRequestItem({
-            type: "REQUEST",
-            requestCommandInput: {
-              namespace: system.namespace,
-              systemName: system.name,
-              version: system.version,
-              instance: instance.name,
-            } as RequestCommand,
-          });
-        },
-      },
-    ];
-    if (
-      checkPermission(config, "PLUGIN_ADMIN", {
-        gardenName: system.garden_name,
-        namespace: system.namespace,
-        systemName: system.name,
-        systemVersion: system.version,
-        instanceName: instance.name,
-      } as PermissionCheck)
-    ) {
-      instanceMenuItems.push({
-        label: "Show Logs",
-        command: () => setLogsVisible(true),
-      });
-      instanceMenuItems.push({
-        label: "Manage Queue",
-        command: () => setQueueVisible(true),
-      });
-      instanceMenuItems.push({
-        label: "Cancel/Delete Requests",
-        command: () => setCancelDeleteVisible(true),
-      });
-    }
-
     const permissions = {
       config: config,
       hasGardenName: system.garden_name,
@@ -480,11 +452,62 @@ function SystemCard({
           </AccessButton>
 
           <Menu
-            model={instanceMenuItems}
-            popup
-            ref={instanceConfigMenu}
             id="instance_menu"
-          />
+            anchorEl={instanceMenuAnchor}
+            open={instanceMenuOpen}
+            onClose={handleInstanceMenuClose}
+          >
+            <MenuItem
+              onClick={() => {
+                handleInstanceMenuClose();
+                addRequestItem({
+                  type: "REQUEST",
+                  requestCommandInput: {
+                    namespace: system.namespace,
+                    systemName: system.name,
+                    version: system.version,
+                    instance: instance.name,
+                  } as RequestCommand,
+                });
+              }}
+            >
+              Create Requests
+            </MenuItem>
+            {checkPermission(config, "PLUGIN_ADMIN", {
+              gardenName: system.garden_name,
+              namespace: system.namespace,
+              systemName: system.name,
+              systemVersion: system.version,
+              instanceName: instance.name,
+            } as PermissionCheck) && (
+              <>
+                <MenuItem
+                  onClick={() => {
+                    handleInstanceMenuClose();
+                    setLogsVisible(true);
+                  }}
+                >
+                  Show Logs
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    handleInstanceMenuClose();
+                    setQueueVisible(true);
+                  }}
+                >
+                  Manage Queue
+                </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    handleInstanceMenuClose();
+                    setCancelDeleteVisible(true);
+                  }}
+                >
+                  Cancel/Delete Requests
+                </MenuItem>
+              </>
+            )}
+          </Menu>
           <InstanceShowLogsDialog
             instance={instance}
             system={system}
@@ -506,7 +529,7 @@ function SystemCard({
           <AccessButton
             size="small"
             title={`Admin Tools for ${instance.name}`}
-            onClick={(e) => instanceConfigMenu?.current?.toggle(e)}
+            onClick={handleInstanceMenuOpen}
             {...permissions}
             permission="OPERATOR"
             raised

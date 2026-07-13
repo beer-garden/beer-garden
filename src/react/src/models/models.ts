@@ -94,6 +94,8 @@ export interface PermissionCheck {
 }
 
 export interface HasAccessProps {
+  label?: string;
+  tooltip?: string;
   config?: Config;
   permission?: "READ_ONLY" | "OPERATOR" | "PLUGIN_ADMIN" | "GARDEN_ADMIN";
   isGlobal?: boolean;
