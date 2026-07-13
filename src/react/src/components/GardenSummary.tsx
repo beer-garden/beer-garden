@@ -45,7 +45,7 @@ function GardenSummary({
   tourStepsRef?: RefObject<Array<TourStepProps>>;
   config: Config;
 }) {
-  const { showSnackbar } = useSnackbar();
+  const showSnackbar = useSnackbar();
   const tourUuid = selectedGarden?.id;
   const tourPrefix = "garden_summary";
   const getPublishingConnections = () => {

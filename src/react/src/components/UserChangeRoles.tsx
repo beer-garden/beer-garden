@@ -5,7 +5,7 @@ import { Dialog } from "primereact/dialog";
 import { useEffect, useState } from "react";
 
 import { Role, User } from "../models/brewtils-types";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRoles } from "../services/role_service";
 import { UpdateUserRoles } from "../services/user_service";
 import AccessButton from "./AccessButton";
@@ -21,7 +21,7 @@ function UserChangeRoles({
   setShowRolesDialog: (show: boolean) => void;
   callback?: () => void;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [roles, setRoles] = useState<Array<Role> | undefined>(undefined);
   const [selectedRoles, setSelectedRoles] = useState<Array<Role>>([]);
 
@@ -83,7 +83,7 @@ function UserChangeRoles({
         })
         .catch((error) => {
           console.error("Error updating user roles:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Failed to update roles for user ${user.username}`,
@@ -101,7 +101,7 @@ function UserChangeRoles({
         })
         .catch((error) => {
           console.error("Error fetching roles:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching roles: ${error}`,

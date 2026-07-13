@@ -15,7 +15,7 @@ import {
   Request,
 } from "../models/brewtils-types";
 import { Config } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import {
   GetJob,
   PauseJob,
@@ -55,7 +55,7 @@ function SchedulerViewCard({
   const [recordsUpdated, setRecordsUpdated] = useState(false);
 
   const navigate = useNavigate();
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   useEffect(() => {
     if (job === undefined && jobId !== undefined) {
@@ -65,7 +65,7 @@ function SchedulerViewCard({
         })
         .catch((error) => {
           console.error("Error fetching job:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching job: ${error}`,
@@ -193,7 +193,7 @@ function SchedulerViewCard({
       })
       .catch((error) => {
         console.error("Error fetching request list:", error);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching request list: ${error}`,
@@ -309,7 +309,7 @@ function SchedulerViewCard({
               if (job?.id) {
                 RunAdhocJob(job.id).catch((error) => {
                   console.error("Error running job:", error);
-                  showToast({
+                  showSnackbar({
                     severity: "error",
                     summary: "Error",
                     detail: `Error running job: ${error}`,
@@ -352,7 +352,7 @@ function SchedulerViewCard({
                   })
                   .catch((error) => {
                     console.error("Error pausing job:", error);
-                    showToast({
+                    showSnackbar({
                       severity: "error",
                       summary: "Error",
                       detail: `Error pausing job: ${error}`,
@@ -380,7 +380,7 @@ function SchedulerViewCard({
                   })
                   .catch((error) => {
                     console.error("Error resuming job:", error);
-                    showToast({
+                    showSnackbar({
                       severity: "error",
                       summary: "Error",
                       detail: `Error resuming job: ${error}`,

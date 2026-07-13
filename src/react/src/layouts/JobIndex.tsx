@@ -8,7 +8,7 @@ import { RefObject, useEffect, useRef, useState } from "react";
 import AccessButton from "../components/AccessButton";
 import { Job } from "../models/brewtils-types";
 import { Config, RequestItem, TourStepProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import {
   DeleteJob,
   ExportJobs,
@@ -36,7 +36,7 @@ function JobIndex({
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
   config: Config;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [jobs, setJobs] = useState<Array<Job>>([]);
   const tourUuid = "job_index_tour";
   const tourPrefix = "job_index";
@@ -178,7 +178,7 @@ function JobIndex({
         setJobs(responseJobs);
       })
       .catch((error) => {
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching jobs: ${error}`,
@@ -234,7 +234,7 @@ function JobIndex({
             onClick={() => {
               if (job.id) {
                 RunAdhocJob(job.id).catch((error) => {
-                  showToast({
+                  showSnackbar({
                     severity: "error",
                     summary: "Error",
                     detail: `Error running job: ${error}`,
@@ -286,7 +286,7 @@ function JobIndex({
                     );
                   })
                   .catch((error) => {
-                    showToast({
+                    showSnackbar({
                       severity: "error",
                       summary: "Error",
                       detail: `Error pausing job: ${error}`,
@@ -319,7 +319,7 @@ function JobIndex({
                     );
                   })
                   .catch((error) => {
-                    showToast({
+                    showSnackbar({
                       severity: "error",
                       summary: "Error",
                       detail: `Error resuming job: ${error}`,
@@ -350,7 +350,7 @@ function JobIndex({
                     );
                   })
                   .catch((error) => {
-                    showToast({
+                    showSnackbar({
                       severity: "error",
                       summary: "Error",
                       detail: `Error deleting job: ${error}`,
@@ -392,7 +392,7 @@ function JobIndex({
     const file = event?.files?.[0];
 
     if (!file) {
-      showToast({
+      showSnackbar({
         severity: "error",
         summary: "Error",
         detail: "No file selected for import",
@@ -407,7 +407,7 @@ function JobIndex({
       if (typeof contents === "string") {
         try {
           await ImportJobs(JSON.parse(contents));
-          showToast({
+          showSnackbar({
             severity: "success",
             summary: "Success",
             detail: "Jobs imported successfully",
@@ -425,7 +425,7 @@ function JobIndex({
               setJobs(responseJobs);
             })
             .catch((error) => {
-              showToast({
+              showSnackbar({
                 severity: "error",
                 summary: "Error",
                 detail: `Error fetching jobs: ${error}`,
@@ -434,7 +434,7 @@ function JobIndex({
             });
         } catch (error) {
           if (error instanceof Error) {
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Failed to import jobs: ${error}`,
@@ -442,7 +442,7 @@ function JobIndex({
             });
           } else {
             console.error("Error importing jobs:", error);
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: "Error importing jobs",
@@ -495,7 +495,7 @@ function JobIndex({
           raised
           onClick={() =>
             ExportJobs().catch((error) =>
-              showToast({
+              showSnackbar({
                 severity: "error",
                 summary: "Error",
                 detail: `Error exporting jobs: ${error}`,

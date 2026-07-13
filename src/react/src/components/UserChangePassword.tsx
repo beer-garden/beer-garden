@@ -3,7 +3,7 @@ import { Messages } from "primereact/messages";
 import { Password } from "primereact/password";
 import { ChangeEvent, useRef, useState } from "react";
 
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import {
   AdminUpdatePassword,
   UserUpdatePassword,
@@ -23,7 +23,7 @@ function UserChangePassword({
   setShowPasswordDialog: (show: boolean) => void;
   callback?: () => void;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [currentPassword, setCurrentPassword] = useState<string | undefined>(
     undefined,
   );
@@ -60,7 +60,7 @@ function UserChangePassword({
             callback();
           }
           handleUserPasswordDialogClose();
-          showToast({
+          showSnackbar({
             severity: "success",
             summary: "Success",
             detail: `Password updated for user ${username}`,
@@ -94,7 +94,7 @@ function UserChangePassword({
             callback();
           }
           handleUserPasswordDialogClose();
-          showToast({
+          showSnackbar({
             severity: "success",
             summary: "Success",
             detail: `Password updated for user ${username}`,

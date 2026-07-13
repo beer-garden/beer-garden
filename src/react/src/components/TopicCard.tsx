@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Request, Topic } from "../models/brewtils-types";
 import { RequestItem } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRequestList } from "../services/request_service";
 import { PaginatorTemplate } from "../services/util_service";
 import AccessButton from "./AccessButton";
@@ -25,7 +25,7 @@ function TopicCard({
 }) {
   const [topic, setTopic] = useState<Topic | undefined>(undefined);
   const navigate = useNavigate();
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [requests, setRequests] = useState<Array<Request> | undefined>(
     undefined,
   );
@@ -163,7 +163,7 @@ function TopicCard({
         })
         .catch((error) => {
           console.error("Error fetching request list:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching request list: ${error}`,

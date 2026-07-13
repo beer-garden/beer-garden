@@ -4,12 +4,12 @@ import { DataTable } from "primereact/datatable";
 import { useEffect, useState } from "react";
 
 import { System } from "../models/brewtils-types";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetSystemList } from "../services/system_service";
 import AccessButton from "./AccessButton";
 
 function SystemList({ systemListButtonClick }: { systemListButtonClick: any }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [systems, setSystems] = useState<System[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [filters, setFilters] = useState({
@@ -42,7 +42,7 @@ function SystemList({ systemListButtonClick }: { systemListButtonClick: any }) {
       })
       .catch((error) => {
         console.error("Error fetching systems:", error);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching systems: ${error}`,

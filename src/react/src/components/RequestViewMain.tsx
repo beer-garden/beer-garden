@@ -11,7 +11,7 @@ import RequestOptions from "../components/RequestOptions";
 import RequestOutput from "../components/RequestOutput";
 import { Request, System } from "../models/brewtils-types";
 import { Config, RequestCommand, RequestItem } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRequestProjections } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
 import { GetSeverity } from "../services/util_service";
@@ -48,7 +48,7 @@ function RequestViewMain({
   const [showCommandForm, setShowCommandForm] = useState(false);
   const [command, setCommand] = useState<any>(null);
   const [system, setSystem] = useState<System | null>(null);
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   const [requestProjections, setRequestProjections] = useState<
     RequestCommand[] | undefined
@@ -71,7 +71,7 @@ function RequestViewMain({
           })
           .catch((error) => {
             console.error("Error fetching request projections:", error);
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error fetching request projections: ${error}`,
@@ -103,7 +103,7 @@ function RequestViewMain({
           })
           .catch((error) => {
             console.error("Error fetching system list:", error);
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error fetching system list: ${error}`,

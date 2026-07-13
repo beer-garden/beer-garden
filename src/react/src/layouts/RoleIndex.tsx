@@ -8,7 +8,7 @@ import AccessButton from "../components/AccessButton";
 import RoleCard from "../components/RoleCard";
 import { Role } from "../models/brewtils-types";
 import { Config, TourStepProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { checkPermission } from "../services/permission_service";
 import { DeleteRole, GetRoles, Rescan } from "../services/role_service";
 import {
@@ -25,7 +25,7 @@ function RoleIndex({
   config: Config;
   tourStepsRef: RefObject<Array<TourStepProps>>;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [roles, setRoles] = useState<Array<Role>>([]);
   const [loading, setLoading] = useState(false);
   const [first, setFirst] = useState<number>(0);
@@ -100,7 +100,7 @@ function RoleIndex({
       })
       .catch((error) => {
         setLoading(false);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching roles: ${error}`,
@@ -136,7 +136,7 @@ function RoleIndex({
       Rescan()
         .then(() => {
           loadRoles();
-          showToast({
+          showSnackbar({
             severity: "info",
             summary: "Confirmation",
             detail: "Rescan complete",
@@ -144,7 +144,7 @@ function RoleIndex({
           });
         })
         .catch((error) => {
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error rescanning roles: ${error}`,
@@ -192,7 +192,7 @@ function RoleIndex({
             setRoles((currentRoles) => {
               return currentRoles.filter((r) => r.id !== role.id);
             });
-            showToast({
+            showSnackbar({
               severity: "info",
               summary: "Role Deleted",
               detail: `Deleted role: ${role.name}`,
@@ -200,7 +200,7 @@ function RoleIndex({
             });
           })
           .catch((error) => {
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error deleting the role: ${error}`,

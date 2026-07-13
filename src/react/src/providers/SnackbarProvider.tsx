@@ -20,24 +20,13 @@ interface SnackbarContextType {
   showSnackbar: (args: SnackbarArgs) => void;
 }
 
+// Create the context
 const SnackbarContext = createContext<SnackbarContextType | undefined>(
   undefined,
 );
 
-export const useSnackbar = () => {
-  const context = useContext(SnackbarContext);
-  if (!context)
-    throw new Error("useSnackbar must be used within a SnackbarProvider");
-  return context;
-};
-
-interface SnackbarProviderProps {
-  children: ReactNode;
-}
-
-export const SnackbarProvider: React.FC<SnackbarProviderProps> = ({
-  children,
-}) => {
+// Create the Provider Component
+export const SnackbarProvider = ({ children }: { children: ReactNode }) => {
   const [open, setOpen] = useState(false);
   const [summary, setSummary] = useState("");
   const [detail, setDetail] = useState("");
@@ -45,7 +34,6 @@ export const SnackbarProvider: React.FC<SnackbarProviderProps> = ({
   const [severity, setSeverity] = useState<AlertColor>("success");
 
   const showSnackbar = useCallback((args: SnackbarArgs) => {
-    //msg: string, sev: AlertColor = 'success'
     setSummary(args.summary);
     setDetail(args.detail);
     setSeverity(args.severity);
@@ -82,4 +70,13 @@ export const SnackbarProvider: React.FC<SnackbarProviderProps> = ({
       </Snackbar>
     </SnackbarContext.Provider>
   );
+};
+
+// Create a custom hook for consuming the context
+export const useSnackbar = () => {
+  const context = useContext(SnackbarContext);
+  if (!context) {
+    throw new Error("useSnackbar must be used within a SnackbarProvider");
+  }
+  return context.showSnackbar;
 };

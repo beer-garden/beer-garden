@@ -15,7 +15,7 @@ import InstanceShowLogsDialog from "../components/InstanceShowLogsDialog";
 import { Instance, Runner, System } from "../models/brewtils-types";
 import { Config, PermissionCheck } from "../models/models";
 import { RequestCommand, RequestItem, TourStepProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { StartInstance, StopInstance } from "../services/instance_service";
 import { checkPermission } from "../services/permission_service";
 import { DeleteSystem, ReloadSystem } from "../services/system_service";
@@ -42,7 +42,7 @@ function SystemCard({
   addRequestItem,
   associatedRunners,
 }: SystemCardProps) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [instanceMenuAnchor, setInstanceMenuAnchor] = useState<
     HTMLElement | undefined
   >(undefined);
@@ -277,7 +277,7 @@ function SystemCard({
     const accept = () => {
       DeleteSystem(system)
         .then(() => {
-          showToast({
+          showSnackbar({
             severity: "info",
             summary: "Confirmation",
             detail: `Deleted system ${system.name}`,

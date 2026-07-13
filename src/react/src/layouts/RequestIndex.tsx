@@ -21,7 +21,7 @@ import AccessButton from "../components/AccessButton";
 import { Request } from "../models/brewtils-types";
 import { RequestItem } from "../models/models";
 import { TourStepProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRequestList } from "../services/request_service";
 import {
   AddTourStep,
@@ -49,7 +49,7 @@ function RequestIndex({
 }) {
   const [requests, setRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [filteredRecords, setFilteredRecords] = useState<number>(0);
@@ -297,7 +297,7 @@ function RequestIndex({
       })
       .catch((error) => {
         setLoading(false);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching request list: ${error}`,
