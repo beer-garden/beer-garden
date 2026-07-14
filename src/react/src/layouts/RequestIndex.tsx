@@ -7,8 +7,11 @@ import { RefObject, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import AccessButton from "../components/AccessButton";
-import { ColumnField } from "../components/EnhancedTable";
-import EnhancedTable, { FilterColumn } from "../components/EnhancedTable";
+import {
+  ColumnField,
+  FilterColumn,
+} from "../components/EnhancedTable//models/EnhancedTableModels";
+import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import { Request } from "../models/brewtils-types";
 import { RequestItem } from "../models/models";
 import { TourStepProps } from "../models/models";
