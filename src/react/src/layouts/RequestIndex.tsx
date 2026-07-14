@@ -661,7 +661,8 @@ function RequestIndex({
       sortable: true,
       filterable: true,
       field: "status",
-      isString: true,
+      isArray: true,
+      options: ["SUCCESS", "IN_PROGRESS"],
     },
     {
       id: "created_at",
@@ -677,7 +678,8 @@ function RequestIndex({
       field: "comment",
       sortable: true,
       filterable: true,
-      isString: true,
+      // isString: true,
+      isNumeric: true,
     },
   ];
 
