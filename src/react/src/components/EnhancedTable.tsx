@@ -660,12 +660,20 @@ const ColumnHeaderFilter = ({
   columnFilters,
   columnFiltersRef,
   updateColumnFilters,
+  order,
+  setOrder,
+  orderBy,
+  setOrderBy,
 }: {
   column: ColumnField;
   columns: ColumnField[];
   columnFilters: FilterColumn[];
   columnFiltersRef: RefObject<FilterColumn[]>;
   updateColumnFilters: (filters: FilterColumn[]) => void;
+  order: "asc" | "desc";
+  setOrder: (value: "asc" | "desc") => void;
+  orderBy: string;
+  setOrderBy: (value: string) => void;
 }) => {
   const [filterMenuAnchor, setFilterMenuAnchor] = useState<
     HTMLElement | undefined
@@ -716,32 +724,28 @@ const ColumnHeaderFilter = ({
       >
         <MenuItem
           onClick={() => {
-            handleFilterMenuClose();
+            setOrder("asc");
+            setOrderBy(column.id);
           }}
         >
           <div className="flex">
-            <FontAwesomeIcon className="mr-2" icon="arrow-up" />
+            {orderBy === column.id && order === "asc" && (
+              <FontAwesomeIcon className="mr-2" icon="arrow-up" />
+            )}
             Sort by ASC
           </div>
         </MenuItem>
         <MenuItem
           onClick={() => {
-            handleFilterMenuClose();
+            setOrder("desc");
+            setOrderBy(column.id);
           }}
         >
           <div className="flex">
-            <FontAwesomeIcon className="mr-2" icon="arrow-down" />
+            {orderBy === column.id && order === "desc" && (
+              <FontAwesomeIcon className="mr-2" icon="arrow-down" />
+            )}
             Sort by DESC
-          </div>
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleFilterMenuClose();
-          }}
-        >
-          <div className="flex">
-            <FontAwesomeIcon className="mr-2" icon="rotate-left" />
-            Unsort
           </div>
         </MenuItem>
         <Divider />
@@ -1046,6 +1050,10 @@ const EnhancedTable = ({
                       columnFilters={filters}
                       columnFiltersRef={columnFiltersRef}
                       updateColumnFilters={updateFilters}
+                      order={order}
+                      setOrder={setOrder}
+                      orderBy={orderBy}
+                      setOrderBy={setOrderBy}
                     />
                   </>
                 )}
