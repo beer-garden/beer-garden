@@ -64,7 +64,7 @@ interface TablePaginationActionsProps {
   ) => void;
 }
 
-interface FilterColumn {
+export interface FilterColumn {
   id: string;
   column: string;
   value: string | string[] | Dayjs | number | undefined;
@@ -722,19 +722,21 @@ const ColumnHeaderFilter = ({
         open={filterMenuOpen}
         onClose={handleFilterMenuClose}
       >
-        <MenuItem
-          onClick={() => {
-            setOrder("asc");
-            setOrderBy(column.id);
-          }}
-        >
-          <div className="flex">
-            {orderBy === column.id && order === "asc" && (
-              <FontAwesomeIcon className="mr-2" icon="arrow-up" />
-            )}
-            Sort by ASC
-          </div>
-        </MenuItem>
+        {column.sortable && (
+          <MenuItem
+            onClick={() => {
+              setOrder("asc");
+              setOrderBy(column.id);
+            }}
+          >
+            <div className="flex">
+              {orderBy === column.id && order === "asc" && (
+                <FontAwesomeIcon className="mr-2" icon="arrow-up" />
+              )}
+              Sort by ASC
+            </div>
+          </MenuItem>
+        )}
         <MenuItem
           onClick={() => {
             setOrder("desc");
@@ -779,7 +781,7 @@ const EnhancedTable = ({
   dataLength?: number;
   columns: ColumnField[];
   remoteFilter?: (
-    columnFilters?: any[],
+    columnFilters?: FilterColumn[],
     orderBy?: string,
     order?: "asc" | "desc",
     page?: number,
@@ -1074,7 +1076,7 @@ const EnhancedTable = ({
           <TableFooter>
             <TableRow>
               <TablePagination
-                rowsPerPageOptions={[5, 10, 25, { label: "All", value: -1 }]}
+                rowsPerPageOptions={[5, 10, 25]}
                 colSpan={3}
                 count={dataLength ?? data.length}
                 rowsPerPage={rowsPerPage}
