@@ -40,6 +40,21 @@ const StringFilters = [
     value: "ne",
     label: "Not Equals",
   },
+  {
+    value: "exists",
+    label: "Exists",
+  },
+];
+
+const BooleanOptions = [
+  {
+    value: "true",
+    label: "True",
+  },
+  {
+    value: "false",
+    label: "False",
+  },
 ];
 
 const DateFilters = [
@@ -229,7 +244,7 @@ export const EnhancedTableFilterOptions = ({
           )
             ? columns.filter((tableColumn) => tableColumn.id === column)[0]
                 .options
-            : [];
+            : undefined;
 
           const tableColumnIsString =
             tableColumnIsArray === false &&
@@ -273,7 +288,6 @@ export const EnhancedTableFilterOptions = ({
               isDate: tableColumnIsDate,
               isNumeric: tableColumnIsNumeric,
               isString: tableColumnIsString,
-              isArray: tableColumnIsArray,
               options: tableColumnOptions,
               value: tableColumnIsArray ? [] : undefined,
               modifier: validModifier ? currentModifier : updatedModifier,
@@ -285,7 +299,6 @@ export const EnhancedTableFilterOptions = ({
             isDate: tableColumnIsDate,
             isNumeric: tableColumnIsNumeric,
             isString: tableColumnIsString,
-            isArray: tableColumnIsArray,
             options: tableColumnOptions,
           } as FilterColumn;
         }
@@ -464,6 +477,7 @@ export const EnhancedTableFilterOptions = ({
 
             {filterColumn &&
               filterModifier &&
+              filterModifier !== "exists" &&
               (isString || (!isDate && !isNumeric && !isArray)) && (
                 <TextField
                   className="mr-2"
@@ -475,6 +489,28 @@ export const EnhancedTableFilterOptions = ({
                     updateValue(id, event.target.value);
                   }}
                 />
+              )}
+
+            {filterColumn &&
+              filterModifier &&
+              filterModifier === "exists" &&
+              (isString || (!isDate && !isNumeric && !isArray)) && (
+                <TextField
+                  className="mr-2"
+                  id={`filter-value-${id}`}
+                  select
+                  label="Value"
+                  value={filterValue}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    updateValue(id, event.target.value);
+                  }}
+                >
+                  {BooleanOptions.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
               )}
 
             {filterColumn && filterModifier && isDate && (

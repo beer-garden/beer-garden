@@ -479,7 +479,10 @@ function RequestIndex({
               JSON.stringify({
                 field_name: filter.column,
                 modifier: filter.modifier === "eq" ? "" : filter.modifier,
-                value: filter.value,
+                value:
+                  filter.modifier === "exists"
+                    ? filter.value === "true"
+                    : filter.value,
               }),
             );
           }

@@ -212,6 +212,35 @@ const EnhancedTable = ({
             ) {
               return !filter.value.some((field) => field === compare);
             }
+          } else if (filter.modifier === "exists") {
+            if (filter.value === "true") {
+              // Value Present
+              if (compare === undefined) {
+                return false;
+              }
+
+              if (
+                typeof compare === "string" &&
+                (compare === "" || compare.trim().length === 0)
+              ) {
+                return false;
+              }
+
+              return true;
+            } else {
+              // Value is empty
+              if (compare === undefined) {
+                return true;
+              }
+              if (
+                typeof compare === "string" &&
+                (compare === "" || compare.trim().length === 0)
+              ) {
+                return true;
+              }
+
+              return false;
+            }
           }
 
           // Default response if field is populated
