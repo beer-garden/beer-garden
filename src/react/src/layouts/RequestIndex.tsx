@@ -116,6 +116,10 @@ function RequestIndex({
     }
   }, [autoRefresh, recordsUpdated]);
 
+  useEffect(() => {
+    setReloadRequestsTrigger(reloadRequestsTrigger + 1);
+  }, [showChildren, showHidden]);
+
   const header = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
       <h1 className="text-xl text-900 font-bold">Requests</h1>
@@ -534,7 +538,10 @@ function RequestIndex({
         header={header}
         remoteFilter={tableLoadData}
         dataLength={filteredRecords}
+        totalDataLength={totalRecords}
         reloadTable={reloadRequestsTrigger}
+        defaultOrderBy="created_at"
+        defaultOrder="desc"
       />
     </div>
   );

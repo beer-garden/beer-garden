@@ -20,15 +20,18 @@ import { EnhancedTablePaginationActions } from "./EnhancedTablePaginationActions
 const EnhancedTable = ({
   data,
   dataLength,
+  totalDataLength,
   columns,
   remoteFilter,
   defaultOrderBy,
+  defaultOrder,
   header,
   footer,
   reloadTable,
 }: {
   data: any[];
   dataLength?: number;
+  totalDataLength?: number;
   columns: ColumnField[];
   remoteFilter?: (
     columnFilters?: FilterColumn[],
@@ -38,13 +41,17 @@ const EnhancedTable = ({
     rowsPerPage?: number,
   ) => void;
   defaultOrderBy?: string;
+  defaultOrder?: "asc" | "desc";
   header?: React.ReactElement;
   footer?: React.ReactElement;
   reloadTable?: number;
 }) => {
   const [displayData, setDisplayData] = useState<any[] | undefined>(undefined);
+  const [displayFiltered, setDisplayFiltered] = useState<number | undefined>(
+    undefined,
+  );
 
-  const [order, setOrder] = useState<"asc" | "desc">("asc");
+  const [order, setOrder] = useState<"asc" | "desc">(defaultOrder ?? "asc");
   const [orderBy, setOrderBy] = useState<string | undefined>(defaultOrderBy);
 
   const columnFiltersRef = useRef<FilterColumn[]>([]);
@@ -207,6 +214,8 @@ const EnhancedTable = ({
         });
       }),
     ];
+
+    setDisplayFiltered(filteredData.length);
     const sortedData = filteredData.sort((a, b) => {
       if (orderBy) {
         const field_a = Object.hasOwn(a, orderBy) ? a?.[orderBy] : undefined;
@@ -253,6 +262,18 @@ const EnhancedTable = ({
       setDisplayData(filterSortData(data));
     }
   }, [reloadTable, filters, order, orderBy, page, rowsPerPage]);
+
+  function defaultLabelDisplayedRows({
+    from,
+    to,
+    count,
+  }: {
+    from: number;
+    to: number;
+    count: number;
+  }) {
+    return `Showing ${from} to ${to} of ${count !== -1 ? count : `more than ${to}`} entries ${totalDataLength ? (dataLength === totalDataLength ? "" : `(Filtered from ${totalDataLength} entries)`) : data.length === displayFiltered ? "" : `(Filtered from ${data.length} entries)`}`;
+  }
 
   return (
     <>
@@ -328,6 +349,7 @@ const EnhancedTable = ({
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
                 ActionsComponent={EnhancedTablePaginationActions}
+                labelDisplayedRows={defaultLabelDisplayedRows}
               />
             </TableRow>
           </TableFooter>
