@@ -9,7 +9,7 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { PickerValue } from "@mui/x-date-pickers/internals";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { Dayjs } from "dayjs";
-import { ChangeEvent, RefObject, useEffect, useRef, useState } from "react";
+import { ChangeEvent, RefObject, useEffect, useState } from "react";
 
 import { ColumnField, FilterColumn } from "../models/EnhancedTableModels";
 import NumberField from "./NumberField";
@@ -142,9 +142,6 @@ export const EnhancedTableFilterOptions = ({
       }
     }
     if (filter) {
-      if (filter.column === undefined) {
-      }
-
       if (filter.modifier) {
         return filter.modifier;
       }
@@ -156,9 +153,6 @@ export const EnhancedTableFilterOptions = ({
       }
       if (filter.isArray) {
         return ArrayFilters[0].value;
-      }
-      if (filter.isString) {
-        return StringFilters[0].value;
       }
     }
 
