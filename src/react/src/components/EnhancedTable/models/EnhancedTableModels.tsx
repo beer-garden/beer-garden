@@ -27,6 +27,6 @@ export interface FilterColumn {
   isString?: boolean;
   isDate?: boolean;
   isNumeric?: boolean;
-  isArray?: boolean;
+
   options?: string[];
 }

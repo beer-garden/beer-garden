@@ -153,7 +153,7 @@ export const EnhancedTableFilterOptions = ({
       if (filter.isNumeric) {
         return NumericFilters[0].value;
       }
-      if (filter.isArray) {
+      if (filter.options !== undefined) {
         return ArrayFilters[0].value;
       }
     }
@@ -198,10 +198,12 @@ export const EnhancedTableFilterOptions = ({
       triggerReload();
     }
     setFilterValue(filter?.value);
-    setIsDate(filter?.isDate === true);
-    setIsString(filter?.isString === true);
-    setIsNumeric(filter?.isNumeric === true);
-    setIsArray(filter?.isArray === true);
+
+    const isArray = filter?.options !== undefined;
+    setIsDate(!isArray && filter?.isDate === true);
+    setIsString(!isArray && filter?.isString === true);
+    setIsNumeric(!isArray && filter?.isNumeric === true);
+    setIsArray(isArray);
     setOptions(filter?.options);
   }, [columnFilters]);
 
@@ -230,19 +232,20 @@ export const EnhancedTableFilterOptions = ({
             : [];
 
           const tableColumnIsString =
-            columns.some(
+            tableColumnIsArray === false &&
+            (columns.some(
               (tableColumn) =>
                 tableColumn.id === column && tableColumn.isString === true,
             ) ||
-            (tableColumnIsDate === false &&
-              tableColumnIsNumeric === false &&
-              tableColumnIsArray === false);
+              (tableColumnIsDate === false &&
+                tableColumnIsNumeric === false &&
+                tableColumnIsArray === false));
 
           if (
             filter.isDate !== tableColumnIsDate ||
             filter.isNumeric !== tableColumnIsNumeric ||
             filter.isString !== tableColumnIsString ||
-            filter.isArray !== tableColumnIsArray
+            (filter.options !== undefined) !== tableColumnIsArray
           ) {
             // check is modifier is set and in the correct array of options
 
@@ -251,25 +254,17 @@ export const EnhancedTableFilterOptions = ({
             let validModifier = true;
             let updatedModifier = undefined;
             if (tableColumnIsDate) {
-              // if (currentModifier === undefined || !DateFilters.some(f => f.value === currentModifier)){
               validModifier = false;
               updatedModifier = DateFilters[0].value;
-              // }
             } else if (tableColumnIsNumeric) {
-              // if (currentModifier === undefined || !NumericFilters.some(f => f.value === currentModifier)){
               validModifier = false;
               updatedModifier = NumericFilters[0].value;
-              // }
             } else if (tableColumnIsArray) {
-              // if (currentModifier === undefined || ArrayFilters.some(f => f.value === currentModifier)){
               validModifier = false;
               updatedModifier = ArrayFilters[0].value;
-              // }
             } else if (tableColumnIsString) {
-              // if(currentModifier === undefined ||  StringFilters.some(f => f.value === currentModifier)){
               validModifier = false;
               updatedModifier = StringFilters[0].value;
-              // }
             }
 
             return {
