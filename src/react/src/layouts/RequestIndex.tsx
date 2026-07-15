@@ -542,6 +542,7 @@ function RequestIndex({
         reloadTable={reloadRequestsTrigger}
         defaultOrderBy="created_at"
         defaultOrder="desc"
+        isLoading={loading}
       />
     </div>
   );

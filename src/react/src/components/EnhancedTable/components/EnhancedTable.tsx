@@ -1,4 +1,5 @@
 import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -28,6 +29,7 @@ const EnhancedTable = ({
   header,
   footer,
   reloadTable,
+  isLoading,
 }: {
   data: any[];
   dataLength?: number;
@@ -45,6 +47,7 @@ const EnhancedTable = ({
   header?: React.ReactElement;
   footer?: React.ReactElement;
   reloadTable?: number;
+  isLoading?: boolean;
 }) => {
   const [displayData, setDisplayData] = useState<any[] | undefined>(undefined);
   const [displayFiltered, setDisplayFiltered] = useState<number | undefined>(
@@ -194,8 +197,8 @@ const EnhancedTable = ({
           } else if (filter.modifier === "lte") {
             return compare <= filter.value;
           } else if (filter.modifier === "in") {
-            if (   
-              typeof compare === "string" &&           
+            if (
+              typeof compare === "string" &&
               typeof filter.value === "object" &&
               Array.isArray(filter.value)
             ) {
@@ -278,8 +281,11 @@ const EnhancedTable = ({
   }
 
   return (
-    <>
-      <TableContainer component={Paper}>
+    <Box sx={{ position: "relative", width: "100%" }}>
+      <TableContainer
+        component={Paper}
+        sx={{ position: "relative", opacity: isLoading ? 0.5 : 1 }}
+      >
         {header}
         <Table>
           <TableHead>
@@ -359,7 +365,20 @@ const EnhancedTable = ({
 
         {footer}
       </TableContainer>
-    </>
+      {isLoading && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 10, // Higher than the table
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      )}
+    </Box>
   );
 };
 
