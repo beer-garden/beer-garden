@@ -3,7 +3,7 @@ import { AutoComplete } from "primereact/autocomplete";
 import { Card } from "primereact/card";
 import React, { useEffect, useRef, useState } from "react";
 
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetSystemList } from "../services/system_service";
 import AccessButton from "./AccessButton";
 
@@ -23,7 +23,7 @@ function RoleScopeCard({
   const [filteredItems, setFilteredItems] = useState([] as Array<string>);
   const items = useRef<Array<string>>([]);
 
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   useEffect(() => {
     GetSystemList()
@@ -76,7 +76,7 @@ function RoleScopeCard({
       })
       .catch((error) => {
         console.error("Error fetching system list:", error);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching system list: ${error}`,

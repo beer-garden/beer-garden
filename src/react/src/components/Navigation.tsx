@@ -8,7 +8,7 @@ import { NavLink } from "react-router-dom";
 import CurrentRequestsTemplate from "../components/CurrentRequestsTemplate";
 import UserLogin from "../components/UserLogin";
 import { Config, RequestItem, TourStepProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import {
   ClearRefresh,
   ClearToken,
@@ -41,7 +41,7 @@ function NavigationMenu({
   toggleRunTour: () => void;
   tourStepsRef: RefObject<Array<TourStepProps>>;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [iconDefault, setIconDefault] = useState<string>(
     config?.icon_default ?? "beer-mug-empty",
   );
@@ -369,7 +369,7 @@ function NavigationMenu({
         ClearToken();
         ClearRefresh().catch((error) => {
           console.error("Error Clearing Refresh Token:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error Clearing Refresh Token: ${error}`,

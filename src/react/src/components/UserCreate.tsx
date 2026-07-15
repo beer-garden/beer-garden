@@ -3,7 +3,7 @@ import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { ChangeEvent, useState } from "react";
 
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { CreateUser } from "../services/user_service";
 import AccessButton from "./AccessButton";
 
@@ -16,7 +16,7 @@ function UserCreate({
   setShowCreateUserDialog: (show: boolean) => void;
   callback?: () => void;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [username, setUsername] = useState<string | undefined>(undefined);
   const [newPassword, setNewPassword] = useState<string | undefined>(undefined);
   const [confirmPassword, setConfirmPassword] = useState<string | undefined>(
@@ -27,21 +27,21 @@ function UserCreate({
 
   function createUser() {
     if (!username) {
-      showToast({
+      showSnackbar({
         severity: "error",
         summary: "Error",
         detail: "Missing Username",
         life: 3000,
       });
     } else if (!newPassword || !confirmPassword) {
-      showToast({
+      showSnackbar({
         severity: "error",
         summary: "Error",
         detail: "Missing Password",
         life: 3000,
       });
     } else if (newPassword !== confirmPassword) {
-      showToast({
+      showSnackbar({
         severity: "error",
         summary: "Error",
         detail: "Passwords do not match",
@@ -50,7 +50,7 @@ function UserCreate({
     } else {
       CreateUser(username, newPassword)
         .then(() => {
-          showToast({
+          showSnackbar({
             severity: "info",
             summary: "Info",
             detail: `Created Account for ${username}`,
@@ -63,7 +63,7 @@ function UserCreate({
         })
         .catch((error) => {
           console.error("Failed creating user", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error creating user: ${error}`,

@@ -7,7 +7,7 @@ import RequestTreeMenu from "../components/RequestTreeMenu";
 import RequestViewMain from "../components/RequestViewMain";
 import { Request } from "../models/brewtils-types";
 import { Config, RequestItem } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRequest } from "../services/request_service";
 import { getErrorCode } from "../services/util_service";
 
@@ -20,7 +20,7 @@ function RequestView({
   config: Config;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [error, setError] = useState<Error>();
   const { requestId } = useParams<{ requestId: string }>();
   const [request, setRequest] = useState<Request | undefined>(undefined);
@@ -129,7 +129,7 @@ function RequestView({
             }
           })
           .catch((error) => {
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error fetching request: ${error}`,
@@ -215,7 +215,7 @@ function RequestView({
               updateRootRequest(updatedRequest);
             })
             .catch((error) => {
-              showToast({
+              showSnackbar({
                 severity: "error",
                 summary: "Error",
                 detail: `Error fetching children requests: ${error}`,
@@ -227,7 +227,7 @@ function RequestView({
 
       if (rootRequest === undefined) {
         loadRootRequest(request).catch((error) => {
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching parent request: ${error}`,

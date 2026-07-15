@@ -6,7 +6,7 @@ import { Tag } from "primereact/tag";
 
 import { Runner } from "../models/brewtils-types";
 import { Config, RunnerGroup } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import {
   ReloadRunner,
   RemoveRunner,
@@ -22,7 +22,7 @@ function UnassociatedRunnerCard({
   runnerGroup: RunnerGroup;
   config: Config;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   const headerTemplate = (options: any) => {
     const className = `${options.className} justify-content-space-between`;
@@ -56,7 +56,7 @@ function UnassociatedRunnerCard({
   function startRunner(runner: Runner) {
     StartRunner(runner)
       .then(() => {
-        showToast({
+        showSnackbar({
           severity: "info",
           summary: "Confirmation",
           detail: `Start runner ${runner.id}`,
@@ -77,7 +77,7 @@ function UnassociatedRunnerCard({
   function stopRunner(runner: Runner) {
     StopRunner(runner)
       .then(() => {
-        showToast({
+        showSnackbar({
           severity: "info",
           summary: "Confirmation",
           detail: `Stopped runner ${runner.id}`,
@@ -98,7 +98,7 @@ function UnassociatedRunnerCard({
   function deleteRunner(runner: Runner) {
     RemoveRunner(runner)
       .then(() => {
-        showToast({
+        showSnackbar({
           severity: "info",
           summary: "Confirmation",
           detail: `Deleted runner ${runner.id}`,
@@ -113,7 +113,7 @@ function UnassociatedRunnerCard({
   function reloadPath() {
     ReloadRunner(runnerGroup.path)
       .then(() => {
-        showToast({
+        showSnackbar({
           severity: "info",
           summary: "Confirmation",
           detail: `Reloaded runner ${runnerGroup.path}`,

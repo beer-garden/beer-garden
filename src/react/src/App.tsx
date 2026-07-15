@@ -40,7 +40,7 @@ import { MultiSelectPT } from "./passthrough/MultiSelectPT";
 import { PanelPT } from "./passthrough/PanelPT";
 import { SplitButtonPT } from "./passthrough/SplitButtonPT";
 import { TriStateCheckboxPT } from "./passthrough/TriStateCheckboxPT";
-import { ToastProvider } from "./providers/ToastProvider";
+import { SnackbarProvider } from "./providers/SnackbarProvider";
 import { GetConfig } from "./services/config_service";
 import { GetRootGarden } from "./services/garden_service";
 import { preemptiveRefresh } from "./services/token_service";
@@ -496,7 +496,7 @@ function App() {
 
   return (
     <PrimeReactProvider value={primeValue}>
-      <ToastProvider>
+      <SnackbarProvider>
         {config && Object.keys(config).length === 0 && (
           <div>
             <Skeleton height="5rem" className="mb-2" />
@@ -698,21 +698,21 @@ function App() {
                           path="/roles"
                           element={
                             <HasAccess
-                            config={config}
-                            permission="GARDEN_ADMIN"
-                            isGlobal={true}
-                            renderAuthFailed={
-                              <ErrorPage
-                                errorCode={401}
-                                errorMsg="Insufficient Access for Roles Management. Please contact Garden Administrator"
-                              />
-                            }
-                          >
-                            <RoleIndex
                               config={config}
-                              tourStepsRef={tourStepsRef}
-                            />
-                          </HasAccess>
+                              permission="GARDEN_ADMIN"
+                              isGlobal={true}
+                              renderAuthFailed={
+                                <ErrorPage
+                                  errorCode={401}
+                                  errorMsg="Insufficient Access for Roles Management. Please contact Garden Administrator"
+                                />
+                              }
+                            >
+                              <RoleIndex
+                                config={config}
+                                tourStepsRef={tourStepsRef}
+                              />
+                            </HasAccess>
                           }
                         />
                         <Route
@@ -762,7 +762,7 @@ function App() {
             </div>
           </div>
         )}
-      </ToastProvider>
+      </SnackbarProvider>
     </PrimeReactProvider>
   );
 }

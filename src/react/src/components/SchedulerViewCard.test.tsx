@@ -11,7 +11,7 @@ import {
   Job,
   Request,
 } from "../models/brewtils-types";
-import { ToastProvider } from "../providers/ToastProvider";
+import { SnackbarProvider } from "../providers/SnackbarProvider";
 import * as jobService from "../services/job_service";
 import * as requestService from "../services/request_service";
 import SchedulerViewCard from "./SchedulerViewCard";
@@ -64,7 +64,7 @@ describe("SchedulerViewCard", () => {
     ]);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <SchedulerViewCard
           listeners={{}}
           jobId="1"
@@ -74,7 +74,7 @@ describe("SchedulerViewCard", () => {
           config={{}}
           isDialog={true}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -250,7 +250,7 @@ describe("SchedulerViewCard", () => {
     ]);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <SchedulerViewCard
           listeners={{}}
           jobId="1"
@@ -260,7 +260,7 @@ describe("SchedulerViewCard", () => {
           config={{}}
           isDialog={true}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -300,7 +300,7 @@ describe("SchedulerViewCard", () => {
     ]);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <SchedulerViewCard
           listeners={{}}
           jobId="1"
@@ -310,7 +310,7 @@ describe("SchedulerViewCard", () => {
           config={{}}
           isDialog={true}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -403,7 +403,7 @@ describe("SchedulerViewCard", () => {
     ]);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <SchedulerViewCard
           listeners={{}}
           jobId="1"
@@ -413,7 +413,7 @@ describe("SchedulerViewCard", () => {
           config={{}}
           isDialog={true}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -450,7 +450,7 @@ describe("SchedulerViewCard", () => {
     ]);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <SchedulerViewCard
           listeners={{}}
           jobId="1"
@@ -460,7 +460,7 @@ describe("SchedulerViewCard", () => {
           config={{}}
           isDialog={true}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -521,7 +521,7 @@ describe("SchedulerViewCard", () => {
     ]);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <SchedulerViewCard
           listeners={{}}
           jobId="1"
@@ -531,7 +531,7 @@ describe("SchedulerViewCard", () => {
           config={{}}
           isDialog={true}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -614,7 +614,7 @@ describe("SchedulerViewCard", () => {
     } as Job);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <SchedulerViewCard
           listeners={{}}
           jobId="1"
@@ -624,7 +624,7 @@ describe("SchedulerViewCard", () => {
           config={{}}
           isDialog={true}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const pauseButton = await screen.findByRole("button", {
@@ -676,7 +676,7 @@ describe("SchedulerViewCard", () => {
     } as Job);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <SchedulerViewCard
           listeners={{}}
           jobId="1"
@@ -686,7 +686,7 @@ describe("SchedulerViewCard", () => {
           config={{}}
           isDialog={true}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const resumeButton = await screen.findByRole("button", {
@@ -739,7 +739,7 @@ describe("SchedulerViewCard", () => {
     render(
       <>
         <ConfirmDialog />
-        <ToastProvider>
+        <SnackbarProvider>
           <SchedulerViewCard
             listeners={{}}
             jobId="1"
@@ -749,7 +749,7 @@ describe("SchedulerViewCard", () => {
             config={{}}
             isDialog={true}
           />
-        </ToastProvider>
+        </SnackbarProvider>
       </>,
     );
 
@@ -797,7 +797,7 @@ describe("SchedulerViewCard", () => {
     vi.mocked(jobService.RunAdhocJob);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <SchedulerViewCard
           listeners={{}}
           jobId="1"
@@ -807,7 +807,7 @@ describe("SchedulerViewCard", () => {
           config={{}}
           isDialog={true}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const runNowButton = await screen.findByRole("button", {
@@ -853,7 +853,7 @@ describe("SchedulerViewCard", () => {
     const closeJobMock = vi.fn().mockResolvedValue({} as Job);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <SchedulerViewCard
           listeners={{}}
           jobId="1"
@@ -863,7 +863,7 @@ describe("SchedulerViewCard", () => {
           config={{}}
           isDialog={false}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const closeButton = await screen.findByTestId("CLOSE_JOB_" + mockJob?.name);
@@ -915,7 +915,7 @@ describe("SchedulerViewCard", () => {
     ]);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <SchedulerViewCard
           listeners={{}}
           jobId="1"
@@ -925,7 +925,7 @@ describe("SchedulerViewCard", () => {
           config={{}}
           isDialog={true}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 import { Queue } from "../models/brewtils-types";
 import { InstanceDialogProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { ClearQueue, GetInstanceQueues } from "../services/queue_service";
 import AccessButton from "./AccessButton";
 
@@ -16,7 +16,7 @@ function InstanceManageQueueDialog({
   onClose,
 }: InstanceDialogProps) {
   const [queues, setQueues] = useState<Array<Queue>>([]);
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   useEffect(() => {
     if (isVisible) {
@@ -26,7 +26,7 @@ function InstanceManageQueueDialog({
         })
         .catch((error) => {
           console.error("Error fetching queues:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching queues: ${error}`,
@@ -54,7 +54,7 @@ function InstanceManageQueueDialog({
             });
             return newQueues;
           });
-          showToast({
+          showSnackbar({
             severity: "success",
             summary: "Success",
             detail: `Cleared queue: ${queueName}`,
@@ -63,7 +63,7 @@ function InstanceManageQueueDialog({
         })
         .catch((error) => {
           console.error("Error clearing queue:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error clearing queue: ${error}`,

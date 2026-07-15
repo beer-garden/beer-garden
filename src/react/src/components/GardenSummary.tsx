@@ -12,7 +12,7 @@ import { RefObject, useEffect, useState } from "react";
 import { Connection, Garden, Runner, System } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { TourStepProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import {
   DeleteGarden,
   RescanGarden,
@@ -45,7 +45,7 @@ function GardenSummary({
   tourStepsRef?: RefObject<Array<TourStepProps>>;
   config: Config;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const tourUuid = selectedGarden?.id;
   const tourPrefix = "garden_summary";
   const getPublishingConnections = () => {
@@ -348,7 +348,7 @@ function GardenSummary({
             if (selectedGarden?.name && node?.status && node?.api) {
               UpdateApiGarden(selectedGarden.name, type, node.api, type)
                 .then(() => {
-                  showToast({
+                  showSnackbar({
                     severity: "success",
                     summary: "Success",
                     detail: `Stopped Garden API connection ${node.api}`,
@@ -357,7 +357,7 @@ function GardenSummary({
                 })
                 .catch((error) => {
                   console.error("Error Updating Garden API Connection:", error);
-                  showToast({
+                  showSnackbar({
                     severity: "error",
                     summary: "Error",
                     detail: `Error Updating Garden API Connection: ${error}`,
@@ -376,7 +376,7 @@ function GardenSummary({
           <FontAwesomeIcon icon="play" />
         </AccessButton>
         <AccessButton
-          severity="warning"
+          color="warning"
           data-testid={type + "_" + node?.api + "_STOP"}
           {...GenerateTourProps({
             prefix: tourPrefix,
@@ -387,7 +387,7 @@ function GardenSummary({
             if (selectedGarden?.name && node?.status && node?.api) {
               UpdateApiGarden(selectedGarden.name, "DISABLED", node.api, type)
                 .then(() => {
-                  showToast({
+                  showSnackbar({
                     severity: "success",
                     summary: "Success",
                     detail: `Started Garden API connection ${node.api}`,
@@ -396,7 +396,7 @@ function GardenSummary({
                 })
                 .catch((error) => {
                   console.error("Error Updating Garden API Connection:", error);
-                  showToast({
+                  showSnackbar({
                     severity: "error",
                     summary: "Error",
                     detail: `Error Updating Garden API Connection: ${error}`,
@@ -441,7 +441,7 @@ function GardenSummary({
                 if (selectedGarden?.name) {
                   Rescan(selectedGarden.name)
                     .then(() => {
-                      showToast({
+                      showSnackbar({
                         severity: "success",
                         summary: "Success",
                         detail: `Rescanned Plugins for Garden ${selectedGarden?.name}`,
@@ -453,7 +453,7 @@ function GardenSummary({
                         "Error Rescanning Garden Plugin Dir:",
                         error,
                       );
-                      showToast({
+                      showSnackbar({
                         severity: "error",
                         summary: "Error",
                         detail: `Error Rescanning Garden Plugin Dir: ${error}`,
@@ -465,7 +465,9 @@ function GardenSummary({
               config={config}
               permission="GARDEN_ADMIN"
               hasGardenName={selectedGarden?.name}
-            />
+            >
+              Rescan Plugins
+            </AccessButton>
             <AccessButton
               label="Rescan Downstream"
               tooltip={`Rescan Downstream for Garden ${selectedGarden?.name}`}
@@ -476,7 +478,7 @@ function GardenSummary({
                 if (selectedGarden?.name) {
                   RescanGarden(selectedGarden.name)
                     .then(() => {
-                      showToast({
+                      showSnackbar({
                         severity: "success",
                         summary: "Success",
                         detail: `Rescanned Downstream for Garden ${selectedGarden?.name}`,
@@ -485,7 +487,7 @@ function GardenSummary({
                     })
                     .catch((error) => {
                       console.error("Error Rescanning Garden:", error);
-                      showToast({
+                      showSnackbar({
                         severity: "error",
                         summary: "Error",
                         detail: `Error Rescanning Garden: ${error}`,
@@ -497,7 +499,9 @@ function GardenSummary({
               config={config}
               permission="GARDEN_ADMIN"
               hasGardenName={selectedGarden?.name}
-            />
+            >
+              Rescan Downstream
+            </AccessButton>
             <AccessButton
               label="Clear Plugin Queues"
               tooltip={`Clear Plugin Queues for Garden ${selectedGarden?.name}`}
@@ -509,7 +513,7 @@ function GardenSummary({
                 if (selectedGarden?.name) {
                   ClearAllQueues(selectedGarden.name)
                     .then(() => {
-                      showToast({
+                      showSnackbar({
                         severity: "success",
                         summary: "Success",
                         detail: `Cleared Plugin Queues for Garden ${selectedGarden?.name}`,
@@ -518,7 +522,7 @@ function GardenSummary({
                     })
                     .catch((error) => {
                       console.error("Error clearing Plugin Queue:", error);
-                      showToast({
+                      showSnackbar({
                         severity: "error",
                         summary: "Error",
                         detail: `Error clearing Plugin Queue: ${error}`,
@@ -530,7 +534,9 @@ function GardenSummary({
               config={config}
               permission="GARDEN_ADMIN"
               hasGardenName={selectedGarden?.name}
-            />
+            >
+              Clear Plugin Queues
+            </AccessButton>
             {gardenRef.current &&
               gardenRef.current.name !== selectedGarden?.name && (
                 <AccessButton
@@ -543,7 +549,7 @@ function GardenSummary({
                     if (selectedGarden?.name) {
                       SyncGarden(selectedGarden.name)
                         .then(() => {
-                          showToast({
+                          showSnackbar({
                             severity: "success",
                             summary: "Success",
                             detail: `Synced Garden ${selectedGarden?.name}`,
@@ -552,7 +558,7 @@ function GardenSummary({
                         })
                         .catch((error) => {
                           console.error("Error Syncing Garden:", error);
-                          showToast({
+                          showSnackbar({
                             severity: "error",
                             summary: "Error",
                             detail: `Error Syncing Garden: ${error}`,
@@ -564,7 +570,9 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                />
+                >
+                  Sync
+                </AccessButton>
               )}
             {gardenRef.current &&
               gardenRef.current.name === selectedGarden?.name && (
@@ -576,7 +584,7 @@ function GardenSummary({
                   onClick={() => {
                     SyncGarden()
                       .then(() => {
-                        showToast({
+                        showSnackbar({
                           severity: "success",
                           summary: "Success",
                           detail: `Synced Garden ${selectedGarden?.name}`,
@@ -585,7 +593,7 @@ function GardenSummary({
                       })
                       .catch((error) => {
                         console.error("Error Syncing Garden:", error);
-                        showToast({
+                        showSnackbar({
                           severity: "error",
                           summary: "Error",
                           detail: `Error Syncing Garden: ${error}`,
@@ -596,7 +604,9 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                />
+                >
+                  Sync All
+                </AccessButton>
               )}
             {gardenRef.current &&
               gardenRef.current.name !== selectedGarden?.name && (
@@ -610,7 +620,7 @@ function GardenSummary({
                     if (selectedGarden?.name) {
                       SyncUsersGarden(selectedGarden.name)
                         .then(() => {
-                          showToast({
+                          showSnackbar({
                             severity: "success",
                             summary: "Success",
                             detail: `Synced Users for Garden ${selectedGarden?.name}`,
@@ -622,7 +632,7 @@ function GardenSummary({
                             "Error Syncing Users in Garden:",
                             error,
                           );
-                          showToast({
+                          showSnackbar({
                             severity: "error",
                             summary: "Error",
                             detail: `Error Syncing Users in Garden: ${error}`,
@@ -634,7 +644,9 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                />
+                >
+                  Sync Users
+                </AccessButton>
               )}
             {gardenRef.current &&
               gardenRef.current.name !== selectedGarden?.name && (
@@ -643,13 +655,13 @@ function GardenSummary({
                   tooltip={`Delete Garden ${selectedGarden?.name}`}
                   {...GenerateTourProps(deleteGardenTourStep)}
                   data-testid={"DELETE_GARDEN"}
-                  severity="danger"
+                  color="error"
                   className="mr-2"
                   onClick={() => {
                     if (selectedGarden?.name) {
                       DeleteGarden(selectedGarden.name)
                         .then(() => {
-                          showToast({
+                          showSnackbar({
                             severity: "success",
                             summary: "Success",
                             detail: `Deleted Garden ${selectedGarden?.name}`,
@@ -658,7 +670,7 @@ function GardenSummary({
                         })
                         .catch((error) => {
                           console.error("Error Deleting Garden:", error);
-                          showToast({
+                          showSnackbar({
                             severity: "error",
                             summary: "Error",
                             detail: `Error Deleting Garden: ${error}`,
@@ -670,7 +682,9 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                />
+                >
+                  Delete Garden
+                </AccessButton>
               )}
           </div>
         )}
@@ -680,7 +694,7 @@ function GardenSummary({
           {invalidRouting && (
             <Message
               className="mx-2 mb-2"
-              severity="warn"
+              color="warning"
               text="Warning - Upstream routing error. Requests or Syncs might be interrupted or missed. Please contact your Garden Admin"
               pt={{
                 icon: {

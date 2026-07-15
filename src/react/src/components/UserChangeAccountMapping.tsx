@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { AliasUserMap, Garden, User } from "../models/brewtils-types";
 import { Config } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRootGarden } from "../services/garden_service";
 import { UpdateUserAliasMapping } from "../services/user_service";
 import AccessButton from "./AccessButton";
@@ -24,7 +24,7 @@ function UserChangeAccountMapping({
   setShowAccountMappingDialog: (show: boolean) => void;
   callback?: () => void;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [gardenAccounts, setGardenAccounts] = useState<Array<any>>([]);
   const gardenAccountsRef = useRef<Array<any>>([]);
   const seenGardens = useRef<Set<string>>(new Set());
@@ -122,7 +122,7 @@ function UserChangeAccountMapping({
         })
         .catch((error) => {
           console.error("Error updating user account mapping:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Failed to update account mapping for user ${user.username}`,
@@ -218,7 +218,7 @@ function UserChangeAccountMapping({
       })
       .catch((error) => {
         console.error("Error fetching root garden accounts:", error);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching root garden accounts: ${error}`,

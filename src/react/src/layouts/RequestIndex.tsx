@@ -15,7 +15,7 @@ import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable"
 import { Request } from "../models/brewtils-types";
 import { RequestItem } from "../models/models";
 import { TourStepProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRequestList } from "../services/request_service";
 import {
   AddTourStep,
@@ -35,7 +35,7 @@ function RequestIndex({
 }) {
   const [requests, setRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [filteredRecords, setFilteredRecords] = useState<number>(0);
@@ -157,8 +157,6 @@ function RequestIndex({
           Show Children
         </label>
         <AccessButton
-          rounded
-          raised
           basic
           onClick={() => setReloadRequestsTrigger(reloadRequestsTrigger + 1)}
           tooltip={recordsUpdated ? "New updates available" : "Refresh"}
@@ -225,9 +223,6 @@ function RequestIndex({
           style={{ textDecoration: "none" }}
         >
           <AccessButton
-            rounded
-            raised
-            link
             basic
             tooltip={`Open Request ${request.command_display_name ?? request.command} ${request.id}`}
             className="mr-2"
@@ -237,9 +232,6 @@ function RequestIndex({
           </AccessButton>
         </Link>
         <AccessButton
-          rounded
-          raised
-          link
           basic
           onClick={() => PeekRequestView(request)}
           tooltip={`View Request ${request.command_display_name ?? request.command} ${request.id}`}
@@ -525,7 +517,7 @@ function RequestIndex({
       })
       .catch((error) => {
         setLoading(false);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching request list: ${error}`,

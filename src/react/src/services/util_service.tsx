@@ -63,7 +63,14 @@ export const GetBaseURL = (): string => {
 
 export const GetSeverity = (
   status?: string,
-): "warning" | "success" | "info" | "danger" | "secondary" | "contrast" => {
+):
+  | "warning"
+  | "success"
+  | "info"
+  | "error"
+  | "primary"
+  | "secondary"
+  | "inherit" => {
   switch (status?.toUpperCase()) {
     case "RUNNING": // Instance
     case "HEALTHY": // Connection (Summary)
@@ -92,9 +99,9 @@ export const GetSeverity = (
     case "MISSING_CONFIGURATION": // Connection
     case "CONFIGURATION_ERROR": // Connection
     case "UNREACHABLE": // Connection
-      return "danger";
+      return "error";
     default:
-      return "danger";
+      return "error";
   }
 };
 

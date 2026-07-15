@@ -13,7 +13,7 @@ import {
   RequestCommand,
   RequestItem,
 } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { checkPermission } from "../services/permission_service";
 import { CancelRequest, DeleteRequest } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
@@ -45,7 +45,7 @@ function RequestOptions({
 }) {
   const navigate = useNavigate();
   const items: MenuItem[] = [];
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   const handleDownload = (request: Request) => {
     // Example: fetch a file from a URL
@@ -72,7 +72,7 @@ function RequestOptions({
       })
       .catch((error) => {
         console.error("Error fetching the file:", error);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching the file: ${error}`,
@@ -96,7 +96,7 @@ function RequestOptions({
         command: () => {
           CancelRequest(request).catch((error) => {
             console.error("Error canceling request:", error);
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error canceling request: ${error}`,
@@ -143,7 +143,7 @@ function RequestOptions({
                 })
                 .catch((error) => {
                   console.error("Error deleting request:", error);
-                  showToast({
+                  showSnackbar({
                     severity: "error",
                     summary: "Error",
                     detail: `Error deleting request: ${error}`,

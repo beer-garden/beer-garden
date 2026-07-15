@@ -3,12 +3,12 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { Config, Version } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetVersion } from "../services/util_service";
 
 function AboutIndex({ config }: { config: Config }) {
   const [version, setVersion] = useState<Version | null>(null);
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   useEffect(() => {
     GetVersion()
@@ -16,7 +16,7 @@ function AboutIndex({ config }: { config: Config }) {
         setVersion(version);
       })
       .catch((error) => {
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching the version: ${error}`,

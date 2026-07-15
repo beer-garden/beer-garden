@@ -14,7 +14,7 @@ import UserChangeRoles from "../components/UserChangeRoles";
 import UserCreate from "../components/UserCreate";
 import { Role, User } from "../models/brewtils-types";
 import { Config, TourStepProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { RevokeToken } from "../services/token_service";
 import {
   AddTourStep,
@@ -31,7 +31,7 @@ function UserIndex({
   config: Config;
   tourStepsRef: RefObject<Array<TourStepProps>>;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [users, setUsers] = useState<Array<User>>([]);
   const [loading, setLoading] = useState(false);
   const [first, setFirst] = useState<number>(0);
@@ -363,7 +363,7 @@ function UserIndex({
                 rowData.metadata?.has_token === undefined ||
                 rowData.metadata?.has_token === false
               ) {
-                showToast({
+                showSnackbar({
                   severity: "warn",
                   summary: "Revoke Token",
                   detail: `No active token to revoke for ${rowData?.username}`,
@@ -374,7 +374,7 @@ function UserIndex({
               RevokeToken(rowData.username)
                 .then(() => {
                   loadUsers();
-                  showToast({
+                  showSnackbar({
                     severity: "info",
                     summary: "Revoke Token",
                     detail: `Successfully revoked token for ${rowData.username}`,
@@ -383,7 +383,7 @@ function UserIndex({
                 })
                 .catch((error) => {
                   console.error("Error Revoking Token", error);
-                  showToast({
+                  showSnackbar({
                     severity: "error",
                     summary: "Revoke Token",
                     detail: `Error revoking token for ${rowData.username}`,
@@ -461,7 +461,7 @@ function UserIndex({
                 if (rowData.username) {
                   DeleteUser(rowData.username)
                     .then(() => {
-                      showToast({
+                      showSnackbar({
                         severity: "info",
                         summary: "Delete User",
                         detail: `Successfully deleted ${rowData.username}`,
@@ -470,7 +470,7 @@ function UserIndex({
                       loadUsers();
                     })
                     .catch((error) =>
-                      showToast({
+                      showSnackbar({
                         severity: "error",
                         summary: "Error",
                         detail: `Error attempting to delete user: ${error}`,
@@ -531,7 +531,7 @@ function UserIndex({
     RescanUsers()
       .then(() => {
         loadUsers();
-        showToast({
+        showSnackbar({
           severity: "info",
           summary: "Confirmation",
           detail: "Rescan complete",
@@ -539,7 +539,7 @@ function UserIndex({
         });
       })
       .catch((error) => {
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error rescanning users: ${error}`,
@@ -558,7 +558,7 @@ function UserIndex({
       })
       .catch((error) => {
         setLoading(false);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching users: ${error}`,

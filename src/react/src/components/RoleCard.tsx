@@ -8,7 +8,7 @@ import { ChangeEvent, useEffect, useRef, useState } from "react";
 import AccessButton from "../components/AccessButton";
 import RoleScopeCard from "../components/RoleScopeCard";
 import { Role } from "../models/brewtils-types";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { CreateRole, EditRole, GetRole } from "../services/role_service";
 
 function RoleCard({
@@ -26,7 +26,7 @@ function RoleCard({
   updateRoles?: (role: Role) => void;
   onClose: () => void;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   const [roleName, setRoleName] = useState<string>("");
   const [roleDescription, setRoleDescription] = useState<string>("");
@@ -93,7 +93,7 @@ function RoleCard({
           setRole(role);
         })
         .catch((error) => {
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error loading the role: ${error}`,
@@ -115,7 +115,7 @@ function RoleCard({
 
   function handleDialogSubmit() {
     if (updateRoles === undefined) {
-      showToast({
+      showSnackbar({
         severity: "error",
         summary: "Error",
         detail: `Missing Roles Updater Logic`,
@@ -142,7 +142,7 @@ function RoleCard({
           .then((updatedRole: Role) => {
             updateRoles(updatedRole);
 
-            showToast({
+            showSnackbar({
               severity: "info",
               summary: "Role Updated",
               detail: `Role updated: ${roleObj.name}`,
@@ -151,7 +151,7 @@ function RoleCard({
             onClose();
           })
           .catch((error) => {
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error editing the role: ${error}`,
@@ -164,7 +164,7 @@ function RoleCard({
           .then((createdRole: Role) => {
             updateRoles(createdRole);
 
-            showToast({
+            showSnackbar({
               severity: "info",
               summary: "Role Created",
               detail: `New role created: ${roleObj.name}`,
@@ -173,7 +173,7 @@ function RoleCard({
             onClose();
           })
           .catch((error) => {
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error creating the role: ${error}`,
