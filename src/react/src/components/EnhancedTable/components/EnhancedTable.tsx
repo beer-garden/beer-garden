@@ -194,7 +194,8 @@ const EnhancedTable = ({
           } else if (filter.modifier === "lte") {
             return compare <= filter.value;
           } else if (filter.modifier === "in") {
-            if (
+            if (   
+              typeof compare === "string" &&           
               typeof filter.value === "object" &&
               Array.isArray(filter.value)
             ) {
@@ -202,6 +203,7 @@ const EnhancedTable = ({
             }
           } else if (filter.modifier === "nin") {
             if (
+              typeof compare === "string" &&
               typeof filter.value === "object" &&
               Array.isArray(filter.value)
             ) {

@@ -185,7 +185,7 @@ export const EnhancedTableFilterOptions = ({
   );
   const [isArray, setIsArray] = useState(
     columnFiltersRef.current.filter((filter) => filter.id === id)[0]
-      ?.isArray === true,
+      ?.options !== undefined,
   );
 
   const [options, setOptions] = useState(
@@ -220,7 +220,7 @@ export const EnhancedTableFilterOptions = ({
           );
           const tableColumnIsArray = columns.some(
             (tableColumn) =>
-              tableColumn.id === column && tableColumn.isArray === true,
+              tableColumn.id === column && tableColumn.options !== undefined,
           );
 
           const tableColumnOptions = columns.some(

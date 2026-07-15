@@ -14,8 +14,8 @@ export interface ColumnField {
   isNumeric?: boolean;
   isString?: boolean;
   isDate?: boolean;
-  isArray?: boolean;
 
+  // Evaluated to determine if is Array
   options?: string[];
 }
 

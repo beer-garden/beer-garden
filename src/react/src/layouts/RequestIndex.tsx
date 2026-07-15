@@ -378,7 +378,7 @@ function RequestIndex({
       sortable: true,
       filterable: true,
       field: "status",
-      isArray: true,
+      isString: true,
       options: [
         "CREATED",
         "RECEIVED",
