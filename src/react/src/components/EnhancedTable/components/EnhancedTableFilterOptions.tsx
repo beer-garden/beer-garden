@@ -16,9 +16,14 @@ import NumberField from "./NumberField";
 
 const StringFilters = [
   {
-    value: "eq",
-    label: "Equals",
+    value: "contains",
+    label: "Contains",
   },
+  {
+    value: "not__contains",
+    label: "Not Contains",
+  },
+
   {
     value: "startswith",
     label: "Starts With",
@@ -28,27 +33,23 @@ const StringFilters = [
     label: "Ends With",
   },
   {
+    value: "eq",
+    label: "Equals",
+  },
+  {
     value: "ne",
     label: "Not Equals",
-  },
-  {
-    value: "contains",
-    label: "Contains",
-  },
-  {
-    value: "not__contains",
-    label: "Not Contains",
   },
 ];
 
 const DateFilters = [
   {
-    value: "eq",
-    label: "Is",
+    value: "lt",
+    label: "Is Before",
   },
   {
-    value: "ne",
-    label: "Is Not",
+    value: "lte",
+    label: "Is Before or Equal",
   },
   {
     value: "gt",
@@ -59,12 +60,12 @@ const DateFilters = [
     label: "Is After or Equal",
   },
   {
-    value: "lt",
-    label: "Is Before",
+    value: "eq",
+    label: "Is",
   },
   {
-    value: "lte",
-    label: "Is Before or Equal",
+    value: "ne",
+    label: "Is Not",
   },
 ];
 
@@ -122,8 +123,32 @@ export const EnhancedTableFilterOptions = ({
   const [filterColumn, setFilterColumn] = useState<string>(
     columnFiltersRef.current.filter((filter) => filter.id === id)[0]?.column,
   );
+
+  const defaultModifier = () => {
+    const filters = columnFiltersRef.current.filter(
+      (filter) => filter.id === id,
+    );
+    if (filters.length === 1) {
+      const filter = filters[0];
+
+      if (filter.modifier) {
+        return filter.modifier;
+      }
+      if (filter.isDate) {
+        return DateFilters[0].value;
+      }
+      if (filter.isNumeric) {
+        return NumericFilters[0].value;
+      }
+      if (filter.isArray) {
+        return ArrayFilters[0].value;
+      }
+    }
+
+    return StringFilters[0].value;
+  };
   const [filterModifier, setFilterModifier] = useState<string | undefined>(
-    columnFiltersRef.current.filter((filter) => filter.id === id)[0]?.modifier,
+    defaultModifier(),
   );
   const [filterValue, setFilterValue] = useState<
     string | string[] | number | Dayjs | undefined
@@ -203,6 +228,34 @@ export const EnhancedTableFilterOptions = ({
             filter.isString !== tableColumnIsString ||
             filter.isArray !== tableColumnIsArray
           ) {
+            // check is modifier is set and in the correct array of options
+
+            // Check if modifier is set and in the correct array of options
+            const currentModifier = filter.modifier;
+            let validModifier = true;
+            let updatedModifier = undefined;
+            if (tableColumnIsDate) {
+              // if (currentModifier === undefined || !DateFilters.some(f => f.value === currentModifier)){
+              validModifier = false;
+              updatedModifier = DateFilters[0].value;
+              // }
+            } else if (tableColumnIsNumeric) {
+              // if (currentModifier === undefined || !NumericFilters.some(f => f.value === currentModifier)){
+              validModifier = false;
+              updatedModifier = NumericFilters[0].value;
+              // }
+            } else if (tableColumnIsArray) {
+              // if (currentModifier === undefined || ArrayFilters.some(f => f.value === currentModifier)){
+              validModifier = false;
+              updatedModifier = ArrayFilters[0].value;
+              // }
+            } else if (tableColumnIsString) {
+              // if(currentModifier === undefined ||  StringFilters.some(f => f.value === currentModifier)){
+              validModifier = false;
+              updatedModifier = StringFilters[0].value;
+              // }
+            }
+
             return {
               ...filter,
               column: column,
@@ -212,7 +265,19 @@ export const EnhancedTableFilterOptions = ({
               isArray: tableColumnIsArray,
               options: tableColumnOptions,
               value: tableColumnIsArray ? [] : undefined,
+              modifier: validModifier ? currentModifier : updatedModifier,
             } as FilterColumn;
+
+            // return {
+            //   ...filter,
+            //   column: column,
+            //   isDate: tableColumnIsDate,
+            //   isNumeric: tableColumnIsNumeric,
+            //   isString: tableColumnIsString,
+            //   isArray: tableColumnIsArray,
+            //   options: tableColumnOptions,
+            //   value: tableColumnIsArray ? [] : undefined,
+            // } as FilterColumn;
           }
           return {
             ...filter,
