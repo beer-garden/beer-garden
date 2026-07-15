@@ -113,12 +113,14 @@ export const EnhancedTableFilterOptions = ({
   columnFiltersRef,
   columnFilters,
   updateColumnFilters,
+  triggerReload,
 }: {
   id: string;
   columns: ColumnField[];
   columnFiltersRef: RefObject<FilterColumn[]>;
   columnFilters: FilterColumn[];
   updateColumnFilters: (filters: FilterColumn[]) => void;
+  triggerReload: () => void;
 }) => {
   const [filterColumn, setFilterColumn] = useState<string | undefined>(() => {
     const filters = columnFiltersRef.current.filter(
@@ -192,6 +194,9 @@ export const EnhancedTableFilterOptions = ({
     )[0];
     setFilterColumn(filter?.column);
     setFilterModifier(defaultModifier(filter));
+    if (filter?.value !== filterValue) {
+      triggerReload();
+    }
     setFilterValue(filter?.value);
     setIsDate(filter?.isDate === true);
     setIsString(filter?.isString === true);
@@ -295,9 +300,18 @@ export const EnhancedTableFilterOptions = ({
   };
 
   const removeFilter = (id: string) => {
+    const runReload = columnFilters.some(
+      (filter) =>
+        filter.id === id &&
+        filter.value !== undefined &&
+        (typeof filter.value !== "string" || filter.value !== ""),
+    );
     updateColumnFilters([
       ...columnFilters.filter((filter) => filter.id !== id),
     ]);
+    if (runReload) {
+      triggerReload();
+    }
   };
 
   const updateModifier = (id: string, modifier: string) => {

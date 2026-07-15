@@ -17,6 +17,7 @@ export const EnhancedTableFilterSelect = ({
   anchor,
   setShowFilter,
   addColumn,
+  triggerReload,
 }: {
   columns: ColumnField[];
   columnFilters: FilterColumn[];
@@ -25,6 +26,7 @@ export const EnhancedTableFilterSelect = ({
   anchor: HTMLButtonElement | undefined;
   setShowFilter(filter: boolean): void;
   addColumn: string;
+  triggerReload: () => void;
 }) => {
   // Return Popover
 
@@ -36,7 +38,15 @@ export const EnhancedTableFilterSelect = ({
   };
 
   const clearFilters = () => {
+    const runReload = columnFilters.some(
+      (filter) =>
+        filter.value !== undefined &&
+        (typeof filter.value !== "string" || filter.value !== ""),
+    );
     updateColumnFilters([]);
+    if (runReload) {
+      triggerReload();
+    }
   };
 
   useEffect(() => {
@@ -65,6 +75,7 @@ export const EnhancedTableFilterSelect = ({
             columnFilters={columnFilters}
             columnFiltersRef={columnFiltersRef}
             updateColumnFilters={updateColumnFilters}
+            triggerReload={triggerReload}
           />
         ))}
 

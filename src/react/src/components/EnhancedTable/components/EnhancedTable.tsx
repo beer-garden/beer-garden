@@ -266,7 +266,7 @@ const EnhancedTable = ({
     } else {
       setDisplayData(filterSortData(data));
     }
-  }, [reloadTable, filters, order, orderBy, page, rowsPerPage]);
+  }, [reloadTable, order, orderBy, page, rowsPerPage]);
 
   function defaultLabelDisplayedRows({
     from,
@@ -279,6 +279,15 @@ const EnhancedTable = ({
   }) {
     return `Showing ${from} to ${to} of ${count !== -1 ? count : `more than ${to}`} entries ${totalDataLength ? (dataLength === totalDataLength ? "" : `(Filtered from ${totalDataLength} entries)`) : data.length === displayFiltered ? "" : `(Filtered from ${data.length} entries)`}`;
   }
+
+  const filterTriggerReload = () => {
+    setPage(0);
+    if (remoteFilter) {
+      remoteFilter(filters, orderBy, order, 0, rowsPerPage);
+    } else {
+      setDisplayData(filterSortData(data));
+    }
+  };
 
   return (
     <Box sx={{ position: "relative", width: "100%" }}>
@@ -321,6 +330,7 @@ const EnhancedTable = ({
                       setOrder={setOrder}
                       orderBy={orderBy}
                       setOrderBy={setOrderBy}
+                      triggerReload={filterTriggerReload}
                     />
                   </>
                 )}

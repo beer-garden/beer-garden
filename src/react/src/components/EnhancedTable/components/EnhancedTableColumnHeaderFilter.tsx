@@ -12,6 +12,7 @@ export const EnhancedTableColumnHeaderFilter = ({
   columnFilters,
   columnFiltersRef,
   updateColumnFilters,
+  triggerReload,
 }: {
   column: ColumnField;
   columns: ColumnField[];
@@ -22,6 +23,7 @@ export const EnhancedTableColumnHeaderFilter = ({
   setOrder: (value: "asc" | "desc") => void;
   orderBy: string | undefined;
   setOrderBy: (value: string) => void;
+  triggerReload: () => void;
 }) => {
   const [filterMenuAnchor, setFilterMenuAnchor] = useState<
     HTMLElement | undefined
@@ -67,6 +69,7 @@ export const EnhancedTableColumnHeaderFilter = ({
           anchor={filterAnchorRef.current}
           setShowFilter={handleFilterMenuClose}
           addColumn={column.id}
+          triggerReload={triggerReload}
         />
       )}
     </>
