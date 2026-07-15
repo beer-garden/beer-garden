@@ -28,7 +28,6 @@ export const EnhancedTableFilterSelect = ({
   addColumn: string;
   triggerReload: () => void;
 }) => {
-
   const addFilter = (defaultColumn?: string) => {
     updateColumnFilters([
       ...columnFilters,

@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import FormHelperText from "@mui/material/FormHelperText";
+import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
@@ -14,7 +14,7 @@ import { ChangeEvent, RefObject, useEffect, useState } from "react";
 import { ColumnField, FilterColumn } from "../models/EnhancedTableModels";
 import NumberField from "./NumberField";
 
-// TODO: Provide white/black lists for filter options
+// TODO: Provide overrides for filters
 
 const StringFilters = [
   {
@@ -352,13 +352,13 @@ export const EnhancedTableFilterOptions = ({
   return (
     <>
       {id && (
-        <div className="flex mb-2 ml-2">
-          <div className="flex-1">
+        <Grid container spacing={1} className="mb-2 mr-2 ml-2">
+          <Grid size={1}>
             <IconButton onClick={() => removeFilter(id)}>
-              <FontAwesomeIcon icon="x" className="mr-2" />
+              <FontAwesomeIcon icon="x" />
             </IconButton>
-          </div>
-          <div className="flex-2">
+          </Grid>
+          <Grid size={3}>
             <TextField
               className="mr-2"
               id={`filter-column-${id}`}
@@ -368,6 +368,7 @@ export const EnhancedTableFilterOptions = ({
               onChange={(event: ChangeEvent<HTMLInputElement>) => {
                 updateColumn(id, event.target.value);
               }}
+              sx={{ width: "100%" }}
             >
               {columns
                 .filter((tableColumns) => tableColumns.filterable === true)
@@ -377,13 +378,14 @@ export const EnhancedTableFilterOptions = ({
                   </MenuItem>
                 ))}
             </TextField>
-          </div>
+          </Grid>
 
-          <div className="flex-3">
+          <Grid size={3}>
             {filterColumn === undefined && (
               <TextField
                 className="mr-2"
                 id={`filter-modifier-${id}`}
+                sx={{ width: "100%" }}
                 select
                 label="Operator"
                 disabled
@@ -393,6 +395,7 @@ export const EnhancedTableFilterOptions = ({
               (isString || (!isDate && !isNumeric && !isArray)) && (
                 <TextField
                   className="mr-2"
+                  sx={{ width: "100%" }}
                   id={`filter-modifier-${id}`}
                   select
                   label="Operator"
@@ -412,6 +415,7 @@ export const EnhancedTableFilterOptions = ({
             {filterColumn && isDate && (
               <TextField
                 className="mr-2"
+                sx={{ width: "100%" }}
                 id={`filter-modifier-${id}`}
                 select
                 label="Operator"
@@ -431,6 +435,7 @@ export const EnhancedTableFilterOptions = ({
             {filterColumn && isNumeric && (
               <TextField
                 className="mr-2"
+                sx={{ width: "100%" }}
                 id={`filter-modifier-${id}`}
                 select
                 label="Operator"
@@ -450,6 +455,7 @@ export const EnhancedTableFilterOptions = ({
             {filterColumn && isArray && (
               <TextField
                 className="mr-2"
+                sx={{ width: "100%" }}
                 id={`filter-modifier-${id}`}
                 select
                 label="Operator"
@@ -465,11 +471,10 @@ export const EnhancedTableFilterOptions = ({
                 ))}
               </TextField>
             )}
-          </div>
-          <div className="flex-4">
+          </Grid>
+          <Grid size={5}>
             {(filterColumn === undefined || filterModifier === undefined) && (
               <TextField
-                className="mr-2"
                 id={`filter-value-${id}`}
                 label="Value"
                 variant="outlined"
@@ -482,7 +487,6 @@ export const EnhancedTableFilterOptions = ({
               filterModifier !== "exists" &&
               (isString || (!isDate && !isNumeric && !isArray)) && (
                 <TextField
-                  className="mr-2"
                   id={`filter-value-${id}`}
                   label="Value"
                   value={filterValue}
@@ -498,8 +502,8 @@ export const EnhancedTableFilterOptions = ({
               filterModifier === "exists" &&
               (isString || (!isDate && !isNumeric && !isArray)) && (
                 <TextField
-                  className="mr-2"
                   id={`filter-value-${id}`}
+                  sx={{ width: "100%" }}
                   select
                   label="Value"
                   value={filterValue}
@@ -546,37 +550,32 @@ export const EnhancedTableFilterOptions = ({
             )}
 
             {filterColumn && filterModifier && isArray && (
-              <>
-                <Select
-                  id={`filter-value-${id}`}
-                  aria-describedby={`filter-value-helper-text-${id}`}
-                  multiple
-                  label="Value"
-                  value={filterValue as string[]}
-                  onChange={(event: SelectChangeEvent<typeof options>) => {
-                    const {
-                      target: { value },
-                    } = event;
-                    updateValue(
-                      id,
-                      typeof value === "string" ? value.split(",") : value,
-                    );
-                  }}
-                >
-                  {options &&
-                    options.map((option) => (
-                      <MenuItem key={option} value={option}>
-                        {option}
-                      </MenuItem>
-                    ))}
-                </Select>
-                <FormHelperText id={`filter-value-helper-text-${id}`}>
-                  Value
-                </FormHelperText>
-              </>
+              <Select
+                id={`filter-value-${id}`}
+                sx={{ width: "100%" }}
+                multiple
+                label="Value"
+                value={filterValue as string[]}
+                onChange={(event: SelectChangeEvent<typeof options>) => {
+                  const {
+                    target: { value },
+                  } = event;
+                  updateValue(
+                    id,
+                    typeof value === "string" ? value.split(",") : value,
+                  );
+                }}
+              >
+                {options &&
+                  options.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+              </Select>
             )}
-          </div>
-        </div>
+          </Grid>
+        </Grid>
       )}
     </>
   );
