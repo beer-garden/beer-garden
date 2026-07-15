@@ -1,10 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
 import Tooltip from "@mui/material/Tooltip";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { RefObject, useRef, useState } from "react";
 
 import { ColumnField, FilterColumn } from "../models/EnhancedTableModels";
 import { EnhancedTableFilterSelect } from "./EnhancedTableFilterSelect";
@@ -15,10 +12,6 @@ export const EnhancedTableColumnHeaderFilter = ({
   columnFilters,
   columnFiltersRef,
   updateColumnFilters,
-  order,
-  setOrder,
-  orderBy,
-  setOrderBy,
 }: {
   column: ColumnField;
   columns: ColumnField[];
@@ -36,9 +29,13 @@ export const EnhancedTableColumnHeaderFilter = ({
   const filterMenuOpen = Boolean(filterMenuAnchor);
   const handleFilterMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setFilterMenuAnchor(event.currentTarget);
+    setShowFilter(true);
   };
-  const handleFilterMenuClose = () => {
-    setFilterMenuAnchor(undefined);
+  const handleFilterMenuClose = (show: boolean) => {
+    if (show === false) {
+      setFilterMenuAnchor(undefined);
+    }
+    setShowFilter(show);
   };
 
   const filterAnchorRef = useRef<HTMLButtonElement>(undefined);
@@ -58,7 +55,7 @@ export const EnhancedTableColumnHeaderFilter = ({
           aria-haspopup="true"
           aria-expanded={filterMenuOpen}
         >
-          <FontAwesomeIcon icon="ellipsis-vertical" />
+          <FontAwesomeIcon icon="filter" />
         </IconButton>
       </Tooltip>
       {showFilter && (
@@ -68,56 +65,10 @@ export const EnhancedTableColumnHeaderFilter = ({
           columnFiltersRef={columnFiltersRef}
           updateColumnFilters={updateColumnFilters}
           anchor={filterAnchorRef.current}
-          setShowFilter={setShowFilter}
+          setShowFilter={handleFilterMenuClose}
+          addColumn={column.id}
         />
       )}
-      <Menu
-        id="filter_menu"
-        anchorEl={filterAnchorRef.current}
-        open={filterMenuOpen}
-        onClose={handleFilterMenuClose}
-      >
-        {column.sortable && (
-          <MenuItem
-            onClick={() => {
-              setOrder("asc");
-              setOrderBy(column.id);
-            }}
-          >
-            <div className="flex">
-              {orderBy === column.id && order === "asc" && (
-                <FontAwesomeIcon className="mr-2" icon="arrow-up" />
-              )}
-              Sort by ASC
-            </div>
-          </MenuItem>
-        )}
-        <MenuItem
-          onClick={() => {
-            setOrder("desc");
-            setOrderBy(column.id);
-          }}
-        >
-          <div className="flex">
-            {orderBy === column.id && order === "desc" && (
-              <FontAwesomeIcon className="mr-2" icon="arrow-down" />
-            )}
-            Sort by DESC
-          </div>
-        </MenuItem>
-        <Divider />
-        <MenuItem
-          onClick={() => {
-            setShowFilter(true);
-            handleFilterMenuClose();
-          }}
-        >
-          <div className="flex">
-            <FontAwesomeIcon className="mr-2" icon="filter" />
-            Filter
-          </div>
-        </MenuItem>
-      </Menu>
     </>
   );
 };

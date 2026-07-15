@@ -3,7 +3,7 @@ import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
-import { RefObject } from "react";
+import { RefObject, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 import { ColumnField, FilterColumn } from "../models/EnhancedTableModels";
@@ -16,6 +16,7 @@ export const EnhancedTableFilterSelect = ({
   updateColumnFilters,
   anchor,
   setShowFilter,
+  addColumn,
 }: {
   columns: ColumnField[];
   columnFilters: FilterColumn[];
@@ -23,16 +24,26 @@ export const EnhancedTableFilterSelect = ({
   updateColumnFilters: (filters: FilterColumn[]) => void;
   anchor: HTMLButtonElement | undefined;
   setShowFilter(filter: boolean): void;
+  addColumn: string;
 }) => {
   // Return Popover
 
-  const addFilter = () => {
-    updateColumnFilters([...columnFilters, { id: uuidv4() } as FilterColumn]);
+  const addFilter = (defaultColumn?: string) => {
+    updateColumnFilters([
+      ...columnFilters,
+      { id: uuidv4(), column: defaultColumn } as FilterColumn,
+    ]);
   };
 
   const clearFilters = () => {
     updateColumnFilters([]);
   };
+
+  useEffect(() => {
+    if (columnFilters.length === 0) {
+      addFilter(addColumn);
+    }
+  }, []);
 
   return (
     <Popover
@@ -60,7 +71,7 @@ export const EnhancedTableFilterSelect = ({
       <Divider />
       <div className="flex mt-2 mb-2">
         <div className="flex-1 ml-2">
-          <Button variant="outlined" onClick={addFilter}>
+          <Button variant="outlined" onClick={() => addFilter()}>
             <FontAwesomeIcon icon="plus" />
             Add Filter
           </Button>

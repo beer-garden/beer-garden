@@ -120,16 +120,30 @@ export const EnhancedTableFilterOptions = ({
   columnFilters: FilterColumn[];
   updateColumnFilters: (filters: FilterColumn[]) => void;
 }) => {
-  const [filterColumn, setFilterColumn] = useState<string>(
-    columnFiltersRef.current.filter((filter) => filter.id === id)[0]?.column,
-  );
-
-  const defaultModifier = () => {
+  const [filterColumn, setFilterColumn] = useState<string | undefined>(() => {
     const filters = columnFiltersRef.current.filter(
       (filter) => filter.id === id,
     );
+
     if (filters.length === 1) {
-      const filter = filters[0];
+      return columnFiltersRef.current.filter((filter) => filter.id === id)[0]
+        ?.column;
+    }
+    return undefined;
+  });
+
+  const defaultModifier = (filter?: FilterColumn) => {
+    if (filter === undefined) {
+      const filters = columnFiltersRef.current.filter(
+        (filter) => filter.id === id,
+      );
+      if (filters.length === 1) {
+        filter = filters[0];
+      }
+    }
+    if (filter) {
+      if (filter.column === undefined) {
+      }
 
       if (filter.modifier) {
         return filter.modifier;
@@ -142,6 +156,9 @@ export const EnhancedTableFilterOptions = ({
       }
       if (filter.isArray) {
         return ArrayFilters[0].value;
+      }
+      if (filter.isString) {
+        return StringFilters[0].value;
       }
     }
 
@@ -180,7 +197,7 @@ export const EnhancedTableFilterOptions = ({
       (filter) => filter.id === id,
     )[0];
     setFilterColumn(filter?.column);
-    setFilterModifier(filter?.modifier);
+    setFilterModifier(defaultModifier(filter));
     setFilterValue(filter?.value);
     setIsDate(filter?.isDate === true);
     setIsString(filter?.isString === true);
@@ -267,17 +284,6 @@ export const EnhancedTableFilterOptions = ({
               value: tableColumnIsArray ? [] : undefined,
               modifier: validModifier ? currentModifier : updatedModifier,
             } as FilterColumn;
-
-            // return {
-            //   ...filter,
-            //   column: column,
-            //   isDate: tableColumnIsDate,
-            //   isNumeric: tableColumnIsNumeric,
-            //   isString: tableColumnIsString,
-            //   isArray: tableColumnIsArray,
-            //   options: tableColumnOptions,
-            //   value: tableColumnIsArray ? [] : undefined,
-            // } as FilterColumn;
           }
           return {
             ...filter,
@@ -356,26 +362,36 @@ export const EnhancedTableFilterOptions = ({
           </div>
 
           <div className="flex-3">
-            {(isString || (!isDate && !isNumeric && !isArray)) && (
+            {filterColumn === undefined && (
               <TextField
                 className="mr-2"
                 id={`filter-modifier-${id}`}
                 select
                 label="Operator"
-                value={filterModifier}
-                onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                  updateModifier(id, event.target.value);
-                }}
-              >
-                {StringFilters.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
+                disabled
+              ></TextField>
             )}
+            {filterColumn &&
+              (isString || (!isDate && !isNumeric && !isArray)) && (
+                <TextField
+                  className="mr-2"
+                  id={`filter-modifier-${id}`}
+                  select
+                  label="Operator"
+                  value={filterModifier}
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    updateModifier(id, event.target.value);
+                  }}
+                >
+                  {StringFilters.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
 
-            {isDate && (
+            {filterColumn && isDate && (
               <TextField
                 className="mr-2"
                 id={`filter-modifier-${id}`}
@@ -394,7 +410,7 @@ export const EnhancedTableFilterOptions = ({
               </TextField>
             )}
 
-            {isNumeric && (
+            {filterColumn && isNumeric && (
               <TextField
                 className="mr-2"
                 id={`filter-modifier-${id}`}
@@ -413,7 +429,7 @@ export const EnhancedTableFilterOptions = ({
               </TextField>
             )}
 
-            {isArray && (
+            {filterColumn && isArray && (
               <TextField
                 className="mr-2"
                 id={`filter-modifier-${id}`}
@@ -433,20 +449,32 @@ export const EnhancedTableFilterOptions = ({
             )}
           </div>
           <div className="flex-4">
-            {(isString || (!isDate && !isNumeric && !isArray)) && (
+            {(filterColumn === undefined || filterModifier === undefined) && (
               <TextField
                 className="mr-2"
                 id={`filter-value-${id}`}
                 label="Value"
-                value={filterValue}
                 variant="outlined"
-                onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                  updateValue(id, event.target.value);
-                }}
+                disabled
               />
             )}
 
-            {isDate && (
+            {filterColumn &&
+              filterModifier &&
+              (isString || (!isDate && !isNumeric && !isArray)) && (
+                <TextField
+                  className="mr-2"
+                  id={`filter-value-${id}`}
+                  label="Value"
+                  value={filterValue}
+                  variant="outlined"
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    updateValue(id, event.target.value);
+                  }}
+                />
+              )}
+
+            {filterColumn && filterModifier && isDate && (
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DateTimePicker
                   label="Value"
@@ -462,7 +490,7 @@ export const EnhancedTableFilterOptions = ({
               </LocalizationProvider>
             )}
 
-            {isNumeric && (
+            {filterColumn && filterModifier && isNumeric && (
               <NumberField
                 label="Value"
                 value={filterValue as number}
@@ -476,7 +504,7 @@ export const EnhancedTableFilterOptions = ({
               />
             )}
 
-            {isArray && (
+            {filterColumn && filterModifier && isArray && (
               <>
                 <Select
                   id={`filter-value-${id}`}
