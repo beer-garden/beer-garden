@@ -24,11 +24,10 @@ export const EnhancedTableFilterSelect = ({
   columnFiltersRef: RefObject<FilterColumn[]>;
   updateColumnFilters: (filters: FilterColumn[]) => void;
   anchor: HTMLButtonElement | undefined;
-  setShowFilter(filter: boolean): void;
+  setShowFilter: (filter: boolean) => void;
   addColumn: string;
   triggerReload: () => void;
 }) => {
-  // Return Popover
 
   const addFilter = (defaultColumn?: string) => {
     updateColumnFilters([

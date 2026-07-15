@@ -14,6 +14,8 @@ import { ChangeEvent, RefObject, useEffect, useState } from "react";
 import { ColumnField, FilterColumn } from "../models/EnhancedTableModels";
 import NumberField from "./NumberField";
 
+// TODO: Provide white/black lists for filter options
+
 const StringFilters = [
   {
     value: "contains",

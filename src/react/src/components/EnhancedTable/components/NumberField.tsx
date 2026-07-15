@@ -1,6 +1,4 @@
 import { NumberField as BaseNumberField } from "@base-ui/react/number-field";
-// import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-// import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import FormControl from "@mui/material/FormControl";
 import FormHelperText from "@mui/material/FormHelperText";
@@ -12,6 +10,7 @@ import * as React from "react";
 
 /**
  * This is a near copy of the base example provided by MUI Number Field
+ * Modifications are to use Font Awsome and provide helper text
  */
 
 /**
