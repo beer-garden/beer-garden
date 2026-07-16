@@ -1,7 +1,9 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Card } from "primereact/card";
-import { InputSwitch } from "primereact/inputswitch";
-import { Skeleton } from "primereact/skeleton";
+import Box from "@mui/material/Box";
+import Container from "@mui/material/Container";
+import Skeleton from "@mui/material/Skeleton";
+import Switch from "@mui/material/Switch";
+import Typography from "@mui/material/Typography";
 import { useEffect, useState } from "react";
 
 import { Job, Request } from "../models/brewtils-types";
@@ -19,15 +21,11 @@ import SchedulerForm from "./SchedulerForm";
 function RequestCreateCard({
   requestItem,
   updateRequestItem,
-  removeItem,
   config,
-  isDialog,
 }: {
   requestItem: RequestItem;
   updateRequestItem: (item: RequestItem) => void;
-  removeItem: (id: string) => void;
   config: Config;
-  isDialog: boolean;
 }) {
   const showSnackbar = useSnackbar();
   // Input Request
@@ -290,110 +288,27 @@ function RequestCreateCard({
   };
 
   return (
-    <Card
-      className="justify-content-center"
-      unstyled={isDialog}
-      header={
+    <Container
+      // className="justify-content-center"
+
+      key={requestItem.itemId}
+    >
+      {/* Header */}
+      <Box>
         <div className="flex mb-2">
-          {!isDialog && (
-            <AccessButton
-              onClick={() => {
-                removeItem(requestItem.itemId);
-              }}
-              tooltip={`Close Request Creation for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
-            >
-              <FontAwesomeIcon icon="xmark" />
-            </AccessButton>
-          )}
           <div className="ml-4 mr-2 align-self-center">Scheduled</div>
-          <InputSwitch
+          <Switch
             checked={showScheduleJob}
-            onChange={(e) => updateShowScheduleJob(e.value)}
+            onChange={(e) => updateShowScheduleJob(e.target.checked)}
             className="align-self-center"
-            pt={{
-              root: {
-                role: undefined,
-                "aria-checked": undefined,
-              },
-              input: {
-                "aria-label": "Toggle for creating Scheduled Job",
-              },
+            slotProps={{
+              input: { "aria-label": "Toggle for creating Scheduled Job" },
             }}
           />
         </div>
-      }
-      key={requestItem.itemId}
-      footer={
-        <div className="flex mt-2">
-          <div>
-            <AccessButton
-              label="Reset Form"
-              severity="warning"
-              icon="pi pi-arrow-right"
-              onClick={() => setResetForm(true)}
-              className="mr-2"
-            />
-          </div>
-          <div>
-            <CodeExample
-              visibleCodeExample={visibleCodeExample}
-              setVisibleCodeExample={setVisibleCodeExample}
-              request={request}
-            />
-            <AccessButton
-              label="Code Examples"
-              severity="info"
-              icon="pi pi-arrow-right"
-              onClick={() => setVisibleCodeExample(true)}
-              className="mr-2"
-            />
-          </div>
-
-          <div style={{ marginLeft: "auto" }}>
-            {showCreateRequest && !showScheduleJob && (
-              <AccessButton
-                label="Submit"
-                icon="pi pi-arrow-right"
-                disabled={!isFormValid}
-                onMouseDown={(event: any) => {
-                  if (event.type === "mousedown" && event.button === 1) {
-                    submitRequestAndOpen();
-                  }
-                }}
-                onClick={submitRequest}
-                {...permissions}
-                permission="OPERATOR"
-              />
-            )}
-            {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
-              <AccessButton
-                label="Submit Job"
-                severity="success"
-                disabled={!(isJobValid && isFormValid)}
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                onClick={submitJob}
-                {...permissions}
-                permission="OPERATOR"
-              />
-            )}
-            {showCreateRequest && showScheduleJob && requestItem?.jobId && (
-              <AccessButton
-                label="Update Job"
-                severity="success"
-                disabled={!(isJobValid && isFormValid)}
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                onClick={updateJob}
-                {...permissions}
-                permission="OPERATOR"
-              />
-            )}
-          </div>
-        </div>
-      }
-    >
-      <div>
+      </Box>
+      {/* Content */}
+      <Box>
         <div className="flex pt-4 justify-content-between">
           <div className="flex-column" style={{ width: "100%" }}>
             {showScheduleJob && (
@@ -420,8 +335,105 @@ function RequestCreateCard({
             )}
           </div>
         </div>
-      </div>
-    </Card>
+      </Box>
+      {/* Footer */}
+      <Box>
+        <div className="flex mt-2">
+          <div>
+            <AccessButton
+              label="Reset Form"
+              color="warning"
+              onClick={() => setResetForm(true)}
+              className="mr-2"
+            >
+              <Typography variant="button" sx={{ display: "block" }}>
+                Reset Form
+              </Typography>
+              <FontAwesomeIcon icon="refresh" className="ml-2" />
+            </AccessButton>
+          </div>
+          <div>
+            <CodeExample
+              visibleCodeExample={visibleCodeExample}
+              setVisibleCodeExample={setVisibleCodeExample}
+              request={request}
+            />
+            <AccessButton
+              label="Code Examples"
+              color="info"
+              onClick={() => setVisibleCodeExample(true)}
+              className="mr-2"
+            >
+              <Typography variant="button" sx={{ display: "block" }}>
+                Code Examples
+              </Typography>
+              <FontAwesomeIcon icon="code" className="ml-2" />
+            </AccessButton>
+          </div>
+
+          <div style={{ marginLeft: "auto" }}>
+            {showCreateRequest && !showScheduleJob && (
+              <AccessButton
+                label="Submit"
+                disabled={!isFormValid}
+                onMouseDown={(event: any) => {
+                  if (event.type === "mousedown" && event.button === 1) {
+                    submitRequestAndOpen();
+                  }
+                }}
+                onClick={submitRequest}
+                {...permissions}
+                permission="OPERATOR"
+              >
+                <Typography variant="button" sx={{ display: "block" }}>
+                  Submit
+                </Typography>
+                <FontAwesomeIcon
+                  icon="arrow-right-to-bracket"
+                  className="ml-2"
+                />
+              </AccessButton>
+            )}
+            {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
+              <AccessButton
+                label="Submit Job"
+                color="success"
+                disabled={!(isJobValid && isFormValid)}
+                onClick={submitJob}
+                {...permissions}
+                permission="OPERATOR"
+              >
+                <Typography variant="button" sx={{ display: "block" }}>
+                  Submit Job
+                </Typography>
+                <FontAwesomeIcon
+                  icon="arrow-right-to-bracket"
+                  className="ml-2"
+                />
+              </AccessButton>
+            )}
+            {showCreateRequest && showScheduleJob && requestItem?.jobId && (
+              <AccessButton
+                label="Update Job"
+                color="success"
+                disabled={!(isJobValid && isFormValid)}
+                onClick={updateJob}
+                {...permissions}
+                permission="OPERATOR"
+              >
+                <Typography variant="button" sx={{ display: "block" }}>
+                  Update Job
+                </Typography>
+                <FontAwesomeIcon
+                  icon="arrow-right-to-bracket"
+                  className="ml-2"
+                />
+              </AccessButton>
+            )}
+          </div>
+        </div>
+      </Box>
+    </Container>
   );
 }
 
