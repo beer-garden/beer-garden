@@ -1,3 +1,6 @@
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Box, BoxProps } from "@mui/material";
 import { Dropdown } from "primereact/dropdown";
 import { ChevronDownIcon } from "primereact/icons/chevrondown";
 import { ChevronRightIcon } from "primereact/icons/chevronright";
@@ -325,4 +328,20 @@ export const PaginatorTemplate = {
       </>
     );
   },
+};
+
+interface faProps {
+  icon: IconProp;
+}
+
+export const FAIcon = ({
+  icon,
+  component = "span",
+  ...props
+}: BoxProps & faProps) => {
+  return (
+    <Box component={component} {...props}>
+      <FontAwesomeIcon icon={icon} />
+    </Box>
+  );
 };

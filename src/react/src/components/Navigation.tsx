@@ -1,5 +1,4 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import MenuIcon from "@mui/icons-material/Menu";
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import {
   AppBar,
   Box,
@@ -34,7 +33,7 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { GetCurrentUser } from "../services/user_service";
-import { ClearThemes } from "../services/util_service";
+import { ClearThemes, FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import HasAccess from "./HasAccess";
 import UserOverlay from "./UserOverlay";
@@ -225,9 +224,7 @@ function NavigationMenu({
             {...GenerateTourProps(createRequestTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <Box component="span">
-                <FontAwesomeIcon icon="pencil" />
-              </Box>
+              <FAIcon icon="pencil" />
               <Box component="span">Create Request</Box>
             </Stack>
           </Button>
@@ -245,9 +242,7 @@ function NavigationMenu({
             }}
           >
             <Stack direction="row" spacing={1}>
-              <Box component="span">
-                <FontAwesomeIcon icon="pencil" />
-              </Box>
+              <FAIcon icon="pencil" />
               <Box component="span">Create Request</Box>
             </Stack>
           </Link>
@@ -267,9 +262,7 @@ function NavigationMenu({
             {...GenerateTourProps(requestTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <Box component="span">
-                <FontAwesomeIcon icon="file-lines" />
-              </Box>
+              <FAIcon icon="file-lines" />
               <Box component="span">Requests</Box>
             </Stack>
           </Button>
@@ -284,9 +277,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <Box component="span">
-                <FontAwesomeIcon icon="file-lines" />
-              </Box>
+              <FAIcon icon="file-lines" />
               <Box component="span">Requests</Box>
             </Stack>
           </Link>
@@ -305,9 +296,7 @@ function NavigationMenu({
             {...GenerateTourProps(schedulerTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <Box component="span">
-                <FontAwesomeIcon icon="clock" />
-              </Box>
+              <FAIcon icon="clock" />
               <Box component="span">Scheduler</Box>
             </Stack>
           </Button>
@@ -322,9 +311,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <Box component="span">
-                <FontAwesomeIcon icon="clock" />
-              </Box>
+              <FAIcon icon="clock" />
               <Box component="span">Scheduler</Box>
             </Stack>
           </Link>
@@ -343,9 +330,7 @@ function NavigationMenu({
             {...GenerateTourProps(topicTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <Box component="span">
-                <FontAwesomeIcon icon="envelope" />
-              </Box>
+              <FAIcon icon="envelope" />
               <Box component="span">Topics</Box>
             </Stack>
           </Button>
@@ -360,9 +345,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <Box component="span">
-                <FontAwesomeIcon icon="envelope" />
-              </Box>
+              <FAIcon icon="envelope" />
               <Box component="span">Topics</Box>
             </Stack>
           </Link>
@@ -383,9 +366,7 @@ function NavigationMenu({
             {...GenerateTourProps(userTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <Box component="span">
-                <FontAwesomeIcon icon="users" />
-              </Box>
+              <FAIcon icon="users" />
               <Box component="span">Users</Box>
             </Stack>
           </Button>
@@ -400,9 +381,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <Box component="span">
-                <FontAwesomeIcon icon="users" />
-              </Box>
+              <FAIcon icon="users" />
               <Box component="span">Users</Box>
             </Stack>
           </Link>
@@ -423,9 +402,7 @@ function NavigationMenu({
               {...GenerateTourProps(rolesTourStep)}
             >
               <Stack direction="row" spacing={1}>
-                <Box component="span">
-                  <FontAwesomeIcon icon="user-gear" />
-                </Box>
+                <FAIcon icon="user-gear" />
                 <Box component="span">Roles</Box>
               </Stack>
             </Button>
@@ -442,9 +419,7 @@ function NavigationMenu({
               onKeyDown={handleKeyDown}
             >
               <Stack direction="row" spacing={1}>
-                <Box component="span">
-                  <FontAwesomeIcon icon="user-gear" />
-                </Box>
+                <FAIcon icon="user-gear" />
                 <Box component="span">Roles</Box>
               </Stack>
             </Link>
@@ -465,9 +440,7 @@ function NavigationMenu({
             {...GenerateTourProps(aboutTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <Box component="span">
-                <FontAwesomeIcon icon="circle-info" />
-              </Box>
+              <FAIcon icon="circle-info" />
               <Box component="span">About</Box>
             </Stack>
           </Button>
@@ -482,9 +455,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <Box component="span">
-                <FontAwesomeIcon icon="circle-info" />
-              </Box>
+              <FAIcon icon="circle-info" />
               <Box component="span">About</Box>
             </Stack>
           </Link>
@@ -602,12 +573,11 @@ function NavigationMenu({
             to="/"
             {...GenerateTourProps(homeLinkTourStep)}
           >
-            <Box component="span" sx={{ mr: 1 }}>
-              <FontAwesomeIcon
-                icon={iconDefault}
-                aria-label="Application Icon"
-              />
-            </Box>
+            <FAIcon
+              icon={iconDefault as IconProp}
+              aria-label="Application Icon"
+              sx={{ mr: 1 }}
+            />
 
             {applicationName && (
               <Typography className="mr-2">{applicationName}</Typography>
@@ -627,7 +597,7 @@ function NavigationMenu({
               },
             }}
           >
-            <MenuIcon />
+            <FAIcon icon="bars" sx={{ fontSize: 16, px: "4px" }} />
           </IconButton>
           <Menu
             id="instance_menu"
@@ -688,7 +658,7 @@ function NavigationMenu({
               data-testid="start-tour"
               basic
             >
-              <FontAwesomeIcon className="fa-2x" icon="compass" />
+              <FAIcon sx={{ fontSize: 24 }} icon="compass" />
             </AccessButton>
             <CurrentRequestsTemplate listeners={listeners} config={config} />
             <AccessButton
@@ -707,7 +677,7 @@ function NavigationMenu({
                   style={{ width: "32px", height: "32px" }}
                 />
               ) : (
-                <FontAwesomeIcon icon="user" />
+                <FAIcon icon="user" />
               )}
             </AccessButton>
             <OverlayPanel ref={op} style={{ width: "400px" }}>
