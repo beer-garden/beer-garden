@@ -1,6 +1,7 @@
+import MenuItem from "@mui/material/MenuItem";
+import TextField from "@mui/material/TextField";
 import { validate as validateVersion } from "compare-versions";
-import { Dropdown } from "primereact/dropdown";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 
 import { Command, Instance, System } from "../models/brewtils-types";
 import { RequestCommand } from "../models/models";
@@ -305,114 +306,195 @@ function CommandSelect({
   ]);
 
   return (
-    <div className="border-2 border-dashed surface-border border-round surface-ground flex-auto flex justify-content-center align-items-center font-medium">
-      <div>
-        <datalist id="selectNamespaceDropdown" aria-hidden="true">
-          {namespaces?.map((value: string) => (
-            <option key={value} value={value} />
-          ))}
-        </datalist>
-        <Dropdown
-          value={selectedNamespace}
-          onChange={(e) => {
-            setSelectedNamespace(e.value);
-          }}
-          options={namespaces}
-          filter
-          optionLabel="Namespace"
+    <div className="border-2 border-dashed surface-border border-round surface-ground flex-auto flex justify-content-center align-items-center font-medium mb-2">
+      {namespaces.length === 0 && (
+        <TextField
+          className="ml-2 mr-2 mt-2 mb-2"
+          sx={{ width: "100%" }}
+          id={`select-namespace`}
+          select
+          disabled
+          label="Namespace"
           placeholder="Select Namespace"
-          aria-label="Select Namespace"
-          pt={{
-            select: {
-              "aria-controls": "selectNamespaceDropdown",
-            },
+          slotProps={{
+            input: { "aria-label": "Select Namespace" },
           }}
         />
-        <datalist id="selectSystemDropdown" aria-hidden="true">
-          {systemNames?.map((value: string) => (
-            <option key={value} value={value} />
-          ))}
-        </datalist>
-        <Dropdown
-          value={selectedSystemName}
-          onChange={(e) => {
-            setSelectedSystemName(e.value);
+      )}
+      {namespaces.length > 0 && (
+        <TextField
+          className="ml-2 mr-2 mt-2 mb-2"
+          sx={{ width: "100%" }}
+          id={`select-namespace`}
+          select
+          label="Namespace"
+          value={selectedNamespace}
+          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+            setSelectedNamespace(event.target.value);
           }}
-          options={systemNames}
-          filter
-          optionLabel="System"
+          placeholder="Select Namespace"
+          slotProps={{
+            input: { "aria-label": "Select Namespace" },
+          }}
+        >
+          {namespaces.map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
+
+      {systemNames.length === 0 && (
+        <TextField
+          className="mr-2 mt-2 mb-2"
+          sx={{ width: "100%" }}
+          id={`select-system`}
+          select
+          label="System"
           placeholder="Select System"
-          aria-label="Select System"
-          pt={{
-            select: {
-              "aria-controls": "selectSystemDropdown",
-            },
+          slotProps={{
+            input: { "aria-label": "Select System" },
           }}
         />
-        <datalist id="selectVersionDropdown" aria-hidden="true">
-          {versions?.map((value: string) => (
-            <option key={value} value={value} />
-          ))}
-        </datalist>
-        <Dropdown
-          value={selectedVersion}
-          onChange={(e) => {
-            setSelectedVersion(e.value);
+      )}
+      {systemNames.length > 0 && (
+        <TextField
+          className="mr-2 mt-2 mb-2"
+          sx={{ width: "100%" }}
+          id={`select-system`}
+          select
+          label="System"
+          value={selectedSystemName}
+          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+            setSelectedSystemName(event.target.value);
           }}
-          options={versions}
-          filter
-          optionLabel="Version"
+          placeholder="Select System"
+          slotProps={{
+            input: { "aria-label": "Select System" },
+          }}
+        >
+          {systemNames.map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
+
+      {versions.length === 0 && (
+        <TextField
+          className="mr-2 mt-2 mb-2"
+          sx={{ width: "100%" }}
+          id={`select-version`}
+          select
+          label="Version"
+          disabled
           placeholder="Select Version"
-          aria-label="Select Version"
-          pt={{
-            select: {
-              "aria-controls": "selectVersionDropdown",
-            },
+          slotProps={{
+            input: { "aria-label": "Select Version" },
           }}
         />
-        <datalist id="selectInstanceDropdown" aria-hidden="true">
-          {instances?.map((value: string) => (
-            <option key={value} value={value} />
-          ))}
-        </datalist>
-        <Dropdown
-          value={selectedInstance}
-          onChange={(e) => {
-            setSelectedInstance(e.value);
+      )}
+      {versions.length > 0 && (
+        <TextField
+          className="mr-2 mt-2 mb-2"
+          sx={{ width: "100%" }}
+          id={`select-version`}
+          select
+          label="Version"
+          value={selectedVersion}
+          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+            setSelectedVersion(event.target.value);
           }}
-          options={instances}
-          filter
-          optionLabel="Instance"
+          placeholder="Select Version"
+          slotProps={{
+            input: { "aria-label": "Select Version" },
+          }}
+        >
+          {versions.map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
+      
+      {instances.length === 0 && (
+        <TextField
+          className="mr-2 mt-2 mb-2"
+          sx={{ width: "100%" }}
+          id={`select-instance`}
+          select
+          label="Instance"
+          disabled
           placeholder="Select Instance"
-          aria-label="Select Instance"
-          pt={{
-            select: {
-              "aria-controls": "selectInstanceDropdown",
-            },
+          slotProps={{
+            input: { "aria-label": "Select Instance" },
           }}
         />
-        <datalist id="selectCommandDropdown" aria-hidden="true">
-          {commands?.map((value: string) => (
-            <option key={value} value={value} />
+      )}
+      {instances.length > 0 && (
+        <TextField
+          className="mr-2 mt-2 mb-2"
+          sx={{ width: "100%" }}
+          id={`select-instance`}
+          select
+          label="Instance"
+          value={selectedInstance}
+          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+            setSelectedInstance(event.target.value);
+          }}
+          placeholder="Select Instance"
+          slotProps={{
+            input: { "aria-label": "Select Instance" },
+          }}
+        >
+          {instances.map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
           ))}
-        </datalist>
-        <Dropdown
-          value={selectedCommand}
-          onChange={(e) => {
-            setSelectedCommand(e.value);
-          }}
-          options={commands}
-          filter
-          optionLabel="Command"
+        </TextField>
+      )}
+
+      {commands.length === 0 && (
+        <TextField
+          className="mr-2 mt-2 mb-2"
+          sx={{ width: "100%" }}
+          id={`select-command`}
+          select
+          disabled
+          label="Command"
           placeholder="Select Command"
-          aria-label="Select Command"
-          pt={{
-            select: {
-              "aria-controls": "selectCommandDropdown",
-            },
+          slotProps={{
+            input: { "aria-label": "Select Command" },
           }}
         />
-      </div>
+      )}
+      {commands.length > 0 && (
+        <TextField
+          className="mr-2 mt-2 mb-2"
+          sx={{ width: "100%" }}
+          id={`select-command`}
+          select
+          label="Command"
+          value={selectedCommand}
+          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+            setSelectedCommand(event.target.value);
+          }}
+          placeholder="Select Command"
+          slotProps={{
+            input: { "aria-label": "Select Command" },
+          }}
+        >
+          {commands.map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </TextField>
+      )}
     </div>
   );
 }
