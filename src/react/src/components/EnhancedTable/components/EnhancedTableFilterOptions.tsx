@@ -352,7 +352,7 @@ export const EnhancedTableFilterOptions = ({
   return (
     <>
       {id && (
-        <Grid container spacing={1} className="mb-2 mr-2 ml-2">
+        <Grid container spacing={1} sx={{ mb: 2, mr: 2, ml: 2 }}>
           <Grid size={1}>
             <IconButton onClick={() => removeFilter(id)}>
               <FontAwesomeIcon icon="x" />
@@ -360,7 +360,6 @@ export const EnhancedTableFilterOptions = ({
           </Grid>
           <Grid size={3}>
             <TextField
-              className="mr-2"
               id={`filter-column-${id}`}
               select
               label="Column"
@@ -368,7 +367,7 @@ export const EnhancedTableFilterOptions = ({
               onChange={(event: ChangeEvent<HTMLInputElement>) => {
                 updateColumn(id, event.target.value);
               }}
-              sx={{ width: "100%" }}
+              sx={{ width: "100%", mr: 2 }}
             >
               {columns
                 .filter((tableColumns) => tableColumns.filterable === true)
@@ -383,19 +382,17 @@ export const EnhancedTableFilterOptions = ({
           <Grid size={3}>
             {filterColumn === undefined && (
               <TextField
-                className="mr-2"
                 id={`filter-modifier-${id}`}
-                sx={{ width: "100%" }}
+                sx={{ width: "100%", mr: 2 }}
                 select
                 label="Operator"
                 disabled
-              ></TextField>
+              />
             )}
             {filterColumn &&
               (isString || (!isDate && !isNumeric && !isArray)) && (
                 <TextField
-                  className="mr-2"
-                  sx={{ width: "100%" }}
+                  sx={{ width: "100%", mr: 2 }}
                   id={`filter-modifier-${id}`}
                   select
                   label="Operator"
@@ -414,8 +411,7 @@ export const EnhancedTableFilterOptions = ({
 
             {filterColumn && isDate && (
               <TextField
-                className="mr-2"
-                sx={{ width: "100%" }}
+                sx={{ width: "100%", mr: 2 }}
                 id={`filter-modifier-${id}`}
                 select
                 label="Operator"
@@ -434,8 +430,7 @@ export const EnhancedTableFilterOptions = ({
 
             {filterColumn && isNumeric && (
               <TextField
-                className="mr-2"
-                sx={{ width: "100%" }}
+                sx={{ width: "100%", mr: 2 }}
                 id={`filter-modifier-${id}`}
                 select
                 label="Operator"
@@ -454,8 +449,7 @@ export const EnhancedTableFilterOptions = ({
 
             {filterColumn && isArray && (
               <TextField
-                className="mr-2"
-                sx={{ width: "100%" }}
+                sx={{ width: "100%", mr: 2 }}
                 id={`filter-modifier-${id}`}
                 select
                 label="Operator"

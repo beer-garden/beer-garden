@@ -93,20 +93,12 @@ export default function NumberField({
                   render={<IconButton size={size} aria-label="Increase" />}
                 >
                   <FontAwesomeIcon icon="arrow-up" />
-                  {/* <KeyboardArrowUpIcon
-                        fontSize={size}
-                        sx={{ transform: 'translateY(2px)' }}
-                    /> */}
                 </BaseNumberField.Increment>
 
                 <BaseNumberField.Decrement
                   render={<IconButton size={size} aria-label="Decrease" />}
                 >
                   <FontAwesomeIcon icon="arrow-down" />
-                  {/* <KeyboardArrowDownIcon
-                        fontSize={size}
-                        sx={{ transform: 'translateY(-2px)' }}
-                    /> */}
                 </BaseNumberField.Decrement>
               </InputAdornment>
             }
