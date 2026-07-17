@@ -1,4 +1,4 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Grid } from "@mui/material";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Skeleton from "@mui/material/Skeleton";
@@ -13,11 +13,11 @@ import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
 import { GetBaseURL } from "../services/util_service";
+import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import CodeExample from "./CodeExample";
 import CommandCreate from "./CommandCreate";
 import SchedulerForm from "./SchedulerForm";
-import { Grid } from "@mui/material";
 
 function RequestCreateCard({
   requestItem,
@@ -289,67 +289,66 @@ function RequestCreateCard({
   };
 
   return (
-    <Container
-      key={requestItem.itemId}
-    >
+    <Container key={requestItem.itemId}>
       {/* Header */}
-      <Box sx={{
-        display: 'flex'
-      }}>
-          <Typography sx={{ ml: 4, mr: 2, alignSelf: 'center' }}>Scheduled</Typography>
-          <Switch
-            checked={showScheduleJob}
-            onChange={(e) => updateShowScheduleJob(e.target.checked)}
-            className="align-self-center"
-            slotProps={{
-              input: { "aria-label": "Toggle for creating Scheduled Job" },
-            }}
-          />
+      <Box
+        sx={{
+          display: "flex",
+        }}
+      >
+        <Typography sx={{ ml: 4, mr: 2, alignSelf: "center" }}>
+          Scheduled
+        </Typography>
+        <Switch
+          checked={showScheduleJob}
+          onChange={(e) => updateShowScheduleJob(e.target.checked)}
+          className="align-self-center"
+          slotProps={{
+            input: { "aria-label": "Toggle for creating Scheduled Job" },
+          }}
+        />
       </Box>
       {/* Content */}
-      <Box sx={{pt: 4, width: "100%"}}>
-            {showScheduleJob && (
-              <SchedulerForm
-                scheduledJob={job}
-                setScheduledJob={updateJobValue}
-                setIsJobValid={setIsJobValid}
-              />
-            )}
-            {showCreateRequest && (
-              <CommandCreate
-                request={request}
-                setRequest={updateRequestValue}
-                requestCommand={requestCommand}
-                setRequestCommand={updateRequestCommand}
-                resetForm={resetForm}
-                setResetForm={setResetForm}
-                setIsFormValid={setIsFormValid}
-                config={config}
-              />
-            )}
-            {!showCreateRequest && (
-              <Skeleton width="100%" height="150px"></Skeleton>
-            )}
+      <Box sx={{ pt: 4, width: "100%" }}>
+        {showScheduleJob && (
+          <SchedulerForm
+            scheduledJob={job}
+            setScheduledJob={updateJobValue}
+            setIsJobValid={setIsJobValid}
+          />
+        )}
+        {showCreateRequest && (
+          <CommandCreate
+            request={request}
+            setRequest={updateRequestValue}
+            requestCommand={requestCommand}
+            setRequestCommand={updateRequestCommand}
+            resetForm={resetForm}
+            setResetForm={setResetForm}
+            setIsFormValid={setIsFormValid}
+            config={config}
+          />
+        )}
+        {!showCreateRequest && (
+          <Skeleton width="100%" height="150px"></Skeleton>
+        )}
       </Box>
       {/* Footer */}
       <Box>
-        <Grid container sx={{mt: 2}}>
+        <Grid container sx={{ mt: 2 }}>
           <Grid size="grow">
-          
             <AccessButton
               label="Reset Form"
               color="warning"
               onClick={() => setResetForm(true)}
-              
-              sx={{mr:2}}
-
+              sx={{ mr: 2 }}
             >
               <Typography variant="button" sx={{ display: "block" }}>
                 Reset Form
               </Typography>
-              <FontAwesomeIcon icon="refresh" sx={{ml:2}} />
+              <FAIcon icon="refresh" sx={{ ml: 2 }} />
             </AccessButton>
-          
+
             <CodeExample
               visibleCodeExample={visibleCodeExample}
               setVisibleCodeExample={setVisibleCodeExample}
@@ -359,18 +358,16 @@ function RequestCreateCard({
               label="Code Examples"
               color="info"
               onClick={() => setVisibleCodeExample(true)}
-              
-              sx={{mr:2}}
+              sx={{ mr: 2 }}
             >
               <Typography variant="button" sx={{ display: "block" }}>
                 Code Examples
               </Typography>
-              <FontAwesomeIcon icon="code" sx={{ml:2}}/>
+              <FAIcon icon="code" sx={{ ml: 2 }} />
             </AccessButton>
-          
           </Grid>
-          
-          <Grid >
+
+          <Grid>
             {showCreateRequest && !showScheduleJob && (
               <AccessButton
                 label="Submit"
@@ -387,10 +384,7 @@ function RequestCreateCard({
                 <Typography variant="button" sx={{ display: "block" }}>
                   Submit
                 </Typography>
-                <FontAwesomeIcon
-                  icon="arrow-right-to-bracket"
-                  sx={{ml:2}}
-                />
+                <FAIcon icon="arrow-right-to-bracket" sx={{ ml: 2 }} />
               </AccessButton>
             )}
             {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
@@ -405,10 +399,7 @@ function RequestCreateCard({
                 <Typography variant="button" sx={{ display: "block" }}>
                   Submit Job
                 </Typography>
-                <FontAwesomeIcon
-                  icon="arrow-right-to-bracket"
-                  sx={{ml:2}}
-                />
+                <FAIcon icon="arrow-right-to-bracket" sx={{ ml: 2 }} />
               </AccessButton>
             )}
             {showCreateRequest && showScheduleJob && requestItem?.jobId && (
@@ -423,10 +414,7 @@ function RequestCreateCard({
                 <Typography variant="button" sx={{ display: "block" }}>
                   Update Job
                 </Typography>
-                <FontAwesomeIcon
-                  icon="arrow-right-to-bracket"
-                  sx={{ml:2}}
-                />
+                <FAIcon icon="arrow-right-to-bracket" sx={{ ml: 2 }} />
               </AccessButton>
             )}
           </Grid>
