@@ -264,9 +264,8 @@ export const EnhancedTableFilterOptions = ({
             filter.isString !== tableColumnIsString ||
             (filter.options !== undefined) !== tableColumnIsArray
           ) {
+            
             // check is modifier is set and in the correct array of options
-
-            // Check if modifier is set and in the correct array of options
             const currentModifier = filter.modifier;
             let validModifier = true;
             let updatedModifier = undefined;

@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Grid } from "@mui/material";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import Popover from "@mui/material/Popover";
@@ -78,19 +79,19 @@ export const EnhancedTableFilterSelect = ({
         ))}
 
       <Divider />
-      <div className="flex mt-2 mb-2">
-        <div className="flex-1 ml-2">
+      <Grid container sx={{ mb: 2, mt: 2 }}>
+        <Grid size="grow" sx={{ ml: 2 }}>
           <Button variant="outlined" onClick={() => addFilter()}>
             <FontAwesomeIcon icon="plus" />
             Add Filter
           </Button>
-        </div>
-        <div className="flex-2 mr-2">
+        </Grid>
+        <Grid sx={{ mr: 2 }}>
           <Button variant="outlined" onClick={clearFilters}>
             <FontAwesomeIcon icon="trash" /> Remove All
           </Button>
-        </div>
-      </div>
+        </Grid>
+      </Grid>
     </Popover>
   );
 };
