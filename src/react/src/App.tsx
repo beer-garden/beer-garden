@@ -560,7 +560,7 @@ function App() {
                         <Grid>
                           {fullScreenDialog === false && (
                             <AccessButton
-                              className="mr-2"
+                              sx={{ mr: 2 }}
                               onClick={() => setFullScreenDialog(true)}
                             >
                               <FontAwesomeIcon icon="maximize" />
@@ -568,14 +568,14 @@ function App() {
                           )}
                           {fullScreenDialog === true && (
                             <AccessButton
-                              className="mr-2"
+                              sx={{ mr: 2 }}
                               onClick={() => setFullScreenDialog(false)}
                             >
                               <FontAwesomeIcon icon="minimize" />
                             </AccessButton>
                           )}
                           <AccessButton
-                            className="mr-2"
+                            sx={{ mr: 2 }}
                             onClick={() => {
                               setRequestItem(undefined);
                               setFullScreenDialog(false);
