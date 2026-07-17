@@ -1,3 +1,4 @@
+import { Box } from "@mui/material";
 import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
 import { validate as validateVersion } from "compare-versions";
@@ -306,11 +307,18 @@ function CommandSelect({
   ]);
 
   return (
-    <div className="border-2 border-dashed surface-border border-round surface-ground flex-auto flex justify-content-center align-items-center font-medium mb-2">
+    <Box
+      sx={{
+        display: "flex",
+        mb: 2,
+        border: "2px dashed grey",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       {namespaces.length === 0 && (
         <TextField
-          className="ml-2 mr-2 mt-2 mb-2"
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", m: 2 }}
           id={`select-namespace`}
           select
           disabled
@@ -323,8 +331,7 @@ function CommandSelect({
       )}
       {namespaces.length > 0 && (
         <TextField
-          className="ml-2 mr-2 mt-2 mb-2"
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", m: 2 }}
           id={`select-namespace`}
           select
           label="Namespace"
@@ -347,8 +354,7 @@ function CommandSelect({
 
       {systemNames.length === 0 && (
         <TextField
-          className="mr-2 mt-2 mb-2"
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
           id={`select-system`}
           select
           label="System"
@@ -360,8 +366,7 @@ function CommandSelect({
       )}
       {systemNames.length > 0 && (
         <TextField
-          className="mr-2 mt-2 mb-2"
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
           id={`select-system`}
           select
           label="System"
@@ -384,8 +389,7 @@ function CommandSelect({
 
       {versions.length === 0 && (
         <TextField
-          className="mr-2 mt-2 mb-2"
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
           id={`select-version`}
           select
           label="Version"
@@ -398,8 +402,7 @@ function CommandSelect({
       )}
       {versions.length > 0 && (
         <TextField
-          className="mr-2 mt-2 mb-2"
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
           id={`select-version`}
           select
           label="Version"
@@ -419,11 +422,10 @@ function CommandSelect({
           ))}
         </TextField>
       )}
-      
+
       {instances.length === 0 && (
         <TextField
-          className="mr-2 mt-2 mb-2"
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
           id={`select-instance`}
           select
           label="Instance"
@@ -436,8 +438,7 @@ function CommandSelect({
       )}
       {instances.length > 0 && (
         <TextField
-          className="mr-2 mt-2 mb-2"
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
           id={`select-instance`}
           select
           label="Instance"
@@ -460,8 +461,7 @@ function CommandSelect({
 
       {commands.length === 0 && (
         <TextField
-          className="mr-2 mt-2 mb-2"
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
           id={`select-command`}
           select
           disabled
@@ -474,8 +474,7 @@ function CommandSelect({
       )}
       {commands.length > 0 && (
         <TextField
-          className="mr-2 mt-2 mb-2"
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
           id={`select-command`}
           select
           label="Command"
@@ -495,7 +494,7 @@ function CommandSelect({
           ))}
         </TextField>
       )}
-    </div>
+    </Box>
   );
 }
 
