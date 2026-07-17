@@ -1,6 +1,18 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import {
+  AppBar,
+  Box,
+  Button,
+  Container,
+  IconButton,
+  Link,
+  Menu,
+  MenuItem,
+  Stack,
+  Toolbar,
+  Typography,
+} from "@mui/material";
 import { Avatar } from "primereact/avatar";
-import { Menubar } from "primereact/menubar";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { NavLink } from "react-router-dom";
@@ -21,10 +33,17 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { GetCurrentUser } from "../services/user_service";
-import { ClearThemes } from "../services/util_service";
+import { ClearThemes, FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import HasAccess from "./HasAccess";
 import UserOverlay from "./UserOverlay";
+
+interface linkProps {
+  label: string;
+  buttonTemplate: () => any;
+  linkTemplate: () => any;
+  visible?: boolean | undefined;
+}
 
 function NavigationMenu({
   listeners,
@@ -70,6 +89,19 @@ function NavigationMenu({
     ClearThemes();
     runReloadUI();
     op.current?.hide();
+  };
+
+  const [hamburgerMenuAnchor, setHamburgerMenuAnchor] = useState<
+    HTMLElement | undefined
+  >(undefined);
+  const hamburgerMenuOpen = Boolean(hamburgerMenuAnchor);
+  const handleHamburgerMenuOpen = (
+    event: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    setHamburgerMenuAnchor(event.currentTarget);
+  };
+  const handleHamburgerMenuClose = () => {
+    setHamburgerMenuAnchor(undefined);
   };
 
   const tourUuid = "navigation_tour";
@@ -164,125 +196,233 @@ function NavigationMenu({
     }
   };
 
+  const navButtonStyles = {
+    display: { xs: "none", md: "flex" },
+    whiteSpace: "nowrap",
+    color: "white",
+    backgroundColor: "primary.main",
+    textTransform: "none",
+    "&:hover": {
+      backgroundColor: "primary.dark",
+      opacity: [0.9, 0.8, 0.7],
+    },
+  };
+
   const items = [
     {
       label: "Create Request",
-      template: (item: any) => {
+      buttonTemplate: () => {
         return (
-          <div
+          <Button
+            sx={navButtonStyles}
             role="button"
             tabIndex={0}
             onKeyDown={handleKeyDown}
             onClick={() => {
               addRequestItem();
             }}
-            className="p-menuitem-link"
             {...GenerateTourProps(createRequestTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="pencil" />
-            <span>{item.label}</span>
-          </div>
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="pencil" />
+              <Box component="span">Create Request</Box>
+            </Stack>
+          </Button>
+        );
+      },
+      linkTemplate: () => {
+        return (
+          <Link
+            underline="none"
+            role="button"
+            tabIndex={0}
+            onKeyDown={handleKeyDown}
+            onClick={() => {
+              addRequestItem();
+            }}
+          >
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="pencil" />
+              <Box component="span">Create Request</Box>
+            </Stack>
+          </Link>
         );
       },
     },
     {
       label: "Requests",
-      template: (item: any) => {
+      buttonTemplate: () => {
         return (
-          <NavLink
+          <Button
+            sx={navButtonStyles}
+            component={NavLink}
             to="/requests"
-            className="p-menuitem-link"
+            role="button"
             onKeyDown={handleKeyDown}
             {...GenerateTourProps(requestTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="file-lines" />
-            <span>{item.label}</span>
-          </NavLink>
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="file-lines" />
+              <Box component="span">Requests</Box>
+            </Stack>
+          </Button>
+        );
+      },
+      linkTemplate: () => {
+        return (
+          <Link
+            component={NavLink}
+            underline="none"
+            to="/requests"
+            onKeyDown={handleKeyDown}
+          >
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="file-lines" />
+              <Box component="span">Requests</Box>
+            </Stack>
+          </Link>
         );
       },
     },
     {
       label: "Scheduler",
-      template: (item: any) => {
+      buttonTemplate: () => {
         return (
-          <NavLink
+          <Button
+            sx={navButtonStyles}
+            component={NavLink}
             to="/jobs"
-            className="p-menuitem-link"
             onKeyDown={handleKeyDown}
             {...GenerateTourProps(schedulerTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="clock" />
-            <span>{item.label}</span>
-          </NavLink>
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="clock" />
+              <Box component="span">Scheduler</Box>
+            </Stack>
+          </Button>
         );
       },
-    },
-    {
-      label: "Workspace",
-      template: (item: any) => {
+      linkTemplate: () => {
         return (
-          <NavLink
-            to="/workspace"
-            className="p-menuitem-link"
+          <Link
+            component={NavLink}
+            underline="none"
+            to="/jobs"
             onKeyDown={handleKeyDown}
-            {...GenerateTourProps(workspaceTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="toolbox" />
-            <span>{item.label}</span>
-          </NavLink>
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="clock" />
+              <Box component="span">Scheduler</Box>
+            </Stack>
+          </Link>
         );
       },
     },
-
     {
       label: "Topics",
-
-      template: (item: any) => {
+      buttonTemplate: () => {
         return (
-          <NavLink
+          <Button
+            sx={navButtonStyles}
+            component={NavLink}
             to="/topics"
-            className="p-menuitem-link"
             onKeyDown={handleKeyDown}
             {...GenerateTourProps(topicTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="envelope" />
-            <span>{item.label}</span>
-          </NavLink>
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="envelope" />
+              <Box component="span">Topics</Box>
+            </Stack>
+          </Button>
+        );
+      },
+      linkTemplate: () => {
+        return (
+          <Link
+            component={NavLink}
+            underline="none"
+            to="/topics"
+            onKeyDown={handleKeyDown}
+          >
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="envelope" />
+              <Box component="span">Topics</Box>
+            </Stack>
+          </Link>
         );
       },
     },
 
     {
       label: "Users",
-      template: (item: any) => {
+      buttonTemplate: () => {
         return (
-          <NavLink
+          <Button
+            sx={navButtonStyles}
+            component={NavLink}
             to="/users"
             className="p-menuitem-link"
             onKeyDown={handleKeyDown}
             {...GenerateTourProps(userTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="users" />
-            <span>{item.label}</span>
-          </NavLink>
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="users" />
+              <Box component="span">Users</Box>
+            </Stack>
+          </Button>
+        );
+      },
+      linkTemplate: () => {
+        return (
+          <Link
+            component={NavLink}
+            underline="none"
+            to="/users"
+            onKeyDown={handleKeyDown}
+          >
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="users" />
+              <Box component="span">Users</Box>
+            </Stack>
+          </Link>
         );
       },
       visible: authEnabled,
     },
     {
       label: "Roles",
-      template: (item: any) => {
+      buttonTemplate: () => {
         return (
           <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
-            <NavLink
+            <Button
+              sx={navButtonStyles}
+              component={NavLink}
               to="/roles"
-              className="p-menuitem-link"
               onKeyDown={handleKeyDown}
               {...GenerateTourProps(rolesTourStep)}
             >
-              <FontAwesomeIcon className="mr-2" icon="user-gear" />
-              <span>{item.label}</span>
-            </NavLink>
+              <Stack direction="row" spacing={1}>
+                <FAIcon icon="user-gear" />
+                <Box component="span">Roles</Box>
+              </Stack>
+            </Button>
+          </HasAccess>
+        );
+      },
+      linkTemplate: () => {
+        return (
+          <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
+            <Link
+              component={NavLink}
+              underline="none"
+              to="/roles"
+              onKeyDown={handleKeyDown}
+            >
+              <Stack direction="row" spacing={1}>
+                <FAIcon icon="user-gear" />
+                <Box component="span">Roles</Box>
+              </Stack>
+            </Link>
           </HasAccess>
         );
       },
@@ -290,37 +430,39 @@ function NavigationMenu({
     },
     {
       label: "About",
-      template: (item: any) => {
+      buttonTemplate: () => {
         return (
-          <NavLink
+          <Button
+            sx={navButtonStyles}
+            component={NavLink}
             to="/about"
-            className="p-menuitem-link"
             onKeyDown={handleKeyDown}
             {...GenerateTourProps(aboutTourStep)}
           >
-            <FontAwesomeIcon className="mr-2" icon="circle-info" />
-            <span>{item.label}</span>
-          </NavLink>
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="circle-info" />
+              <Box component="span">About</Box>
+            </Stack>
+          </Button>
+        );
+      },
+      linkTemplate: () => {
+        return (
+          <Link
+            component={NavLink}
+            underline="none"
+            to="/about"
+            onKeyDown={handleKeyDown}
+          >
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="circle-info" />
+              <Box component="span">About</Box>
+            </Stack>
+          </Link>
         );
       },
     },
   ];
-
-  const start = (
-    <NavLink
-      className="p-menuitem-link text-primary cursor-pointer px-3 py-2 overflow-hidden relative font-semibold text-lg uppercase p-ripple hover:surface-ground"
-      to="/"
-      {...GenerateTourProps(homeLinkTourStep)}
-    >
-      <div className="flex">
-        <div className="mr-2">
-          <FontAwesomeIcon icon={iconDefault} aria-label="Application Icon" />
-        </div>
-
-        {applicationName && <div className="mr-2">{applicationName}</div>}
-      </div>
-    </NavLink>
-  );
 
   const getUserName = () => {
     if (authEnabled === true) {
@@ -409,72 +551,146 @@ function NavigationMenu({
     }
   }, []);
 
-  const end = (
-    <div className="flex">
-      {authEnabled === true && (
-        <div>
-          {username === undefined && (
-            <div>
-              <AccessButton
-                rounded
-                className="mr-2"
-                onClick={() => setLoginVisible(true)}
-                data-testid="user-login"
-                tooltip="User Login"
-                label="Login"
-              />
-              <UserLogin
-                visible={loginVisible}
-                setVisible={setLoginVisible}
-                setUsernameDisplay={updateUserName}
-              />
-            </div>
-          )}
-        </div>
-      )}
-      <AccessButton
-        text
-        className="mr-2"
-        onClick={toggleRunTour}
-        tooltip="Start Tour"
-        data-testid="start-tour"
-        basic
-      >
-        <FontAwesomeIcon className="fa-2x" icon="compass" />
-      </AccessButton>
-
-      <CurrentRequestsTemplate listeners={listeners} config={config} />
-      <AccessButton
-        tooltip="User Preferences Menu"
-        basic
-        onClick={(e) => op.current?.toggle(e)}
-        text
-        title="Preferences"
-      >
-        {username !== undefined ? (
-          <Avatar
-            size="large"
-            label={username.charAt(0).toUpperCase()}
-            style={{ width: "32px", height: "32px" }}
-          />
-        ) : (
-          <FontAwesomeIcon icon="user" />
-        )}
-      </AccessButton>
-      <OverlayPanel ref={op} style={{ width: "400px" }}>
-        <UserOverlay
-          username={username}
-          onLogout={onLogout}
-          onClearSession={onClearSession}
-        />
-      </OverlayPanel>
-    </div>
-  );
-
   return (
-    <div className="card">
-      <Menubar model={items} start={start} end={end} />
-    </div>
+    <AppBar position="static">
+      <Container maxWidth={false}>
+        <Toolbar
+          disableGutters
+          sx={{ display: "flex", alignItems: "center", gap: 2 }}
+        >
+          <Button
+            sx={{
+              whiteSpace: "nowrap",
+              color: "white",
+              backgroundColor: "primary.main",
+              textTransform: "none",
+              "&:hover": {
+                backgroundColor: "primary.dark",
+                opacity: [0.9, 0.8, 0.7],
+              },
+            }}
+            component={NavLink}
+            to="/"
+            {...GenerateTourProps(homeLinkTourStep)}
+          >
+            <FAIcon
+              icon={iconDefault as IconProp}
+              aria-label="Application Icon"
+              sx={{ mr: 1 }}
+            />
+
+            {applicationName && (
+              <Typography className="mr-2">{applicationName}</Typography>
+            )}
+          </Button>
+
+          <IconButton
+            onClick={handleHamburgerMenuOpen}
+            sx={{
+              display: { xs: "flex", md: "none" },
+              color: "white",
+              backgroundColor: "primary.main",
+              textTransform: "none",
+              "&:hover": {
+                backgroundColor: "primary.dark",
+                opacity: [0.9, 0.8, 0.7],
+              },
+            }}
+          >
+            <FAIcon icon="bars" sx={{ fontSize: 16, px: "4px" }} />
+          </IconButton>
+          <Menu
+            id="instance_menu"
+            anchorEl={hamburgerMenuAnchor}
+            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+            transformOrigin={{ vertical: "top", horizontal: "left" }}
+            open={hamburgerMenuOpen}
+            onClose={handleHamburgerMenuClose}
+          >
+            {items
+              .filter((item: linkProps) => item.visible !== false)
+              .map((item: linkProps) => (
+                <MenuItem key={item.label} onClick={handleHamburgerMenuClose}>
+                  {item.linkTemplate()}
+                </MenuItem>
+              ))}
+          </Menu>
+
+          {items
+            .filter((item: linkProps) => item.visible !== false)
+            .map((item: linkProps) => (
+              <>{item.buttonTemplate()}</>
+            ))}
+
+          <Box sx={{ ml: "auto" }} />
+          {authEnabled === true && (
+            <>
+              {username === undefined && (
+                <>
+                  <AccessButton
+                    sx={{ borderRadius: 20 }}
+                    color="secondary"
+                    className="mr-2"
+                    onClick={() => setLoginVisible(true)}
+                    data-testid="user-login"
+                    tooltip="User Login"
+                    label="Login"
+                  >
+                    Login{" "}
+                  </AccessButton>
+                  <UserLogin
+                    visible={loginVisible}
+                    setVisible={setLoginVisible}
+                    setUsernameDisplay={updateUserName}
+                  />
+                </>
+              )}
+            </>
+          )}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 0 }}>
+            <AccessButton
+              sx={{ height: "36px" }}
+              color="secondary"
+              text
+              className="mr-2"
+              onClick={toggleRunTour}
+              tooltip="Start Tour"
+              data-testid="start-tour"
+              basic
+            >
+              <FAIcon sx={{ fontSize: 24 }} icon="compass" />
+            </AccessButton>
+            <CurrentRequestsTemplate listeners={listeners} config={config} />
+            <AccessButton
+              sx={{ height: "36px" }}
+              color="secondary"
+              tooltip="User Preferences Menu"
+              basic
+              onClick={(e) => op.current?.toggle(e)}
+              text
+              title="Preferences"
+            >
+              {username !== undefined ? (
+                <Avatar
+                  size="large"
+                  label={username.charAt(0).toUpperCase()}
+                  style={{ width: "32px", height: "32px" }}
+                />
+              ) : (
+                <FAIcon icon="user" />
+              )}
+            </AccessButton>
+            <OverlayPanel ref={op} style={{ width: "400px" }}>
+              <UserOverlay
+                username={username}
+                onLogout={onLogout}
+                onClearSession={onClearSession}
+              />
+            </OverlayPanel>
+          </Box>
+        </Toolbar>
+      </Container>
+    </AppBar>
   );
 }
 

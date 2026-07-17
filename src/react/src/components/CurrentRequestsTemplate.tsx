@@ -333,6 +333,9 @@ function CurrentRequestsTemplate({
         )}
       />
       <AccessButton
+        sx={{ height: "36px" }}
+        color="secondary"
+        label="Current Requests"
         className="fa-layers fa-fw fa-2x"
         onClick={confirm}
         text
