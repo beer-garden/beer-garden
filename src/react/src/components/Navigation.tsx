@@ -224,7 +224,7 @@ function NavigationMenu({
             {...GenerateTourProps(createRequestTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon iconProps={{ icon: "pencil" }} />
+              <FAIcon icon="pencil" />
               <Box component="span">Create Request</Box>
             </Stack>
           </Button>
@@ -242,7 +242,7 @@ function NavigationMenu({
             }}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon iconProps={{ icon: "pencil" }} />
+              <FAIcon icon="pencil" />
               <Box component="span">Create Request</Box>
             </Stack>
           </Link>
@@ -262,7 +262,7 @@ function NavigationMenu({
             {...GenerateTourProps(requestTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon iconProps={{ icon: "file-lines" }} />
+              <FAIcon icon="file-lines" />
               <Box component="span">Requests</Box>
             </Stack>
           </Button>
@@ -277,7 +277,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon iconProps={{ icon: "file-lines" }} />
+              <FAIcon icon="file-lines" />
               <Box component="span">Requests</Box>
             </Stack>
           </Link>
@@ -296,7 +296,7 @@ function NavigationMenu({
             {...GenerateTourProps(schedulerTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon iconProps={{ icon: "clock" }} />
+              <FAIcon icon="clock" />
               <Box component="span">Scheduler</Box>
             </Stack>
           </Button>
@@ -311,7 +311,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon iconProps={{ icon: "clock" }} />
+              <FAIcon icon="clock" />
               <Box component="span">Scheduler</Box>
             </Stack>
           </Link>
@@ -330,7 +330,7 @@ function NavigationMenu({
             {...GenerateTourProps(topicTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon iconProps={{ icon: "envelope" }} />
+              <FAIcon icon="envelope" />
               <Box component="span">Topics</Box>
             </Stack>
           </Button>
@@ -345,7 +345,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon iconProps={{ icon: "envelope" }} />
+              <FAIcon icon="envelope" />
               <Box component="span">Topics</Box>
             </Stack>
           </Link>
@@ -366,7 +366,7 @@ function NavigationMenu({
             {...GenerateTourProps(userTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon iconProps={{ icon: "users" }} />
+              <FAIcon icon="users" />
               <Box component="span">Users</Box>
             </Stack>
           </Button>
@@ -381,7 +381,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon iconProps={{ icon: "users" }} />
+              <FAIcon icon="users" />
               <Box component="span">Users</Box>
             </Stack>
           </Link>
@@ -402,7 +402,7 @@ function NavigationMenu({
               {...GenerateTourProps(rolesTourStep)}
             >
               <Stack direction="row" spacing={1}>
-                <FAIcon iconProps={{ icon: "user-gear" }} />
+                <FAIcon icon="user-gear" />
                 <Box component="span">Roles</Box>
               </Stack>
             </Button>
@@ -419,7 +419,7 @@ function NavigationMenu({
               onKeyDown={handleKeyDown}
             >
               <Stack direction="row" spacing={1}>
-                <FAIcon iconProps={{ icon: "user-gear" }} />
+                <FAIcon icon="user-gear" />
                 <Box component="span">Roles</Box>
               </Stack>
             </Link>
@@ -440,7 +440,7 @@ function NavigationMenu({
             {...GenerateTourProps(aboutTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon iconProps={{ icon: "circle-info" }} />
+              <FAIcon icon="circle-info" />
               <Box component="span">About</Box>
             </Stack>
           </Button>
@@ -455,7 +455,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon iconProps={{ icon: "circle-info" }} />
+              <FAIcon icon="circle-info" />
               <Box component="span">About</Box>
             </Stack>
           </Link>
@@ -574,7 +574,7 @@ function NavigationMenu({
             {...GenerateTourProps(homeLinkTourStep)}
           >
             <FAIcon
-              iconProps={{ icon: iconDefault as IconProp }}
+              icon={iconDefault as IconProp}
               aria-label="Application Icon"
               sx={{ mr: 1 }}
             />
@@ -597,10 +597,7 @@ function NavigationMenu({
               },
             }}
           >
-            <FAIcon
-              iconProps={{ icon: "bars" }}
-              sx={{ fontSize: 16, px: "4px" }}
-            />
+            <FAIcon icon="bars" sx={{ fontSize: 16, px: "4px" }} />
           </IconButton>
           <Menu
             id="instance_menu"
@@ -661,7 +658,7 @@ function NavigationMenu({
               data-testid="start-tour"
               basic
             >
-              <FAIcon sx={{ fontSize: 24 }} iconProps={{ icon: "compass" }} />
+              <FAIcon sx={{ fontSize: 24 }} icon="compass" />
             </AccessButton>
             <CurrentRequestsTemplate listeners={listeners} config={config} />
             <AccessButton
@@ -680,7 +677,7 @@ function NavigationMenu({
                   style={{ width: "32px", height: "32px" }}
                 />
               ) : (
-                <FAIcon iconProps={{ icon: "user" }} />
+                <FAIcon icon="user" />
               )}
             </AccessButton>
             <OverlayPanel ref={op} style={{ width: "400px" }}>

@@ -332,18 +332,13 @@ export const PaginatorTemplate = {
   },
 };
 
-interface FAProps {
-  iconProps: FontAwesomeIconProps;
-}
-
 export const FAIcon = ({
-  iconProps,
   component = "span",
-  ...boxProps
-}: BoxProps & FAProps) => {
+  ...props
+}: BoxProps & FontAwesomeIconProps) => {
   return (
-    <Box component={component} {...boxProps}>
-      <FontAwesomeIcon {...iconProps} />
+    <Box component={component} {...props}>
+      <FontAwesomeIcon {...props} />
     </Box>
   );
 };
