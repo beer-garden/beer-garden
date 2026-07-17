@@ -31,13 +31,17 @@ export const EnhancedTableFilterSelect = ({
 }) => {
   const addFilter = (defaultColumn?: string) => {
     updateColumnFilters([
-      ...columnFilters,
-      { id: uuidv4(), column: defaultColumn } as FilterColumn,
+      ...columnFiltersRef.current,
+      {
+        id: uuidv4(),
+        column: defaultColumn,
+        highlighted: true,
+      } as FilterColumn,
     ]);
   };
 
   const clearFilters = () => {
-    const runReload = columnFilters.some(
+    const runReload = columnFiltersRef.current.some(
       (filter) =>
         filter.value !== undefined &&
         (typeof filter.value !== "string" || filter.value !== ""),
@@ -50,8 +54,8 @@ export const EnhancedTableFilterSelect = ({
 
   useEffect(() => {
     if (
-      columnFilters.length === 0 ||
-      !columnFilters.some((filter) => filter.column === addColumn)
+      columnFiltersRef.current.length === 0 ||
+      !columnFiltersRef.current.some((filter) => filter.column === addColumn)
     ) {
       addFilter(addColumn);
     }
@@ -68,21 +72,9 @@ export const EnhancedTableFilterSelect = ({
         horizontal: "left",
       }}
     >
-      <Typography sx={{ p: 2 }}>Filter Table</Typography>
-      {columnFilters &&
-        columnFilters.map((filter) => (
-          <EnhancedTableFilterOptions
-            id={filter.id}
-            columns={columns}
-            columnFilters={columnFilters}
-            columnFiltersRef={columnFiltersRef}
-            updateColumnFilters={updateColumnFilters}
-            triggerReload={triggerReload}
-          />
-        ))}
+      <Typography sx={{ p: 2 }}>Filter</Typography>
 
-      <Divider />
-      <Grid container sx={{ mb: 2, mt: 2 }}>
+      <Grid container sx={{}}>
         <Grid size="grow" sx={{ ml: 2 }}>
           <Button variant="outlined" onClick={() => addFilter()}>
             <FontAwesomeIcon icon="plus" />
@@ -95,6 +87,18 @@ export const EnhancedTableFilterSelect = ({
           </Button>
         </Grid>
       </Grid>
+      <Divider sx={{ mb: 2, mt: 2 }} />
+      {columnFilters &&
+        columnFilters.map((filter) => (
+          <EnhancedTableFilterOptions
+            id={filter.id}
+            columns={columns}
+            columnFilters={columnFilters}
+            columnFiltersRef={columnFiltersRef}
+            updateColumnFilters={updateColumnFilters}
+            triggerReload={triggerReload}
+          />
+        ))}
     </Popover>
   );
 };

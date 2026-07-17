@@ -29,4 +29,6 @@ export interface FilterColumn {
   isNumeric?: boolean;
 
   options?: string[];
+
+  highlighted?: boolean;
 }

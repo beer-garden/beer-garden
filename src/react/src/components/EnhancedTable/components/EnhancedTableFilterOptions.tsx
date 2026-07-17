@@ -3,6 +3,7 @@ import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
 import Select, { SelectChangeEvent } from "@mui/material/Select";
+import { alpha } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
@@ -205,6 +206,29 @@ export const EnhancedTableFilterOptions = ({
     columnFiltersRef.current.filter((filter) => filter.id === id)[0]?.options,
   );
 
+  const [isHighlighted, setIsHighlighted] = useState(
+    columnFiltersRef.current.filter((filter) => filter.id === id)[0]
+      ?.highlighted === true,
+  );
+
+  useEffect(() => {
+    if (isHighlighted) {
+      const timer = setTimeout(() => {
+        setIsHighlighted(false);
+        updateColumnFilters([
+          ...columnFiltersRef.current.map((filter) => {
+            if (filter.id === id) {
+              return { ...filter, highlighted: false } as FilterColumn;
+            }
+            return filter;
+          }),
+        ]);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   useEffect(() => {
     const filter = columnFiltersRef.current.filter(
       (filter) => filter.id === id,
@@ -226,7 +250,7 @@ export const EnhancedTableFilterOptions = ({
 
   const updateColumn = (id: string, column: string) => {
     updateColumnFilters([
-      ...columnFilters.map((filter) => {
+      ...columnFiltersRef.current.map((filter) => {
         if (filter.id === id) {
           const tableColumnIsDate = columns.some(
             (tableColumn) =>
@@ -308,14 +332,14 @@ export const EnhancedTableFilterOptions = ({
   };
 
   const removeFilter = (id: string) => {
-    const runReload = columnFilters.some(
+    const runReload = columnFiltersRef.current.some(
       (filter) =>
         filter.id === id &&
         filter.value !== undefined &&
         (typeof filter.value !== "string" || filter.value !== ""),
     );
     updateColumnFilters([
-      ...columnFilters.filter((filter) => filter.id !== id),
+      ...columnFiltersRef.current.filter((filter) => filter.id !== id),
     ]);
     if (runReload) {
       triggerReload();
@@ -324,7 +348,7 @@ export const EnhancedTableFilterOptions = ({
 
   const updateModifier = (id: string, modifier: string) => {
     updateColumnFilters([
-      ...columnFilters.map((filter) => {
+      ...columnFiltersRef.current.map((filter) => {
         if (filter.id === id) {
           return { ...filter, modifier: modifier } as FilterColumn;
         }
@@ -338,7 +362,7 @@ export const EnhancedTableFilterOptions = ({
     value: string | Dayjs | number | string[] | undefined,
   ) => {
     updateColumnFilters([
-      ...columnFilters.map((filter) => {
+      ...columnFiltersRef.current.map((filter) => {
         if (filter.id === id) {
           return { ...filter, value: value } as FilterColumn;
         }
@@ -350,7 +374,26 @@ export const EnhancedTableFilterOptions = ({
   return (
     <>
       {id && (
-        <Grid container spacing={1} sx={{ mb: 2, mr: 2, ml: 2 }}>
+        <Grid
+          container
+          spacing={1}
+          sx={{
+            mb: 2,
+            mr: 2,
+            ml: 2,
+            // Change background and text color based on state
+            bgcolor: isHighlighted
+              ? (theme) => alpha(theme.palette.action.selected, 0.05)
+              : "background.paper",
+
+            p: 1,
+            borderRadius: 1,
+            // Smooth transition for the color swap
+            transition: "background-color 0.3s ease, color 0.3s ease",
+            border: "1px solid",
+            borderColor: "divider",
+          }}
+        >
           <Grid size={1}>
             <IconButton onClick={() => removeFilter(id)}>
               <FontAwesomeIcon icon="x" />
