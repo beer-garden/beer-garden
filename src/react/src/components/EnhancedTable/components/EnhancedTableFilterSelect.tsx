@@ -49,7 +49,10 @@ export const EnhancedTableFilterSelect = ({
   };
 
   useEffect(() => {
-    if (columnFilters.length === 0) {
+    if (
+      columnFilters.length === 0 ||
+      !columnFilters.some((filter) => filter.column === addColumn)
+    ) {
       addFilter(addColumn);
     }
   }, []);

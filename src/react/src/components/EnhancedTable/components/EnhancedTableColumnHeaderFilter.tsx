@@ -46,7 +46,7 @@ export const EnhancedTableColumnHeaderFilter = ({
 
   return (
     <>
-      <Tooltip title={`Filter ${column.field}`} ref={filterAnchorRef}>
+      <Tooltip title={`Filter ${column.label}`} ref={filterAnchorRef}>
         <IconButton
           onClick={handleFilterMenuOpen}
           size="small"
