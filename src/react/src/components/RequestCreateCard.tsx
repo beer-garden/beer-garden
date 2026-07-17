@@ -17,6 +17,7 @@ import AccessButton from "./AccessButton";
 import CodeExample from "./CodeExample";
 import CommandCreate from "./CommandCreate";
 import SchedulerForm from "./SchedulerForm";
+import { Grid } from "@mui/material";
 
 function RequestCreateCard({
   requestItem,
@@ -289,14 +290,13 @@ function RequestCreateCard({
 
   return (
     <Container
-      // className="justify-content-center"
-
       key={requestItem.itemId}
     >
       {/* Header */}
-      <Box>
-        <div className="flex mb-2">
-          <div className="ml-4 mr-2 align-self-center">Scheduled</div>
+      <Box sx={{
+        display: 'flex'
+      }}>
+          <Typography sx={{ ml: 4, mr: 2, alignSelf: 'center' }}>Scheduled</Typography>
           <Switch
             checked={showScheduleJob}
             onChange={(e) => updateShowScheduleJob(e.target.checked)}
@@ -305,12 +305,9 @@ function RequestCreateCard({
               input: { "aria-label": "Toggle for creating Scheduled Job" },
             }}
           />
-        </div>
       </Box>
       {/* Content */}
-      <Box>
-        <div className="flex pt-4 justify-content-between">
-          <div className="flex-column" style={{ width: "100%" }}>
+      <Box sx={{pt: 4, width: "100%"}}>
             {showScheduleJob && (
               <SchedulerForm
                 scheduledJob={job}
@@ -333,26 +330,26 @@ function RequestCreateCard({
             {!showCreateRequest && (
               <Skeleton width="100%" height="150px"></Skeleton>
             )}
-          </div>
-        </div>
       </Box>
       {/* Footer */}
       <Box>
-        <div className="flex mt-2">
-          <div>
+        <Grid container sx={{mt: 2}}>
+          <Grid size="grow">
+          
             <AccessButton
               label="Reset Form"
               color="warning"
               onClick={() => setResetForm(true)}
-              className="mr-2"
+              
+              sx={{mr:2}}
+
             >
               <Typography variant="button" sx={{ display: "block" }}>
                 Reset Form
               </Typography>
-              <FontAwesomeIcon icon="refresh" className="ml-2" />
+              <FontAwesomeIcon icon="refresh" sx={{ml:2}} />
             </AccessButton>
-          </div>
-          <div>
+          
             <CodeExample
               visibleCodeExample={visibleCodeExample}
               setVisibleCodeExample={setVisibleCodeExample}
@@ -362,16 +359,18 @@ function RequestCreateCard({
               label="Code Examples"
               color="info"
               onClick={() => setVisibleCodeExample(true)}
-              className="mr-2"
+              
+              sx={{mr:2}}
             >
               <Typography variant="button" sx={{ display: "block" }}>
                 Code Examples
               </Typography>
-              <FontAwesomeIcon icon="code" className="ml-2" />
+              <FontAwesomeIcon icon="code" sx={{ml:2}}/>
             </AccessButton>
-          </div>
-
-          <div style={{ marginLeft: "auto" }}>
+          
+          </Grid>
+          
+          <Grid >
             {showCreateRequest && !showScheduleJob && (
               <AccessButton
                 label="Submit"
@@ -390,7 +389,7 @@ function RequestCreateCard({
                 </Typography>
                 <FontAwesomeIcon
                   icon="arrow-right-to-bracket"
-                  className="ml-2"
+                  sx={{ml:2}}
                 />
               </AccessButton>
             )}
@@ -408,7 +407,7 @@ function RequestCreateCard({
                 </Typography>
                 <FontAwesomeIcon
                   icon="arrow-right-to-bracket"
-                  className="ml-2"
+                  sx={{ml:2}}
                 />
               </AccessButton>
             )}
@@ -426,12 +425,12 @@ function RequestCreateCard({
                 </Typography>
                 <FontAwesomeIcon
                   icon="arrow-right-to-bracket"
-                  className="ml-2"
+                  sx={{ml:2}}
                 />
               </AccessButton>
             )}
-          </div>
-        </div>
+          </Grid>
+        </Grid>
       </Box>
     </Container>
   );
