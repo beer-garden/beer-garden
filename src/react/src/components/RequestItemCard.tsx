@@ -45,8 +45,6 @@ function RequestItemCard({
         <RequestCreateCard
           requestItem={requestItem}
           updateRequestItem={updateRequestItem}
-          removeItem={removeItem}
-          isDialog={isDialog}
           config={config}
         />
       )}
