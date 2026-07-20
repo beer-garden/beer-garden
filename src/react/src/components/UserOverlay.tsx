@@ -3,15 +3,18 @@ import { Avatar } from "primereact/avatar";
 import { Divider } from "primereact/divider";
 import { Dropdown } from "primereact/dropdown";
 import { InputSwitch } from "primereact/inputswitch";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import {
   ChangePowerUser,
   ChangeTheme,
+  FAIcon,
   ThemeOptions,
 } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import UserChangePassword from "./UserChangePassword";
+import { Autocomplete, Box, MenuItem, Select, Switch, TextField } from "@mui/material";
+import { AutoComplete } from "primereact/autocomplete";
 
 function UserOverlay({
   username,
@@ -57,6 +60,12 @@ function UserOverlay({
     }
   }, [color, dark, showAdvancedOption]);
 
+  const handleColor = (_: React.SyntheticEvent, newColor: string | null) => {
+    if (newColor) {
+    setColor(newColor);
+    }
+  }
+
   return (
     <>
       {username && showPasswordDialog && (
@@ -82,31 +91,20 @@ function UserOverlay({
           </div>
         )}
         <div className="flex align-items-center gap-2">
-          <InputSwitch
+          <Switch
             checked={dark}
-            onChange={(e) => setDark(e.value)}
-            className="align-self-center"
-            pt={{
-              root: {
-                role: undefined,
-                "aria-checked": undefined,
-              },
-              input: {
-                "aria-labelledby": "switchMode",
-              },
-            }}
-            ref={focusRef}
+            onChange={(e) => setDark(e.target.checked)}
           />
           <span className="ml-2" id="switchMode">
             {dark ? (
               <>
-                <FontAwesomeIcon className="mr-2" icon="moon" />
-                <span>Dark Mode</span>
+                <FAIcon icon="moon" sx={{mr: 2, color: "black"}} />
+                <Box component="span" sx={{color: "black"}}>Dark Mode</Box>
               </>
             ) : (
               <>
-                <FontAwesomeIcon className="mr-2" icon="sun" />
-                <span>Light Mode</span>
+                <FAIcon icon="sun" sx={{mr: 2, color: "black"}} />
+                <Box component="span" sx={{color: "black"}}>Light Mode</Box>
               </>
             )}
           </span>
@@ -115,40 +113,25 @@ function UserOverlay({
               <option key={color} value={color} />
             ))}
           </datalist>
-          <Dropdown
+          <Autocomplete
+            disablePortal
             value={color}
-            onChange={(e) => setColor(e.value)}
+            onChange={handleColor}
+            renderInput={(params) => <TextField {...params} label="Select a Color" />}
+            sx={{ width: 150 }}
             options={ThemeOptions()}
-            optionLabel="Color"
-            placeholder="Select a Color"
-            className="mr-2"
-            pt={{
-              select: {
-                "aria-controls": "selectThemeColorDropdown",
-              },
-            }}
           />
         </div>
         <div className="flex align-items-center gap-2">
-          <InputSwitch
+          <Switch
             checked={showAdvancedOption}
             onChange={(e) => {
-              setShowAdvancedOption(e.value);
-            }}
-            className="align-self-center"
-            pt={{
-              root: {
-                role: undefined,
-                "aria-checked": undefined,
-              },
-              input: {
-                "aria-labelledby": "switchPowerUser",
-              },
+              setShowAdvancedOption(e.target.checked);
             }}
           />
-          <span className="ml-2" id="switchPowerUser">
+          <Box component="span" id="switchPowerUser" sx={{ml:2, color: "black"}}>
             Power User
-          </span>
+          </Box>
         </div>
       </div>
       {username && (

@@ -3,6 +3,7 @@ import {
   AppBar,
   Box,
   Button,
+  ClickAwayListener,
   Container,
   IconButton,
   Link,
@@ -12,9 +13,12 @@ import {
   Toolbar,
   Typography,
 } from "@mui/material";
+import Fade from "@mui/material/Fade";
+import Popper from "@mui/material/Popper";
 import { Avatar } from "primereact/avatar";
 import { OverlayPanel } from "primereact/overlaypanel";
 import { RefObject, useEffect, useRef, useState } from "react";
+import React from "react";
 import { NavLink } from "react-router-dom";
 
 import CurrentRequestsTemplate from "../components/CurrentRequestsTemplate";
@@ -189,6 +193,22 @@ function NavigationMenu({
     layer: "NAVIGATION",
     pos: 8,
   };
+
+  const [userPopperOpen, setUserPopperOpen] = React.useState(false);
+  const [userPopperAnchorEl, setUserPopperAnchorEl] =
+    React.useState<null | HTMLElement>(null);
+
+  const handleUserPopperOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setUserPopperAnchorEl(event.currentTarget);
+    setUserPopperOpen(true);
+  };
+
+  const handleUserPopperClickAway = () => {
+    setUserPopperOpen(false);
+  };
+
+  const canBeOpen = userPopperOpen && Boolean(userPopperAnchorEl);
+  const userPopperId = canBeOpen ? "userPopper" : undefined;
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -666,7 +686,7 @@ function NavigationMenu({
               color="secondary"
               tooltip="User Preferences Menu"
               basic
-              onClick={(e) => op.current?.toggle(e)}
+              onClick={handleUserPopperOpen}
               text
               title="Preferences"
             >
@@ -680,13 +700,44 @@ function NavigationMenu({
                 <FAIcon icon="user" />
               )}
             </AccessButton>
-            <OverlayPanel ref={op} style={{ width: "400px" }}>
-              <UserOverlay
-                username={username}
-                onLogout={onLogout}
-                onClearSession={onClearSession}
-              />
-            </OverlayPanel>
+            <Popper
+            sx={{zIndex: 1300}}
+            disablePortal
+              id={userPopperId}
+              open={userPopperOpen}
+              anchorEl={userPopperAnchorEl}
+              transition
+              placement="bottom-end"
+              modifiers={[
+                {
+                  name: "offset",
+                  options: {
+                    offset: [0, 15], // [X-offset, Y-offset] in pixels
+                  },
+                },
+              ]}
+            >
+              {({ TransitionProps }) => (
+                <ClickAwayListener onClickAway={handleUserPopperClickAway}>
+                  <Fade {...TransitionProps} timeout={350}>
+                    <Box
+                      sx={{
+                        width: "400px",
+                        border: 1,
+                        p: 1,
+                        bgcolor: "background.paper",
+                      }}
+                    >
+                      <UserOverlay
+                        username={username}
+                        onLogout={onLogout}
+                        onClearSession={onClearSession}
+                      />
+                    </Box>
+                  </Fade>
+                </ClickAwayListener>
+              )}
+            </Popper>
           </Box>
         </Toolbar>
       </Container>
