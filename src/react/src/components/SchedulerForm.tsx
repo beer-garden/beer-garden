@@ -952,33 +952,6 @@ function SchedulerForm({
 
       <div className="card flex justify-content-center ">
         <div>
-          <Grid container>
-            <Grid size="grow" sx={{ alignSelf: "center" }}>
-              <FormLabel
-                htmlFor="jobName"
-                sx={{
-                  minWidth: "100px",
-                  textAlign: "right",
-                  color: "text.primary",
-                }}
-              >
-                Job Name
-              </FormLabel>
-            </Grid>
-            <Grid>
-              <TextField
-                value={scheduledJob?.name ?? ""}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                  setScheduledJob({
-                    ...scheduledJob,
-                    ...{ name: e.target.value },
-                  });
-                }}
-                sx={{ ml: 2, mb: 2, mr: 2 }}
-              />
-            </Grid>
-          </Grid>
-
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <FormLabel
               htmlFor="jobName"
