@@ -366,7 +366,7 @@ function CommandSelect({
       )}
       {systemNames.length > 0 && (
         <TextField
-          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
+          sx={{ width: "100%", mr: 2, my: 2 }}
           id={`select-system`}
           select
           label="System"
