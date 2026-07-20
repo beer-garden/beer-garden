@@ -4,16 +4,21 @@ import {
   Box,
   Button,
   ButtonGroup,
-  FormLabel,
-  TextField,
-  Typography,
   Checkbox,
   FormControlLabel,
+  FormLabel,
   MenuItem,
+  OutlinedInput,
   Select,
   SelectChangeEvent,
-  OutlinedInput,
+  TextField,
+  Typography,
 } from "@mui/material";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { PickerValue } from "@mui/x-date-pickers/internals";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { Dayjs } from "dayjs";
 import { ChangeEvent, useEffect, useState } from "react";
 import { Cron } from "react-js-cron";
 
@@ -117,11 +122,16 @@ function FileForm({
     <Box>
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="path" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>Path</FormLabel>
+          <FormLabel
+            htmlFor="path"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Path
+          </FormLabel>
         </Box>
         <Box sx={{ width: layoutProps.valueWidth }}>
           <TextField
@@ -143,11 +153,16 @@ function FileForm({
       </Box>
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="pattern" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>Pattern</FormLabel>
+          <FormLabel
+            htmlFor="pattern"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Pattern
+          </FormLabel>
         </Box>
         <Box sx={{ width: layoutProps.valueWidth }}>
           <TextField
@@ -167,11 +182,16 @@ function FileForm({
       </Box>
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="recursive" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>Recursive</FormLabel>
+          <FormLabel
+            htmlFor="recursive"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Recursive
+          </FormLabel>
         </Box>
         <Box sx={{ width: layoutProps.valueWidth }}>
           <FormControlLabel
@@ -193,20 +213,39 @@ function FileForm({
       </Box>
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="eventTypes" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>Event Types</FormLabel>
+          <FormLabel
+            htmlFor="eventTypes"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Event Types
+          </FormLabel>
         </Box>
         <Box sx={{ width: layoutProps.valueWidth }}>
           <Select
             id="eventTypes"
             multiple
             value={selectedTypes}
-            onChange={(e: SelectChangeEvent<string[]>) => setSelectedTypes(e.target.value as string[])}
+            onChange={(event: SelectChangeEvent<typeof typeOptions | null>) => {
+              const {
+                target: { value },
+              } = event;
+
+              if (value === null) {
+                setSelectedTypes([]);
+              } else {
+                setSelectedTypes(
+                  typeof value === "string" ? value.split(",") : value,
+                );
+              }
+            }}
             input={<OutlinedInput label="Select Event Type" />}
-            renderValue={(selected) => selected.join(", ")}
+            renderValue={(selected) =>
+              selected === null ? "" : selected.join(", ")
+            }
             size="small"
             fullWidth
           >
@@ -256,34 +295,49 @@ function DateForm({
     <Box>
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="runDate" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>Run Date</FormLabel>
+          <FormLabel
+            htmlFor="runDate"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Run Date
+          </FormLabel>
         </Box>
         <Box sx={{ width: layoutProps.valueWidth }}>
-          <TextField
-            id="runDate"
-            type="datetime-local"
-            fullWidth
-            size="small"
-            value={runDate ? new Date(runDate).toISOString().slice(0, 16) : ""}
-            onChange={(e) => updateRunDate(e.target.value)}
-            error={
-              runDate === undefined || runDate === null || runDate === ""
-            }
-            // InputLabelProps={{ shrink: true }}
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              value={runDate as Dayjs}
+              onChange={(newValue: PickerValue) => {
+                if (newValue && newValue.isValid()) {
+                  updateRunDate(newValue);
+                } else {
+                  updateRunDate(undefined);
+                }
+              }}
+              slotProps={{
+                textField: {
+                  id: "runDate",
+                },
+              }}
+            />
+          </LocalizationProvider>
         </Box>
       </Box>
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="timezone" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>Timezone</FormLabel>
+          <FormLabel
+            htmlFor="timezone"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Timezone
+          </FormLabel>
         </Box>
         <Box sx={{ width: layoutProps.valueWidth }}>
           <TextField
@@ -418,17 +472,22 @@ function IntervalForm({
     <Box>
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="intervalNumber" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>Interval Number</FormLabel>
+          <FormLabel
+            htmlFor="intervalNumber"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Interval Number
+          </FormLabel>
         </Box>
         <Box sx={{ width: layoutProps.valueWidth }}>
           <NumberField
             id="intervalNumber"
             value={intervalNumber}
-            onChange={(val) => setIntervalNumber(val)}
+            onValueChange={(value: number | null) => setIntervalNumber(value)}
             min={1}
             size="small"
           />
@@ -436,17 +495,24 @@ function IntervalForm({
       </Box>
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="intervalType" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>Interval Type</FormLabel>
+          <FormLabel
+            htmlFor="intervalType"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Interval Type
+          </FormLabel>
         </Box>
         <Box sx={{ width: layoutProps.valueWidth }}>
           <Select
             id="intervalType"
             value={intervalType}
-            onChange={(e: SelectChangeEvent<string>) => setIntervalType(e.target.value)}
+            onChange={(event: SelectChangeEvent<string | null>) => {
+              setIntervalType(event.target.value);
+            }}
             size="small"
             fullWidth
           >
@@ -460,51 +526,82 @@ function IntervalForm({
       </Box>
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="startDate" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>Start Date</FormLabel>
+          <FormLabel
+            htmlFor="startDate"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Start Date
+          </FormLabel>
         </Box>
         <Box sx={{ width: layoutProps.valueWidth }}>
-          <TextField
-            id="startDate"
-            type="datetime-local"
-            fullWidth
-            size="small"
-            value={startDate ? new Date(startDate).toISOString().slice(0, 16) : ""}
-            onChange={(e) => setStartDate(new Date(e.target.value))}
-            // InputLabelProps={{ shrink: true }}
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              value={startDate as Dayjs}
+              onChange={(newValue: PickerValue) => {
+                if (newValue && newValue.isValid()) {
+                  setStartDate(newValue);
+                } else {
+                  setStartDate(undefined);
+                }
+              }}
+              slotProps={{
+                textField: {
+                  id: "startDate",
+                },
+              }}
+            />
+          </LocalizationProvider>
         </Box>
       </Box>
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="endDate" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>End Date</FormLabel>
+          <FormLabel
+            htmlFor="endDate"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            End Date
+          </FormLabel>
         </Box>
         <Box sx={{ width: layoutProps.valueWidth }}>
-          <TextField
-            id="endDate"
-            type="datetime-local"
-            fullWidth
-            size="small"
-            value={endDate ? new Date(endDate).toISOString().slice(0, 16) : ""}
-            onChange={(e) => setEndDate(new Date(e.target.value))}
-            // InputLabelProps={{ shrink: true }}
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              value={endDate as Dayjs}
+              onChange={(newValue: PickerValue) => {
+                if (newValue && newValue.isValid()) {
+                  setEndDate(newValue);
+                } else {
+                  setEndDate(undefined);
+                }
+              }}
+              slotProps={{
+                textField: {
+                  id: "endDate",
+                },
+              }}
+            />
+          </LocalizationProvider>
         </Box>
       </Box>
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="timezone" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>Timezone</FormLabel>
+          <FormLabel
+            htmlFor="timezone"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Timezone
+          </FormLabel>
         </Box>
         <Box sx={{ width: layoutProps.valueWidth }}>
           <TextField
@@ -621,11 +718,16 @@ function CronForm({
     <Box>
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="cron" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>CRON</FormLabel>
+          <FormLabel
+            htmlFor="cron"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            CRON
+          </FormLabel>
         </Box>
         <Box id="cron" sx={{ width: layoutProps.valueWidth }}>
           <Cron
@@ -638,18 +740,23 @@ function CronForm({
 
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="cronJitter" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>CRON Jitter</FormLabel>
+          <FormLabel
+            htmlFor="cronJitter"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            CRON Jitter
+          </FormLabel>
         </Box>
         <Box sx={{ width: layoutProps.valueWidth }}>
           <NumberField
             id="cronJitter"
             value={cronTrigger?.jitter}
-            onChange={(val) => {
-              setCronTrigger({ ...cronTrigger, ...{ jitter: val } });
+            onValueChange={(value: number | null) => {
+              setCronTrigger({ ...cronTrigger, ...{ jitter: value } });
             }}
             min={0}
             size="small"
@@ -658,51 +765,82 @@ function CronForm({
       </Box>
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="startDate" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>Start Date</FormLabel>
+          <FormLabel
+            htmlFor="startDate"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Start Date
+          </FormLabel>
         </Box>
         <Box sx={{ width: layoutProps.valueWidth }}>
-          <TextField
-            id="startDate"
-            type="datetime-local"
-            fullWidth
-            size="small"
-            value={startDate ? new Date(startDate).toISOString().slice(0, 16) : ""}
-            onChange={(e) => setStartDate(new Date(e.target.value))}
-            // InputLabelProps={{ shrink: true }}
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              value={startDate as Dayjs}
+              onChange={(newValue: PickerValue) => {
+                if (newValue && newValue.isValid()) {
+                  setStartDate(newValue);
+                } else {
+                  setStartDate(undefined);
+                }
+              }}
+              slotProps={{
+                textField: {
+                  id: "startDate",
+                },
+              }}
+            />
+          </LocalizationProvider>
         </Box>
       </Box>
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="endDate" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>End Date</FormLabel>
+          <FormLabel
+            htmlFor="endDate"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            End Date
+          </FormLabel>
         </Box>
         <Box sx={{ width: layoutProps.valueWidth }}>
-          <TextField
-            id="endDate"
-            type="datetime-local"
-            fullWidth
-            size="small"
-            value={endDate ? new Date(endDate).toISOString().slice(0, 16) : ""}
-            onChange={(e) => setEndDate(new Date(e.target.value))}
-            // InputLabelProps={{ shrink: true }}
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              value={endDate as Dayjs}
+              onChange={(newValue: PickerValue) => {
+                if (newValue && newValue.isValid()) {
+                  setEndDate(newValue);
+                } else {
+                  setEndDate(undefined);
+                }
+              }}
+              slotProps={{
+                textField: {
+                  id: "endDate",
+                },
+              }}
+            />
+          </LocalizationProvider>
         </Box>
       </Box>
       <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
         <Box sx={{ width: layoutProps.labelWidth }}>
-          <FormLabel htmlFor="timezone" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>Timezone</FormLabel>
+          <FormLabel
+            htmlFor="timezone"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Timezone
+          </FormLabel>
         </Box>
         <Box sx={{ width: layoutProps.valueWidth }}>
           <TextField
@@ -868,8 +1006,8 @@ function SchedulerForm({
               htmlFor="jobName"
               sx={{
                 minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
+                textAlign: "right",
+                fontWeight: "bold",
               }}
             >
               Job Name
@@ -891,11 +1029,16 @@ function SchedulerForm({
 
           <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
             <Box sx={{ width: layoutProps.labelWidth }}>
-              <FormLabel htmlFor="coalesce" sx={{
-                minWidth: "100px",
-                textAlign: "right",                
-                fontWeight: "bold"
-              }}>Coalesce</FormLabel>
+              <FormLabel
+                htmlFor="coalesce"
+                sx={{
+                  minWidth: "100px",
+                  textAlign: "right",
+                  fontWeight: "bold",
+                }}
+              >
+                Coalesce
+              </FormLabel>
             </Box>
             <Box sx={{ width: layoutProps.valueWidth }}>
               <FormControlLabel
@@ -915,6 +1058,8 @@ function SchedulerForm({
               />
             </Box>
           </Box>
+        </Box>
+        <Box>
           {jobState === "CRON" && (
             <CronForm
               cronTrigger={cronTrigger}
