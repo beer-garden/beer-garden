@@ -1,13 +1,21 @@
 import "react-js-cron/dist/styles.css";
 
+import {
+  Box,
+  Button,
+  ButtonGroup,
+  FormLabel,
+  Grid,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { Calendar } from "primereact/calendar";
 import { Checkbox } from "primereact/checkbox";
 import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
 import { MultiSelect } from "primereact/multiselect";
-import { SelectButton } from "primereact/selectbutton";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { Cron } from "react-js-cron";
 
 import {
@@ -928,44 +936,73 @@ function SchedulerForm({
   } as LayoutProps;
 
   return (
-    <div>
-      <div className="card flex justify-content-center mb-4">
-        <SelectButton
-          value={jobState}
-          onChange={(e) => e.value && setJobState(e.value)}
-          options={jobOptions}
-        />
-      </div>
+    <Box>
+      <Box sx={{ justifyContent: "center", mb: 4, display: "flex" }}>
+        <ButtonGroup variant="contained" aria-label="">
+          {jobOptions.map((option) => (
+            <Button
+              onClick={() => setJobState(option)}
+              aria-label={`Change Job Type ${option}`}
+            >
+              <Typography>{option}</Typography>
+            </Button>
+          ))}
+        </ButtonGroup>
+      </Box>
 
       <div className="card flex justify-content-center ">
         <div>
-          <div className="flex ml-2 mb-2">
-            <div style={{ width: layoutProps.labelWidth }}>
-              <label htmlFor="jobName">Job Name</label>
-            </div>
-            <div style={{ width: layoutProps.valueWidth }}>
-              <InputText
-                id="jobName"
+          <Grid container>
+            <Grid size="grow" sx={{ alignSelf: "center" }}>
+              <FormLabel
+                htmlFor="jobName"
+                sx={{
+                  minWidth: "100px",
+                  textAlign: "right",
+                  color: "text.primary",
+                }}
+              >
+                Job Name
+              </FormLabel>
+            </Grid>
+            <Grid>
+              <TextField
                 value={scheduledJob?.name ?? ""}
-                onChange={(e) => {
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
                   setScheduledJob({
                     ...scheduledJob,
                     ...{ name: e.target.value },
                   });
                 }}
-                invalid={
-                  scheduledJob?.name === undefined ||
-                  scheduledJob?.name === null ||
-                  scheduledJob?.name === ""
-                }
-                pt={{
-                  root: {
-                    autoComplete: "off",
-                  },
-                }}
+                sx={{ ml: 2, mb: 2, mr: 2 }}
               />
-            </div>
-          </div>
+            </Grid>
+          </Grid>
+
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <FormLabel
+              htmlFor="jobName"
+              sx={{
+                minWidth: "100px",
+                textAlign: "right",
+                color: "text.primary",
+              }}
+            >
+              Job Name
+            </FormLabel>
+            <TextField
+              id="jobName"
+              value={scheduledJob?.name ?? ""}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                setScheduledJob({
+                  ...scheduledJob,
+                  ...{ name: e.target.value },
+                });
+              }}
+              sx={{ ml: 2, mb: 2 }}
+              placeholder="Enter Job Name"
+            />
+          </Box>
 
           <div className="flex ml-2 mb-2">
             <div style={{ width: layoutProps.labelWidth }}>
@@ -994,9 +1031,9 @@ function SchedulerForm({
             </div>
           </div>
           <div className="flex ml-2 mb-2">
-            <div style={{ width: layoutProps.labelWidth }}>
+            <Box sx={{ width: layoutProps.labelWidth }}>
               <label htmlFor="misfireGraceTime">Misfire Grace Time</label>
-            </div>
+            </Box>
             <div style={{ width: layoutProps.valueWidth }}>
               <InputNumber
                 id="misfireGraceTime"
@@ -1157,7 +1194,7 @@ function SchedulerForm({
           )}
         </div>
       </div>
-    </div>
+    </Box>
   );
 }
 export default SchedulerForm;
