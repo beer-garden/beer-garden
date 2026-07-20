@@ -288,7 +288,7 @@ export const EnhancedTableFilterOptions = ({
             filter.isString !== tableColumnIsString ||
             (filter.options !== undefined) !== tableColumnIsArray
           ) {
-            // check is modifier is set and in the correct array of options
+            // check if modifier is set and in the correct array of options
             const currentModifier = filter.modifier;
             let validModifier = true;
             let updatedModifier = undefined;
@@ -379,8 +379,7 @@ export const EnhancedTableFilterOptions = ({
           spacing={1}
           sx={{
             mb: 2,
-            mr: 2,
-            ml: 2,
+            mx:2,
             // Change background and text color based on state
             bgcolor: isHighlighted
               ? (theme) => alpha(theme.palette.action.selected, 0.05)

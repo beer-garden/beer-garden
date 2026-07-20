@@ -87,7 +87,7 @@ export const EnhancedTableFilterSelect = ({
           </Button>
         </Grid>
       </Grid>
-      <Divider sx={{ mb: 2, mt: 2 }} />
+      <Divider sx={{ my: 2 }} />
       {columnFilters &&
         columnFilters.map((filter) => (
           <EnhancedTableFilterOptions
