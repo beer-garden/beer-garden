@@ -379,7 +379,7 @@ export const EnhancedTableFilterOptions = ({
           spacing={1}
           sx={{
             mb: 2,
-            mx:2,
+            mx: 2,
             // Change background and text color based on state
             bgcolor: isHighlighted
               ? (theme) => alpha(theme.palette.action.selected, 0.05)
