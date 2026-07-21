@@ -701,8 +701,8 @@ function NavigationMenu({
               )}
             </AccessButton>
             <Popper
-            sx={{zIndex: 1300}}
-            disablePortal
+              sx={{ zIndex: 1000 }}
+              disablePortal
               id={userPopperId}
               open={userPopperOpen}
               anchorEl={userPopperAnchorEl}
@@ -723,7 +723,7 @@ function NavigationMenu({
                     <Box
                       sx={{
                         width: "400px",
-                        border: 1,
+                        border: "1px solid black",
                         p: 1,
                         bgcolor: "background.paper",
                       }}
