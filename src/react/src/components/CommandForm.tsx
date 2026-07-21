@@ -1,6 +1,15 @@
-import { Dropdown } from "primereact/dropdown";
-import { InputTextarea } from "primereact/inputtextarea";
-import { Messages } from "primereact/messages";
+import {
+  Alert,
+  AlertTitle,
+  Box,
+  FormControl,
+  FormLabel,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -40,7 +49,23 @@ function CommandForm({
   const altLoadingChoices = useRef<Array<{ key: string; timestamp: number }>>(
     [],
   );
-  const msgs = useRef<Messages>(null);
+
+  const [errorMessages, setErrorMessages] = useState<
+    Array<{
+      summary: string;
+      detail: string;
+      severity: "error" | "info" | "success" | "warning";
+    }>
+  >([]);
+
+  const clearMessages = () => setErrorMessages([]);
+  const addMessage = (msg: {
+    summary: string;
+    detail: string;
+    severity: "error" | "info" | "success" | "warning";
+  }) => {
+    setErrorMessages((prev) => [...prev, msg]);
+  };
 
   const generateChoices = (
     parameter: InputParam,
@@ -559,16 +584,12 @@ function CommandForm({
       };
 
       if (!validateChildren(rootGarden, garden_name)) {
-        if (msgs.current) {
-          msgs.current.clear();
-          msgs.current.show({
-            sticky: true,
-            severity: "error",
-            summary: "Garden Check",
-            detail: "Target Garden for command is not routable",
-            life: 3000,
-          });
-        }
+        clearMessages();
+        addMessage({
+          severity: "error",
+          summary: "Garden Check",
+          detail: "Target Garden for command is not routable",
+        });
       }
     }
   };
@@ -588,35 +609,27 @@ function CommandForm({
         );
 
         if (targetSystem === undefined) {
-          if (msgs.current) {
-            msgs.current.clear();
-            msgs.current.show({
-              sticky: true,
-              severity: "error",
-              summary: "System Check",
-              detail:
-                "Unable to find target system for command, unable to validate routing",
-              life: 3000,
-            });
-          }
+          clearMessages();
+          addMessage({
+            severity: "error",
+            summary: "System Check",
+            detail:
+              "Unable to find target system for command, unable to validate routing",
+          });
         } else if (
           targetSystem.instances?.some(
             (instance) => "RUNNING" !== instance.status,
           )
         ) {
-          if (msgs.current) {
-            const targetInstance = targetSystem.instances?.find(
-              (instance) => instance.name === request?.instance_name,
-            );
-            msgs.current.clear();
-            msgs.current.show({
-              sticky: true,
-              severity: "error",
-              summary: "System Check",
-              detail: `Target System has a status of ${targetInstance?.status}`,
-              life: 3000,
-            });
-          }
+          const targetInstance = targetSystem.instances?.find(
+            (instance) => instance.name === request?.instance_name,
+          );
+          clearMessages();
+          addMessage({
+            severity: "error",
+            summary: "System Check",
+            detail: `Target System has a status of ${targetInstance?.status}`,
+          });
         } else {
           // Validate Garden Routing
           if (request?.target_garden) {
@@ -624,31 +637,23 @@ function CommandForm({
           } else if (targetSystem?.garden_name) {
             validateGardenRouting(targetSystem.garden_name);
           } else {
-            if (msgs.current) {
-              msgs.current.clear();
-              msgs.current.show({
-                sticky: true,
-                severity: "error",
-                summary: "Garden Check",
-                detail:
-                  "Unable to find target Garden for command, unable to validate routing",
-                life: 3000,
-              });
-            }
+            clearMessages();
+            addMessage({
+              severity: "error",
+              summary: "Garden Check",
+              detail:
+                "Unable to find target Garden for command, unable to validate routing",
+            });
           }
         }
       })
       .catch((error: any) => {
-        if (msgs.current) {
-          msgs.current.clear();
-          msgs.current.show({
-            sticky: true,
-            severity: "error",
-            summary: "Command Check",
-            detail: `Error validating command routing: ${error}`,
-            life: 3000,
-          });
-        }
+        clearMessages();
+        addMessage({
+          severity: "error",
+          summary: "Command Check",
+          detail: `Error validating command routing: ${error}`,
+        });
       });
   };
 
@@ -777,57 +782,78 @@ function CommandForm({
   };
 
   const renderInputLabel = (parameter: InputParam) => {
-    return <label htmlFor={parameter.key}>{parameter.key}</label>;
+    return (
+      <FormLabel htmlFor={parameter.key} sx={{ fontWeight: "bold" }}>
+        {parameter.key}
+      </FormLabel>
+    );
   };
 
-  // Need to find a better way to handle states of dynamic options loading instead of
-  // checking if loading choices has items and rendering two tables
   return (
-    <div
+    <Box
       key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}`}
-      className="mt-4 mb-4"
+      sx={{ mt: 4, mb: 4 }}
     >
-      <Messages ref={msgs} />
-      <div
-        className="flex justify-content-between mb-3"
+      <Box sx={{ mb: 2 }}>
+        {errorMessages.map((msg, index) => (
+          <Alert key={index} severity={msg.severity} sx={{ mb: 1 }}>
+            <AlertTitle>{msg.summary}</AlertTitle>
+            {msg.detail}
+          </Alert>
+        ))}
+      </Box>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          mb: 3,
+        }}
         key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMAND_TYPE`}
       >
-        <div style={{ width: "20%" }}>
-          <label id="command-type-label" htmlFor="COMMAND_TYPE">
+        <Box sx={{ width: "20%" }}>
+          <FormLabel
+            id="command-type-label"
+            htmlFor="COMMAND_TYPE"
+            sx={{ fontWeight: "bold" }}
+          >
             Command Type
-          </label>
-        </div>
-        <div style={{ width: "80%" }}>
-          <datalist id="selectCommandTypeDropdown" aria-hidden="true">
-            {["ACTION", "INFO", "TEMP"]?.map((status: any) => (
-              <option key={status.label} value={status.value} />
-            ))}
-          </datalist>
-          <Dropdown
-            id="COMMAND_TYPE"
-            value={request?.command_type}
-            onChange={(e) =>
-              setRequest({ ...request, command_type: e.target.value })
-            }
-            options={["ACTION", "INFO", "TEMP"]}
-            disabled={disabled}
-            style={{ maxWidth: "75%" }}
-            pt={{
-              select: {
-                "aria-controls": "selectCommandTypeDropdown",
-              },
-            }}
-          />
-        </div>
-      </div>
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: "80%" }}>
+          <FormControl fullWidth sx={{ maxWidth: "75%" }}>
+            <InputLabel id="command-type-label-select">Command Type</InputLabel>
+            <Select
+              labelId="command-type-label-select"
+              id="COMMAND_TYPE"
+              label="Command Type"
+              value={request?.command_type}
+              onChange={(e) =>
+                setRequest({ ...request, command_type: e.target.value })
+              }
+              disabled={disabled}
+              size="small"
+            >
+              {["ACTION", "INFO", "TEMP"].map((status: any) => (
+                <MenuItem key={status} value={status}>
+                  {status}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+      </Box>
       {parametersFields &&
         parametersFields?.map((parameter: InputParam) => (
-          <div
-            className="flex justify-content-between mb-3"
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              mb: 3,
+            }}
             key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}.${parameter.key}`}
           >
-            <div style={{ width: "20%" }}>{renderInputLabel(parameter)}</div>
-            <div style={{ width: "60%" }}>
+            <Box sx={{ width: "20%" }}>{renderInputLabel(parameter)}</Box>
+            <Box sx={{ width: "60%" }}>
               <CommandFormField
                 parameter={parameter}
                 disabled={disabled}
@@ -836,21 +862,28 @@ function CommandForm({
                 handleChange={handleChange}
                 resetForm={resetForm}
               />
-            </div>
-            <div style={{ overflowWrap: "break-word", width: "20%" }}>
-              {parameter.description}
-            </div>
-          </div>
+            </Box>
+            <Box sx={{ overflowWrap: "break-word", width: "20%" }}>
+              <Typography variant="body2" color="text.secondary">
+                {parameter.description}
+              </Typography>
+            </Box>
+          </Box>
         ))}
       {(() => {
         const commentId = `${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMENT`;
         return (
-          <div className="flex justify-content-between mb-3" key={commentId}>
-            <div style={{ width: "20%" }}>
-              <label htmlFor={commentId}>Comment</label>
-            </div>
-            <div style={{ width: "80%" }}>
-              <InputTextarea
+          <Box
+            sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}
+            key={commentId}
+          >
+            <Box sx={{ width: "20%" }}>
+              <FormLabel htmlFor={commentId} sx={{ fontWeight: "bold" }}>
+                Comment
+              </FormLabel>
+            </Box>
+            <Box sx={{ width: "80%" }}>
+              <TextField
                 id={commentId}
                 name={commentId}
                 value={request?.comment}
@@ -858,14 +891,17 @@ function CommandForm({
                   setRequest({ ...request, comment: e.target.value })
                 }
                 disabled={disabled}
-                style={{ maxWidth: "75%" }}
-                tooltip="Comment Field"
+                multiline
+                rows={3}
+                size="small"
+                sx={{ maxWidth: "75%" }}
+                placeholder="Comment Field"
               />
-            </div>
-          </div>
+            </Box>
+          </Box>
         );
       })()}
-    </div>
+    </Box>
   );
 }
 
