@@ -5,6 +5,7 @@ import { Dropdown } from "primereact/dropdown";
 import { InputSwitch } from "primereact/inputswitch";
 import { useEffect, useRef, useState } from "react";
 
+import { useColorMode } from "../providers/ColorModeProvider";
 import {
   ChangePowerUser,
   ChangeTheme,
@@ -22,6 +23,7 @@ function UserOverlay({
   onLogout: any;
   onClearSession: any;
 }) {
+  const toggleColorMode = useColorMode();
   const [color, setColor] = useState<string>(
     localStorage.getItem("theme_color") || "blue",
   );
@@ -84,7 +86,10 @@ function UserOverlay({
         <div className="flex align-items-center gap-2">
           <InputSwitch
             checked={dark}
-            onChange={(e) => setDark(e.value)}
+            onChange={(e) => {
+              setDark(e.value);
+              toggleColorMode(e.value);
+            }}
             className="align-self-center"
             pt={{
               root: {
@@ -187,7 +192,7 @@ function UserOverlay({
           <Divider />
           <AccessButton
             size="small"
-            severity="warning"
+            color="warning"
             className="mr-2"
             onClick={onClearSession}
             data-testid="clear-session-overlay"

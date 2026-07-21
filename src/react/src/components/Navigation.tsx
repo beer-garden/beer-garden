@@ -199,7 +199,7 @@ function NavigationMenu({
   const navButtonStyles = {
     display: { xs: "none", md: "flex" },
     whiteSpace: "nowrap",
-    color: "white",
+    color: "text.secondary",
     backgroundColor: "primary.main",
     textTransform: "none",
     "&:hover": {
@@ -553,7 +553,7 @@ function NavigationMenu({
 
   return (
     <AppBar position="static">
-      <Container maxWidth={false}>
+      <Container maxWidth={false} sx={{ backgroundColor: "primary.main" }}>
         <Toolbar
           disableGutters
           sx={{ display: "flex", alignItems: "center", gap: 2 }}
@@ -561,7 +561,7 @@ function NavigationMenu({
           <Button
             sx={{
               whiteSpace: "nowrap",
-              color: "white",
+              color: "text.secondary",
               backgroundColor: "primary.main",
               textTransform: "none",
               "&:hover": {
@@ -588,7 +588,7 @@ function NavigationMenu({
             onClick={handleHamburgerMenuOpen}
             sx={{
               display: { xs: "flex", md: "none" },
-              color: "white",
+              color: "text.secondary",
               backgroundColor: "primary.main",
               textTransform: "none",
               "&:hover": {
@@ -651,7 +651,6 @@ function NavigationMenu({
             <AccessButton
               sx={{ height: "36px" }}
               color="secondary"
-              text
               className="mr-2"
               onClick={toggleRunTour}
               tooltip="Start Tour"
@@ -667,7 +666,6 @@ function NavigationMenu({
               tooltip="User Preferences Menu"
               basic
               onClick={(e) => op.current?.toggle(e)}
-              text
               title="Preferences"
             >
               {username !== undefined ? (
