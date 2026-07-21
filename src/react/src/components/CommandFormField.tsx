@@ -6,7 +6,6 @@ import { Checkbox } from "primereact/checkbox";
 import { Dropdown } from "primereact/dropdown";
 import { FileUpload, FileUploadFile } from "primereact/fileupload";
 import { InputNumber } from "primereact/inputnumber";
-import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { MultiSelect } from "primereact/multiselect";
 import { ProgressBar } from "primereact/progressbar";
@@ -312,7 +311,7 @@ function CommandFormField({
       if (parameter.multi) {
         return (
           <Container id={parameter.key} key={parameter.key}>
-            {parameter.value?.map((item: any, index: any) => (              
+            {parameter.value?.map((item: any, index: any) => (
               <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
                 <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
                   <Tooltip
@@ -372,20 +371,22 @@ function CommandFormField({
           key={parameter.key}
           sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
         >
-          <InputText
+          <TextField
             id={parameter.key}
             value={parameter.value}
-            invalid={
-              (!disabled &&
-                !parameter.optional &&
-                (parameter.value === undefined ||
-                  parameter.value === null ||
-                  parameter.value === "")) ||
-              undefined
-            }
-            onChange={(e) => handleChange(e.target.id, e.target.value)}
+            variant="outlined"
+            onChange={(event: ChangeEvent<HTMLInputElement>) => {
+              handleChange(parameter.key, event.target.value);
+            }}
+            fullWidth
             disabled={disabled}
-            tooltip={`${inputAreaAriaLabel}: String`}
+            error={
+              !disabled &&
+              !parameter.optional &&
+              (parameter.value === undefined ||
+                parameter.value === null ||
+                parameter.value === "")
+            }
           />
         </Box>
       );
