@@ -1,7 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Grid } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
-import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import { PrimeReactProvider } from "primereact/api";
 import { ConfirmDialog } from "primereact/confirmdialog";
@@ -538,9 +537,15 @@ function App() {
                     open={requestItem !== undefined}
                     fullScreen={fullScreenDialog}
                     maxWidth="xl"
+                    scroll="paper"
                     onClose={() => {
                       setRequestItem(undefined);
                       setFullScreenDialog(false);
+                    }}
+                    sx={{
+                      "& .MuiPaper-root": {
+                        minWidth: "50%",
+                      },
                     }}
                   >
                     <DialogTitle
@@ -587,18 +592,16 @@ function App() {
                       </Grid>
                     </DialogTitle>
 
-                    <DialogContent dividers>
-                      <RequestItemCard
-                        removeItem={() => {
-                          setRequestItem(undefined);
-                        }}
-                        updateRequestItem={addRequestItem}
-                        requestItem={requestItem}
-                        listeners={listeners}
-                        config={config}
-                        isDialog={true}
-                      />
-                    </DialogContent>
+                    <RequestItemCard
+                      removeItem={() => {
+                        setRequestItem(undefined);
+                      }}
+                      updateRequestItem={addRequestItem}
+                      requestItem={requestItem}
+                      listeners={listeners}
+                      config={config}
+                      isDialog={true}
+                    />
                   </Dialog>
                 )}
                 <div
