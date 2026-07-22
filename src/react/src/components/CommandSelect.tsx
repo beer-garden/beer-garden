@@ -1,13 +1,13 @@
 import { Box } from "@mui/material";
-import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
 import { validate as validateVersion } from "compare-versions";
-import { ChangeEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Command, Instance, System } from "../models/brewtils-types";
 import { RequestCommand } from "../models/models";
 import { DetermineLatestSystemVersion } from "../services/system_service";
 import { CompareObjects } from "../services/util_service";
+import Autocomplete from "@mui/material/Autocomplete";
 
 interface CommandSelectProps {
   systems: Array<System> | null;
@@ -316,184 +316,61 @@ function CommandSelect({
         justifyContent: "center",
       }}
     >
-      {namespaces.length === 0 && (
-        <TextField
-          sx={{ width: "100%", m: 2 }}
-          id={`select-namespace`}
-          select
-          disabled
-          label="Namespace"
-          placeholder="Select Namespace"
-          slotProps={{
-            input: { "aria-label": "Select Namespace" },
-          }}
-        />
-      )}
-      {namespaces.length > 0 && (
-        <TextField
-          sx={{ width: "100%", m: 2 }}
-          id={`select-namespace`}
-          select
-          label="Namespace"
-          value={selectedNamespace}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => {
-            setSelectedNamespace(event.target.value);
-          }}
-          placeholder="Select Namespace"
-          slotProps={{
-            input: { "aria-label": "Select Namespace" },
-          }}
-        >
-          {namespaces.map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
-      )}
-
-      {systemNames.length === 0 && (
-        <TextField
-          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
-          id={`select-system`}
-          select
-          label="System"
-          placeholder="Select System"
-          slotProps={{
-            input: { "aria-label": "Select System" },
-          }}
-        />
-      )}
-      {systemNames.length > 0 && (
-        <TextField
-          sx={{ width: "100%", mr: 2, my: 2 }}
-          id={`select-system`}
-          select
-          label="System"
-          value={selectedSystemName}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => {
-            setSelectedSystemName(event.target.value);
-          }}
-          placeholder="Select System"
-          slotProps={{
-            input: { "aria-label": "Select System" },
-          }}
-        >
-          {systemNames.map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
-      )}
-
-      {versions.length === 0 && (
-        <TextField
-          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
-          id={`select-version`}
-          select
-          label="Version"
-          disabled
-          placeholder="Select Version"
-          slotProps={{
-            input: { "aria-label": "Select Version" },
-          }}
-        />
-      )}
-      {versions.length > 0 && (
-        <TextField
-          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
-          id={`select-version`}
-          select
-          label="Version"
-          value={selectedVersion}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => {
-            setSelectedVersion(event.target.value);
-          }}
-          placeholder="Select Version"
-          slotProps={{
-            input: { "aria-label": "Select Version" },
-          }}
-        >
-          {versions.map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
-      )}
-
-      {instances.length === 0 && (
-        <TextField
-          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
-          id={`select-instance`}
-          select
-          label="Instance"
-          disabled
-          placeholder="Select Instance"
-          slotProps={{
-            input: { "aria-label": "Select Instance" },
-          }}
-        />
-      )}
-      {instances.length > 0 && (
-        <TextField
-          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
-          id={`select-instance`}
-          select
-          label="Instance"
-          value={selectedInstance}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => {
-            setSelectedInstance(event.target.value);
-          }}
-          placeholder="Select Instance"
-          slotProps={{
-            input: { "aria-label": "Select Instance" },
-          }}
-        >
-          {instances.map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
-      )}
-
-      {commands.length === 0 && (
-        <TextField
-          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
-          id={`select-command`}
-          select
-          disabled
-          label="Command"
-          placeholder="Select Command"
-          slotProps={{
-            input: { "aria-label": "Select Command" },
-          }}
-        />
-      )}
-      {commands.length > 0 && (
-        <TextField
-          sx={{ width: "100%", mr: 2, mt: 2, mb: 2 }}
-          id={`select-command`}
-          select
-          label="Command"
-          value={selectedCommand}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => {
-            setSelectedCommand(event.target.value);
-          }}
-          placeholder="Select Command"
-          slotProps={{
-            input: { "aria-label": "Select Command" },
-          }}
-        >
-          {commands.map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </TextField>
-      )}
+      <Autocomplete
+        sx={{ width: "100%", m: 2 }}
+        id={`select-namespace`}
+        disabled={namespaces && namespaces.length === 0}
+        options={namespaces}
+        value={selectedNamespace ?? null}
+        onChange={(_event: any, newValue: string | null) => {
+          setSelectedNamespace(newValue === null ? undefined : newValue);
+        }}
+        renderInput={(params) => <TextField {...params} label="Namespace" />}
+      />
+      <Autocomplete
+        sx={{ width: "100%", m: 2 }}
+        id={`select-system`}
+        disabled={systemNames && systemNames.length === 0}
+        options={systemNames}
+        value={selectedSystemName ?? null}
+        onChange={(_event: any, newValue: string | null) => {
+          setSelectedSystemName(newValue === null ? undefined : newValue);
+        }}
+        renderInput={(params) => <TextField {...params} label="System" />}
+      />
+      <Autocomplete
+        sx={{ width: "100%", m: 2 }}
+        id={`select-version`}
+        options={versions}
+        value={selectedVersion ?? null}
+        onChange={(_event: any, newValue: string | null) => {
+          setSelectedVersion(newValue === null ? undefined : newValue);
+        }}
+        disabled={versions && versions.length === 0}
+        renderInput={(params) => <TextField {...params} label="Version" />}
+      />
+      <Autocomplete
+        sx={{ width: "100%", m: 2 }}
+        id={`select-version`}
+        options={instances}
+        value={selectedInstance ?? null}
+        onChange={(_event: any, newValue: string | null) => {
+          setSelectedInstance(newValue === null ? undefined : newValue);
+        }}
+        disabled={instances && instances.length === 0}
+        renderInput={(params) => <TextField {...params} label="Instance" />}
+      />
+      <Autocomplete
+        sx={{ width: "100%", m: 2 }}
+        id={`select-command`}
+        options={commands}
+        value={selectedCommand ?? null}
+        onChange={(_event: any, newValue: string | null) => {
+          setSelectedCommand(newValue === null ? undefined : newValue);
+        }}
+        disabled={commands && commands.length === 0}
+        renderInput={(params) => <TextField {...params} label="Command" />}
+      />
     </Box>
   );
 }
