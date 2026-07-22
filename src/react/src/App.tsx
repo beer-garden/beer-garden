@@ -545,9 +545,15 @@ function App() {
                       open={requestItem !== undefined}
                       fullScreen={fullScreenDialog}
                       maxWidth="xl"
+                      scroll="paper"
                       onClose={() => {
                         setRequestItem(undefined);
                         setFullScreenDialog(false);
+                      }}
+                      sx={{
+                        "& .MuiPaper-root": {
+                          minWidth: "50%",
+                        },
                       }}
                     >
                       <DialogTitle
