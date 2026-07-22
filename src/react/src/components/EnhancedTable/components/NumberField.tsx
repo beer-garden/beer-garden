@@ -92,13 +92,13 @@ export default function NumberField({
                 <BaseNumberField.Increment
                   render={<IconButton size={size} aria-label="Increase" />}
                 >
-                  <FontAwesomeIcon icon="arrow-up" />
+                  <FontAwesomeIcon icon="angle-up" />
                 </BaseNumberField.Increment>
 
                 <BaseNumberField.Decrement
                   render={<IconButton size={size} aria-label="Decrease" />}
                 >
-                  <FontAwesomeIcon icon="arrow-down" />
+                  <FontAwesomeIcon icon="angle-down" />
                 </BaseNumberField.Decrement>
               </InputAdornment>
             }
