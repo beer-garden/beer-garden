@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useColorScheme } from "@mui/material/styles";
 import { Avatar } from "primereact/avatar";
 import { Divider } from "primereact/divider";
 import { Dropdown } from "primereact/dropdown";
@@ -31,6 +32,11 @@ function UserOverlay({
   const [showAdvancedOption, setShowAdvancedOption] = useState<boolean>(
     localStorage.getItem("user_advanced") === "true" || false,
   );
+
+  const { mode, setMode } = useColorScheme();
+  if (!mode) {
+    setMode("light");
+  }
 
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
@@ -83,8 +89,11 @@ function UserOverlay({
         )}
         <div className="flex align-items-center gap-2">
           <InputSwitch
-            checked={dark}
-            onChange={(e) => setDark(e.value)}
+            checked={mode === "dark"}
+            onChange={(e) => {
+              setDark(e.value);
+              setMode(e.value ? "dark" : "light");
+            }}
             className="align-self-center"
             pt={{
               root: {
