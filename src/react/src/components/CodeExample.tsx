@@ -176,14 +176,9 @@ function CodeExample({
       maxWidth="md"
       fullWidth
     >
-      <DialogTitle
-        sx={{ m: 0, p: 2 }}
-        id="customized-dialog-title"
-      >
+      <DialogTitle sx={{ m: 0, p: 2 }} id="customized-dialog-title">
         <Grid container>
-          <Grid size="grow">
-            Code Examples
-          </Grid>
+          <Grid size="grow">Code Examples</Grid>
           <Grid>
             <AccessButton
               sx={{ mr: 2 }}
