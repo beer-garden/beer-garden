@@ -1,5 +1,12 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Dialog } from "primereact/dialog";
+import {
+  Box,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  Typography,
+} from "@mui/material";
 
 import { Request } from "../models/brewtils-types";
 import { useSnackbar } from "../providers/SnackbarProvider";
@@ -134,8 +141,8 @@ function CodeExample({
     };
 
     return (
-      <div style={{ position: "relative" }}>
-        <h3>{codeType}</h3>
+      <Box sx={{ position: "relative", mb: 2 }}>
+        <Typography variant="h6">{codeType}</Typography>
         <AccessButton
           className="p-button-rounded p-button-text"
           onClick={copyToClipboard}
@@ -155,28 +162,52 @@ function CodeExample({
             {code()}
           </code>
         </pre>
-      </div>
+      </Box>
     );
   };
 
   return (
     <Dialog
-      header={"Code Examples"}
-      visible={visibleCodeExample}
-      onHide={() => {
+      open={visibleCodeExample}
+      onClose={() => {
         if (!visibleCodeExample) return;
         setVisibleCodeExample(false);
       }}
-      style={{ width: "50vw" }}
+      maxWidth="md"
+      fullWidth
     >
-      <div>Bytes and Base64 parameters are not supported in code examples.</div>
-      {CodeBlock("Python")}
+      <DialogTitle
+        sx={{ m: 0, p: 2 }}
+        id="customized-dialog-title"
+      >
+        <Grid container>
+          <Grid size="grow">
+            Code Examples
+          </Grid>
+          <Grid>
+            <AccessButton
+              sx={{ mr: 2 }}
+              onClick={() => {
+                setVisibleCodeExample(false);
+              }}
+            >
+              <FontAwesomeIcon icon="xmark" />
+            </AccessButton>
+          </Grid>
+        </Grid>
+      </DialogTitle>
+      <DialogContent dividers>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          Bytes and Base64 parameters are not supported in code examples.
+        </Typography>
+        {CodeBlock("Python")}
 
-      {CodeBlock("cURL")}
+        {CodeBlock("cURL")}
 
-      {CodeBlock("Wget")}
+        {CodeBlock("Wget")}
 
-      {CodeBlock("JSON")}
+        {CodeBlock("JSON")}
+      </DialogContent>
     </Dialog>
   );
 }
