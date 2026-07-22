@@ -371,23 +371,25 @@ function CommandFormField({
           key={parameter.key}
           sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
         >
-          <TextField
-            id={parameter.key}
-            value={parameter.value}
-            variant="outlined"
-            onChange={(event: ChangeEvent<HTMLInputElement>) => {
-              handleChange(parameter.key, event.target.value);
-            }}
-            fullWidth
-            disabled={disabled}
-            error={
-              !disabled &&
-              !parameter.optional &&
-              (parameter.value === undefined ||
-                parameter.value === null ||
-                parameter.value === "")
-            }
-          />
+          <Tooltip title={`${inputAreaAriaLabel}: String`}>
+            <TextField
+              id={parameter.key}
+              value={parameter.value}
+              variant="outlined"
+              onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                handleChange(parameter.key, event.target.value);
+              }}
+              fullWidth
+              disabled={disabled}
+              error={
+                !disabled &&
+                !parameter.optional &&
+                (parameter.value === undefined ||
+                  parameter.value === null ||
+                  parameter.value === "")
+              }
+            />
+          </Tooltip>
         </Box>
       );
     }
