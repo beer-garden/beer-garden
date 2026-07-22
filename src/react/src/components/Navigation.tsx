@@ -609,7 +609,7 @@ function NavigationMenu({
           {items
             .filter((item: linkProps) => item.visible !== false)
             .map((item: linkProps) => (
-              <Box sx={{ color: "inherit" }}>{item.buttonTemplate()}</Box>
+              <Box key={item.label}>{item.buttonTemplate()}</Box>
             ))}
 
           <Box sx={{ ml: "auto" }} />

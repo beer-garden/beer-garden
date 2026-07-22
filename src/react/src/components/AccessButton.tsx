@@ -20,9 +20,18 @@ const AccessButton = ({
   renderAuthFailed,
   children,
   basic,
+  text,
+  raised,
+  rounded,
   ...props
 }: PropsWithChildren<
-  ButtonProps & HasAccessProps & { basic?: boolean | undefined }
+  ButtonProps &
+    HasAccessProps & {
+      basic?: boolean | undefined;
+      text?: boolean | undefined;
+      raised?: boolean | undefined;
+      rounded?: boolean | undefined;
+    }
 >) => {
   if (!tooltip) {
     if (Object.hasOwn(props, "aria-label")) {
@@ -77,6 +86,22 @@ const AccessButton = ({
     } else {
       props.className = "basic";
     }
+  }
+
+  if (!Object.hasOwn(props, "sx")) {
+    props.sx = {};
+  }
+
+  if (rounded) {
+    props.sx = { ...props.sx, ...{ borderRadius: "50px" } };
+  }
+
+  if (raised) {
+    props.variant = "contained";
+  }
+
+  if (text) {
+    props.variant = "text";
   }
 
   if (permission && config && config?.auth_enabled === true) {

@@ -1,18 +1,18 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Box, Container, TextField, Tooltip, Typography } from "@mui/material";
 import { AutoComplete } from "primereact/autocomplete";
 import { Calendar } from "primereact/calendar";
 import { Checkbox } from "primereact/checkbox";
 import { Dropdown } from "primereact/dropdown";
 import { FileUpload, FileUploadFile } from "primereact/fileupload";
 import { InputNumber } from "primereact/inputnumber";
-import { InputText } from "primereact/inputtext";
 import { InputTextarea } from "primereact/inputtextarea";
 import { MultiSelect } from "primereact/multiselect";
 import { ProgressBar } from "primereact/progressbar";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { TriStateCheckbox } from "primereact/tristatecheckbox";
 import { classNames } from "primereact/utils";
-import { useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 import { InputParam } from "../models/models";
@@ -310,62 +310,87 @@ function CommandFormField({
     case "String": {
       if (parameter.multi) {
         return (
-          <div id={parameter.key} key={parameter.key} className="p-field">
-            <div className="container">
-              {parameter.value?.map((item: any, index: any) => (
-                <div key={`${parameter.key}-${index}`} className="dynamic-item">
-                  <InputText
-                    id={`${parameter.key}-${index}`}
-                    value={item ?? ""}
-                    invalid={
-                      (!disabled &&
+          <Container id={parameter.key} key={parameter.key}>
+            {parameter.value?.map((item: any, index: any) => (
+              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
+                  <Tooltip
+                    title={`${inputAreaAriaLabel} Index ${index}: String`}
+                  >
+                    <TextField
+                      id={`${parameter.key}-${index}`}
+                      value={item}
+                      variant="outlined"
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                        handleMultiChange(
+                          parameter.key,
+                          event.target.value,
+                          index,
+                        );
+                      }}
+                      fullWidth
+                      disabled={disabled}
+                      error={
+                        !disabled &&
                         !parameter.optional &&
-                        (item === undefined || item === null || item === "")) ||
-                      undefined
-                    }
-                    onChange={(e) =>
-                      handleMultiChange(parameter.key, e.target.value, index)
-                    }
-                    disabled={disabled}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}: String`}
-                  />
+                        (item === undefined || item === null || item === "")
+                      }
+                    />
+                  </Tooltip>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
                   <AccessButton
                     label="Remove"
-                    severity="danger"
+                    color="warning"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
                     tooltip={`${removeInputAriaLabel} Index ${index}`}
-                  />
-                </div>
-              ))}
+                  >
+                    <Typography variant="button">Remove</Typography>
+                  </AccessButton>
+                </Box>
+              </Box>
+            ))}
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-              />
-            </div>
-          </div>
+              >
+                <Typography variant="button">
+                  Add {parameter.display_name ?? parameter.key}
+                </Typography>
+              </AccessButton>
+            </Box>
+          </Container>
         );
       }
       return (
-        <div key={parameter.key} className="p-field">
-          <InputText
-            id={parameter.key}
-            value={parameter.value}
-            invalid={
-              (!disabled &&
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          <Tooltip title={`${inputAreaAriaLabel}: String`}>
+            <TextField
+              id={parameter.key}
+              value={parameter.value}
+              variant="outlined"
+              onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                handleChange(parameter.key, event.target.value);
+              }}
+              fullWidth
+              disabled={disabled}
+              error={
+                !disabled &&
                 !parameter.optional &&
                 (parameter.value === undefined ||
                   parameter.value === null ||
-                  parameter.value === "")) ||
-              undefined
-            }
-            onChange={(e) => handleChange(e.target.id, e.target.value)}
-            disabled={disabled}
-            tooltip={`${inputAreaAriaLabel}: String`}
-          />
-        </div>
+                  parameter.value === "")
+              }
+            />
+          </Tooltip>
+        </Box>
       );
     }
     case "Dictionary": {
