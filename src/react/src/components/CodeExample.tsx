@@ -1,5 +1,11 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Dialog, DialogTitle, DialogContent, Box, Typography } from "@mui/material";
+import {
+  Box,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Typography,
+} from "@mui/material";
 
 import { Request } from "../models/brewtils-types";
 import { useSnackbar } from "../providers/SnackbarProvider";
