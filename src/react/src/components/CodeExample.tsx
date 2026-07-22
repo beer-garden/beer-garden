@@ -4,6 +4,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  Grid,
   Typography,
 } from "@mui/material";
 
@@ -175,8 +176,27 @@ function CodeExample({
       maxWidth="md"
       fullWidth
     >
-      <DialogTitle>Code Examples</DialogTitle>
-      <DialogContent>
+      <DialogTitle
+        sx={{ m: 0, p: 2 }}
+        id="customized-dialog-title"
+      >
+        <Grid container>
+          <Grid size="grow">
+            Code Examples
+          </Grid>
+          <Grid>
+            <AccessButton
+              sx={{ mr: 2 }}
+              onClick={() => {
+                setVisibleCodeExample(false);
+              }}
+            >
+              <FontAwesomeIcon icon="xmark" />
+            </AccessButton>
+          </Grid>
+        </Grid>
+      </DialogTitle>
+      <DialogContent dividers>
         <Typography variant="body2" sx={{ mb: 2 }}>
           Bytes and Base64 parameters are not supported in code examples.
         </Typography>
