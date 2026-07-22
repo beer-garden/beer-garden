@@ -723,7 +723,7 @@ function NavigationMenu({
                     <Box
                       sx={{
                         width: "400px",
-                        border: "1px solid black",
+                        boxShadow: 3,
                         p: 1,
                         bgcolor: "background.paper",
                       }}
