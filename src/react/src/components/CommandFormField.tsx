@@ -18,6 +18,7 @@ import { v4 as uuidv4 } from "uuid";
 import { InputParam } from "../models/models";
 import { uploadFile } from "../services/file_service";
 import AccessButton from "./AccessButton";
+import NumberField from "./EnhancedTable/components/NumberField";
 interface CommandFormFieldParams {
   parameter: InputParam;
   disabled: boolean;
@@ -523,29 +524,34 @@ function CommandFormField({
         );
       }
       return (
-        <div key={parameter.key} className="p-field">
-          <InputNumber
-            id={parameter.key}
-            value={parameter.value}
-            invalid={
-              (!disabled &&
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          <Tooltip
+            title={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+          >
+            <NumberField
+              id={parameter.key}
+              value={parameter.value}
+              disabled={disabled}
+              onValueChange={(value) => handleChange(parameter.key, value)}
+              error={
+                !disabled &&
                 !parameter.optional &&
                 (parameter.value === undefined ||
                   parameter.value === null ||
-                  parameter.value === "")) ||
-              undefined
-            }
-            max={
-              parameter.maximum !== undefined ? parameter.maximum : undefined
-            }
-            min={
-              parameter.minimum !== undefined ? parameter.minimum : undefined
-            }
-            onValueChange={(e) => handleChange(e.target.id, e.target.value)}
-            disabled={disabled}
-            tooltip={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-          />
-        </div>
+                  parameter.value === "")
+              }
+              max={
+                parameter.maximum !== undefined ? parameter.maximum : undefined
+              }
+              min={
+                parameter.minimum !== undefined ? parameter.minimum : undefined
+              }
+            />
+          </Tooltip>
+        </Box>
       );
     }
     case "Float": {
