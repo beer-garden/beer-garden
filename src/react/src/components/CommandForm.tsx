@@ -849,6 +849,7 @@ function CommandForm({
               display: "flex",
               justifyContent: "space-between",
               mb: 3,
+              alignItems: "center",
             }}
             key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}.${parameter.key}`}
           >
