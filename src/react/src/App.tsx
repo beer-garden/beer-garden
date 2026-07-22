@@ -25,7 +25,6 @@ import RoleIndex from "./layouts/RoleIndex";
 import Swagger from "./layouts/Swagger";
 import TopicIndex from "./layouts/TopicIndex";
 import UserIndex from "./layouts/UserIndex";
-import Workspace from "./layouts/Workspace";
 import { Garden, Instance, System } from "./models/brewtils-types";
 import { Config, Listener, RequestItem, TourStepProps } from "./models/models";
 import { AutoCompletePT } from "./passthrough/AutoCompletePT";
@@ -125,7 +124,6 @@ function App() {
 
   const runReloadUI = () => {
     sessionStorage.clear();
-    localStorage.removeItem("requestItems");
     setReloadUI(reloadUI + 1);
   };
 
@@ -658,77 +656,12 @@ function App() {
                           }
                         />
                         <Route
-                          path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              display={false}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/recreate/:requestId"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              display={false}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/workspace"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/workspace/request/:requestId"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              display={true}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/workspace/job/:jobId"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              display={true}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
                           path="/jobs"
                           element={
                             <JobIndex
                               listeners={listeners.current}
                               tourStepsRef={tourStepsRef}
                               addRequestItem={addRequestItem}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/job/:jobId"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              display={false}
-                              tourStepsRef={tourStepsRef}
                               config={config}
                             />
                           }
