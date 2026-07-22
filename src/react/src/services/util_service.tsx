@@ -35,6 +35,7 @@ export const CompareObjects = (obj1: any, obj2: any) => {
 
   if (keys1.length !== keys2.length) return false; // Must have the same number of keys
 
+  // Does not validate order of elements
   if (Array.isArray(obj1) && Array.isArray(obj2)) {
     for (const obj1Value of obj1) {
       if (!obj2.some((obj2Value) => CompareObjects(obj1Value, obj2Value))) {
