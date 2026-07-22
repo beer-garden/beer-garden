@@ -461,7 +461,7 @@ class Application(StoppableThread):
                 client_cert=config.get("ssl.client_cert", cfg),
                 client_key=config.get("ssl.client_key", cfg),
             )
-
+ 
             event_manager.register(
                 # Keep filter list in sync with Stomp StompManager._event_handler()
                 HttpParentUpdater(
