@@ -1,6 +1,10 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Grid } from "@mui/material";
+import Dialog from "@mui/material/Dialog";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import { PrimeReactProvider } from "primereact/api";
 import { ConfirmDialog } from "primereact/confirmdialog";
-import { Dialog } from "primereact/dialog";
 import { Skeleton } from "primereact/skeleton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -8,6 +12,7 @@ import { ACTIONS, type EventData, Joyride, STATUS } from "react-joyride";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
+import AccessButton from "./components/AccessButton";
 import ErrorPage from "./components/ErrorPage";
 import HasAccess from "./components/HasAccess";
 import NavigationMenu from "./components/Navigation";
@@ -57,6 +62,8 @@ function App() {
   const [requestItem, setRequestItem] = useState<RequestItem | undefined>(
     undefined,
   );
+
+  const [fullScreenDialog, setFullScreenDialog] = useState(false);
 
   const addRequestItem = (itemParams?: Partial<RequestItem>) => {
     const newItem: RequestItem = {
@@ -528,26 +535,59 @@ function App() {
                 <ConfirmDialog />
                 {requestItem && (
                   <Dialog
-                    visible={requestItem !== undefined}
-                    style={{ width: "70%", overflowY: "auto" }}
-                    modal
-                    maximizable
-                    onHide={() => {
+                    open={requestItem !== undefined}
+                    fullScreen={fullScreenDialog}
+                    maxWidth="xl"
+                    onClose={() => {
                       setRequestItem(undefined);
-                    }}
-                    header={() => {
-                      if (requestItem.type === "REQUEST") {
-                        return "Create Request";
-                      } else if (requestItem.type === "VIEW_REQUEST") {
-                        return `View Request: ${requestItem?.requestId}`;
-                      } else if (requestItem.type === "VIEW_JOB") {
-                        return `View Scheduled Job: ${requestItem?.jobId}`;
-                      } else if (requestItem.type === "VIEW_TOPIC") {
-                        return `View Topic: ${requestItem?.topic?.name}`;
-                      }
+                      setFullScreenDialog(false);
                     }}
                   >
-                    <>
+                    <DialogTitle
+                      sx={{ m: 0, p: 2 }}
+                      id="customized-dialog-title"
+                    >
+                      <Grid container>
+                        <Grid size="grow">
+                          {requestItem.type === "REQUEST" && "Create Request"}
+                          {requestItem.type === "VIEW_REQUEST" &&
+                            `View Request: ${requestItem?.requestId}`}
+                          {requestItem.type === "VIEW_JOB" &&
+                            `View Scheduled Job: ${requestItem?.jobId}`}
+                          {requestItem.type === "VIEW_TOPIC" &&
+                            `View Topic: ${requestItem?.topic?.name}`}
+                        </Grid>
+                        <Grid>
+                          {fullScreenDialog === false && (
+                            <AccessButton
+                              sx={{ mr: 2 }}
+                              onClick={() => setFullScreenDialog(true)}
+                            >
+                              <FontAwesomeIcon icon="maximize" />
+                            </AccessButton>
+                          )}
+                          {fullScreenDialog === true && (
+                            <AccessButton
+                              sx={{ mr: 2 }}
+                              onClick={() => setFullScreenDialog(false)}
+                            >
+                              <FontAwesomeIcon icon="minimize" />
+                            </AccessButton>
+                          )}
+                          <AccessButton
+                            sx={{ mr: 2 }}
+                            onClick={() => {
+                              setRequestItem(undefined);
+                              setFullScreenDialog(false);
+                            }}
+                          >
+                            <FontAwesomeIcon icon="xmark" />
+                          </AccessButton>
+                        </Grid>
+                      </Grid>
+                    </DialogTitle>
+
+                    <DialogContent dividers>
                       <RequestItemCard
                         removeItem={() => {
                           setRequestItem(undefined);
@@ -558,7 +598,7 @@ function App() {
                         config={config}
                         isDialog={true}
                       />
-                    </>
+                    </DialogContent>
                   </Dialog>
                 )}
                 <div
