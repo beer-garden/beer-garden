@@ -1,7 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { CssBaseline, Grid } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
-import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import { ThemeProvider } from "@mui/material/styles";
 import { PrimeReactProvider } from "primereact/api";
@@ -504,7 +503,11 @@ function App() {
   }
 
   return (
-    <ThemeProvider theme={theme} modeStorageKey="user_theme" defaultMode="light">
+    <ThemeProvider
+      theme={theme}
+      modeStorageKey="user_theme"
+      defaultMode="light"
+    >
       <CssBaseline />
       <PrimeReactProvider value={primeValue}>
         <SnackbarProvider>
@@ -591,18 +594,16 @@ function App() {
                         </Grid>
                       </DialogTitle>
 
-                      <DialogContent dividers>
-                        <RequestItemCard
-                          removeItem={() => {
-                            setRequestItem(undefined);
-                          }}
-                          updateRequestItem={addRequestItem}
-                          requestItem={requestItem}
-                          listeners={listeners}
-                          config={config}
-                          isDialog={true}
-                        />
-                      </DialogContent>
+                      <RequestItemCard
+                        removeItem={() => {
+                          setRequestItem(undefined);
+                        }}
+                        updateRequestItem={addRequestItem}
+                        requestItem={requestItem}
+                        listeners={listeners}
+                        config={config}
+                        isDialog={true}
+                      />
                     </Dialog>
                   )}
                   <div
