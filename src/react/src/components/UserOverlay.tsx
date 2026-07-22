@@ -34,9 +34,6 @@ function UserOverlay({
   );
 
   const { mode, setMode } = useColorScheme();
-  if (!mode) {
-    setMode("light");
-  }
 
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 

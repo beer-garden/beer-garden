@@ -504,7 +504,7 @@ function App() {
   }
 
   return (
-    <ThemeProvider theme={theme} modeStorageKey="user_theme">
+    <ThemeProvider theme={theme} modeStorageKey="user_theme" defaultMode="light">
       <CssBaseline />
       <PrimeReactProvider value={primeValue}>
         <SnackbarProvider>
