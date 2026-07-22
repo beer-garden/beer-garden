@@ -1,4 +1,5 @@
 import { Avatar, Box, Divider, Stack, Switch, Typography } from "@mui/material";
+import { useColorScheme } from "@mui/material/styles";
 import { useEffect, useState } from "react";
 
 import { ChangePowerUser, ChangeTheme, FAIcon } from "../services/util_service";
