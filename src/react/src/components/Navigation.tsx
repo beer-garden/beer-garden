@@ -219,8 +219,7 @@ function NavigationMenu({
   const navButtonStyles = {
     display: { xs: "none", md: "flex" },
     whiteSpace: "nowrap",
-    color: "white",
-    backgroundColor: "primary.main",
+    color: "inherit",
     textTransform: "none",
     "&:hover": {
       backgroundColor: "primary.dark",
@@ -579,16 +578,7 @@ function NavigationMenu({
           sx={{ display: "flex", alignItems: "center", gap: 2 }}
         >
           <Button
-            sx={{
-              whiteSpace: "nowrap",
-              color: "white",
-              backgroundColor: "primary.main",
-              textTransform: "none",
-              "&:hover": {
-                backgroundColor: "primary.dark",
-                opacity: [0.9, 0.8, 0.7],
-              },
-            }}
+            sx={navButtonStyles}
             component={NavLink}
             to="/"
             {...GenerateTourProps(homeLinkTourStep)}
