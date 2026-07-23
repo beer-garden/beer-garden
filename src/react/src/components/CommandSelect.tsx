@@ -1,4 +1,5 @@
 import { Box } from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import { validate as validateVersion } from "compare-versions";
 import { useEffect, useState } from "react";
@@ -7,7 +8,6 @@ import { Command, Instance, System } from "../models/brewtils-types";
 import { RequestCommand } from "../models/models";
 import { DetermineLatestSystemVersion } from "../services/system_service";
 import { CompareObjects } from "../services/util_service";
-import Autocomplete from "@mui/material/Autocomplete";
 
 interface CommandSelectProps {
   systems: Array<System> | null;
