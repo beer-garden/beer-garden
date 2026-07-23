@@ -1,8 +1,8 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Grid } from "@mui/material";
+import { CssBaseline, Grid } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
-import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import { ThemeProvider } from "@mui/material/styles";
 import { PrimeReactProvider } from "primereact/api";
 import { ConfirmDialog } from "primereact/confirmdialog";
 import { Skeleton } from "primereact/skeleton";
@@ -26,7 +26,6 @@ import RoleIndex from "./layouts/RoleIndex";
 import Swagger from "./layouts/Swagger";
 import TopicIndex from "./layouts/TopicIndex";
 import UserIndex from "./layouts/UserIndex";
-import Workspace from "./layouts/Workspace";
 import { Garden, Instance, System } from "./models/brewtils-types";
 import { Config, Listener, RequestItem, TourStepProps } from "./models/models";
 import { AutoCompletePT } from "./passthrough/AutoCompletePT";
@@ -52,6 +51,7 @@ import { preemptiveRefresh } from "./services/token_service";
 import { GetToken } from "./services/token_service";
 import { ConvertToTourStepProps } from "./services/tour_service";
 import { ChangePowerUser, ChangeTheme } from "./services/util_service";
+import { theme } from "./theme";
 
 function App() {
   const socketRef = useRef(null as null | any);
@@ -126,7 +126,6 @@ function App() {
 
   const runReloadUI = () => {
     sessionStorage.clear();
-    localStorage.removeItem("requestItems");
     setReloadUI(reloadUI + 1);
   };
 
@@ -502,92 +501,103 @@ function App() {
   }
 
   return (
-    <PrimeReactProvider value={primeValue}>
-      <SnackbarProvider>
-        {config && Object.keys(config).length === 0 && (
-          <div>
-            <Skeleton height="5rem" className="mb-2" />
-            <Skeleton height="40rem" />
-          </div>
-        )}
-        {config && Object.keys(config).length > 0 && (
-          <div className="flex" key={reloadUI}>
-            <div className="flex-grow-1">
-              <BrowserRouter basename={baseURL}>
-                {runTour && (
-                  <Joyride
-                    onEvent={handleJoyrideEvent}
-                    continuous
-                    run={true}
-                    steps={ConvertToTourStepProps(tourStepsRef.current)}
-                  />
-                )}
-                <div role="navigation">
-                  <NavigationMenu
-                    listeners={listeners.current}
-                    config={config}
-                    runReloadUI={runReloadUI}
-                    addRequestItem={addRequestItem}
-                    toggleRunTour={toggleRunTour}
-                    tourStepsRef={tourStepsRef}
-                  />
-                </div>
-                <ConfirmDialog />
-                {requestItem && (
-                  <Dialog
-                    open={requestItem !== undefined}
-                    fullScreen={fullScreenDialog}
-                    maxWidth="xl"
-                    onClose={() => {
-                      setRequestItem(undefined);
-                      setFullScreenDialog(false);
-                    }}
-                  >
-                    <DialogTitle
-                      sx={{ m: 0, p: 2 }}
-                      id="customized-dialog-title"
+    <ThemeProvider
+      theme={theme}
+      modeStorageKey="user_theme"
+      defaultMode="light"
+    >
+      <CssBaseline />
+      <PrimeReactProvider value={primeValue}>
+        <SnackbarProvider>
+          {config && Object.keys(config).length === 0 && (
+            <div>
+              <Skeleton height="5rem" className="mb-2" />
+              <Skeleton height="40rem" />
+            </div>
+          )}
+          {config && Object.keys(config).length > 0 && (
+            <div className="flex" key={reloadUI}>
+              <div className="flex-grow-1">
+                <BrowserRouter basename={baseURL}>
+                  {runTour && (
+                    <Joyride
+                      onEvent={handleJoyrideEvent}
+                      continuous
+                      run={true}
+                      steps={ConvertToTourStepProps(tourStepsRef.current)}
+                    />
+                  )}
+                  <div role="navigation">
+                    <NavigationMenu
+                      listeners={listeners.current}
+                      config={config}
+                      runReloadUI={runReloadUI}
+                      addRequestItem={addRequestItem}
+                      toggleRunTour={toggleRunTour}
+                      tourStepsRef={tourStepsRef}
+                    />
+                  </div>
+                  <ConfirmDialog />
+                  {requestItem && (
+                    <Dialog
+                      open={requestItem !== undefined}
+                      fullScreen={fullScreenDialog}
+                      maxWidth="xl"
+                      scroll="paper"
+                      onClose={() => {
+                        setRequestItem(undefined);
+                        setFullScreenDialog(false);
+                      }}
+                      sx={{
+                        "& .MuiPaper-root": {
+                          minWidth: "50%",
+                        },
+                      }}
                     >
-                      <Grid container>
-                        <Grid size="grow">
-                          {requestItem.type === "REQUEST" && "Create Request"}
-                          {requestItem.type === "VIEW_REQUEST" &&
-                            `View Request: ${requestItem?.requestId}`}
-                          {requestItem.type === "VIEW_JOB" &&
-                            `View Scheduled Job: ${requestItem?.jobId}`}
-                          {requestItem.type === "VIEW_TOPIC" &&
-                            `View Topic: ${requestItem?.topic?.name}`}
-                        </Grid>
-                        <Grid>
-                          {fullScreenDialog === false && (
+                      <DialogTitle
+                        sx={{ m: 0, p: 2 }}
+                        id="customized-dialog-title"
+                      >
+                        <Grid container>
+                          <Grid size="grow">
+                            {requestItem.type === "REQUEST" && "Create Request"}
+                            {requestItem.type === "VIEW_REQUEST" &&
+                              `View Request: ${requestItem?.requestId}`}
+                            {requestItem.type === "VIEW_JOB" &&
+                              `View Scheduled Job: ${requestItem?.jobId}`}
+                            {requestItem.type === "VIEW_TOPIC" &&
+                              `View Topic: ${requestItem?.topic?.name}`}
+                          </Grid>
+                          <Grid>
+                            {fullScreenDialog === false && (
+                              <AccessButton
+                                sx={{ mr: 2 }}
+                                onClick={() => setFullScreenDialog(true)}
+                              >
+                                <FontAwesomeIcon icon="maximize" />
+                              </AccessButton>
+                            )}
+                            {fullScreenDialog === true && (
+                              <AccessButton
+                                sx={{ mr: 2 }}
+                                onClick={() => setFullScreenDialog(false)}
+                              >
+                                <FontAwesomeIcon icon="minimize" />
+                              </AccessButton>
+                            )}
                             <AccessButton
                               sx={{ mr: 2 }}
-                              onClick={() => setFullScreenDialog(true)}
+                              onClick={() => {
+                                setRequestItem(undefined);
+                                setFullScreenDialog(false);
+                              }}
                             >
-                              <FontAwesomeIcon icon="maximize" />
+                              <FontAwesomeIcon icon="xmark" />
                             </AccessButton>
-                          )}
-                          {fullScreenDialog === true && (
-                            <AccessButton
-                              sx={{ mr: 2 }}
-                              onClick={() => setFullScreenDialog(false)}
-                            >
-                              <FontAwesomeIcon icon="minimize" />
-                            </AccessButton>
-                          )}
-                          <AccessButton
-                            sx={{ mr: 2 }}
-                            onClick={() => {
-                              setRequestItem(undefined);
-                              setFullScreenDialog(false);
-                            }}
-                          >
-                            <FontAwesomeIcon icon="xmark" />
-                          </AccessButton>
+                          </Grid>
                         </Grid>
-                      </Grid>
-                    </DialogTitle>
+                      </DialogTitle>
 
-                    <DialogContent dividers>
                       <RequestItemCard
                         removeItem={() => {
                           setRequestItem(undefined);
@@ -598,212 +608,147 @@ function App() {
                         config={config}
                         isDialog={true}
                       />
-                    </DialogContent>
-                  </Dialog>
-                )}
-                <div
-                  className="flex-grow-1"
-                  role="main"
-                  id="main-content"
-                  tabIndex={-1}
-                >
-                  <HasAccess
-                    config={config}
-                    permission="READ_ONLY"
-                    renderAuthFailed={
-                      <ErrorPage
-                        errorCode={401}
-                        errorMsg="Insufficient access or not logged in. Please contact Garden Administrator."
-                      />
-                    }
+                    </Dialog>
+                  )}
+                  <div
+                    className="flex-grow-1"
+                    role="main"
+                    id="main-content"
+                    tabIndex={-1}
                   >
-                    <ErrorBoundary FallbackComponent={ErrorFallback}>
-                      <Routes>
-                        <Route
-                          path="/dashboard"
-                          element={
-                            <GardenDashboard
-                              tourStepsRef={tourStepsRef}
-                              gardenRef={rootGardenRef}
-                              systemsRef={systemsRef}
-                              gardenState={gardenState}
-                              systemState={systemState}
-                              addRequestItem={addRequestItem}
-                              config={config}
-                              listeners={listeners.current}
-                            />
-                          }
+                    <HasAccess
+                      config={config}
+                      permission="READ_ONLY"
+                      renderAuthFailed={
+                        <ErrorPage
+                          errorCode={401}
+                          errorMsg="Insufficient access or not logged in. Please contact Garden Administrator."
                         />
-                        <Route
-                          path="/request/:requestId"
-                          element={
-                            <RequestView
-                              listeners={listeners.current}
-                              config={config}
-                              addRequestItem={addRequestItem}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/requests"
-                          element={
-                            <RequestIndex
-                              listeners={listeners.current}
-                              tourStepsRef={tourStepsRef}
-                              addRequestItem={addRequestItem}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              display={false}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/recreate/:requestId"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              display={false}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/workspace"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/workspace/request/:requestId"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              display={true}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/workspace/job/:jobId"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              display={true}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/jobs"
-                          element={
-                            <JobIndex
-                              listeners={listeners.current}
-                              tourStepsRef={tourStepsRef}
-                              addRequestItem={addRequestItem}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/job/:jobId"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              display={false}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/about"
-                          element={<AboutIndex config={config} />}
-                        />
-                        <Route
-                          path="/roles"
-                          element={
-                            <HasAccess
-                              config={config}
-                              permission="GARDEN_ADMIN"
-                              isGlobal={true}
-                              renderAuthFailed={
-                                <ErrorPage
-                                  errorCode={401}
-                                  errorMsg="Insufficient Access for Roles Management. Please contact Garden Administrator"
+                      }
+                    >
+                      <ErrorBoundary FallbackComponent={ErrorFallback}>
+                        <Routes>
+                          <Route
+                            path="/dashboard"
+                            element={
+                              <GardenDashboard
+                                tourStepsRef={tourStepsRef}
+                                gardenRef={rootGardenRef}
+                                systemsRef={systemsRef}
+                                gardenState={gardenState}
+                                systemState={systemState}
+                                addRequestItem={addRequestItem}
+                                config={config}
+                                listeners={listeners.current}
+                              />
+                            }
+                          />
+                          <Route
+                            path="/request/:requestId"
+                            element={
+                              <RequestView
+                                listeners={listeners.current}
+                                config={config}
+                                addRequestItem={addRequestItem}
+                              />
+                            }
+                          />
+                          <Route
+                            path="/requests"
+                            element={
+                              <RequestIndex
+                                listeners={listeners.current}
+                                tourStepsRef={tourStepsRef}
+                                addRequestItem={addRequestItem}
+                              />
+                            }
+                          />
+                          <Route
+                            path="/jobs"
+                            element={
+                              <JobIndex
+                                listeners={listeners.current}
+                                tourStepsRef={tourStepsRef}
+                                addRequestItem={addRequestItem}
+                                config={config}
+                              />
+                            }
+                          />
+                          <Route
+                            path="/about"
+                            element={<AboutIndex config={config} />}
+                          />
+                          <Route
+                            path="/roles"
+                            element={
+                              <HasAccess
+                                config={config}
+                                permission="GARDEN_ADMIN"
+                                isGlobal={true}
+                                renderAuthFailed={
+                                  <ErrorPage
+                                    errorCode={401}
+                                    errorMsg="Insufficient Access for Roles Management. Please contact Garden Administrator"
+                                  />
+                                }
+                              >
+                                <RoleIndex
+                                  config={config}
+                                  tourStepsRef={tourStepsRef}
                                 />
-                              }
-                            >
-                              <RoleIndex
+                              </HasAccess>
+                            }
+                          />
+                          <Route
+                            path="/topics"
+                            element={
+                              <TopicIndex
+                                config={config}
+                                listeners={listeners}
+                                addRequestItem={addRequestItem}
+                              />
+                            }
+                          />
+                          <Route
+                            path="/users"
+                            element={
+                              <UserIndex
                                 config={config}
                                 tourStepsRef={tourStepsRef}
                               />
-                            </HasAccess>
-                          }
-                        />
-                        <Route
-                          path="/topics"
-                          element={
-                            <TopicIndex
-                              config={config}
-                              listeners={listeners}
-                              addRequestItem={addRequestItem}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/users"
-                          element={
-                            <UserIndex
-                              config={config}
-                              tourStepsRef={tourStepsRef}
-                            />
-                          }
-                        />
-                        <Route path="/swagger" element={<Swagger />} />
-                        <Route
-                          path="/"
-                          element={
-                            <GardenDashboard
-                              tourStepsRef={tourStepsRef}
-                              gardenRef={rootGardenRef}
-                              systemsRef={systemsRef}
-                              gardenState={gardenState}
-                              systemState={systemState}
-                              addRequestItem={addRequestItem}
-                              config={config}
-                              listeners={listeners.current}
-                            />
-                          }
-                        />
-                        <Route
-                          path="*"
-                          element={<ErrorPage errorCode={404} />}
-                        />
-                      </Routes>
-                    </ErrorBoundary>
-                  </HasAccess>
-                </div>
-              </BrowserRouter>
+                            }
+                          />
+                          <Route path="/swagger" element={<Swagger />} />
+                          <Route
+                            path="/"
+                            element={
+                              <GardenDashboard
+                                tourStepsRef={tourStepsRef}
+                                gardenRef={rootGardenRef}
+                                systemsRef={systemsRef}
+                                gardenState={gardenState}
+                                systemState={systemState}
+                                addRequestItem={addRequestItem}
+                                config={config}
+                                listeners={listeners.current}
+                              />
+                            }
+                          />
+                          <Route
+                            path="*"
+                            element={<ErrorPage errorCode={404} />}
+                          />
+                        </Routes>
+                      </ErrorBoundary>
+                    </HasAccess>
+                  </div>
+                </BrowserRouter>
+              </div>
             </div>
-          </div>
-        )}
-      </SnackbarProvider>
-    </PrimeReactProvider>
+          )}
+        </SnackbarProvider>
+      </PrimeReactProvider>
+    </ThemeProvider>
   );
 }
 

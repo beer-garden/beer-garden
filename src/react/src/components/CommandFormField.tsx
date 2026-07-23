@@ -5,12 +5,10 @@ import { Calendar } from "primereact/calendar";
 import { Checkbox } from "primereact/checkbox";
 import { Dropdown } from "primereact/dropdown";
 import { FileUpload, FileUploadFile } from "primereact/fileupload";
-import { InputTextarea } from "primereact/inputtextarea";
 import { MultiSelect } from "primereact/multiselect";
 import { ProgressBar } from "primereact/progressbar";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { TriStateCheckbox } from "primereact/tristatecheckbox";
-import { classNames } from "primereact/utils";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 
@@ -402,71 +400,95 @@ function CommandFormField({
           return false;
         }
       };
-
       if (parameter.multi) {
         return (
-          <div id={parameter.key} key={parameter.key} className="p-field">
-            <div className="container">
-              {parameter.value?.map((item: any, index: any) => (
-                <div key={`${parameter.key}-${index}`} className="dynamic-item">
-                  <InputTextarea
-                    id={`${parameter.key}-${index}`}
-                    value={item ?? ""}
-                    invalid={
-                      (!disabled &&
+          <Container id={parameter.key} key={parameter.key}>
+            {parameter.value?.map((item: any, index: any) => (
+              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
+                  <Tooltip
+                    title={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
+                  >
+                    <TextField
+                      id={`${parameter.key}-${index}`}
+                      value={item}
+                      variant="outlined"
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                        handleMultiChange(
+                          parameter.key,
+                          event.target.value,
+                          index,
+                        );
+                      }}
+                      fullWidth
+                      multiline
+                      disabled={disabled}
+                      error={
+                        !disabled &&
                         !parameter.optional &&
                         (item === undefined ||
                           item === null ||
                           item === "" ||
-                          !canParseJSON(item))) ||
-                      undefined
-                    }
-                    onChange={(e) =>
-                      handleMultiChange(parameter.key, e.target.value, index)
-                    }
-                    disabled={disabled}
-                    aria-label={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
-                  />
+                          !canParseJSON(item))
+                      }
+                    />
+                  </Tooltip>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
                   <AccessButton
                     label="Remove"
-                    severity="danger"
+                    color="warning"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
                     tooltip={`${removeInputAriaLabel} Index ${index}`}
-                  />
-                </div>
-              ))}
+                  >
+                    <Typography variant="button">Remove</Typography>
+                  </AccessButton>
+                </Box>
+              </Box>
+            ))}
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-              />
-            </div>
-          </div>
+              >
+                <Typography variant="button">
+                  Add {parameter.display_name ?? parameter.key}
+                </Typography>
+              </AccessButton>
+            </Box>
+          </Container>
         );
       }
       return (
-        <div key={parameter.key} className="p-field">
-          <InputTextarea
-            id={parameter.key}
-            value={parameter.value}
-            invalid={
-              (!disabled &&
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          <Tooltip title={`${inputAreaAriaLabel}: Dictionary`}>
+            <TextField
+              id={parameter.key}
+              value={parameter.value}
+              variant="outlined"
+              onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                handleChange(parameter.key, event.target.value);
+              }}
+              fullWidth
+              disabled={disabled}
+              multiline
+              error={
+                !disabled &&
                 !parameter.optional &&
                 (parameter.value === undefined ||
                   parameter.value === null ||
                   parameter.value === "" ||
-                  !canParseJSON(parameter.value))) ||
-              undefined
-            }
-            onChange={(e) => handleChange(e.target.id, e.target.value)}
-            disabled={disabled}
-            className={classNames({ "p-invalid": parameter.isInvalid })}
-            tooltip={`${inputAreaAriaLabel}: Dictionary`}
-          />
-        </div>
+                  !canParseJSON(parameter.value))
+              }
+            />
+          </Tooltip>
+        </Box>
       );
     }
     case "Integer": {
