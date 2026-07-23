@@ -3,6 +3,8 @@ import {
   Box,
   Checkbox,
   Container,
+  FormHelperText,
+  IconButton,
   MenuItem,
   Select,
   TextField,
@@ -19,6 +21,7 @@ import { ChangeEvent, useEffect, useRef, useState } from "react";
 
 import { InputParam } from "../models/models";
 import { uploadFile } from "../services/file_service";
+import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import NumberField from "./EnhancedTable/components/NumberField";
 interface CommandFormFieldParams {
@@ -151,46 +154,54 @@ function CommandFormField({
           sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
         >
           <Tooltip title={`${inputAreaAriaLabel}: Multi Select`}>
-            <Select
-              id={parameter.key}
-              value={parameter.value}
-              multiple
-              disabled={
-                disabled ||
-                parameter.options === undefined ||
-                parameter.options.length === 0 ||
-                loadingChoices.some(
-                  (loading) => loading.key === parameter.key,
-                ) ||
-                parameter.error
-              }
-              error={
-                !disabled &&
-                !parameter.optional &&
-                (parameter.value === undefined ||
-                  parameter.value === null ||
-                  parameter.value === "")
-              }
-              onChange={(event) => {
-                const {
-                  target: { value },
-                } = event;
+            <span>
+              <Select
+                id={parameter.key}
+                value={parameter.value}
+                aria-describedby={`${parameter.key}-helper-text`}
+                multiple
+                disabled={
+                  disabled ||
+                  parameter.options === undefined ||
+                  parameter.options.length === 0 ||
+                  loadingChoices.some(
+                    (loading) => loading.key === parameter.key,
+                  ) ||
+                  parameter.error
+                }
+                error={
+                  !disabled &&
+                  !parameter.optional &&
+                  (parameter.value === undefined ||
+                    parameter.value === null ||
+                    parameter.value === "")
+                }
+                onChange={(event) => {
+                  const {
+                    target: { value },
+                  } = event;
 
-                handleChange(
-                  parameter.key,
-                  (typeof value === "string" ? value.split(",") : value).filter(
-                    (option: string) =>
+                  handleChange(
+                    parameter.key,
+                    (typeof value === "string"
+                      ? value.split(",")
+                      : value
+                    ).filter((option: string) =>
                       parameter.options?.some((opt) => opt.value === option),
-                  ),
-                );
-              }}
-            >
-              {parameter.options?.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
+                    ),
+                  );
+                }}
+              >
+                {parameter.options?.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+              <FormHelperText id={`${parameter.key}-helper-text`}>
+                {parameter.description}
+              </FormHelperText>
+            </span>
           </Tooltip>
           {loadingChoices &&
             loadingChoices.some((loading) => loading.key === parameter.key) && (
@@ -214,33 +225,41 @@ function CommandFormField({
         sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
       >
         <Tooltip title={`${inputAreaAriaLabel}: Dropdown Select`}>
-          <Select
-            id={parameter.key}
-            value={parameter.value}
-            disabled={
-              disabled ||
-              parameter.options === undefined ||
-              parameter.options.length === 0 ||
-              loadingChoices.some((loading) => loading.key === parameter.key) ||
-              parameter.error
-            }
-            error={
-              !disabled &&
-              !parameter.optional &&
-              (parameter.value === undefined ||
-                parameter.value === null ||
-                parameter.value === "")
-            }
-            onChange={(event) => {
-              handleChange(parameter.key, event.target.value);
-            }}
-          >
-            {parameter.options?.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
+          <span>
+            <Select
+              id={parameter.key}
+              value={parameter.value}
+              aria-describedby={`${parameter.key}-helper-text`}
+              disabled={
+                disabled ||
+                parameter.options === undefined ||
+                parameter.options.length === 0 ||
+                loadingChoices.some(
+                  (loading) => loading.key === parameter.key,
+                ) ||
+                parameter.error
+              }
+              error={
+                !disabled &&
+                !parameter.optional &&
+                (parameter.value === undefined ||
+                  parameter.value === null ||
+                  parameter.value === "")
+              }
+              onChange={(event) => {
+                handleChange(parameter.key, event.target.value);
+              }}
+            >
+              {parameter.options?.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText id={`${parameter.key}-helper-text`}>
+              {parameter.description}
+            </FormHelperText>
+          </span>
         </Tooltip>
 
         {loadingChoices &&
@@ -267,6 +286,7 @@ function CommandFormField({
         <Autocomplete
           sx={{ width: "100%" }}
           id={parameter.key}
+          aria-describedby={`${parameter.key}-helper-text`}
           value={
             parameter?.multi == true
               ? (parameter.value as string[])
@@ -297,6 +317,9 @@ function CommandFormField({
             />
           )}
         />
+        <FormHelperText id={`${parameter.key}-helper-text`}>
+          {parameter.description}
+        </FormHelperText>
         {loadingChoices &&
           loadingChoices.some((loading) => loading.key === parameter.key) && (
             <ProgressSpinner style={{ width: "34px", height: "34px" }} />
@@ -318,43 +341,38 @@ function CommandFormField({
         return (
           <Container id={parameter.key} key={parameter.key}>
             {parameter.value?.map((item: any, index: any) => (
-              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <Tooltip
-                    title={`${inputAreaAriaLabel} Index ${index}: String`}
-                  >
-                    <TextField
-                      id={`${parameter.key}-${index}`}
-                      value={item}
-                      variant="outlined"
-                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                        handleMultiChange(
-                          parameter.key,
-                          event.target.value,
-                          index,
-                        );
-                      }}
-                      fullWidth
-                      disabled={disabled}
-                      error={
-                        !disabled &&
-                        !parameter.optional &&
-                        (item === undefined || item === null || item === "")
-                      }
-                    />
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <AccessButton
-                    label="Remove"
-                    color="warning"
-                    onClick={() => removeMultiItem(parameter.key, index)}
+              <Box
+                key={`${parameter.key}-${index}`}
+                sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
+              >
+                <Tooltip title={`${inputAreaAriaLabel} Index ${index}: String`}>
+                  <TextField
+                    id={`${parameter.key}-${index}`}
+                    helperText={parameter.description}
+                    value={item}
+                    variant="outlined"
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                      handleMultiChange(
+                        parameter.key,
+                        event.target.value,
+                        index,
+                      );
+                    }}
+                    fullWidth
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}`}
-                  >
-                    <Typography variant="button">Remove</Typography>
-                  </AccessButton>
-                </Box>
+                    error={
+                      !disabled &&
+                      !parameter.optional &&
+                      (item === undefined || item === null || item === "")
+                    }
+                  />
+                </Tooltip>
+                <IconButton
+                  onClick={() => removeMultiItem(parameter.key, index)}
+                  disabled={disabled}
+                >
+                  <FAIcon icon="xmark" />
+                </IconButton>
               </Box>
             ))}
             <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
@@ -381,6 +399,7 @@ function CommandFormField({
             <TextField
               id={parameter.key}
               value={parameter.value}
+              helperText={parameter.description}
               variant="outlined"
               onChange={(event: ChangeEvent<HTMLInputElement>) => {
                 handleChange(parameter.key, event.target.value);
@@ -412,47 +431,44 @@ function CommandFormField({
         return (
           <Container id={parameter.key} key={parameter.key}>
             {parameter.value?.map((item: any, index: any) => (
-              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <Tooltip
-                    title={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
-                  >
-                    <TextField
-                      id={`${parameter.key}-${index}`}
-                      value={item}
-                      variant="outlined"
-                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                        handleMultiChange(
-                          parameter.key,
-                          event.target.value,
-                          index,
-                        );
-                      }}
-                      fullWidth
-                      multiline
-                      disabled={disabled}
-                      error={
-                        !disabled &&
-                        !parameter.optional &&
-                        (item === undefined ||
-                          item === null ||
-                          item === "" ||
-                          !canParseJSON(item))
-                      }
-                    />
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <AccessButton
-                    label="Remove"
-                    color="warning"
-                    onClick={() => removeMultiItem(parameter.key, index)}
+              <Box
+                key={`${parameter.key}-${index}`}
+                sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
+              >
+                <Tooltip
+                  title={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
+                >
+                  <TextField
+                    id={`${parameter.key}-${index}`}
+                    value={item}
+                    helperText={parameter.description}
+                    variant="outlined"
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                      handleMultiChange(
+                        parameter.key,
+                        event.target.value,
+                        index,
+                      );
+                    }}
+                    fullWidth
+                    multiline
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}`}
-                  >
-                    <Typography variant="button">Remove</Typography>
-                  </AccessButton>
-                </Box>
+                    error={
+                      !disabled &&
+                      !parameter.optional &&
+                      (item === undefined ||
+                        item === null ||
+                        item === "" ||
+                        !canParseJSON(item))
+                    }
+                  />
+                </Tooltip>
+                <IconButton
+                  onClick={() => removeMultiItem(parameter.key, index)}
+                  disabled={disabled}
+                >
+                  <FAIcon icon="xmark" />
+                </IconButton>
               </Box>
             ))}
             <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
@@ -479,6 +495,7 @@ function CommandFormField({
             <TextField
               id={parameter.key}
               value={parameter.value}
+              helperText={parameter.description}
               variant="outlined"
               onChange={(event: ChangeEvent<HTMLInputElement>) => {
                 handleChange(parameter.key, event.target.value);
@@ -504,49 +521,46 @@ function CommandFormField({
         return (
           <Container id={parameter.key} key={parameter.key}>
             {parameter.value?.map((item: any, index: any) => (
-              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <Tooltip
-                    title={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                  >
-                    <NumberField
-                      id={`${parameter.key}-${index}`}
-                      value={
-                        getMultiValue(parameter.key, index) ?? parameter.default
-                      }
-                      disabled={disabled}
-                      onValueChange={(value) =>
-                        handleMultiChange(parameter.key, value, index)
-                      }
-                      error={
-                        !disabled &&
-                        !parameter.optional &&
-                        (item === undefined || item === null || item === "")
-                      }
-                      max={
-                        parameter.maximum !== undefined
-                          ? parameter.maximum
-                          : undefined
-                      }
-                      min={
-                        parameter.minimum !== undefined
-                          ? parameter.minimum
-                          : undefined
-                      }
-                    />
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <AccessButton
-                    label="Remove"
-                    color="warning"
-                    onClick={() => removeMultiItem(parameter.key, index)}
+              <Box
+                key={`${parameter.key}-${index}`}
+                sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
+              >
+                <Tooltip
+                  title={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                >
+                  <NumberField
+                    id={`${parameter.key}-${index}`}
+                    value={
+                      getMultiValue(parameter.key, index) ?? parameter.default
+                    }
+                    helperText={parameter.description}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}`}
-                  >
-                    <Typography variant="button">Remove</Typography>
-                  </AccessButton>
-                </Box>
+                    onValueChange={(value) =>
+                      handleMultiChange(parameter.key, value, index)
+                    }
+                    error={
+                      !disabled &&
+                      !parameter.optional &&
+                      (item === undefined || item === null || item === "")
+                    }
+                    max={
+                      parameter.maximum !== undefined
+                        ? parameter.maximum
+                        : undefined
+                    }
+                    min={
+                      parameter.minimum !== undefined
+                        ? parameter.minimum
+                        : undefined
+                    }
+                  />
+                </Tooltip>
+                <IconButton
+                  onClick={() => removeMultiItem(parameter.key, index)}
+                  disabled={disabled}
+                >
+                  <FAIcon icon="xmark" />
+                </IconButton>
               </Box>
             ))}
             <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
@@ -575,6 +589,7 @@ function CommandFormField({
             <NumberField
               id={parameter.key}
               value={parameter.value}
+              helperText={parameter.description}
               disabled={disabled}
               onValueChange={(value) => handleChange(parameter.key, value)}
               error={
@@ -600,50 +615,47 @@ function CommandFormField({
         return (
           <Container id={parameter.key} key={parameter.key}>
             {parameter.value?.map((item: any, index: any) => (
-              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <Tooltip
-                    title={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                  >
-                    <NumberField
-                      id={`${parameter.key}-${index}`}
-                      value={
-                        getMultiValue(parameter.key, index) ?? parameter.default
-                      }
-                      disabled={disabled}
-                      onValueChange={(value) =>
-                        handleMultiChange(parameter.key, value, index)
-                      }
-                      error={
-                        !disabled &&
-                        !parameter.optional &&
-                        (item === undefined || item === null || item === "")
-                      }
-                      max={
-                        parameter.maximum !== undefined
-                          ? parameter.maximum
-                          : undefined
-                      }
-                      min={
-                        parameter.minimum !== undefined
-                          ? parameter.minimum
-                          : undefined
-                      }
-                      step={0.01}
-                    />
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <AccessButton
-                    label="Remove"
-                    color="warning"
-                    onClick={() => removeMultiItem(parameter.key, index)}
+              <Box
+                key={`${parameter.key}-${index}`}
+                sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
+              >
+                <Tooltip
+                  title={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                >
+                  <NumberField
+                    id={`${parameter.key}-${index}`}
+                    value={
+                      getMultiValue(parameter.key, index) ?? parameter.default
+                    }
+                    helperText={parameter.description}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}`}
-                  >
-                    <Typography variant="button">Remove</Typography>
-                  </AccessButton>
-                </Box>
+                    onValueChange={(value) =>
+                      handleMultiChange(parameter.key, value, index)
+                    }
+                    error={
+                      !disabled &&
+                      !parameter.optional &&
+                      (item === undefined || item === null || item === "")
+                    }
+                    max={
+                      parameter.maximum !== undefined
+                        ? parameter.maximum
+                        : undefined
+                    }
+                    min={
+                      parameter.minimum !== undefined
+                        ? parameter.minimum
+                        : undefined
+                    }
+                    step={0.01}
+                  />
+                </Tooltip>
+                <IconButton
+                  onClick={() => removeMultiItem(parameter.key, index)}
+                  disabled={disabled}
+                >
+                  <FAIcon icon="xmark" />
+                </IconButton>
               </Box>
             ))}
             <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
@@ -672,6 +684,7 @@ function CommandFormField({
             <NumberField
               id={parameter.key}
               value={parameter.value}
+              helperText={parameter.description}
               disabled={disabled}
               onValueChange={(value) => handleChange(parameter.key, value)}
               error={
@@ -698,14 +711,18 @@ function CommandFormField({
         return (
           <Container id={parameter.key} key={parameter.key}>
             {parameter.value?.map((item: any, index: any) => (
-              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <Tooltip
-                    title={`${inputAreaAriaLabel} Boolean ${index}: String`}
-                  >
+              <Box
+                key={`${parameter.key}-${index}`}
+                sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
+              >
+                <Tooltip
+                  title={`${inputAreaAriaLabel} Boolean ${index}: String`}
+                >
+                  <span>
                     <Checkbox
                       id={`${parameter.key}-${index}`}
                       checked={item}
+                      aria-describedby={`${parameter.key}-${index}-helper-text`}
                       indeterminate={
                         item === undefined
                           ? parameter.nullable || parameter.optional
@@ -720,19 +737,19 @@ function CommandFormField({
                       }
                       disabled={disabled}
                     />
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <AccessButton
-                    label="Remove"
-                    color="warning"
-                    onClick={() => removeMultiItem(parameter.key, index)}
-                    disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}`}
-                  >
-                    <Typography variant="button">Remove</Typography>
-                  </AccessButton>
-                </Box>
+                    <FormHelperText
+                      id={`${parameter.key}-${index}-helper-text`}
+                    >
+                      {parameter.description}
+                    </FormHelperText>
+                  </span>
+                </Tooltip>
+                <IconButton
+                  onClick={() => removeMultiItem(parameter.key, index)}
+                  disabled={disabled}
+                >
+                  <FAIcon icon="xmark" />
+                </IconButton>
               </Box>
             ))}
             <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
@@ -756,17 +773,23 @@ function CommandFormField({
           sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
         >
           <Tooltip title={`${inputAreaAriaLabel}: Boolean`}>
-            <Checkbox
-              id={parameter.key}
-              checked={parameter.value}
-              indeterminate={
-                parameter.value === undefined
-                  ? parameter.nullable || parameter.optional
-                  : false
-              }
-              onChange={(e) => handleChange(parameter.key, e.target.checked)}
-              disabled={disabled}
-            />
+            <span>
+              <Checkbox
+                id={parameter.key}
+                checked={parameter.value}
+                aria-describedby={`${parameter.key}-helper-text`}
+                indeterminate={
+                  parameter.value === undefined
+                    ? parameter.nullable || parameter.optional
+                    : false
+                }
+                onChange={(e) => handleChange(parameter.key, e.target.checked)}
+                disabled={disabled}
+              />
+              <FormHelperText id={`${parameter.key}-helper-text`}>
+                {parameter.description}
+              </FormHelperText>
+            </span>
           </Tooltip>
         </Box>
       );

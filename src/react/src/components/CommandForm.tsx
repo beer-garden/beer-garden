@@ -2,15 +2,18 @@ import {
   Alert,
   AlertTitle,
   Box,
+  Divider,
   FormControl,
   FormLabel,
+  Grid,
   InputLabel,
   MenuItem,
   Select,
+  Stack,
   TextField,
-  Typography,
+  Tooltip,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 
 import {
   ChoicesValue,
@@ -802,106 +805,92 @@ function CommandForm({
           </Alert>
         ))}
       </Box>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          mb: 3,
-        }}
-        key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMAND_TYPE`}
-      >
-        <Box sx={{ width: "20%" }}>
-          <FormLabel
-            id="command-type-label"
-            htmlFor="COMMAND_TYPE"
-            sx={{ fontWeight: "bold" }}
-          >
-            Command Type
-          </FormLabel>
-        </Box>
-        <Box sx={{ width: "80%" }}>
-          <FormControl fullWidth sx={{ maxWidth: "75%" }}>
-            <InputLabel id="command-type-label-select">Command Type</InputLabel>
-            <Select
-              labelId="command-type-label-select"
-              id="COMMAND_TYPE"
-              label="Command Type"
-              value={request?.command_type}
-              onChange={(e) =>
-                setRequest({ ...request, command_type: e.target.value })
-              }
-              disabled={disabled}
-              size="small"
+      <Stack divider={<Divider flexItem />} spacing={1}>
+        <Grid
+          container
+          key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMAND_TYPE`}
+        >
+          <Grid size="grow">
+            <FormLabel
+              id="command-type-label"
+              htmlFor="COMMAND_TYPE"
+              sx={{ fontWeight: "bold" }}
             >
-              {["ACTION", "INFO", "TEMP"].map((status: any) => (
-                <MenuItem key={status} value={status}>
-                  {status}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-      </Box>
-      {parametersFields &&
-        parametersFields?.map((parameter: InputParam) => (
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              mb: 3,
-              alignItems: "center",
-            }}
-            key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}.${parameter.key}`}
-          >
-            <Box sx={{ width: "20%" }}>{renderInputLabel(parameter)}</Box>
-            <Box sx={{ width: "60%" }}>
-              <CommandFormField
-                parameter={parameter}
-                disabled={disabled}
-                parametersFields={parametersFields}
-                loadingChoices={loadingChoices}
-                handleChange={handleChange}
-                resetForm={resetForm}
-              />
-            </Box>
-            <Box sx={{ overflowWrap: "break-word", width: "20%" }}>
-              <Typography variant="body2" color="text.secondary">
-                {parameter.description}
-              </Typography>
-            </Box>
-          </Box>
-        ))}
-      {(() => {
-        const commentId = `${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMENT`;
-        return (
-          <Box
-            sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}
-            key={commentId}
-          >
-            <Box sx={{ width: "20%" }}>
-              <FormLabel htmlFor={commentId} sx={{ fontWeight: "bold" }}>
-                Comment
-              </FormLabel>
-            </Box>
-            <Box sx={{ width: "80%" }}>
-              <TextField
-                id={commentId}
-                name={commentId}
-                value={request?.comment}
+              Command Type
+            </FormLabel>
+          </Grid>
+
+          <Grid size="grow">
+            <FormControl fullWidth>
+              <InputLabel id="command-type-label-select">
+                Command Type
+              </InputLabel>
+              <Select
+                labelId="command-type-label-select"
+                id="COMMAND_TYPE"
+                label="Command Type"
+                value={request?.command_type}
                 onChange={(e) =>
-                  setRequest({ ...request, comment: e.target.value })
+                  setRequest({ ...request, command_type: e.target.value })
                 }
                 disabled={disabled}
-                multiline
-                rows={3}
                 size="small"
-                sx={{ maxWidth: "75%" }}
-                placeholder="Comment Field"
-              />
+              >
+                {["ACTION", "INFO", "TEMP"].map((status: any) => (
+                  <MenuItem key={status} value={status}>
+                    {status}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+
+        {parametersFields &&
+          parametersFields?.map((parameter: InputParam) => (
+            <Grid
+              container
+              key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}.${parameter.key}`}
+            >
+              <Grid size="grow">{renderInputLabel(parameter)}</Grid>
+              <Grid size="grow">
+                <CommandFormField
+                  parameter={parameter}
+                  disabled={disabled}
+                  parametersFields={parametersFields}
+                  loadingChoices={loadingChoices}
+                  handleChange={handleChange}
+                  resetForm={resetForm}
+                />
+              </Grid>
+            </Grid>
+          ))}
+
+        {(() => {
+          const commentId = `${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMENT`;
+          return (
+            <Box
+              key={`${commentId}-box`}
+              sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+            >
+              <Tooltip title={`Add Comment`}>
+                <TextField
+                  id={`${commentId}-value`}
+                  value={request?.comment}
+                  helperText="Add Comment"
+                  placeholder="Comment..."
+                  variant="outlined"
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    setRequest({ ...request, comment: event.target.value });
+                  }}
+                  fullWidth
+                  disabled={disabled}
+                />
+              </Tooltip>
             </Box>
-          </Box>
-        );
-      })()}
+          );
+        })()}
+      </Stack>
     </Box>
   );
 }
