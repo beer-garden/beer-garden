@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Box } from "@mui/material";
 import { BreadCrumb } from "primereact/breadcrumb";
 import { Card } from "primereact/card";
 import { InputSwitch } from "primereact/inputswitch";
@@ -20,7 +21,7 @@ import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
-import { GetBaseURL } from "../services/util_service";
+import { FAIcon, GetBaseURL } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import CodeExample from "./CodeExample";
 import CommandForm from "./CommandForm";
@@ -601,7 +602,7 @@ function RequestWizard({
       unstyled={isDialog}
       header={
         !isDialog && (
-          <div className="flex">
+          <Box sx={{ display: "flex" }}>
             <AccessButton
               onClick={() => {
                 removeItem(requestItem.itemId);
@@ -610,7 +611,7 @@ function RequestWizard({
             >
               <FontAwesomeIcon icon="xmark" />
             </AccessButton>
-          </div>
+          </Box>
         )
       }
       key={requestItem.itemId}
@@ -733,16 +734,20 @@ function RequestWizard({
               selectedInstance={selectedInstance}
               setSelectedInstance={updateSelectedInstance}
             />
-            <div className="flex pt-4 justify-content-between">
+            <Box
+              sx={{ display: "flex", pt: 4, justifyContent: "space-between" }}
+            >
               <AccessButton
                 label="Back"
-                severity="secondary"
+                color="secondary"
                 onClick={() => {
                   setSelectedInstance(undefined);
                   stepperRef.current?.prevCallback();
                 }}
-              />
-            </div>
+              >
+                Back
+              </AccessButton>
+            </Box>
           </StepperPanel>
           <StepperPanel
             header="Form"
@@ -790,7 +795,7 @@ function RequestWizard({
                 },
               }}
             />
-            <div className="flex ml-4">
+            <Box sx={{ display: "flex", ml: 4 }}>
               <span className="mr-2 align-self-center">Scheduled</span>
               <InputSwitch
                 checked={showScheduleJob}
@@ -805,7 +810,7 @@ function RequestWizard({
                   },
                 }}
               />
-            </div>
+            </Box>
             {showScheduleJob && (
               <SchedulerForm
                 scheduledJob={job}
@@ -822,22 +827,28 @@ function RequestWizard({
               setResetForm={setResetForm}
               setIsFormValid={setIsFormValid}
             />
-            <div className="flex pt-4 justify-content-between">
+            <Box
+              sx={{ display: "flex", pt: 4, justifyContent: "space-between" }}
+            >
               <AccessButton
                 label="Back"
-                severity="secondary"
+                color="secondary"
                 onClick={() => {
                   cleanForm();
                   stepperRef.current?.prevCallback();
                 }}
-              />
+              >
+                Back
+              </AccessButton>
               <AccessButton
                 label="Reset Form"
-                severity="warning"
+                color="warning"
                 onClick={() => setResetForm(true)}
-                className="ml-2"
-              />
-              <div>
+                sx={{ ml: 2 }}
+              >
+                Reset Form
+              </AccessButton>
+              <Box>
                 <CodeExample
                   visibleCodeExample={visibleCodeExample}
                   setVisibleCodeExample={setVisibleCodeExample}
@@ -845,15 +856,16 @@ function RequestWizard({
                 />
                 <AccessButton
                   label="Code Examples"
-                  severity="info"
+                  color="info"
                   onClick={() => setVisibleCodeExample(true)}
-                  className="mr-2"
-                />
-              </div>
+                  sx={{ mr: 2 }}
+                >
+                  Code Examples
+                </AccessButton>
+              </Box>
               {showCreateRequest && !showScheduleJob && (
                 <AccessButton
                   label="Submit"
-                  icon="pi pi-arrow-right"
                   disabled={!isFormValid}
                   onMouseDown={(event: any) => {
                     if (event.type === "mousedown" && event.button === 1) {
@@ -868,15 +880,16 @@ function RequestWizard({
                   hasSystemVersion={requestItem.requestCommandInput?.version}
                   hasInstanceName={requestItem.requestCommandInput?.instance}
                   hasCommandName={requestItem.requestCommandInput?.command}
-                />
+                >
+                  Submit
+                  <FAIcon icon="arrow-right" sx={{ ml: 2 }} />
+                </AccessButton>
               )}
               {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
                 <AccessButton
                   label="Submit Job"
-                  severity="success"
-                  icon="pi pi-arrow-right"
+                  color="success"
                   disabled={!(isJobValid && isFormValid)}
-                  iconPos="right"
                   onClick={submitJob}
                   config={config}
                   permission="OPERATOR"
@@ -885,15 +898,16 @@ function RequestWizard({
                   hasSystemVersion={requestItem.requestCommandInput?.version}
                   hasInstanceName={requestItem.requestCommandInput?.instance}
                   hasCommandName={requestItem.requestCommandInput?.command}
-                />
+                >
+                  Submit Job
+                  <FAIcon icon="arrow-right" sx={{ ml: 2 }} />
+                </AccessButton>
               )}
               {showCreateRequest && showScheduleJob && requestItem?.jobId && (
                 <AccessButton
                   label="Update Job"
-                  severity="success"
-                  icon="pi pi-arrow-right"
+                  color="success"
                   disabled={!(isJobValid && isFormValid)}
-                  iconPos="right"
                   onClick={updateJob}
                   config={config}
                   permission="OPERATOR"
@@ -902,9 +916,12 @@ function RequestWizard({
                   hasSystemVersion={requestItem.requestCommandInput?.version}
                   hasInstanceName={requestItem.requestCommandInput?.instance}
                   hasCommandName={requestItem.requestCommandInput?.command}
-                />
+                >
+                  Update Job
+                  <FAIcon icon="arrow-right" sx={{ ml: 2 }} />
+                </AccessButton>
               )}
-            </div>
+            </Box>
           </StepperPanel>
         </Stepper>
       )}

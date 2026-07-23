@@ -1,4 +1,4 @@
-import { Grid } from "@mui/material";
+import { DialogActions, DialogContent, Grid } from "@mui/material";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import Skeleton from "@mui/material/Skeleton";
@@ -289,138 +289,142 @@ function RequestCreateCard({
   };
 
   return (
-    <Container key={requestItem.itemId}>
-      {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-        }}
-      >
-        <Typography sx={{ ml: 4, mr: 2, alignSelf: "center" }}>
-          Scheduled
-        </Typography>
-        <Switch
-          checked={showScheduleJob}
-          onChange={(e) => updateShowScheduleJob(e.target.checked)}
-          className="align-self-center"
-          slotProps={{
-            input: { "aria-label": "Toggle for creating Scheduled Job" },
-          }}
-        />
-      </Box>
-      {/* Content */}
-      <Box sx={{ pt: 4, width: "100%" }}>
-        {showScheduleJob && (
-          <SchedulerForm
-            scheduledJob={job}
-            setScheduledJob={updateJobValue}
-            setIsJobValid={setIsJobValid}
-          />
-        )}
-        {showCreateRequest && (
-          <CommandCreate
-            request={request}
-            setRequest={updateRequestValue}
-            requestCommand={requestCommand}
-            setRequestCommand={updateRequestCommand}
-            resetForm={resetForm}
-            setResetForm={setResetForm}
-            setIsFormValid={setIsFormValid}
-            config={config}
-          />
-        )}
-        {!showCreateRequest && (
-          <Skeleton width="100%" height="150px"></Skeleton>
-        )}
-      </Box>
-      {/* Footer */}
-      <Box>
-        <Grid container sx={{ mt: 2 }}>
-          <Grid size="grow">
-            <AccessButton
-              label="Reset Form"
-              color="warning"
-              onClick={() => setResetForm(true)}
-              sx={{ mr: 2 }}
-            >
-              <Typography variant="button" sx={{ display: "block" }}>
-                Reset Form
-              </Typography>
-              <FAIcon icon="refresh" sx={{ ml: 2 }} />
-            </AccessButton>
-
-            <CodeExample
-              visibleCodeExample={visibleCodeExample}
-              setVisibleCodeExample={setVisibleCodeExample}
-              request={request}
+    <>
+      <DialogContent dividers>
+        <Container key={requestItem.itemId}>
+          <Box
+            sx={{
+              display: "flex",
+            }}
+          >
+            <Typography sx={{ ml: 4, mr: 2, alignSelf: "center" }}>
+              Scheduled
+            </Typography>
+            <Switch
+              checked={showScheduleJob}
+              onChange={(e) => updateShowScheduleJob(e.target.checked)}
+              className="align-self-center"
+              slotProps={{
+                input: { "aria-label": "Toggle for creating Scheduled Job" },
+              }}
             />
-            <AccessButton
-              label="Code Examples"
-              color="info"
-              onClick={() => setVisibleCodeExample(true)}
-              sx={{ mr: 2 }}
-            >
-              <Typography variant="button" sx={{ display: "block" }}>
-                Code Examples
-              </Typography>
-              <FAIcon icon="code" sx={{ ml: 2 }} />
-            </AccessButton>
-          </Grid>
+          </Box>
 
-          <Grid>
-            {showCreateRequest && !showScheduleJob && (
+          <Box sx={{ pt: 4, width: "100%" }}>
+            {showScheduleJob && (
+              <SchedulerForm
+                scheduledJob={job}
+                setScheduledJob={updateJobValue}
+                setIsJobValid={setIsJobValid}
+              />
+            )}
+            {showCreateRequest && (
+              <CommandCreate
+                request={request}
+                setRequest={updateRequestValue}
+                requestCommand={requestCommand}
+                setRequestCommand={updateRequestCommand}
+                resetForm={resetForm}
+                setResetForm={setResetForm}
+                setIsFormValid={setIsFormValid}
+                config={config}
+              />
+            )}
+            {!showCreateRequest && (
+              <Skeleton width="100%" height="150px"></Skeleton>
+            )}
+          </Box>
+        </Container>
+      </DialogContent>
+      <DialogActions sx={{ m: 2 }}>
+        <Box>
+          <Grid container>
+            <Grid size="grow">
               <AccessButton
-                label="Submit"
-                disabled={!isFormValid}
-                onMouseDown={(event: any) => {
-                  if (event.type === "mousedown" && event.button === 1) {
-                    submitRequestAndOpen();
-                  }
-                }}
-                onClick={submitRequest}
-                {...permissions}
-                permission="OPERATOR"
+                label="Reset Form"
+                color="warning"
+                onClick={() => setResetForm(true)}
+                sx={{ mr: 2 }}
               >
                 <Typography variant="button" sx={{ display: "block" }}>
-                  Submit
+                  Reset Form
                 </Typography>
-                <FAIcon icon="arrow-right-to-bracket" sx={{ ml: 2 }} />
+                <FAIcon icon="refresh" sx={{ ml: 2 }} />
               </AccessButton>
-            )}
-            {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
+
+              <CodeExample
+                visibleCodeExample={visibleCodeExample}
+                setVisibleCodeExample={setVisibleCodeExample}
+                request={request}
+              />
               <AccessButton
-                label="Submit Job"
-                color="success"
-                disabled={!(isJobValid && isFormValid)}
-                onClick={submitJob}
-                {...permissions}
-                permission="OPERATOR"
+                label="Code Examples"
+                color="info"
+                onClick={() => setVisibleCodeExample(true)}
+                sx={{ mr: 2 }}
               >
                 <Typography variant="button" sx={{ display: "block" }}>
-                  Submit Job
+                  Code Examples
                 </Typography>
-                <FAIcon icon="arrow-right-to-bracket" sx={{ ml: 2 }} />
+                <FAIcon icon="code" sx={{ ml: 2 }} />
               </AccessButton>
-            )}
-            {showCreateRequest && showScheduleJob && requestItem?.jobId && (
-              <AccessButton
-                label="Update Job"
-                color="success"
-                disabled={!(isJobValid && isFormValid)}
-                onClick={updateJob}
-                {...permissions}
-                permission="OPERATOR"
-              >
-                <Typography variant="button" sx={{ display: "block" }}>
-                  Update Job
-                </Typography>
-                <FAIcon icon="arrow-right-to-bracket" sx={{ ml: 2 }} />
-              </AccessButton>
-            )}
+            </Grid>
+
+            <Grid>
+              {showCreateRequest && !showScheduleJob && (
+                <AccessButton
+                  label="Submit"
+                  disabled={!isFormValid}
+                  onMouseDown={(event: any) => {
+                    if (event.type === "mousedown" && event.button === 1) {
+                      submitRequestAndOpen();
+                    }
+                  }}
+                  onClick={submitRequest}
+                  {...permissions}
+                  permission="OPERATOR"
+                >
+                  <Typography variant="button" sx={{ display: "block" }}>
+                    Submit
+                  </Typography>
+                  <FAIcon icon="arrow-right-to-bracket" sx={{ ml: 2 }} />
+                </AccessButton>
+              )}
+              {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
+                <AccessButton
+                  label="Submit Job"
+                  color="success"
+                  disabled={!(isJobValid && isFormValid)}
+                  onClick={submitJob}
+                  {...permissions}
+                  permission="OPERATOR"
+                >
+                  <Typography variant="button" sx={{ display: "block" }}>
+                    Submit Job
+                  </Typography>
+                  <FAIcon icon="arrow-right-to-bracket" sx={{ ml: 2 }} />
+                </AccessButton>
+              )}
+              {showCreateRequest && showScheduleJob && requestItem?.jobId && (
+                <AccessButton
+                  label="Update Job"
+                  color="success"
+                  disabled={!(isJobValid && isFormValid)}
+                  onClick={updateJob}
+                  {...permissions}
+                  permission="OPERATOR"
+                >
+                  <Typography variant="button" sx={{ display: "block" }}>
+                    Update Job
+                  </Typography>
+                  <FAIcon icon="arrow-right-to-bracket" sx={{ ml: 2 }} />
+                </AccessButton>
+              )}
+            </Grid>
           </Grid>
-        </Grid>
-      </Box>
-    </Container>
+        </Box>
+      </DialogActions>
+    </>
   );
 }
 
