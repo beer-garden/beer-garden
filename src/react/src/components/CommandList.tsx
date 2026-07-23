@@ -54,6 +54,7 @@ function CommandList({
         (i) => JSON.stringify(i) == JSON.stringify(selectedInstance),
       )
     ) {
+      setInstance(selectedInstance.name);
       buttonsDisabled.current = false;
     } else {
       buttonsDisabled.current = true;
