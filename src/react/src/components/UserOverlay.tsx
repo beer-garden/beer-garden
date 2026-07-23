@@ -1,5 +1,6 @@
 import { Avatar, Box, Divider, Stack, Switch, Typography } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import { useColorScheme } from "@mui/material/styles";
+import { useEffect, useState } from "react";
 
 import { ChangePowerUser, ChangeTheme, FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
@@ -21,6 +22,8 @@ function UserOverlay({
   const [showAdvancedOption, setShowAdvancedOption] = useState<boolean>(
     localStorage.getItem("user_advanced") === "true" || false,
   );
+
+  const { mode, setMode } = useColorScheme();
 
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
@@ -66,7 +69,13 @@ function UserOverlay({
           </Box>
         )}
         <Stack direction="row" sx={{ alignItems: "center" }}>
-          <Switch checked={dark} onChange={(e) => setDark(e.target.checked)} />
+          <Switch
+            checked={mode === "dark"}
+            onChange={(e) => {
+              setDark(e.target.checked);
+              setMode(e.target.checked ? "dark" : "light");
+            }}
+          />
           <Box sx={{ ml: 2 }} id="switchMode">
             {dark ? (
               <>

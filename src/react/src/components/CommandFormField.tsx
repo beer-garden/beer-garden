@@ -7,11 +7,10 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { AutoComplete } from "primereact/autocomplete";
+import Autocomplete from "@mui/material/Autocomplete";
 import { Calendar } from "primereact/calendar";
 import { Dropdown } from "primereact/dropdown";
 import { FileUpload, FileUploadFile } from "primereact/fileupload";
-import { InputNumber } from "primereact/inputnumber";
 import { MultiSelect } from "primereact/multiselect";
 import { ProgressBar } from "primereact/progressbar";
 import { ProgressSpinner } from "primereact/progressspinner";
@@ -21,6 +20,7 @@ import { v4 as uuidv4 } from "uuid";
 import { InputParam } from "../models/models";
 import { uploadFile } from "../services/file_service";
 import AccessButton from "./AccessButton";
+import NumberField from "./EnhancedTable/components/NumberField";
 interface CommandFormFieldParams {
   parameter: InputParam;
   disabled: boolean;
@@ -38,9 +38,6 @@ function CommandFormField({
   loadingChoices,
   resetForm,
 }: CommandFormFieldParams) {
-  // AutoComplete Objects
-  const [items, setItems] = useState<Array<string>>([]);
-
   // Base64 Stateful Objects
   const [uploadPercentage, setUploadPercentage] = useState(0);
   const fileUploadRef = useRef<FileUpload>(null);
@@ -262,37 +259,43 @@ function CommandFormField({
       </div>
     );
   } else if (parameter.choices && parameter.choices?.display === "typeahead") {
-    const searchItems = (event: any) => {
-      if (parameter.options) {
-        const filteredItems = parameter.options.filter((option) =>
-          option.label.toLowerCase().includes(event.query),
-        );
-
-        setItems(filteredItems?.map((option) => option.value));
-      }
-    };
     return (
-      <div key={parameter.key} className="p-field">
-        <AutoComplete
+      <Box
+        key={parameter.key}
+        sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+      >
+        <Autocomplete
+          sx={{ width: "100%" }}
           id={parameter.key}
-          value={parameter.value}
-          suggestions={items}
-          completeMethod={searchItems}
-          invalid={
-            (!disabled &&
-              !parameter.optional &&
-              (parameter.value === undefined ||
-                parameter.value === null ||
-                parameter.value === "")) ||
-            undefined
+          value={
+            parameter?.multi == true
+              ? (parameter.value as string[])
+              : (parameter.value as string)
           }
-          onChange={(e) => handleChange(e.target.id, e.target.value)}
+          options={
+            parameter?.options
+              ? parameter?.options?.map((option) => option.value as string)
+              : []
+          }
+          onChange={(_event: any, newValue: any) => {
+            handleChange(parameter.key, newValue);
+          }}
           disabled={disabled}
-          multiple={parameter.multi}
-          dropdown
-          dropdownIcon="pi pi-chevron-down"
-          aria-label={`${inputAreaAriaLabel}: String with Typeahead`}
-          tooltip={`${inputAreaAriaLabel}: String with Typeahead`}
+          multiple={parameter?.multi === true}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              variant="outlined"
+              placeholder={parameter.display_name}
+              error={
+                !disabled &&
+                !parameter.optional &&
+                (parameter.value === undefined ||
+                  parameter.value === null ||
+                  parameter.value === "")
+              }
+            />
+          )}
         />
         {loadingChoices &&
           loadingChoices.some((loading) => loading.key === parameter.key) && (
@@ -304,7 +307,7 @@ function CommandFormField({
             title={parameter.errorMsg ?? "ERROR"}
           />
         )}
-      </div>
+      </Box>
     );
   }
 
@@ -499,159 +502,195 @@ function CommandFormField({
     case "Integer": {
       if (parameter.multi) {
         return (
-          <div id={parameter.key} key={parameter.key} className="p-field">
-            <div className="container">
-              {parameter.value?.map((item: any, index: any) => (
-                <div key={`${parameter.key}-${index}`} className="dynamic-item">
-                  <InputNumber
-                    id={`${parameter.key}-${index}`}
-                    value={
-                      getMultiValue(parameter.key, index) ?? parameter.default
-                    }
-                    invalid={
-                      (!disabled &&
+          <Container id={parameter.key} key={parameter.key}>
+            {parameter.value?.map((item: any, index: any) => (
+              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
+                  <Tooltip
+                    title={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                  >
+                    <NumberField
+                      id={`${parameter.key}-${index}`}
+                      value={
+                        getMultiValue(parameter.key, index) ?? parameter.default
+                      }
+                      disabled={disabled}
+                      onValueChange={(value) =>
+                        handleMultiChange(parameter.key, value, index)
+                      }
+                      error={
+                        !disabled &&
                         !parameter.optional &&
-                        (item === undefined || item === null || item === "")) ||
-                      undefined
-                    }
-                    max={
-                      parameter.maximum !== undefined
-                        ? parameter.maximum
-                        : undefined
-                    }
-                    min={
-                      parameter.minimum !== undefined
-                        ? parameter.minimum
-                        : undefined
-                    }
-                    onChange={(e) =>
-                      handleMultiChange(parameter.key, e.value, index)
-                    }
-                    disabled={disabled}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                  />
+                        (item === undefined || item === null || item === "")
+                      }
+                      max={
+                        parameter.maximum !== undefined
+                          ? parameter.maximum
+                          : undefined
+                      }
+                      min={
+                        parameter.minimum !== undefined
+                          ? parameter.minimum
+                          : undefined
+                      }
+                    />
+                  </Tooltip>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
                   <AccessButton
                     label="Remove"
-                    severity="danger"
+                    color="warning"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
                     tooltip={`${removeInputAriaLabel} Index ${index}`}
-                  />
-                </div>
-              ))}
+                  >
+                    <Typography variant="button">Remove</Typography>
+                  </AccessButton>
+                </Box>
+              </Box>
+            ))}
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-              />
-            </div>
-          </div>
+              >
+                <Typography variant="button">
+                  Add {parameter.display_name ?? parameter.key}
+                </Typography>
+              </AccessButton>
+            </Box>
+          </Container>
         );
       }
       return (
-        <div key={parameter.key} className="p-field">
-          <InputNumber
-            id={parameter.key}
-            value={parameter.value}
-            invalid={
-              (!disabled &&
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          <Tooltip
+            title={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+          >
+            <NumberField
+              id={parameter.key}
+              value={parameter.value}
+              disabled={disabled}
+              onValueChange={(value) => handleChange(parameter.key, value)}
+              error={
+                !disabled &&
                 !parameter.optional &&
                 (parameter.value === undefined ||
                   parameter.value === null ||
-                  parameter.value === "")) ||
-              undefined
-            }
-            max={
-              parameter.maximum !== undefined ? parameter.maximum : undefined
-            }
-            min={
-              parameter.minimum !== undefined ? parameter.minimum : undefined
-            }
-            onValueChange={(e) => handleChange(e.target.id, e.target.value)}
-            disabled={disabled}
-            tooltip={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-          />
-        </div>
+                  parameter.value === "")
+              }
+              max={
+                parameter.maximum !== undefined ? parameter.maximum : undefined
+              }
+              min={
+                parameter.minimum !== undefined ? parameter.minimum : undefined
+              }
+            />
+          </Tooltip>
+        </Box>
       );
     }
     case "Float": {
       if (parameter.multi) {
         return (
-          <div id={parameter.key} key={parameter.key} className="p-field">
-            <div className="container">
-              {parameter.value?.map((item: any, index: any) => (
-                <div key={`${parameter.key}-${index}`} className="dynamic-item">
-                  <InputNumber
-                    id={`${parameter.key}-${index}`}
-                    value={item ?? parameter.default}
-                    invalid={
-                      (!disabled &&
+          <Container id={parameter.key} key={parameter.key}>
+            {parameter.value?.map((item: any, index: any) => (
+              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
+                  <Tooltip
+                    title={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                  >
+                    <NumberField
+                      id={`${parameter.key}-${index}`}
+                      value={
+                        getMultiValue(parameter.key, index) ?? parameter.default
+                      }
+                      disabled={disabled}
+                      onValueChange={(value) =>
+                        handleMultiChange(parameter.key, value, index)
+                      }
+                      error={
+                        !disabled &&
                         !parameter.optional &&
-                        (item === undefined || item === null || item === "")) ||
-                      undefined
-                    }
-                    max={
-                      parameter.maximum !== undefined
-                        ? parameter.maximum
-                        : undefined
-                    }
-                    min={
-                      parameter.minimum !== undefined
-                        ? parameter.minimum
-                        : undefined
-                    }
-                    minFractionDigits={2}
-                    onChange={(e) =>
-                      handleMultiChange(parameter.key, e.value, index)
-                    }
-                    disabled={disabled}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                  />
+                        (item === undefined || item === null || item === "")
+                      }
+                      max={
+                        parameter.maximum !== undefined
+                          ? parameter.maximum
+                          : undefined
+                      }
+                      min={
+                        parameter.minimum !== undefined
+                          ? parameter.minimum
+                          : undefined
+                      }
+                      step={0.01}
+                    />
+                  </Tooltip>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
                   <AccessButton
                     label="Remove"
-                    severity="danger"
+                    color="warning"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
                     tooltip={`${removeInputAriaLabel} Index ${index}`}
-                  />
-                </div>
-              ))}
+                  >
+                    <Typography variant="button">Remove</Typography>
+                  </AccessButton>
+                </Box>
+              </Box>
+            ))}
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-              />
-            </div>
-          </div>
+              >
+                <Typography variant="button">
+                  Add {parameter.display_name ?? parameter.key}
+                </Typography>
+              </AccessButton>
+            </Box>
+          </Container>
         );
       }
       return (
-        <div key={parameter.key} className="p-field">
-          <InputNumber
-            id={parameter.key}
-            value={parameter.value}
-            invalid={
-              (!disabled &&
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          <Tooltip
+            title={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+          >
+            <NumberField
+              id={parameter.key}
+              value={parameter.value}
+              disabled={disabled}
+              onValueChange={(value) => handleChange(parameter.key, value)}
+              error={
+                !disabled &&
                 !parameter.optional &&
                 (parameter.value === undefined ||
                   parameter.value === null ||
-                  parameter.value === "")) ||
-              undefined
-            }
-            max={
-              parameter.maximum !== undefined ? parameter.maximum : undefined
-            }
-            min={
-              parameter.minimum !== undefined ? parameter.minimum : undefined
-            }
-            minFractionDigits={2}
-            onValueChange={(e) => handleChange(e.target.id, e.target.value)}
-            disabled={disabled}
-            tooltip={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-          />
-        </div>
+                  parameter.value === "")
+              }
+              max={
+                parameter.maximum !== undefined ? parameter.maximum : undefined
+              }
+              min={
+                parameter.minimum !== undefined ? parameter.minimum : undefined
+              }
+              step={0.01}
+            />
+          </Tooltip>
+        </Box>
       );
     }
     case "Boolean": {
