@@ -1,10 +1,16 @@
+import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+} from "@mui/material";
 import { FilterMatchMode } from "primereact/api";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
-import { Dropdown } from "primereact/dropdown";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { Command, Instance, System } from "../models/brewtils-types";
+import { Command, System } from "../models/brewtils-types";
 import AccessButton from "./AccessButton";
 
 function CommandList({
@@ -17,9 +23,12 @@ function CommandList({
   selectedSystem?: System;
   commandListButtonClick: any;
   instances: Array<Record<string, any>>;
-  selectedInstance: Instance | undefined;
+  selectedInstance: Record<string, any> | undefined;
   setSelectedInstance: any;
 }) {
+  const [instance, setInstance] = useState<string>(
+    selectedInstance?.name ?? "",
+  );
   const [commands, setCommands] = useState<Command[]>([]);
   const commandList: Array<Command> = [];
   const buttonsDisabled = useRef<any>(
@@ -84,25 +93,33 @@ function CommandList({
     );
   }
 
+  const handleChange = (event: SelectChangeEvent) => {
+    setInstance(event.target.value);
+    setSelectedInstance({
+      name: event.target.value,
+      label: event.target.value,
+    });
+    buttonsDisabled.current = false;
+  };
+
   //Get a list of commands and output them to a table
   return (
     <>
-      <label htmlFor="instanceSelect" className="mr-2 font-semibold">
-        Instance:
-      </label>
-      <Dropdown
-        id="instanceSelect"
-        className="mb-2"
-        value={selectedInstance}
-        placeholder="Select Instance"
-        onChange={(e) => {
-          setSelectedInstance(e.value);
-          buttonsDisabled.current = false;
-        }}
-        invalid={!selectedInstance || undefined}
-        options={sortedInstances}
-        aria-label="Select Instance"
-      />
+      <FormControl fullWidth>
+        <InputLabel id="instance-label-select">Instance</InputLabel>
+        <Select
+          labelId="instance-label-select"
+          id="instance-select"
+          value={instance}
+          label="instance"
+          disabled={sortedInstances.length == 1}
+          onChange={handleChange}
+        >
+          {sortedInstances.map((i) => (
+            <MenuItem value={i.name}>{i.label}</MenuItem>
+          ))}
+        </Select>
+      </FormControl>
       <DataTable
         key={buttonsDisabled.current}
         value={commands}
