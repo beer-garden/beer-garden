@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Box, Container, TextField, Tooltip, Typography } from "@mui/material";
-import { AutoComplete } from "primereact/autocomplete";
+import Autocomplete from "@mui/material/Autocomplete";
 import { Calendar } from "primereact/calendar";
 import { Checkbox } from "primereact/checkbox";
 import { Dropdown } from "primereact/dropdown";
@@ -33,9 +33,6 @@ function CommandFormField({
   loadingChoices,
   resetForm,
 }: CommandFormFieldParams) {
-  // AutoComplete Objects
-  const [items, setItems] = useState<Array<string>>([]);
-
   // Base64 Stateful Objects
   const [uploadPercentage, setUploadPercentage] = useState(0);
   const fileUploadRef = useRef<FileUpload>(null);
@@ -257,37 +254,43 @@ function CommandFormField({
       </div>
     );
   } else if (parameter.choices && parameter.choices?.display === "typeahead") {
-    const searchItems = (event: any) => {
-      if (parameter.options) {
-        const filteredItems = parameter.options.filter((option) =>
-          option.label.toLowerCase().includes(event.query),
-        );
-
-        setItems(filteredItems?.map((option) => option.value));
-      }
-    };
     return (
-      <div key={parameter.key} className="p-field">
-        <AutoComplete
+      <Box
+        key={parameter.key}
+        sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+      >
+        <Autocomplete
+          sx={{ width: "100%" }}
           id={parameter.key}
-          value={parameter.value}
-          suggestions={items}
-          completeMethod={searchItems}
-          invalid={
-            (!disabled &&
-              !parameter.optional &&
-              (parameter.value === undefined ||
-                parameter.value === null ||
-                parameter.value === "")) ||
-            undefined
+          value={
+            parameter?.multi == true
+              ? (parameter.value as string[])
+              : (parameter.value as string)
           }
-          onChange={(e) => handleChange(e.target.id, e.target.value)}
+          options={
+            parameter?.options
+              ? parameter?.options?.map((option) => option.value as string)
+              : []
+          }
+          onChange={(_event: any, newValue: any) => {
+            handleChange(parameter.key, newValue);
+          }}
           disabled={disabled}
-          multiple={parameter.multi}
-          dropdown
-          dropdownIcon="pi pi-chevron-down"
-          aria-label={`${inputAreaAriaLabel}: String with Typeahead`}
-          tooltip={`${inputAreaAriaLabel}: String with Typeahead`}
+          multiple={parameter?.multi === true}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              variant="outlined"
+              placeholder={parameter.display_name}
+              error={
+                !disabled &&
+                !parameter.optional &&
+                (parameter.value === undefined ||
+                  parameter.value === null ||
+                  parameter.value === "")
+              }
+            />
+          )}
         />
         {loadingChoices &&
           loadingChoices.some((loading) => loading.key === parameter.key) && (
@@ -299,7 +302,7 @@ function CommandFormField({
             title={parameter.errorMsg ?? "ERROR"}
           />
         )}
-      </div>
+      </Box>
     );
   }
 
