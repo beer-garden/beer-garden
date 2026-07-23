@@ -1,6 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Box,
+  Checkbox,
   Container,
   MenuItem,
   Select,
@@ -11,11 +12,9 @@ import {
 import Autocomplete from "@mui/material/Autocomplete";
 import CircularProgress from "@mui/material/CircularProgress";
 import { Calendar } from "primereact/calendar";
-import { Checkbox } from "primereact/checkbox";
 import { FileUpload, FileUploadFile } from "primereact/fileupload";
 import { ProgressBar } from "primereact/progressbar";
 import { ProgressSpinner } from "primereact/progressspinner";
-import { TriStateCheckbox } from "primereact/tristatecheckbox";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 
 import { InputParam } from "../models/models";
@@ -696,135 +695,80 @@ function CommandFormField({
     }
     case "Boolean": {
       if (parameter.multi) {
-        if (parameter.nullable || parameter.optional) {
-          return (
-            <div id={parameter.key} key={parameter.key} className="p-field">
-              <div className="container">
-                {parameter.value?.map((item: any, index: any) => (
-                  <div
-                    key={`${parameter.key}-${index}`}
-                    className="dynamic-item"
-                  >
-                    <TriStateCheckbox
-                      id={`${parameter.key}-${index}`}
-                      variant="filled"
-                      invalid={
-                        (!disabled &&
-                          !parameter.optional &&
-                          (item === undefined ||
-                            item === null ||
-                            item === "")) ||
-                        undefined
-                      }
-                      value={item}
-                      onChange={(e) =>
-                        handleMultiChange(parameter.key, e.value, index)
-                      }
-                      disabled={disabled}
-                      tooltip={`${inputAreaAriaLabel} Index ${index}: Boolean`}
-                    />
-
-                    <AccessButton
-                      label="Remove"
-                      severity="danger"
-                      onClick={() => removeMultiItem(parameter.key, index)}
-                      disabled={disabled}
-                      tooltip={`${removeInputAriaLabel} Index ${index}`}
-                    />
-                  </div>
-                ))}
-                <AccessButton
-                  label="Add"
-                  onClick={() => addMultiItem(parameter.key, parameter.default)}
-                  disabled={disabled}
-                  tooltip={addInputAriaLabel}
-                />
-              </div>
-            </div>
-          );
-        }
         return (
-          <div id={parameter.key} key={parameter.key} className="p-field">
-            <div className="container">
-              {parameter.value?.map((item: any, index: any) => (
-                <div key={`${parameter.key}-${index}`} className="dynamic-item">
-                  <Checkbox
-                    id={`${parameter.key}-${index}`}
-                    variant="filled"
-                    invalid={
-                      (!disabled &&
-                        !parameter.optional &&
-                        (item === undefined || item === null || item === "")) ||
-                      undefined
-                    }
-                    checked={item}
-                    onChange={(e) =>
-                      handleMultiChange(parameter.key, e.checked, index)
-                    }
-                    disabled={disabled}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}: Boolean`}
-                  />
-
+          <Container id={parameter.key} key={parameter.key}>
+            {parameter.value?.map((item: any, index: any) => (
+              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
+                  <Tooltip
+                    title={`${inputAreaAriaLabel} Boolean ${index}: String`}
+                  >
+                    <Checkbox
+                      id={`${parameter.key}-${index}`}
+                      checked={item}
+                      indeterminate={
+                        item === undefined
+                          ? parameter.nullable || parameter.optional
+                          : false
+                      }
+                      onChange={(e) =>
+                        handleMultiChange(
+                          parameter.key,
+                          e.target.checked,
+                          index,
+                        )
+                      }
+                      disabled={disabled}
+                    />
+                  </Tooltip>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
                   <AccessButton
                     label="Remove"
-                    severity="danger"
+                    color="warning"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
                     tooltip={`${removeInputAriaLabel} Index ${index}`}
-                  />
-                </div>
-              ))}
+                  >
+                    <Typography variant="button">Remove</Typography>
+                  </AccessButton>
+                </Box>
+              </Box>
+            ))}
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-              />
-            </div>
-          </div>
-        );
-      }
-      if (parameter.nullable || parameter.optional) {
-        return (
-          <div key={parameter.key} className="p-field-checkbox">
-            <TriStateCheckbox
-              id={parameter.key}
-              variant="filled"
-              invalid={
-                (!disabled &&
-                  !parameter.optional &&
-                  (parameter.value === undefined ||
-                    parameter.value === null ||
-                    parameter.value === "")) ||
-                undefined
-              }
-              value={parameter.value}
-              onChange={(e) => handleChange(e.target.id, e.value)}
-              disabled={disabled}
-              tooltip={`${inputAreaAriaLabel}: Boolean`}
-            />
-          </div>
+              >
+                <Typography variant="button">
+                  Add {parameter.display_name ?? parameter.key}
+                </Typography>
+              </AccessButton>
+            </Box>
+          </Container>
         );
       }
       return (
-        <div key={parameter.key} className="p-field-checkbox">
-          <Checkbox
-            id={parameter.key}
-            variant="filled"
-            invalid={
-              (!disabled &&
-                !parameter.optional &&
-                (parameter.value === undefined ||
-                  parameter.value === null ||
-                  parameter.value === "")) ||
-              undefined
-            }
-            checked={parameter.value}
-            onChange={(e) => handleChange(e.target.id, e.checked)}
-            disabled={disabled}
-            tooltip={`${inputAreaAriaLabel}: Boolean`}
-          />
-        </div>
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          <Tooltip title={`${inputAreaAriaLabel}: Boolean`}>
+            <Checkbox
+              id={parameter.key}
+              checked={parameter.value}
+              indeterminate={
+                parameter.value === undefined
+                  ? parameter.nullable || parameter.optional
+                  : false
+              }
+              onChange={(e) => handleChange(parameter.key, e.target.checked)}
+              disabled={disabled}
+            />
+          </Tooltip>
+        </Box>
       );
     }
     case "Date": {
