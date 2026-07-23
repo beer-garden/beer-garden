@@ -93,7 +93,7 @@ function CommandList({
     );
   }
 
-  const handleChange = (event: SelectChangeEvent) => {
+  const handleChangeInstance = (event: SelectChangeEvent) => {
     setInstance(event.target.value);
     setSelectedInstance({
       name: event.target.value,
@@ -113,7 +113,7 @@ function CommandList({
           value={instance}
           label="instance"
           disabled={sortedInstances.length == 1}
-          onChange={handleChange}
+          onChange={handleChangeInstance}
         >
           {sortedInstances.map((i) => (
             <MenuItem value={i.name}>{i.label}</MenuItem>
