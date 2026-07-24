@@ -1043,17 +1043,28 @@ function CommandFormField({
               <FAIcon icon="xmark" sx={{ ml: 1 }} />
             </IconButton>
           )}
-          <Button
-            component="label"
-            role={undefined}
-            disabled={disabled || parameter?.value?.name !== undefined}
-            variant="contained"
-            tabIndex={-1}
-            startIcon={<FAIcon icon="upload" />}
-          >
-            Upload Bytes
-            <VisuallyHiddenInput type="file" onChange={customBytesUploader} />
-          </Button>
+          <Tooltip title={`${inputAreaAriaLabel}: Bytes`}>
+            <span>
+              <Button
+                component="label"
+                role={undefined}
+                disabled={disabled || parameter?.value?.name !== undefined}
+                variant="contained"
+                tabIndex={-1}
+                startIcon={<FAIcon icon="upload" />}
+                aria-describedby={`${parameter.key}-helper-text`}
+              >
+                Upload Bytes
+                <VisuallyHiddenInput
+                  type="file"
+                  onChange={customBytesUploader}
+                />
+              </Button>
+              <FormHelperText id={`${parameter.key}-helper-text`}>
+                {parameter.description}
+              </FormHelperText>
+            </span>
+          </Tooltip>
         </Box>
       );
     }
@@ -1103,31 +1114,42 @@ function CommandFormField({
               <FAIcon icon="xmark" sx={{ ml: 1 }} />
             </IconButton>
           )}
-          <Button
-            component="label"
-            role={undefined}
-            variant="contained"
-            disabled={disabled || uploadPercentage > 0}
-            tabIndex={-1}
-            startIcon={<FAIcon icon="upload" />}
-          >
-            <VisuallyHiddenInput type="file" onChange={customBase64Uploader} />
-            <Stack>
-              <Stack>Upload Base64</Stack>
-              <Stack>
-                {uploadPercentage > 0 && (
-                  <LinearProgress
-                    variant="buffer"
-                    color="secondary"
-                    value={uploadPercentage}
-                    valueBuffer={uploadPercentageBuffer}
-                    aria-label="Uploading File..."
-                    sx={{ width: "100%" }}
-                  />
-                )}
-              </Stack>
-            </Stack>
-          </Button>
+          <Tooltip title={`${inputAreaAriaLabel}: Base64`}>
+            <span>
+              <Button
+                component="label"
+                role={undefined}
+                variant="contained"
+                disabled={disabled || uploadPercentage > 0}
+                tabIndex={-1}
+                startIcon={<FAIcon icon="upload" />}
+                aria-describedby={`${parameter.key}-helper-text`}
+              >
+                <VisuallyHiddenInput
+                  type="file"
+                  onChange={customBase64Uploader}
+                />
+                <Stack>
+                  <Stack>Upload Base64</Stack>
+                  <Stack>
+                    {uploadPercentage > 0 && (
+                      <LinearProgress
+                        variant="buffer"
+                        color="secondary"
+                        value={uploadPercentage}
+                        valueBuffer={uploadPercentageBuffer}
+                        aria-label="Uploading File..."
+                        sx={{ width: "100%" }}
+                      />
+                    )}
+                  </Stack>
+                </Stack>
+              </Button>
+              <FormHelperText id={`${parameter.key}-helper-text`}>
+                {parameter.description}
+              </FormHelperText>
+            </span>
+          </Tooltip>
         </Box>
       );
     }
