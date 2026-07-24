@@ -429,20 +429,24 @@ function CommandForm({
         if (param.type === "DateTime") {
           if (param.multi) {
             newParam.value = (newParam.value as Array<any>).map((value) => {
-              return new Date(value);
+              return value ? new Date(value).getTime() : value;
             });
           } else {
-            newParam.value = new Date(newParam.value);
+            newParam.value = newParam.value
+              ? new Date(newParam.value).getTime()
+              : newParam.value;
           }
         }
 
         if (param.type === "Date") {
           if (param.multi) {
             newParam.value = (newParam.value as Array<any>).map((value) => {
-              return new Date(value);
+              return value ? new Date(value).getTime() : value;
             });
           } else {
-            newParam.value = new Date(newParam.value);
+            newParam.value = newParam.value
+              ? new Date(newParam.value).getTime()
+              : newParam.value;
           }
         }
 

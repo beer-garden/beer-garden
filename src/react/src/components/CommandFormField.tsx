@@ -5,25 +5,33 @@ import {
   Container,
   FormHelperText,
   IconButton,
+  LinearProgress,
   MenuItem,
   Select,
+  Stack,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
+import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
-import { Calendar } from "primereact/calendar";
-import { FileUpload, FileUploadFile } from "primereact/fileupload";
-import { ProgressBar } from "primereact/progressbar";
+import { styled } from "@mui/material/styles";
+import { DatePicker } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { PickerValue } from "@mui/x-date-pickers/internals";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import dayjs from "dayjs";
 import { ProgressSpinner } from "primereact/progressspinner";
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 
 import { InputParam } from "../models/models";
 import { uploadFile } from "../services/file_service";
 import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import NumberField from "./EnhancedTable/components/NumberField";
+
 interface CommandFormFieldParams {
   parameter: InputParam;
   disabled: boolean;
@@ -43,22 +51,12 @@ function CommandFormField({
 }: CommandFormFieldParams) {
   // Base64 Stateful Objects
   const [uploadPercentage, setUploadPercentage] = useState(0);
-  const fileUploadRef = useRef<FileUpload>(null);
-
-  // Bytes Stateful Objects
-  const bytesUploadRef = useRef<FileUpload>(null);
+  const [uploadPercentageBuffer, setUploadPercentageBuffer] = useState(0);
 
   // Bytes and Base64 Triggers
   useEffect(() => {
-    if (bytesUploadRef && bytesUploadRef.current) {
-      bytesUploadRef.current.clear();
-    }
-
     if (uploadPercentage !== 0) {
       setUploadPercentage(0);
-    }
-    if (fileUploadRef && fileUploadRef.current) {
-      fileUploadRef.current.clear();
     }
   }, [resetForm]);
 
@@ -797,194 +795,342 @@ function CommandFormField({
     case "Date": {
       if (parameter.multi) {
         return (
-          <div id={parameter.key} key={parameter.key} className="p-field">
-            <div className="container">
-              {parameter.value?.map((item: any, index: any) => (
-                <div key={`${parameter.key}-${index}`} className="dynamic-item">
-                  <Calendar
-                    id={`${parameter.key}-${index}`}
-                    value={item}
-                    invalid={
-                      (!disabled &&
-                        !parameter.optional &&
-                        (item === undefined || item === null || item === "")) ||
-                      undefined
-                    }
-                    hourFormat="24"
-                    onChange={(e) =>
-                      handleMultiChange(parameter.key, e.value, index)
-                    }
-                    disabled={disabled}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}: Date`}
-                  />
+          <Container id={parameter.key} key={parameter.key}>
+            {parameter.value?.map((item: any, index: any) => (
+              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
+                  <Tooltip title={`${inputAreaAriaLabel} Index ${index}: Date`}>
+                    <span>
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                          disabled={disabled}
+                          value={item ? dayjs(item) : null}
+                          onChange={(newValue: PickerValue) => {
+                            if (newValue && newValue.isValid()) {
+                              handleMultiChange(
+                                parameter.key,
+                                newValue.valueOf(),
+                                index,
+                              );
+                            } else {
+                              handleMultiChange(
+                                parameter.key,
+                                undefined,
+                                index,
+                              );
+                            }
+                          }}
+                          slotProps={{
+                            textField: {
+                              id: parameter.key,
+                              error:
+                                !disabled &&
+                                !parameter.optional &&
+                                (item === undefined ||
+                                  item === null ||
+                                  item === ""),
+                            },
+                          }}
+                        />
+                      </LocalizationProvider>
+                    </span>
+                  </Tooltip>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
                   <AccessButton
                     label="Remove"
-                    severity="danger"
+                    color="warning"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
                     tooltip={`${removeInputAriaLabel} Index ${index}`}
-                  />
-                </div>
-              ))}
+                  >
+                    <Typography variant="button">Remove</Typography>
+                  </AccessButton>
+                </Box>
+              </Box>
+            ))}
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-              />
-            </div>
-          </div>
+              >
+                <Typography variant="button">
+                  Add {parameter.display_name ?? parameter.key}
+                </Typography>
+              </AccessButton>
+            </Box>
+          </Container>
         );
       }
       return (
-        <div key={parameter.key} className="p-field">
-          <Calendar
-            id={parameter.key}
-            value={parameter.value || ""}
-            invalid={
-              (!disabled &&
-                !parameter.optional &&
-                (parameter.value === undefined ||
-                  parameter.value === null ||
-                  parameter.value === "")) ||
-              undefined
-            }
-            hourFormat="24"
-            onChange={(e: any) => handleChange(e.target.id, e.value)}
-            disabled={disabled}
-            tooltip={`${inputAreaAriaLabel}: Date`}
-          />
-        </div>
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          <Tooltip title={`${inputAreaAriaLabel}: Date`}>
+            <span>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  disabled={disabled}
+                  value={parameter?.value ? dayjs(parameter.value) : null}
+                  onChange={(newValue: PickerValue) => {
+                    if (newValue && newValue.isValid()) {
+                      handleChange(parameter.key, newValue.valueOf());
+                    } else {
+                      handleChange(parameter.key, undefined);
+                    }
+                  }}
+                  slotProps={{
+                    textField: {
+                      id: parameter.key,
+                      error:
+                        !disabled &&
+                        !parameter.optional &&
+                        (parameter.value === undefined ||
+                          parameter.value === null ||
+                          parameter.value === ""),
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+            </span>
+          </Tooltip>
+        </Box>
       );
     }
     case "DateTime": {
       if (parameter.multi) {
         return (
-          <div id={parameter.key} key={parameter.key} className="p-field">
-            <div className="container">
-              {parameter.value?.map((item: any, index: any) => (
-                <div key={`${parameter.key}-${index}`} className="dynamic-item">
-                  <Calendar
-                    id={`${parameter.key}-${index}`}
-                    value={item ?? parameter.default}
-                    invalid={
-                      (!disabled &&
-                        !parameter.optional &&
-                        (item === undefined || item === null || item === "")) ||
-                      undefined
-                    }
-                    showTime
-                    hourFormat="24"
-                    onChange={(e) =>
-                      handleMultiChange(parameter.key, e.value, index)
-                    }
-                    disabled={disabled}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}: DateTime`}
-                  />
+          <Container id={parameter.key} key={parameter.key}>
+            {parameter.value?.map((item: any, index: any) => (
+              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
+                  <Tooltip
+                    title={`${inputAreaAriaLabel} Index ${index}: DateTime`}
+                  >
+                    <span>
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DateTimePicker
+                          disabled={disabled}
+                          value={item ? dayjs(item) : null}
+                          onChange={(newValue: PickerValue) => {
+                            if (newValue && newValue.isValid()) {
+                              handleMultiChange(
+                                parameter.key,
+                                newValue.valueOf(),
+                                index,
+                              );
+                            } else {
+                              handleMultiChange(
+                                parameter.key,
+                                undefined,
+                                index,
+                              );
+                            }
+                          }}
+                          slotProps={{
+                            textField: {
+                              id: parameter.key,
+
+                              error:
+                                !disabled &&
+                                !parameter.optional &&
+                                (item === undefined ||
+                                  item === null ||
+                                  item === ""),
+                            },
+                          }}
+                        />
+                      </LocalizationProvider>
+                    </span>
+                  </Tooltip>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
                   <AccessButton
                     label="Remove"
-                    severity="danger"
+                    color="warning"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
                     tooltip={`${removeInputAriaLabel} Index ${index}`}
-                  />
-                </div>
-              ))}
+                  >
+                    <Typography variant="button">Remove</Typography>
+                  </AccessButton>
+                </Box>
+              </Box>
+            ))}
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-              />
-            </div>
-          </div>
+              >
+                <Typography variant="button">
+                  Add {parameter.display_name ?? parameter.key}
+                </Typography>
+              </AccessButton>
+            </Box>
+          </Container>
         );
       }
       return (
-        <div key={parameter.key} className="p-field">
-          <Calendar
-            id={parameter.key}
-            value={parameter.value}
-            showTime
-            hourFormat="24"
-            invalid={
-              (!disabled &&
-                !parameter.optional &&
-                (parameter.value === undefined ||
-                  parameter.value === null ||
-                  parameter.value === "")) ||
-              undefined
-            }
-            onChange={(e: any) => handleChange(e.target.id, e.value)}
-            disabled={disabled}
-            tooltip={`${inputAreaAriaLabel}: DateTime`}
-          />
-        </div>
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          <Tooltip title={`${inputAreaAriaLabel}: DateTime`}>
+            <span>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DateTimePicker
+                  disabled={disabled}
+                  value={parameter?.value ? dayjs(parameter.value) : null}
+                  onChange={(newValue: PickerValue) => {
+                    if (newValue && newValue.isValid()) {
+                      handleChange(parameter.key, newValue.valueOf());
+                    } else {
+                      handleChange(parameter.key, undefined);
+                    }
+                  }}
+                  slotProps={{
+                    textField: {
+                      id: parameter.key,
+                      error:
+                        !disabled &&
+                        !parameter.optional &&
+                        (parameter.value === undefined ||
+                          parameter.value === null ||
+                          parameter.value === ""),
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+            </span>
+          </Tooltip>
+        </Box>
       );
     }
     case "Bytes": {
       const customBytesUploader = (event: any) => {
-        const file = event.files[0];
-        handleChange(parameter.key, file as FileUploadFile);
+        if (event.target.files.length === 1) {
+          const file = event.target.files[0];
+          handleChange(parameter.key, file as File);
+        } else {
+          handleChange(parameter.key, undefined);
+        }
       };
+      const VisuallyHiddenInput = styled("input")({
+        clip: "rect(0 0 0 0)",
+        clipPath: "inset(50%)",
+        height: 1,
+        overflow: "hidden",
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        whiteSpace: "nowrap",
+        width: 1,
+      });
 
       return (
-        <div id={parameter.key} key={parameter.key} className="p-field">
-          <FileUpload
-            id={parameter.key}
-            ref={bytesUploadRef}
-            mode="basic"
-            customUpload
-            onSelect={customBytesUploader}
-            disabled={disabled}
-          />
-        </div>
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          {parameter?.value?.name && (
+            <IconButton onClick={() => handleChange(parameter.key, undefined)}>
+              <Typography variant="caption">
+                {parameter?.value?.name}
+              </Typography>
+              <FAIcon icon="xmark" sx={{ ml: 1 }} />
+            </IconButton>
+          )}
+          <Button
+            component="label"
+            role={undefined}
+            disabled={disabled || parameter?.value?.name !== undefined}
+            variant="contained"
+            tabIndex={-1}
+            startIcon={<FAIcon icon="upload" />}
+          >
+            Upload Bytes
+            <VisuallyHiddenInput type="file" onChange={customBytesUploader} />
+          </Button>
+        </Box>
       );
     }
     case "Base64": {
       const customBase64Uploader = async (event: any) => {
-        if (fileUploadRef && fileUploadRef.current) {
-          fileUploadRef.current.setUploadedFiles([]);
-        }
-        const file = event.files[0];
+        const file = event.target.files[0];
 
-        const fileUploadResult = await uploadFile(file, setUploadPercentage);
+        const fileUploadResult = await uploadFile(
+          file,
+          setUploadPercentage,
+          setUploadPercentageBuffer,
+        );
 
         handleChange(parameter.key, fileUploadResult);
-        if (fileUploadRef && fileUploadRef.current) {
-          fileUploadRef.current.clear();
-          fileUploadRef.current.setUploadedFiles([file]);
-        }
         setUploadPercentage(100);
+        setUploadPercentageBuffer(100);
       };
 
       const removeFile = () => {
         handleChange(parameter.key, null);
         setUploadPercentage(0);
-        if (fileUploadRef && fileUploadRef.current) {
-          fileUploadRef.current.clear();
-        }
+        setUploadPercentageBuffer(0);
       };
 
+      const VisuallyHiddenInput = styled("input")({
+        clip: "rect(0 0 0 0)",
+        clipPath: "inset(50%)",
+        height: 1,
+        overflow: "hidden",
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        whiteSpace: "nowrap",
+        width: 1,
+      });
+
       return (
-        <div id={parameter.key} key={parameter.key} className="p-field">
-          <FileUpload
-            id={parameter.key}
-            ref={fileUploadRef}
-            // mode="basic"
-            customUpload
-            auto
-            uploadHandler={customBase64Uploader}
-            onRemove={removeFile}
-            disabled={disabled}
-            progressBarTemplate={
-              <ProgressBar
-                value={uploadPercentage}
-                displayValueTemplate={() => `${uploadPercentage}%`}
-              />
-            }
-          />
-        </div>
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          {uploadPercentage === 100 && (
+            <IconButton onClick={removeFile}>
+              <Typography variant="caption">
+                {parameter?.value?.details?.file_name}
+              </Typography>
+              <FAIcon icon="xmark" sx={{ ml: 1 }} />
+            </IconButton>
+          )}
+          <Button
+            component="label"
+            role={undefined}
+            variant="contained"
+            disabled={disabled || uploadPercentage > 0}
+            tabIndex={-1}
+            startIcon={<FAIcon icon="upload" />}
+          >
+            <VisuallyHiddenInput type="file" onChange={customBase64Uploader} />
+            <Stack>
+              <Stack>Upload Base64</Stack>
+              <Stack>
+                {uploadPercentage > 0 && (
+                  <LinearProgress
+                    variant="buffer"
+                    color="secondary"
+                    value={uploadPercentage}
+                    valueBuffer={uploadPercentageBuffer}
+                    aria-label="Uploading File..."
+                    sx={{ width: "100%" }}
+                  />
+                )}
+              </Stack>
+            </Stack>
+          </Button>
+        </Box>
       );
     }
     default: {
