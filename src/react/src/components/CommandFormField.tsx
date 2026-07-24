@@ -3,29 +3,34 @@ import {
   Box,
   Checkbox,
   Container,
+  IconButton,
+  LinearProgress,
   MenuItem,
   Select,
+  Stack,
   TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
+import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import { styled } from "@mui/material/styles";
 import { DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { PickerValue } from "@mui/x-date-pickers/internals";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
-import { FileUpload, FileUploadFile } from "primereact/fileupload";
-import { ProgressBar } from "primereact/progressbar";
 import { ProgressSpinner } from "primereact/progressspinner";
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 
 import { InputParam } from "../models/models";
 import { uploadFile } from "../services/file_service";
+import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import NumberField from "./EnhancedTable/components/NumberField";
+
 interface CommandFormFieldParams {
   parameter: InputParam;
   disabled: boolean;
@@ -45,22 +50,12 @@ function CommandFormField({
 }: CommandFormFieldParams) {
   // Base64 Stateful Objects
   const [uploadPercentage, setUploadPercentage] = useState(0);
-  const fileUploadRef = useRef<FileUpload>(null);
-
-  // Bytes Stateful Objects
-  const bytesUploadRef = useRef<FileUpload>(null);
+  const [uploadPercentageBuffer, setUploadPercentageBuffer] = useState(0);
 
   // Bytes and Base64 Triggers
   useEffect(() => {
-    if (bytesUploadRef && bytesUploadRef.current) {
-      bytesUploadRef.current.clear();
-    }
-
     if (uploadPercentage !== 0) {
       setUploadPercentage(0);
-    }
-    if (fileUploadRef && fileUploadRef.current) {
-      fileUploadRef.current.clear();
     }
   }, [resetForm]);
 
@@ -997,67 +992,124 @@ function CommandFormField({
     }
     case "Bytes": {
       const customBytesUploader = (event: any) => {
-        const file = event.files[0];
-        handleChange(parameter.key, file as FileUploadFile);
+        if (event.target.files.length === 1) {
+          const file = event.target.files[0];
+          handleChange(parameter.key, file as File);
+        } else {
+          handleChange(parameter.key, undefined);
+        }
       };
+      const VisuallyHiddenInput = styled("input")({
+        clip: "rect(0 0 0 0)",
+        clipPath: "inset(50%)",
+        height: 1,
+        overflow: "hidden",
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        whiteSpace: "nowrap",
+        width: 1,
+      });
 
       return (
-        <div id={parameter.key} key={parameter.key} className="p-field">
-          <FileUpload
-            id={parameter.key}
-            ref={bytesUploadRef}
-            mode="basic"
-            customUpload
-            onSelect={customBytesUploader}
-            disabled={disabled}
-          />
-        </div>
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          {parameter?.value?.name && (
+            <IconButton onClick={() => handleChange(parameter.key, undefined)}>
+              <Typography variant="caption">
+                {parameter?.value?.name}
+              </Typography>
+              <FAIcon icon="xmark" sx={{ ml: 1 }} />
+            </IconButton>
+          )}
+          <Button
+            component="label"
+            role={undefined}
+            disabled={disabled || parameter?.value?.name !== undefined}
+            variant="contained"
+            tabIndex={-1}
+            startIcon={<FAIcon icon="upload" />}
+          >
+            Upload Bytes
+            <VisuallyHiddenInput type="file" onChange={customBytesUploader} />
+          </Button>
+        </Box>
       );
     }
     case "Base64": {
       const customBase64Uploader = async (event: any) => {
-        if (fileUploadRef && fileUploadRef.current) {
-          fileUploadRef.current.setUploadedFiles([]);
-        }
-        const file = event.files[0];
+        const file = event.target.files[0];
 
-        const fileUploadResult = await uploadFile(file, setUploadPercentage);
+        const fileUploadResult = await uploadFile(
+          file,
+          setUploadPercentage,
+          setUploadPercentageBuffer,
+        );
 
         handleChange(parameter.key, fileUploadResult);
-        if (fileUploadRef && fileUploadRef.current) {
-          fileUploadRef.current.clear();
-          fileUploadRef.current.setUploadedFiles([file]);
-        }
         setUploadPercentage(100);
+        setUploadPercentageBuffer(100);
       };
 
       const removeFile = () => {
         handleChange(parameter.key, null);
         setUploadPercentage(0);
-        if (fileUploadRef && fileUploadRef.current) {
-          fileUploadRef.current.clear();
-        }
+        setUploadPercentageBuffer(0);
       };
 
+      const VisuallyHiddenInput = styled("input")({
+        clip: "rect(0 0 0 0)",
+        clipPath: "inset(50%)",
+        height: 1,
+        overflow: "hidden",
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        whiteSpace: "nowrap",
+        width: 1,
+      });
+
       return (
-        <div id={parameter.key} key={parameter.key} className="p-field">
-          <FileUpload
-            id={parameter.key}
-            ref={fileUploadRef}
-            // mode="basic"
-            customUpload
-            auto
-            uploadHandler={customBase64Uploader}
-            onRemove={removeFile}
-            disabled={disabled}
-            progressBarTemplate={
-              <ProgressBar
-                value={uploadPercentage}
-                displayValueTemplate={() => `${uploadPercentage}%`}
-              />
-            }
-          />
-        </div>
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          {uploadPercentage === 100 && (
+            <IconButton onClick={removeFile}>
+              <Typography variant="caption">
+                {parameter?.value?.details?.file_name}
+              </Typography>
+              <FAIcon icon="xmark" sx={{ ml: 1 }} />
+            </IconButton>
+          )}
+          <Button
+            component="label"
+            role={undefined}
+            variant="contained"
+            disabled={disabled || uploadPercentage > 0}
+            tabIndex={-1}
+            startIcon={<FAIcon icon="upload" />}
+          >
+            <VisuallyHiddenInput type="file" onChange={customBase64Uploader} />
+            <Stack>
+              <Stack>Upload Base64</Stack>
+              <Stack>
+                {uploadPercentage > 0 && (
+                  <LinearProgress
+                    variant="buffer"
+                    color="secondary"
+                    value={uploadPercentage}
+                    valueBuffer={uploadPercentageBuffer}
+                    aria-label="Uploading File..."
+                    sx={{ width: "100%" }}
+                  />
+                )}
+              </Stack>
+            </Stack>
+          </Button>
+        </Box>
       );
     }
     default: {
