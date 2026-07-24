@@ -21,19 +21,22 @@ function SSRInitialFilled(_: BaseNumberField.Root.Props) {
 }
 SSRInitialFilled.muiName = "Input";
 
-export default function NumberField({
-  id: idProp,
-  label,
-  helperText,
-  error,
-  size = "medium",
-  ...other
-}: BaseNumberField.Root.Props & {
-  label?: React.ReactNode;
-  helperText?: string;
-  size?: "small" | "medium";
-  error?: boolean;
-}) {
+export default React.forwardRef(function NumberField(
+  {
+    id: idProp,
+    label,
+    helperText,
+    error,
+    size = "medium",
+    ...other
+  }: BaseNumberField.Root.Props & {
+    label?: React.ReactNode;
+    helperText?: string;
+    size?: "small" | "medium";
+    error?: boolean;
+  },
+  ref: React.Ref<any>,
+) {
   let id = React.useId();
   if (idProp) {
     id = idProp;
@@ -41,6 +44,7 @@ export default function NumberField({
   return (
     <BaseNumberField.Root
       {...other}
+      ref={ref}
       render={(props, state) => (
         <FormControl
           size={size}
@@ -94,7 +98,6 @@ export default function NumberField({
                 >
                   <FontAwesomeIcon icon="angle-up" />
                 </BaseNumberField.Increment>
-
                 <BaseNumberField.Decrement
                   render={<IconButton size={size} aria-label="Decrease" />}
                 >
@@ -114,4 +117,4 @@ export default function NumberField({
       </FormHelperText>
     </BaseNumberField.Root>
   );
-}
+});
