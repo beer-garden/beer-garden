@@ -1,9 +1,12 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Box,
+  Checkbox,
   Container,
   IconButton,
   LinearProgress,
+  MenuItem,
+  Select,
   Stack,
   TextField,
   Tooltip,
@@ -11,15 +14,16 @@ import {
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import { styled } from "@mui/material/styles";
-import { Calendar } from "primereact/calendar";
-import { Checkbox } from "primereact/checkbox";
-import { Dropdown } from "primereact/dropdown";
-import { MultiSelect } from "primereact/multiselect";
+import { DatePicker } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { PickerValue } from "@mui/x-date-pickers/internals";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import dayjs from "dayjs";
 import { ProgressSpinner } from "primereact/progressspinner";
-import { TriStateCheckbox } from "primereact/tristatecheckbox";
 import { ChangeEvent, useEffect, useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 
 import { InputParam } from "../models/models";
 import { uploadFile } from "../services/file_service";
@@ -142,62 +146,58 @@ function CommandFormField({
   ) {
     if (parameter.multi) {
       return (
-        <div key={parameter.key} className="p-field">
-          <MultiSelect
-            id={parameter.key}
-            value={parameter.value}
-            options={parameter.options}
-            invalid={
-              (!disabled &&
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          <Tooltip title={`${inputAreaAriaLabel}: Multi Select`}>
+            <Select
+              id={parameter.key}
+              value={parameter.value}
+              multiple
+              disabled={
+                disabled ||
+                parameter.options === undefined ||
+                parameter.options.length === 0 ||
+                loadingChoices.some(
+                  (loading) => loading.key === parameter.key,
+                ) ||
+                parameter.error
+              }
+              error={
+                !disabled &&
                 !parameter.optional &&
                 (parameter.value === undefined ||
                   parameter.value === null ||
-                  parameter.value === "")) ||
-              undefined
-            }
-            onChange={(e) =>
-              handleChange(
-                e.target.id,
-                e.value.filter((option: string) =>
-                  parameter.options?.some((opt) => opt.value === option),
-                ),
-              )
-            }
-            placeholder={`Select ${parameter.key}`}
-            selectAllLabel={`Select all options for ${parameter.display_name ?? parameter.key}`}
-            tooltip={`${inputAreaAriaLabel}: Multi Select`}
-            disabled={
-              disabled ||
-              parameter.options === undefined ||
-              parameter.options.length === 0 ||
-              loadingChoices.some((loading) => loading.key === parameter.key) ||
-              parameter.error
-            }
-            pt={{
-              checkbox: (data: any) => {
-                if (
-                  data?.context?.index &&
-                  parameter.options &&
-                  parameter.options[data.context.index]
-                ) {
-                  return {
-                    input: {
-                      "aria-label": `${inputAreaAriaLabel}: Multiselect Option Checkbox: ${parameter.options[data.context.index].label}`,
-                    },
-                  };
-                } else {
-                  return {
-                    input: {
-                      "aria-label": `${inputAreaAriaLabel}: Multiselect Option Checkbox with random UUID generated ${uuidv4()}`,
-                    },
-                  };
-                }
-              },
-            }}
-          />
+                  parameter.value === "")
+              }
+              onChange={(event) => {
+                const {
+                  target: { value },
+                } = event;
+
+                handleChange(
+                  parameter.key,
+                  (typeof value === "string" ? value.split(",") : value).filter(
+                    (option: string) =>
+                      parameter.options?.some((opt) => opt.value === option),
+                  ),
+                );
+              }}
+            >
+              {parameter.options?.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </Tooltip>
           {loadingChoices &&
             loadingChoices.some((loading) => loading.key === parameter.key) && (
-              <ProgressSpinner style={{ width: "34px", height: "34px" }} />
+              <CircularProgress
+                aria-label="Loading…"
+                sx={{ width: "34px", height: "34px" }}
+              />
             )}
           {parameter.error && (
             <FontAwesomeIcon
@@ -205,46 +205,50 @@ function CommandFormField({
               title={parameter.errorMsg ?? "ERROR"}
             />
           )}
-        </div>
+        </Box>
       );
     }
     return (
-      <div key={parameter.key} className="p-field">
-        <datalist id={`select${parameter.key}Dropdown`} aria-hidden="true">
-          {parameter.options?.map((status: any) => (
-            <option key={status.label} value={status.value} />
-          ))}
-        </datalist>
-        <Dropdown
-          id={parameter.key}
-          value={parameter.value}
-          options={parameter.options}
-          invalid={
-            (!disabled &&
+      <Box
+        key={parameter.key}
+        sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+      >
+        <Tooltip title={`${inputAreaAriaLabel}: Dropdown Select`}>
+          <Select
+            id={parameter.key}
+            value={parameter.value}
+            disabled={
+              disabled ||
+              parameter.options === undefined ||
+              parameter.options.length === 0 ||
+              loadingChoices.some((loading) => loading.key === parameter.key) ||
+              parameter.error
+            }
+            error={
+              !disabled &&
               !parameter.optional &&
               (parameter.value === undefined ||
                 parameter.value === null ||
-                parameter.value === "")) ||
-            undefined
-          }
-          onChange={(e) => handleChange(e.target.id, e.value)}
-          placeholder={`Select ${parameter.key}`}
-          tooltip={`${inputAreaAriaLabel}: Dropdown Select`}
-          disabled={
-            disabled ||
-            parameter.options === undefined ||
-            parameter.options.length === 0 ||
-            loadingChoices.some((loading) => loading.key === parameter.key)
-          }
-          pt={{
-            select: {
-              "aria-controls": `select${parameter.key}Dropdown`,
-            },
-          }}
-        />
+                parameter.value === "")
+            }
+            onChange={(event) => {
+              handleChange(parameter.key, event.target.value);
+            }}
+          >
+            {parameter.options?.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </Tooltip>
+
         {loadingChoices &&
           loadingChoices.some((loading) => loading.key === parameter.key) && (
-            <ProgressSpinner style={{ width: "34px", height: "34px" }} />
+            <CircularProgress
+              aria-label="Loading…"
+              sx={{ width: "34px", height: "34px" }}
+            />
           )}
         {parameter.error && (
           <FontAwesomeIcon
@@ -252,7 +256,7 @@ function CommandFormField({
             title={parameter.errorMsg ?? "ERROR"}
           />
         )}
-      </div>
+      </Box>
     );
   } else if (parameter.choices && parameter.choices?.display === "typeahead") {
     return (
@@ -691,263 +695,299 @@ function CommandFormField({
     }
     case "Boolean": {
       if (parameter.multi) {
-        if (parameter.nullable || parameter.optional) {
-          return (
-            <div id={parameter.key} key={parameter.key} className="p-field">
-              <div className="container">
-                {parameter.value?.map((item: any, index: any) => (
-                  <div
-                    key={`${parameter.key}-${index}`}
-                    className="dynamic-item"
-                  >
-                    <TriStateCheckbox
-                      id={`${parameter.key}-${index}`}
-                      variant="filled"
-                      invalid={
-                        (!disabled &&
-                          !parameter.optional &&
-                          (item === undefined ||
-                            item === null ||
-                            item === "")) ||
-                        undefined
-                      }
-                      value={item}
-                      onChange={(e) =>
-                        handleMultiChange(parameter.key, e.value, index)
-                      }
-                      disabled={disabled}
-                      tooltip={`${inputAreaAriaLabel} Index ${index}: Boolean`}
-                    />
-
-                    <AccessButton
-                      label="Remove"
-                      severity="danger"
-                      onClick={() => removeMultiItem(parameter.key, index)}
-                      disabled={disabled}
-                      tooltip={`${removeInputAriaLabel} Index ${index}`}
-                    />
-                  </div>
-                ))}
-                <AccessButton
-                  label="Add"
-                  onClick={() => addMultiItem(parameter.key, parameter.default)}
-                  disabled={disabled}
-                  tooltip={addInputAriaLabel}
-                />
-              </div>
-            </div>
-          );
-        }
         return (
-          <div id={parameter.key} key={parameter.key} className="p-field">
-            <div className="container">
-              {parameter.value?.map((item: any, index: any) => (
-                <div key={`${parameter.key}-${index}`} className="dynamic-item">
-                  <Checkbox
-                    id={`${parameter.key}-${index}`}
-                    variant="filled"
-                    invalid={
-                      (!disabled &&
-                        !parameter.optional &&
-                        (item === undefined || item === null || item === "")) ||
-                      undefined
-                    }
-                    checked={item}
-                    onChange={(e) =>
-                      handleMultiChange(parameter.key, e.checked, index)
-                    }
-                    disabled={disabled}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}: Boolean`}
-                  />
-
+          <Container id={parameter.key} key={parameter.key}>
+            {parameter.value?.map((item: any, index: any) => (
+              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
+                  <Tooltip
+                    title={`${inputAreaAriaLabel} Boolean ${index}: String`}
+                  >
+                    <Checkbox
+                      id={`${parameter.key}-${index}`}
+                      checked={item}
+                      indeterminate={
+                        item === undefined
+                          ? parameter.nullable || parameter.optional
+                          : false
+                      }
+                      onChange={(e) =>
+                        handleMultiChange(
+                          parameter.key,
+                          e.target.checked,
+                          index,
+                        )
+                      }
+                      disabled={disabled}
+                    />
+                  </Tooltip>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
                   <AccessButton
                     label="Remove"
-                    severity="danger"
+                    color="warning"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
                     tooltip={`${removeInputAriaLabel} Index ${index}`}
-                  />
-                </div>
-              ))}
+                  >
+                    <Typography variant="button">Remove</Typography>
+                  </AccessButton>
+                </Box>
+              </Box>
+            ))}
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-              />
-            </div>
-          </div>
-        );
-      }
-      if (parameter.nullable || parameter.optional) {
-        return (
-          <div key={parameter.key} className="p-field-checkbox">
-            <TriStateCheckbox
-              id={parameter.key}
-              variant="filled"
-              invalid={
-                (!disabled &&
-                  !parameter.optional &&
-                  (parameter.value === undefined ||
-                    parameter.value === null ||
-                    parameter.value === "")) ||
-                undefined
-              }
-              value={parameter.value}
-              onChange={(e) => handleChange(e.target.id, e.value)}
-              disabled={disabled}
-              tooltip={`${inputAreaAriaLabel}: Boolean`}
-            />
-          </div>
+              >
+                <Typography variant="button">
+                  Add {parameter.display_name ?? parameter.key}
+                </Typography>
+              </AccessButton>
+            </Box>
+          </Container>
         );
       }
       return (
-        <div key={parameter.key} className="p-field-checkbox">
-          <Checkbox
-            id={parameter.key}
-            variant="filled"
-            invalid={
-              (!disabled &&
-                !parameter.optional &&
-                (parameter.value === undefined ||
-                  parameter.value === null ||
-                  parameter.value === "")) ||
-              undefined
-            }
-            checked={parameter.value}
-            onChange={(e) => handleChange(e.target.id, e.checked)}
-            disabled={disabled}
-            tooltip={`${inputAreaAriaLabel}: Boolean`}
-          />
-        </div>
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          <Tooltip title={`${inputAreaAriaLabel}: Boolean`}>
+            <Checkbox
+              id={parameter.key}
+              checked={parameter.value}
+              indeterminate={
+                parameter.value === undefined
+                  ? parameter.nullable || parameter.optional
+                  : false
+              }
+              onChange={(e) => handleChange(parameter.key, e.target.checked)}
+              disabled={disabled}
+            />
+          </Tooltip>
+        </Box>
       );
     }
     case "Date": {
       if (parameter.multi) {
         return (
-          <div id={parameter.key} key={parameter.key} className="p-field">
-            <div className="container">
-              {parameter.value?.map((item: any, index: any) => (
-                <div key={`${parameter.key}-${index}`} className="dynamic-item">
-                  <Calendar
-                    id={`${parameter.key}-${index}`}
-                    value={item}
-                    invalid={
-                      (!disabled &&
-                        !parameter.optional &&
-                        (item === undefined || item === null || item === "")) ||
-                      undefined
-                    }
-                    hourFormat="24"
-                    onChange={(e) =>
-                      handleMultiChange(parameter.key, e.value, index)
-                    }
-                    disabled={disabled}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}: Date`}
-                  />
+          <Container id={parameter.key} key={parameter.key}>
+            {parameter.value?.map((item: any, index: any) => (
+              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
+                  <Tooltip title={`${inputAreaAriaLabel} Index ${index}: Date`}>
+                    <span>
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DatePicker
+                          disabled={disabled}
+                          value={item ? dayjs(item) : null}
+                          onChange={(newValue: PickerValue) => {
+                            if (newValue && newValue.isValid()) {
+                              handleMultiChange(
+                                parameter.key,
+                                newValue.valueOf(),
+                                index,
+                              );
+                            } else {
+                              handleMultiChange(
+                                parameter.key,
+                                undefined,
+                                index,
+                              );
+                            }
+                          }}
+                          slotProps={{
+                            textField: {
+                              id: parameter.key,
+                              error:
+                                !disabled &&
+                                !parameter.optional &&
+                                (item === undefined ||
+                                  item === null ||
+                                  item === ""),
+                            },
+                          }}
+                        />
+                      </LocalizationProvider>
+                    </span>
+                  </Tooltip>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
                   <AccessButton
                     label="Remove"
-                    severity="danger"
+                    color="warning"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
                     tooltip={`${removeInputAriaLabel} Index ${index}`}
-                  />
-                </div>
-              ))}
+                  >
+                    <Typography variant="button">Remove</Typography>
+                  </AccessButton>
+                </Box>
+              </Box>
+            ))}
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-              />
-            </div>
-          </div>
+              >
+                <Typography variant="button">
+                  Add {parameter.display_name ?? parameter.key}
+                </Typography>
+              </AccessButton>
+            </Box>
+          </Container>
         );
       }
       return (
-        <div key={parameter.key} className="p-field">
-          <Calendar
-            id={parameter.key}
-            value={parameter.value || ""}
-            invalid={
-              (!disabled &&
-                !parameter.optional &&
-                (parameter.value === undefined ||
-                  parameter.value === null ||
-                  parameter.value === "")) ||
-              undefined
-            }
-            hourFormat="24"
-            onChange={(e: any) => handleChange(e.target.id, e.value)}
-            disabled={disabled}
-            tooltip={`${inputAreaAriaLabel}: Date`}
-          />
-        </div>
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          <Tooltip title={`${inputAreaAriaLabel}: Date`}>
+            <span>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                  disabled={disabled}
+                  value={parameter?.value ? dayjs(parameter.value) : null}
+                  onChange={(newValue: PickerValue) => {
+                    if (newValue && newValue.isValid()) {
+                      handleChange(parameter.key, newValue.valueOf());
+                    } else {
+                      handleChange(parameter.key, undefined);
+                    }
+                  }}
+                  slotProps={{
+                    textField: {
+                      id: parameter.key,
+                      error:
+                        !disabled &&
+                        !parameter.optional &&
+                        (parameter.value === undefined ||
+                          parameter.value === null ||
+                          parameter.value === ""),
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+            </span>
+          </Tooltip>
+        </Box>
       );
     }
     case "DateTime": {
       if (parameter.multi) {
         return (
-          <div id={parameter.key} key={parameter.key} className="p-field">
-            <div className="container">
-              {parameter.value?.map((item: any, index: any) => (
-                <div key={`${parameter.key}-${index}`} className="dynamic-item">
-                  <Calendar
-                    id={`${parameter.key}-${index}`}
-                    value={item ?? parameter.default}
-                    invalid={
-                      (!disabled &&
-                        !parameter.optional &&
-                        (item === undefined || item === null || item === "")) ||
-                      undefined
-                    }
-                    showTime
-                    hourFormat="24"
-                    onChange={(e) =>
-                      handleMultiChange(parameter.key, e.value, index)
-                    }
-                    disabled={disabled}
-                    tooltip={`${inputAreaAriaLabel} Index ${index}: DateTime`}
-                  />
+          <Container id={parameter.key} key={parameter.key}>
+            {parameter.value?.map((item: any, index: any) => (
+              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
+                  <Tooltip
+                    title={`${inputAreaAriaLabel} Index ${index}: DateTime`}
+                  >
+                    <span>
+                      <LocalizationProvider dateAdapter={AdapterDayjs}>
+                        <DateTimePicker
+                          disabled={disabled}
+                          value={item ? dayjs(item) : null}
+                          onChange={(newValue: PickerValue) => {
+                            if (newValue && newValue.isValid()) {
+                              handleMultiChange(
+                                parameter.key,
+                                newValue.valueOf(),
+                                index,
+                              );
+                            } else {
+                              handleMultiChange(
+                                parameter.key,
+                                undefined,
+                                index,
+                              );
+                            }
+                          }}
+                          slotProps={{
+                            textField: {
+                              id: parameter.key,
+
+                              error:
+                                !disabled &&
+                                !parameter.optional &&
+                                (item === undefined ||
+                                  item === null ||
+                                  item === ""),
+                            },
+                          }}
+                        />
+                      </LocalizationProvider>
+                    </span>
+                  </Tooltip>
+                </Box>
+                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
                   <AccessButton
                     label="Remove"
-                    severity="danger"
+                    color="warning"
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
                     tooltip={`${removeInputAriaLabel} Index ${index}`}
-                  />
-                </div>
-              ))}
+                  >
+                    <Typography variant="button">Remove</Typography>
+                  </AccessButton>
+                </Box>
+              </Box>
+            ))}
+            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-              />
-            </div>
-          </div>
+              >
+                <Typography variant="button">
+                  Add {parameter.display_name ?? parameter.key}
+                </Typography>
+              </AccessButton>
+            </Box>
+          </Container>
         );
       }
       return (
-        <div key={parameter.key} className="p-field">
-          <Calendar
-            id={parameter.key}
-            value={parameter.value}
-            showTime
-            hourFormat="24"
-            invalid={
-              (!disabled &&
-                !parameter.optional &&
-                (parameter.value === undefined ||
-                  parameter.value === null ||
-                  parameter.value === "")) ||
-              undefined
-            }
-            onChange={(e: any) => handleChange(e.target.id, e.value)}
-            disabled={disabled}
-            tooltip={`${inputAreaAriaLabel}: DateTime`}
-          />
-        </div>
+        <Box
+          key={parameter.key}
+          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+        >
+          <Tooltip title={`${inputAreaAriaLabel}: DateTime`}>
+            <span>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DateTimePicker
+                  disabled={disabled}
+                  value={parameter?.value ? dayjs(parameter.value) : null}
+                  onChange={(newValue: PickerValue) => {
+                    if (newValue && newValue.isValid()) {
+                      handleChange(parameter.key, newValue.valueOf());
+                    } else {
+                      handleChange(parameter.key, undefined);
+                    }
+                  }}
+                  slotProps={{
+                    textField: {
+                      id: parameter.key,
+                      error:
+                        !disabled &&
+                        !parameter.optional &&
+                        (parameter.value === undefined ||
+                          parameter.value === null ||
+                          parameter.value === ""),
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+            </span>
+          </Tooltip>
+        </Box>
       );
     }
     case "Bytes": {
