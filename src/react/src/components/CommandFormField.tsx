@@ -121,6 +121,29 @@ function CommandFormField({
 
   const removeInputAriaLabel = `Remove value from List for Parameter ${parameter.display_name ?? parameter.key}`;
 
+  // Single Item Formatting
+  const inputDisplayStyling = {
+    display: "flex",
+    justifyContent: "flex-end",
+    m: 1,
+  };
+
+  // Multi Item Formatting
+  const inputDisplayContainerStyling = {
+    mx: 1,
+  };
+
+  const inputDisplayItemStyling = {
+    display: "flex",
+    justifyContent: "flex-end",
+    my: 1,
+  };
+
+  const inputAddButtonStyling = {
+    display: "flex",
+    justifyContent: "flex-end",
+  };
+
   if (!parameter.key) return null;
 
   if (parameter.multi && !Array.isArray(parameter.default)) {
@@ -147,10 +170,7 @@ function CommandFormField({
   ) {
     if (parameter.multi) {
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: Multi Select`}>
             <span>
               <Select
@@ -218,10 +238,7 @@ function CommandFormField({
       );
     }
     return (
-      <Box
-        key={parameter.key}
-        sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-      >
+      <Box key={parameter.key} sx={inputDisplayStyling}>
         <Tooltip title={`${inputAreaAriaLabel}: Dropdown Select`}>
           <span>
             <Select
@@ -277,10 +294,7 @@ function CommandFormField({
     );
   } else if (parameter.choices && parameter.choices?.display === "typeahead") {
     return (
-      <Box
-        key={parameter.key}
-        sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-      >
+      <Box key={parameter.key} sx={inputDisplayStyling}>
         <Autocomplete
           sx={{ width: "100%" }}
           id={parameter.key}
@@ -337,11 +351,15 @@ function CommandFormField({
     case "String": {
       if (parameter.multi) {
         return (
-          <Container id={parameter.key} key={parameter.key}>
+          <Container
+            id={parameter.key}
+            key={parameter.key}
+            sx={inputDisplayContainerStyling}
+          >
             {parameter.value?.map((item: any, index: any) => (
               <Box
                 key={`${parameter.key}-${index}`}
-                sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
+                sx={inputDisplayItemStyling}
               >
                 <Tooltip title={`${inputAreaAriaLabel} Index ${index}: String`}>
                   <TextField
@@ -375,7 +393,7 @@ function CommandFormField({
                 </Tooltip>
               </Box>
             ))}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
+            <Box sx={inputAddButtonStyling}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
@@ -391,10 +409,7 @@ function CommandFormField({
         );
       }
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: String`}>
             <TextField
               id={parameter.key}
@@ -429,11 +444,15 @@ function CommandFormField({
       };
       if (parameter.multi) {
         return (
-          <Container id={parameter.key} key={parameter.key}>
+          <Container
+            id={parameter.key}
+            key={parameter.key}
+            sx={inputDisplayContainerStyling}
+          >
             {parameter.value?.map((item: any, index: any) => (
               <Box
                 key={`${parameter.key}-${index}`}
-                sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
+                sx={inputDisplayItemStyling}
               >
                 <Tooltip
                   title={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
@@ -459,6 +478,7 @@ function CommandFormField({
                       (item === undefined ||
                         item === null ||
                         item === "" ||
+                        item === "null" ||
                         !canParseJSON(item))
                     }
                   />
@@ -473,7 +493,7 @@ function CommandFormField({
                 </Tooltip>
               </Box>
             ))}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
+            <Box sx={inputAddButtonStyling}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
@@ -489,10 +509,7 @@ function CommandFormField({
         );
       }
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: Dictionary`}>
             <TextField
               id={parameter.key}
@@ -511,6 +528,7 @@ function CommandFormField({
                 (parameter.value === undefined ||
                   parameter.value === null ||
                   parameter.value === "" ||
+                  parameter.value === "null" ||
                   !canParseJSON(parameter.value))
               }
             />
@@ -521,11 +539,15 @@ function CommandFormField({
     case "Integer": {
       if (parameter.multi) {
         return (
-          <Container id={parameter.key} key={parameter.key}>
+          <Container
+            id={parameter.key}
+            key={parameter.key}
+            sx={inputDisplayContainerStyling}
+          >
             {parameter.value?.map((item: any, index: any) => (
               <Box
                 key={`${parameter.key}-${index}`}
-                sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
+                sx={inputDisplayItemStyling}
               >
                 <Tooltip
                   title={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
@@ -567,7 +589,7 @@ function CommandFormField({
                 </Tooltip>
               </Box>
             ))}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
+            <Box sx={inputAddButtonStyling}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
@@ -583,10 +605,7 @@ function CommandFormField({
         );
       }
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip
             title={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
           >
@@ -617,11 +636,15 @@ function CommandFormField({
     case "Float": {
       if (parameter.multi) {
         return (
-          <Container id={parameter.key} key={parameter.key}>
+          <Container
+            id={parameter.key}
+            key={parameter.key}
+            sx={inputDisplayContainerStyling}
+          >
             {parameter.value?.map((item: any, index: any) => (
               <Box
                 key={`${parameter.key}-${index}`}
-                sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
+                sx={inputDisplayItemStyling}
               >
                 <Tooltip
                   title={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
@@ -664,7 +687,7 @@ function CommandFormField({
                 </Tooltip>
               </Box>
             ))}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
+            <Box sx={inputAddButtonStyling}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
@@ -680,10 +703,7 @@ function CommandFormField({
         );
       }
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip
             title={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
           >
@@ -715,11 +735,15 @@ function CommandFormField({
     case "Boolean": {
       if (parameter.multi) {
         return (
-          <Container id={parameter.key} key={parameter.key}>
+          <Container
+            id={parameter.key}
+            key={parameter.key}
+            sx={inputDisplayContainerStyling}
+          >
             {parameter.value?.map((item: any, index: any) => (
               <Box
                 key={`${parameter.key}-${index}`}
-                sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
+                sx={inputDisplayItemStyling}
               >
                 <Tooltip
                   title={`${inputAreaAriaLabel} Boolean ${index}: String`}
@@ -760,7 +784,7 @@ function CommandFormField({
                 </Tooltip>
               </Box>
             ))}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
+            <Box sx={inputAddButtonStyling}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
@@ -776,10 +800,7 @@ function CommandFormField({
         );
       }
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: Boolean`}>
             <span>
               <Checkbox
@@ -805,11 +826,15 @@ function CommandFormField({
     case "Date": {
       if (parameter.multi) {
         return (
-          <Container id={parameter.key} key={parameter.key}>
+          <Container
+            id={parameter.key}
+            key={parameter.key}
+            sx={inputDisplayContainerStyling}
+          >
             {parameter.value?.map((item: any, index: any) => (
               <Box
                 key={`${parameter.key}-${index}`}
-                sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
+                sx={inputDisplayItemStyling}
               >
                 <Tooltip title={`${inputAreaAriaLabel} Index ${index}: Date`}>
                   <span>
@@ -857,7 +882,7 @@ function CommandFormField({
                 </Tooltip>
               </Box>
             ))}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
+            <Box sx={inputAddButtonStyling}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
@@ -873,10 +898,7 @@ function CommandFormField({
         );
       }
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: Date`}>
             <span>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -915,11 +937,15 @@ function CommandFormField({
     case "DateTime": {
       if (parameter.multi) {
         return (
-          <Container id={parameter.key} key={parameter.key}>
+          <Container
+            id={parameter.key}
+            key={parameter.key}
+            sx={inputDisplayContainerStyling}
+          >
             {parameter.value?.map((item: any, index: any) => (
               <Box
                 key={`${parameter.key}-${index}`}
-                sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
+                sx={inputDisplayItemStyling}
               >
                 <Tooltip
                   title={`${inputAreaAriaLabel} Index ${index}: DateTime`}
@@ -970,7 +996,7 @@ function CommandFormField({
                 </Tooltip>
               </Box>
             ))}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
+            <Box sx={inputAddButtonStyling}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
@@ -986,10 +1012,7 @@ function CommandFormField({
         );
       }
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: DateTime`}>
             <span>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -1047,10 +1070,7 @@ function CommandFormField({
       });
 
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           {parameter?.value?.name && (
             <IconButton onClick={() => handleChange(parameter.key, undefined)}>
               <Typography variant="caption">
@@ -1118,10 +1138,7 @@ function CommandFormField({
       });
 
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           {uploadPercentage === 100 && (
             <IconButton onClick={removeFile}>
               <Typography variant="caption">
