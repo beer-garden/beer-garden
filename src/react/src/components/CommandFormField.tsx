@@ -23,7 +23,6 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { PickerValue } from "@mui/x-date-pickers/internals";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
-import { ProgressSpinner } from "primereact/progressspinner";
 import { ChangeEvent, useEffect, useState } from "react";
 
 import { InputParam } from "../models/models";
@@ -334,7 +333,7 @@ function CommandFormField({
         </FormHelperText>
         {loadingChoices &&
           loadingChoices.some((loading) => loading.key === parameter.key) && (
-            <ProgressSpinner style={{ width: "34px", height: "34px" }} />
+            <CircularProgress style={{ width: "34px", height: "34px" }} />
           )}
         {parameter.error && (
           <FontAwesomeIcon
