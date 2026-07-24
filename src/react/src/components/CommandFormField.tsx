@@ -817,6 +817,7 @@ function CommandFormField({
                       <DatePicker
                         disabled={disabled}
                         value={item ? dayjs(item) : null}
+                        aria-describedby={`${parameter.key}-helper-text`}
                         onChange={(newValue: PickerValue) => {
                           if (newValue && newValue.isValid()) {
                             handleMultiChange(
@@ -841,6 +842,9 @@ function CommandFormField({
                         }}
                       />
                     </LocalizationProvider>
+                    <FormHelperText id={`${parameter.key}-helper-text`}>
+                      {parameter.description}
+                    </FormHelperText>
                   </span>
                 </Tooltip>
                 <Tooltip title={removeInputAriaLabel}>
@@ -879,6 +883,7 @@ function CommandFormField({
                 <DatePicker
                   disabled={disabled}
                   value={parameter?.value ? dayjs(parameter.value) : null}
+                  aria-describedby={`${parameter.key}-helper-text`}
                   onChange={(newValue: PickerValue) => {
                     if (newValue && newValue.isValid()) {
                       handleChange(parameter.key, newValue.valueOf());
@@ -899,6 +904,9 @@ function CommandFormField({
                   }}
                 />
               </LocalizationProvider>
+              <FormHelperText id={`${parameter.key}-helper-text`}>
+                {parameter.description}
+              </FormHelperText>
             </span>
           </Tooltip>
         </Box>
@@ -921,6 +929,7 @@ function CommandFormField({
                       <DateTimePicker
                         disabled={disabled}
                         value={item ? dayjs(item) : null}
+                        aria-describedby={`${parameter.key}-helper-text`}
                         onChange={(newValue: PickerValue) => {
                           if (newValue && newValue.isValid()) {
                             handleMultiChange(
@@ -946,6 +955,9 @@ function CommandFormField({
                         }}
                       />
                     </LocalizationProvider>
+                    <FormHelperText id={`${parameter.key}-helper-text`}>
+                      {parameter.description}
+                    </FormHelperText>
                   </span>
                 </Tooltip>
                 <Tooltip title={removeInputAriaLabel}>
@@ -984,6 +996,7 @@ function CommandFormField({
                 <DateTimePicker
                   disabled={disabled}
                   value={parameter?.value ? dayjs(parameter.value) : null}
+                  aria-describedby={`${parameter.key}-helper-text`}
                   onChange={(newValue: PickerValue) => {
                     if (newValue && newValue.isValid()) {
                       handleChange(parameter.key, newValue.valueOf());
@@ -1004,6 +1017,9 @@ function CommandFormField({
                   }}
                 />
               </LocalizationProvider>
+              <FormHelperText id={`${parameter.key}-helper-text`}>
+                {parameter.description}
+              </FormHelperText>
             </span>
           </Tooltip>
         </Box>
