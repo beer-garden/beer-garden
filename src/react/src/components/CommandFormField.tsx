@@ -365,12 +365,14 @@ function CommandFormField({
                     }
                   />
                 </Tooltip>
-                <IconButton
-                  onClick={() => removeMultiItem(parameter.key, index)}
-                  disabled={disabled}
-                >
-                  <FAIcon icon="xmark" />
-                </IconButton>
+                <Tooltip title={removeInputAriaLabel}>
+                  <IconButton
+                    onClick={() => removeMultiItem(parameter.key, index)}
+                    disabled={disabled}
+                  >
+                    <FAIcon icon="xmark" />
+                  </IconButton>
+                </Tooltip>
               </Box>
             ))}
             <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
@@ -461,12 +463,14 @@ function CommandFormField({
                     }
                   />
                 </Tooltip>
-                <IconButton
-                  onClick={() => removeMultiItem(parameter.key, index)}
-                  disabled={disabled}
-                >
-                  <FAIcon icon="xmark" />
-                </IconButton>
+                <Tooltip title={removeInputAriaLabel}>
+                  <IconButton
+                    onClick={() => removeMultiItem(parameter.key, index)}
+                    disabled={disabled}
+                  >
+                    <FAIcon icon="xmark" />
+                  </IconButton>
+                </Tooltip>
               </Box>
             ))}
             <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
@@ -553,12 +557,14 @@ function CommandFormField({
                     }
                   />
                 </Tooltip>
-                <IconButton
-                  onClick={() => removeMultiItem(parameter.key, index)}
-                  disabled={disabled}
-                >
-                  <FAIcon icon="xmark" />
-                </IconButton>
+                <Tooltip title={removeInputAriaLabel}>
+                  <IconButton
+                    onClick={() => removeMultiItem(parameter.key, index)}
+                    disabled={disabled}
+                  >
+                    <FAIcon icon="xmark" />
+                  </IconButton>
+                </Tooltip>
               </Box>
             ))}
             <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
@@ -648,12 +654,14 @@ function CommandFormField({
                     step={0.01}
                   />
                 </Tooltip>
-                <IconButton
-                  onClick={() => removeMultiItem(parameter.key, index)}
-                  disabled={disabled}
-                >
-                  <FAIcon icon="xmark" />
-                </IconButton>
+                <Tooltip title={removeInputAriaLabel}>
+                  <IconButton
+                    onClick={() => removeMultiItem(parameter.key, index)}
+                    disabled={disabled}
+                  >
+                    <FAIcon icon="xmark" />
+                  </IconButton>
+                </Tooltip>
               </Box>
             ))}
             <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
@@ -742,12 +750,14 @@ function CommandFormField({
                     </FormHelperText>
                   </span>
                 </Tooltip>
-                <IconButton
-                  onClick={() => removeMultiItem(parameter.key, index)}
-                  disabled={disabled}
-                >
-                  <FAIcon icon="xmark" />
-                </IconButton>
+                <Tooltip title={removeInputAriaLabel}>
+                  <IconButton
+                    onClick={() => removeMultiItem(parameter.key, index)}
+                    disabled={disabled}
+                  >
+                    <FAIcon icon="xmark" />
+                  </IconButton>
+                </Tooltip>
               </Box>
             ))}
             <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
@@ -797,56 +807,50 @@ function CommandFormField({
         return (
           <Container id={parameter.key} key={parameter.key}>
             {parameter.value?.map((item: any, index: any) => (
-              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <Tooltip title={`${inputAreaAriaLabel} Index ${index}: Date`}>
-                    <span>
-                      <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <DatePicker
-                          disabled={disabled}
-                          value={item ? dayjs(item) : null}
-                          onChange={(newValue: PickerValue) => {
-                            if (newValue && newValue.isValid()) {
-                              handleMultiChange(
-                                parameter.key,
-                                newValue.valueOf(),
-                                index,
-                              );
-                            } else {
-                              handleMultiChange(
-                                parameter.key,
-                                undefined,
-                                index,
-                              );
-                            }
-                          }}
-                          slotProps={{
-                            textField: {
-                              id: parameter.key,
-                              error:
-                                !disabled &&
-                                !parameter.optional &&
-                                (item === undefined ||
-                                  item === null ||
-                                  item === ""),
-                            },
-                          }}
-                        />
-                      </LocalizationProvider>
-                    </span>
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <AccessButton
-                    label="Remove"
-                    color="warning"
+              <Box
+                key={`${parameter.key}-${index}`}
+                sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
+              >
+                <Tooltip title={`${inputAreaAriaLabel} Index ${index}: Date`}>
+                  <span>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        disabled={disabled}
+                        value={item ? dayjs(item) : null}
+                        onChange={(newValue: PickerValue) => {
+                          if (newValue && newValue.isValid()) {
+                            handleMultiChange(
+                              parameter.key,
+                              newValue.valueOf(),
+                              index,
+                            );
+                          } else {
+                            handleMultiChange(parameter.key, undefined, index);
+                          }
+                        }}
+                        slotProps={{
+                          textField: {
+                            id: parameter.key,
+                            error:
+                              !disabled &&
+                              !parameter.optional &&
+                              (item === undefined ||
+                                item === null ||
+                                item === ""),
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </span>
+                </Tooltip>
+                <Tooltip title={removeInputAriaLabel}>
+                  <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   >
-                    <Typography variant="button">Remove</Typography>
-                  </AccessButton>
-                </Box>
+                    <FAIcon icon="xmark" />
+                  </IconButton>
+                </Tooltip>
               </Box>
             ))}
             <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
@@ -905,59 +909,53 @@ function CommandFormField({
         return (
           <Container id={parameter.key} key={parameter.key}>
             {parameter.value?.map((item: any, index: any) => (
-              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <Tooltip
-                    title={`${inputAreaAriaLabel} Index ${index}: DateTime`}
-                  >
-                    <span>
-                      <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <DateTimePicker
-                          disabled={disabled}
-                          value={item ? dayjs(item) : null}
-                          onChange={(newValue: PickerValue) => {
-                            if (newValue && newValue.isValid()) {
-                              handleMultiChange(
-                                parameter.key,
-                                newValue.valueOf(),
-                                index,
-                              );
-                            } else {
-                              handleMultiChange(
-                                parameter.key,
-                                undefined,
-                                index,
-                              );
-                            }
-                          }}
-                          slotProps={{
-                            textField: {
-                              id: parameter.key,
+              <Box
+                key={`${parameter.key}-${index}`}
+                sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
+              >
+                <Tooltip
+                  title={`${inputAreaAriaLabel} Index ${index}: DateTime`}
+                >
+                  <span>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DateTimePicker
+                        disabled={disabled}
+                        value={item ? dayjs(item) : null}
+                        onChange={(newValue: PickerValue) => {
+                          if (newValue && newValue.isValid()) {
+                            handleMultiChange(
+                              parameter.key,
+                              newValue.valueOf(),
+                              index,
+                            );
+                          } else {
+                            handleMultiChange(parameter.key, undefined, index);
+                          }
+                        }}
+                        slotProps={{
+                          textField: {
+                            id: parameter.key,
 
-                              error:
-                                !disabled &&
-                                !parameter.optional &&
-                                (item === undefined ||
-                                  item === null ||
-                                  item === ""),
-                            },
-                          }}
-                        />
-                      </LocalizationProvider>
-                    </span>
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <AccessButton
-                    label="Remove"
-                    color="warning"
+                            error:
+                              !disabled &&
+                              !parameter.optional &&
+                              (item === undefined ||
+                                item === null ||
+                                item === ""),
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </span>
+                </Tooltip>
+                <Tooltip title={removeInputAriaLabel}>
+                  <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   >
-                    <Typography variant="button">Remove</Typography>
-                  </AccessButton>
-                </Box>
+                    <FAIcon icon="xmark" />
+                  </IconButton>
+                </Tooltip>
               </Box>
             ))}
             <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
