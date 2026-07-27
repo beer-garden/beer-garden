@@ -3,6 +3,7 @@ import {
   Box,
   Checkbox,
   Container,
+  FormHelperText,
   IconButton,
   LinearProgress,
   MenuItem,
@@ -22,7 +23,6 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { PickerValue } from "@mui/x-date-pickers/internals";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
-import { ProgressSpinner } from "primereact/progressspinner";
 import { ChangeEvent, useEffect, useState } from "react";
 
 import { InputParam } from "../models/models";
@@ -120,6 +120,29 @@ function CommandFormField({
 
   const removeInputAriaLabel = `Remove value from List for Parameter ${parameter.display_name ?? parameter.key}`;
 
+  // Single Item Formatting
+  const inputDisplayStyling = {
+    display: "flex",
+    justifyContent: "flex-end",
+    m: 1,
+  };
+
+  // Multi Item Formatting
+  const inputDisplayContainerStyling = {
+    mx: 1,
+  };
+
+  const inputDisplayItemStyling = {
+    display: "flex",
+    justifyContent: "flex-end",
+    my: 1,
+  };
+
+  const inputAddButtonStyling = {
+    display: "flex",
+    justifyContent: "flex-end",
+  };
+
   if (!parameter.key) return null;
 
   if (parameter.multi && !Array.isArray(parameter.default)) {
@@ -146,51 +169,56 @@ function CommandFormField({
   ) {
     if (parameter.multi) {
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: Multi Select`}>
-            <Select
-              id={parameter.key}
-              value={parameter.value}
-              multiple
-              disabled={
-                disabled ||
-                parameter.options === undefined ||
-                parameter.options.length === 0 ||
-                loadingChoices.some(
-                  (loading) => loading.key === parameter.key,
-                ) ||
-                parameter.error
-              }
-              error={
-                !disabled &&
-                !parameter.optional &&
-                (parameter.value === undefined ||
-                  parameter.value === null ||
-                  parameter.value === "")
-              }
-              onChange={(event) => {
-                const {
-                  target: { value },
-                } = event;
+            <span>
+              <Select
+                id={parameter.key}
+                value={parameter.value}
+                aria-describedby={`${parameter.key}-helper-text`}
+                multiple
+                disabled={
+                  disabled ||
+                  parameter.options === undefined ||
+                  parameter.options.length === 0 ||
+                  loadingChoices.some(
+                    (loading) => loading.key === parameter.key,
+                  ) ||
+                  parameter.error
+                }
+                error={
+                  !disabled &&
+                  !parameter.optional &&
+                  (parameter.value === undefined ||
+                    parameter.value === null ||
+                    parameter.value === "")
+                }
+                onChange={(event) => {
+                  const {
+                    target: { value },
+                  } = event;
 
-                handleChange(
-                  parameter.key,
-                  (typeof value === "string" ? value.split(",") : value).filter(
-                    (option: string) =>
+                  handleChange(
+                    parameter.key,
+                    (typeof value === "string"
+                      ? value.split(",")
+                      : value
+                    ).filter((option: string) =>
                       parameter.options?.some((opt) => opt.value === option),
-                  ),
-                );
-              }}
-            >
-              {parameter.options?.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
-                  {option.label}
-                </MenuItem>
-              ))}
-            </Select>
+                    ),
+                  );
+                }}
+              >
+                {parameter.options?.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+              <FormHelperText id={`${parameter.key}-helper-text`}>
+                {parameter.description}
+              </FormHelperText>
+            </span>
           </Tooltip>
           {loadingChoices &&
             loadingChoices.some((loading) => loading.key === parameter.key) && (
@@ -209,38 +237,43 @@ function CommandFormField({
       );
     }
     return (
-      <Box
-        key={parameter.key}
-        sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-      >
+      <Box key={parameter.key} sx={inputDisplayStyling}>
         <Tooltip title={`${inputAreaAriaLabel}: Dropdown Select`}>
-          <Select
-            id={parameter.key}
-            value={parameter.value}
-            disabled={
-              disabled ||
-              parameter.options === undefined ||
-              parameter.options.length === 0 ||
-              loadingChoices.some((loading) => loading.key === parameter.key) ||
-              parameter.error
-            }
-            error={
-              !disabled &&
-              !parameter.optional &&
-              (parameter.value === undefined ||
-                parameter.value === null ||
-                parameter.value === "")
-            }
-            onChange={(event) => {
-              handleChange(parameter.key, event.target.value);
-            }}
-          >
-            {parameter.options?.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </Select>
+          <span>
+            <Select
+              id={parameter.key}
+              value={parameter.value}
+              aria-describedby={`${parameter.key}-helper-text`}
+              disabled={
+                disabled ||
+                parameter.options === undefined ||
+                parameter.options.length === 0 ||
+                loadingChoices.some(
+                  (loading) => loading.key === parameter.key,
+                ) ||
+                parameter.error
+              }
+              error={
+                !disabled &&
+                !parameter.optional &&
+                (parameter.value === undefined ||
+                  parameter.value === null ||
+                  parameter.value === "")
+              }
+              onChange={(event) => {
+                handleChange(parameter.key, event.target.value);
+              }}
+            >
+              {parameter.options?.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  {option.label}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText id={`${parameter.key}-helper-text`}>
+              {parameter.description}
+            </FormHelperText>
+          </span>
         </Tooltip>
 
         {loadingChoices &&
@@ -260,13 +293,11 @@ function CommandFormField({
     );
   } else if (parameter.choices && parameter.choices?.display === "typeahead") {
     return (
-      <Box
-        key={parameter.key}
-        sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-      >
+      <Box key={parameter.key} sx={inputDisplayStyling}>
         <Autocomplete
           sx={{ width: "100%" }}
           id={parameter.key}
+          aria-describedby={`${parameter.key}-helper-text`}
           value={
             parameter?.multi == true
               ? (parameter.value as string[])
@@ -297,9 +328,12 @@ function CommandFormField({
             />
           )}
         />
+        <FormHelperText id={`${parameter.key}-helper-text`}>
+          {parameter.description}
+        </FormHelperText>
         {loadingChoices &&
           loadingChoices.some((loading) => loading.key === parameter.key) && (
-            <ProgressSpinner style={{ width: "34px", height: "34px" }} />
+            <CircularProgress style={{ width: "34px", height: "34px" }} />
           )}
         {parameter.error && (
           <FontAwesomeIcon
@@ -316,48 +350,49 @@ function CommandFormField({
     case "String": {
       if (parameter.multi) {
         return (
-          <Container id={parameter.key} key={parameter.key}>
+          <Container
+            id={parameter.key}
+            key={parameter.key}
+            sx={inputDisplayContainerStyling}
+          >
             {parameter.value?.map((item: any, index: any) => (
-              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <Tooltip
-                    title={`${inputAreaAriaLabel} Index ${index}: String`}
-                  >
-                    <TextField
-                      id={`${parameter.key}-${index}`}
-                      value={item}
-                      variant="outlined"
-                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                        handleMultiChange(
-                          parameter.key,
-                          event.target.value,
-                          index,
-                        );
-                      }}
-                      fullWidth
-                      disabled={disabled}
-                      error={
-                        !disabled &&
-                        !parameter.optional &&
-                        (item === undefined || item === null || item === "")
-                      }
-                    />
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <AccessButton
-                    label="Remove"
-                    color="warning"
+              <Box
+                key={`${parameter.key}-${index}`}
+                sx={inputDisplayItemStyling}
+              >
+                <Tooltip title={`${inputAreaAriaLabel} Index ${index}: String`}>
+                  <TextField
+                    id={`${parameter.key}-${index}`}
+                    helperText={parameter.description}
+                    value={item}
+                    variant="outlined"
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                      handleMultiChange(
+                        parameter.key,
+                        event.target.value,
+                        index,
+                      );
+                    }}
+                    fullWidth
+                    disabled={disabled}
+                    error={
+                      !disabled &&
+                      !parameter.optional &&
+                      (item === undefined || item === null || item === "")
+                    }
+                  />
+                </Tooltip>
+                <Tooltip title={removeInputAriaLabel}>
+                  <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   >
-                    <Typography variant="button">Remove</Typography>
-                  </AccessButton>
-                </Box>
+                    <FAIcon icon="xmark" />
+                  </IconButton>
+                </Tooltip>
               </Box>
             ))}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
+            <Box sx={inputAddButtonStyling}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
@@ -373,14 +408,12 @@ function CommandFormField({
         );
       }
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: String`}>
             <TextField
               id={parameter.key}
               value={parameter.value}
+              helperText={parameter.description}
               variant="outlined"
               onChange={(event: ChangeEvent<HTMLInputElement>) => {
                 handleChange(parameter.key, event.target.value);
@@ -410,52 +443,56 @@ function CommandFormField({
       };
       if (parameter.multi) {
         return (
-          <Container id={parameter.key} key={parameter.key}>
+          <Container
+            id={parameter.key}
+            key={parameter.key}
+            sx={inputDisplayContainerStyling}
+          >
             {parameter.value?.map((item: any, index: any) => (
-              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <Tooltip
-                    title={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
-                  >
-                    <TextField
-                      id={`${parameter.key}-${index}`}
-                      value={item}
-                      variant="outlined"
-                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                        handleMultiChange(
-                          parameter.key,
-                          event.target.value,
-                          index,
-                        );
-                      }}
-                      fullWidth
-                      multiline
-                      disabled={disabled}
-                      error={
-                        !disabled &&
-                        !parameter.optional &&
-                        (item === undefined ||
-                          item === null ||
-                          item === "" ||
-                          !canParseJSON(item))
-                      }
-                    />
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <AccessButton
-                    label="Remove"
-                    color="warning"
+              <Box
+                key={`${parameter.key}-${index}`}
+                sx={inputDisplayItemStyling}
+              >
+                <Tooltip
+                  title={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
+                >
+                  <TextField
+                    id={`${parameter.key}-${index}`}
+                    value={item}
+                    helperText={parameter.description}
+                    variant="outlined"
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                      handleMultiChange(
+                        parameter.key,
+                        event.target.value,
+                        index,
+                      );
+                    }}
+                    fullWidth
+                    multiline
+                    disabled={disabled}
+                    error={
+                      !disabled &&
+                      !parameter.optional &&
+                      (item === undefined ||
+                        item === null ||
+                        item === "" ||
+                        item === "null" ||
+                        !canParseJSON(item))
+                    }
+                  />
+                </Tooltip>
+                <Tooltip title={removeInputAriaLabel}>
+                  <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   >
-                    <Typography variant="button">Remove</Typography>
-                  </AccessButton>
-                </Box>
+                    <FAIcon icon="xmark" />
+                  </IconButton>
+                </Tooltip>
               </Box>
             ))}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
+            <Box sx={inputAddButtonStyling}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
@@ -471,14 +508,12 @@ function CommandFormField({
         );
       }
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: Dictionary`}>
             <TextField
               id={parameter.key}
               value={parameter.value}
+              helperText={parameter.description}
               variant="outlined"
               onChange={(event: ChangeEvent<HTMLInputElement>) => {
                 handleChange(parameter.key, event.target.value);
@@ -492,6 +527,7 @@ function CommandFormField({
                 (parameter.value === undefined ||
                   parameter.value === null ||
                   parameter.value === "" ||
+                  parameter.value === "null" ||
                   !canParseJSON(parameter.value))
               }
             />
@@ -502,54 +538,57 @@ function CommandFormField({
     case "Integer": {
       if (parameter.multi) {
         return (
-          <Container id={parameter.key} key={parameter.key}>
+          <Container
+            id={parameter.key}
+            key={parameter.key}
+            sx={inputDisplayContainerStyling}
+          >
             {parameter.value?.map((item: any, index: any) => (
-              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <Tooltip
-                    title={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                  >
-                    <NumberField
-                      id={`${parameter.key}-${index}`}
-                      value={
-                        getMultiValue(parameter.key, index) ?? parameter.default
-                      }
-                      disabled={disabled}
-                      onValueChange={(value) =>
-                        handleMultiChange(parameter.key, value, index)
-                      }
-                      error={
-                        !disabled &&
-                        !parameter.optional &&
-                        (item === undefined || item === null || item === "")
-                      }
-                      max={
-                        parameter.maximum !== undefined
-                          ? parameter.maximum
-                          : undefined
-                      }
-                      min={
-                        parameter.minimum !== undefined
-                          ? parameter.minimum
-                          : undefined
-                      }
-                    />
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <AccessButton
-                    label="Remove"
-                    color="warning"
+              <Box
+                key={`${parameter.key}-${index}`}
+                sx={inputDisplayItemStyling}
+              >
+                <Tooltip
+                  title={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                >
+                  <NumberField
+                    id={`${parameter.key}-${index}`}
+                    value={
+                      getMultiValue(parameter.key, index) ?? parameter.default
+                    }
+                    helperText={parameter.description}
+                    disabled={disabled}
+                    onValueChange={(value) =>
+                      handleMultiChange(parameter.key, value, index)
+                    }
+                    error={
+                      !disabled &&
+                      !parameter.optional &&
+                      (item === undefined || item === null || item === "")
+                    }
+                    max={
+                      parameter.maximum !== undefined
+                        ? parameter.maximum
+                        : undefined
+                    }
+                    min={
+                      parameter.minimum !== undefined
+                        ? parameter.minimum
+                        : undefined
+                    }
+                  />
+                </Tooltip>
+                <Tooltip title={removeInputAriaLabel}>
+                  <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   >
-                    <Typography variant="button">Remove</Typography>
-                  </AccessButton>
-                </Box>
+                    <FAIcon icon="xmark" />
+                  </IconButton>
+                </Tooltip>
               </Box>
             ))}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
+            <Box sx={inputAddButtonStyling}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
@@ -565,16 +604,14 @@ function CommandFormField({
         );
       }
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip
             title={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
           >
             <NumberField
               id={parameter.key}
               value={parameter.value}
+              helperText={parameter.description}
               disabled={disabled}
               onValueChange={(value) => handleChange(parameter.key, value)}
               error={
@@ -598,55 +635,58 @@ function CommandFormField({
     case "Float": {
       if (parameter.multi) {
         return (
-          <Container id={parameter.key} key={parameter.key}>
+          <Container
+            id={parameter.key}
+            key={parameter.key}
+            sx={inputDisplayContainerStyling}
+          >
             {parameter.value?.map((item: any, index: any) => (
-              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <Tooltip
-                    title={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                  >
-                    <NumberField
-                      id={`${parameter.key}-${index}`}
-                      value={
-                        getMultiValue(parameter.key, index) ?? parameter.default
-                      }
-                      disabled={disabled}
-                      onValueChange={(value) =>
-                        handleMultiChange(parameter.key, value, index)
-                      }
-                      error={
-                        !disabled &&
-                        !parameter.optional &&
-                        (item === undefined || item === null || item === "")
-                      }
-                      max={
-                        parameter.maximum !== undefined
-                          ? parameter.maximum
-                          : undefined
-                      }
-                      min={
-                        parameter.minimum !== undefined
-                          ? parameter.minimum
-                          : undefined
-                      }
-                      step={0.01}
-                    />
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <AccessButton
-                    label="Remove"
-                    color="warning"
+              <Box
+                key={`${parameter.key}-${index}`}
+                sx={inputDisplayItemStyling}
+              >
+                <Tooltip
+                  title={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                >
+                  <NumberField
+                    id={`${parameter.key}-${index}`}
+                    value={
+                      getMultiValue(parameter.key, index) ?? parameter.default
+                    }
+                    helperText={parameter.description}
+                    disabled={disabled}
+                    onValueChange={(value) =>
+                      handleMultiChange(parameter.key, value, index)
+                    }
+                    error={
+                      !disabled &&
+                      !parameter.optional &&
+                      (item === undefined || item === null || item === "")
+                    }
+                    max={
+                      parameter.maximum !== undefined
+                        ? parameter.maximum
+                        : undefined
+                    }
+                    min={
+                      parameter.minimum !== undefined
+                        ? parameter.minimum
+                        : undefined
+                    }
+                    step={0.01}
+                  />
+                </Tooltip>
+                <Tooltip title={removeInputAriaLabel}>
+                  <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   >
-                    <Typography variant="button">Remove</Typography>
-                  </AccessButton>
-                </Box>
+                    <FAIcon icon="xmark" />
+                  </IconButton>
+                </Tooltip>
               </Box>
             ))}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
+            <Box sx={inputAddButtonStyling}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
@@ -662,16 +702,14 @@ function CommandFormField({
         );
       }
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip
             title={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
           >
             <NumberField
               id={parameter.key}
               value={parameter.value}
+              helperText={parameter.description}
               disabled={disabled}
               onValueChange={(value) => handleChange(parameter.key, value)}
               error={
@@ -696,16 +734,24 @@ function CommandFormField({
     case "Boolean": {
       if (parameter.multi) {
         return (
-          <Container id={parameter.key} key={parameter.key}>
+          <Container
+            id={parameter.key}
+            key={parameter.key}
+            sx={inputDisplayContainerStyling}
+          >
             {parameter.value?.map((item: any, index: any) => (
-              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <Tooltip
-                    title={`${inputAreaAriaLabel} Boolean ${index}: String`}
-                  >
+              <Box
+                key={`${parameter.key}-${index}`}
+                sx={inputDisplayItemStyling}
+              >
+                <Tooltip
+                  title={`${inputAreaAriaLabel} Boolean ${index}: String`}
+                >
+                  <span>
                     <Checkbox
                       id={`${parameter.key}-${index}`}
                       checked={item}
+                      aria-describedby={`${parameter.key}-${index}-helper-text`}
                       indeterminate={
                         item === undefined
                           ? parameter.nullable || parameter.optional
@@ -720,22 +766,24 @@ function CommandFormField({
                       }
                       disabled={disabled}
                     />
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <AccessButton
-                    label="Remove"
-                    color="warning"
+                    <FormHelperText
+                      id={`${parameter.key}-${index}-helper-text`}
+                    >
+                      {parameter.description}
+                    </FormHelperText>
+                  </span>
+                </Tooltip>
+                <Tooltip title={removeInputAriaLabel}>
+                  <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   >
-                    <Typography variant="button">Remove</Typography>
-                  </AccessButton>
-                </Box>
+                    <FAIcon icon="xmark" />
+                  </IconButton>
+                </Tooltip>
               </Box>
             ))}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
+            <Box sx={inputAddButtonStyling}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
@@ -751,22 +799,25 @@ function CommandFormField({
         );
       }
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: Boolean`}>
-            <Checkbox
-              id={parameter.key}
-              checked={parameter.value}
-              indeterminate={
-                parameter.value === undefined
-                  ? parameter.nullable || parameter.optional
-                  : false
-              }
-              onChange={(e) => handleChange(parameter.key, e.target.checked)}
-              disabled={disabled}
-            />
+            <span>
+              <Checkbox
+                id={parameter.key}
+                checked={parameter.value}
+                aria-describedby={`${parameter.key}-helper-text`}
+                indeterminate={
+                  parameter.value === undefined
+                    ? parameter.nullable || parameter.optional
+                    : false
+                }
+                onChange={(e) => handleChange(parameter.key, e.target.checked)}
+                disabled={disabled}
+              />
+              <FormHelperText id={`${parameter.key}-helper-text`}>
+                {parameter.description}
+              </FormHelperText>
+            </span>
           </Tooltip>
         </Box>
       );
@@ -774,61 +825,63 @@ function CommandFormField({
     case "Date": {
       if (parameter.multi) {
         return (
-          <Container id={parameter.key} key={parameter.key}>
+          <Container
+            id={parameter.key}
+            key={parameter.key}
+            sx={inputDisplayContainerStyling}
+          >
             {parameter.value?.map((item: any, index: any) => (
-              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <Tooltip title={`${inputAreaAriaLabel} Index ${index}: Date`}>
-                    <span>
-                      <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <DatePicker
-                          disabled={disabled}
-                          value={item ? dayjs(item) : null}
-                          onChange={(newValue: PickerValue) => {
-                            if (newValue && newValue.isValid()) {
-                              handleMultiChange(
-                                parameter.key,
-                                newValue.valueOf(),
-                                index,
-                              );
-                            } else {
-                              handleMultiChange(
-                                parameter.key,
-                                undefined,
-                                index,
-                              );
-                            }
-                          }}
-                          slotProps={{
-                            textField: {
-                              id: parameter.key,
-                              error:
-                                !disabled &&
-                                !parameter.optional &&
-                                (item === undefined ||
-                                  item === null ||
-                                  item === ""),
-                            },
-                          }}
-                        />
-                      </LocalizationProvider>
-                    </span>
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <AccessButton
-                    label="Remove"
-                    color="warning"
+              <Box
+                key={`${parameter.key}-${index}`}
+                sx={inputDisplayItemStyling}
+              >
+                <Tooltip title={`${inputAreaAriaLabel} Index ${index}: Date`}>
+                  <span>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        disabled={disabled}
+                        value={item ? dayjs(item) : null}
+                        aria-describedby={`${parameter.key}-helper-text`}
+                        onChange={(newValue: PickerValue) => {
+                          if (newValue && newValue.isValid()) {
+                            handleMultiChange(
+                              parameter.key,
+                              newValue.valueOf(),
+                              index,
+                            );
+                          } else {
+                            handleMultiChange(parameter.key, undefined, index);
+                          }
+                        }}
+                        slotProps={{
+                          textField: {
+                            id: parameter.key,
+                            error:
+                              !disabled &&
+                              !parameter.optional &&
+                              (item === undefined ||
+                                item === null ||
+                                item === ""),
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                    <FormHelperText id={`${parameter.key}-helper-text`}>
+                      {parameter.description}
+                    </FormHelperText>
+                  </span>
+                </Tooltip>
+                <Tooltip title={removeInputAriaLabel}>
+                  <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   >
-                    <Typography variant="button">Remove</Typography>
-                  </AccessButton>
-                </Box>
+                    <FAIcon icon="xmark" />
+                  </IconButton>
+                </Tooltip>
               </Box>
             ))}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
+            <Box sx={inputAddButtonStyling}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
@@ -844,16 +897,14 @@ function CommandFormField({
         );
       }
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: Date`}>
             <span>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
                   disabled={disabled}
                   value={parameter?.value ? dayjs(parameter.value) : null}
+                  aria-describedby={`${parameter.key}-helper-text`}
                   onChange={(newValue: PickerValue) => {
                     if (newValue && newValue.isValid()) {
                       handleChange(parameter.key, newValue.valueOf());
@@ -874,6 +925,9 @@ function CommandFormField({
                   }}
                 />
               </LocalizationProvider>
+              <FormHelperText id={`${parameter.key}-helper-text`}>
+                {parameter.description}
+              </FormHelperText>
             </span>
           </Tooltip>
         </Box>
@@ -882,64 +936,66 @@ function CommandFormField({
     case "DateTime": {
       if (parameter.multi) {
         return (
-          <Container id={parameter.key} key={parameter.key}>
+          <Container
+            id={parameter.key}
+            key={parameter.key}
+            sx={inputDisplayContainerStyling}
+          >
             {parameter.value?.map((item: any, index: any) => (
-              <Box key={`${parameter.key}-${index}`} sx={{ m: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <Tooltip
-                    title={`${inputAreaAriaLabel} Index ${index}: DateTime`}
-                  >
-                    <span>
-                      <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <DateTimePicker
-                          disabled={disabled}
-                          value={item ? dayjs(item) : null}
-                          onChange={(newValue: PickerValue) => {
-                            if (newValue && newValue.isValid()) {
-                              handleMultiChange(
-                                parameter.key,
-                                newValue.valueOf(),
-                                index,
-                              );
-                            } else {
-                              handleMultiChange(
-                                parameter.key,
-                                undefined,
-                                index,
-                              );
-                            }
-                          }}
-                          slotProps={{
-                            textField: {
-                              id: parameter.key,
+              <Box
+                key={`${parameter.key}-${index}`}
+                sx={inputDisplayItemStyling}
+              >
+                <Tooltip
+                  title={`${inputAreaAriaLabel} Index ${index}: DateTime`}
+                >
+                  <span>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DateTimePicker
+                        disabled={disabled}
+                        value={item ? dayjs(item) : null}
+                        aria-describedby={`${parameter.key}-helper-text`}
+                        onChange={(newValue: PickerValue) => {
+                          if (newValue && newValue.isValid()) {
+                            handleMultiChange(
+                              parameter.key,
+                              newValue.valueOf(),
+                              index,
+                            );
+                          } else {
+                            handleMultiChange(parameter.key, undefined, index);
+                          }
+                        }}
+                        slotProps={{
+                          textField: {
+                            id: parameter.key,
 
-                              error:
-                                !disabled &&
-                                !parameter.optional &&
-                                (item === undefined ||
-                                  item === null ||
-                                  item === ""),
-                            },
-                          }}
-                        />
-                      </LocalizationProvider>
-                    </span>
-                  </Tooltip>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}>
-                  <AccessButton
-                    label="Remove"
-                    color="warning"
+                            error:
+                              !disabled &&
+                              !parameter.optional &&
+                              (item === undefined ||
+                                item === null ||
+                                item === ""),
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                    <FormHelperText id={`${parameter.key}-helper-text`}>
+                      {parameter.description}
+                    </FormHelperText>
+                  </span>
+                </Tooltip>
+                <Tooltip title={removeInputAriaLabel}>
+                  <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
-                    tooltip={`${removeInputAriaLabel} Index ${index}`}
                   >
-                    <Typography variant="button">Remove</Typography>
-                  </AccessButton>
-                </Box>
+                    <FAIcon icon="xmark" />
+                  </IconButton>
+                </Tooltip>
               </Box>
             ))}
-            <Box sx={{ display: "flex", justifyContent: "flex-end", mr: 2 }}>
+            <Box sx={inputAddButtonStyling}>
               <AccessButton
                 label="Add"
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
@@ -955,16 +1011,14 @@ function CommandFormField({
         );
       }
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: DateTime`}>
             <span>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DateTimePicker
                   disabled={disabled}
                   value={parameter?.value ? dayjs(parameter.value) : null}
+                  aria-describedby={`${parameter.key}-helper-text`}
                   onChange={(newValue: PickerValue) => {
                     if (newValue && newValue.isValid()) {
                       handleChange(parameter.key, newValue.valueOf());
@@ -985,6 +1039,9 @@ function CommandFormField({
                   }}
                 />
               </LocalizationProvider>
+              <FormHelperText id={`${parameter.key}-helper-text`}>
+                {parameter.description}
+              </FormHelperText>
             </span>
           </Tooltip>
         </Box>
@@ -1012,10 +1069,7 @@ function CommandFormField({
       });
 
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           {parameter?.value?.name && (
             <IconButton onClick={() => handleChange(parameter.key, undefined)}>
               <Typography variant="caption">
@@ -1024,17 +1078,28 @@ function CommandFormField({
               <FAIcon icon="xmark" sx={{ ml: 1 }} />
             </IconButton>
           )}
-          <Button
-            component="label"
-            role={undefined}
-            disabled={disabled || parameter?.value?.name !== undefined}
-            variant="contained"
-            tabIndex={-1}
-            startIcon={<FAIcon icon="upload" />}
-          >
-            Upload Bytes
-            <VisuallyHiddenInput type="file" onChange={customBytesUploader} />
-          </Button>
+          <Tooltip title={`${inputAreaAriaLabel}: Bytes`}>
+            <span>
+              <Button
+                component="label"
+                role={undefined}
+                disabled={disabled || parameter?.value?.name !== undefined}
+                variant="contained"
+                tabIndex={-1}
+                startIcon={<FAIcon icon="upload" />}
+                aria-describedby={`${parameter.key}-helper-text`}
+              >
+                Upload Bytes
+                <VisuallyHiddenInput
+                  type="file"
+                  onChange={customBytesUploader}
+                />
+              </Button>
+              <FormHelperText id={`${parameter.key}-helper-text`}>
+                {parameter.description}
+              </FormHelperText>
+            </span>
+          </Tooltip>
         </Box>
       );
     }
@@ -1072,10 +1137,7 @@ function CommandFormField({
       });
 
       return (
-        <Box
-          key={parameter.key}
-          sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
-        >
+        <Box key={parameter.key} sx={inputDisplayStyling}>
           {uploadPercentage === 100 && (
             <IconButton onClick={removeFile}>
               <Typography variant="caption">
@@ -1084,31 +1146,42 @@ function CommandFormField({
               <FAIcon icon="xmark" sx={{ ml: 1 }} />
             </IconButton>
           )}
-          <Button
-            component="label"
-            role={undefined}
-            variant="contained"
-            disabled={disabled || uploadPercentage > 0}
-            tabIndex={-1}
-            startIcon={<FAIcon icon="upload" />}
-          >
-            <VisuallyHiddenInput type="file" onChange={customBase64Uploader} />
-            <Stack>
-              <Stack>Upload Base64</Stack>
-              <Stack>
-                {uploadPercentage > 0 && (
-                  <LinearProgress
-                    variant="buffer"
-                    color="secondary"
-                    value={uploadPercentage}
-                    valueBuffer={uploadPercentageBuffer}
-                    aria-label="Uploading File..."
-                    sx={{ width: "100%" }}
-                  />
-                )}
-              </Stack>
-            </Stack>
-          </Button>
+          <Tooltip title={`${inputAreaAriaLabel}: Base64`}>
+            <span>
+              <Button
+                component="label"
+                role={undefined}
+                variant="contained"
+                disabled={disabled || uploadPercentage > 0}
+                tabIndex={-1}
+                startIcon={<FAIcon icon="upload" />}
+                aria-describedby={`${parameter.key}-helper-text`}
+              >
+                <VisuallyHiddenInput
+                  type="file"
+                  onChange={customBase64Uploader}
+                />
+                <Stack>
+                  <Stack>Upload Base64</Stack>
+                  <Stack>
+                    {uploadPercentage > 0 && (
+                      <LinearProgress
+                        variant="buffer"
+                        color="secondary"
+                        value={uploadPercentage}
+                        valueBuffer={uploadPercentageBuffer}
+                        aria-label="Uploading File..."
+                        sx={{ width: "100%" }}
+                      />
+                    )}
+                  </Stack>
+                </Stack>
+              </Button>
+              <FormHelperText id={`${parameter.key}-helper-text`}>
+                {parameter.description}
+              </FormHelperText>
+            </span>
+          </Tooltip>
         </Box>
       );
     }
