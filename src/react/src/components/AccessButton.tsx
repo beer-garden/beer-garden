@@ -1,4 +1,4 @@
-import { Button, ButtonProps, Tooltip } from "@mui/material";
+import { Box, Button, ButtonProps, Tooltip } from "@mui/material";
 import { PropsWithChildren } from "react";
 
 import { HasAccessProps } from "../models/models";
@@ -119,31 +119,39 @@ const AccessButton = ({
         isLoading={
           isLoading ?? (
             <Tooltip title={tooltip} placement="bottom" arrow>
-              <Button {...{ ...props, ...{ disabled: true } }}>
-                {children}
-              </Button>
+              <Box component="span">
+                <Button {...{ ...props, ...{ disabled: true } }}>
+                  {children}
+                </Button>
+              </Box>
             </Tooltip>
           )
         }
         renderAuthFailed={
           renderAuthFailed ?? (
             <Tooltip title={tooltip} placement="bottom" arrow>
-              <Button {...{ ...props, ...{ disabled: true } }}>
-                {children}
-              </Button>
+              <Box component="span">
+                <Button {...{ ...props, ...{ disabled: true } }}>
+                  {children}
+                </Button>
+              </Box>
             </Tooltip>
           )
         }
       >
         <Tooltip title={tooltip} placement="bottom" arrow>
-          <Button {...props}>{children}</Button>
+          <Box component="span">
+            <Button {...props}>{children}</Button>
+          </Box>
         </Tooltip>
       </HasAccess>
     );
   } else {
     return (
       <Tooltip title={tooltip} placement="bottom" arrow>
-        <Button {...props}>{children}</Button>
+        <Box component="span">
+          <Button {...props}>{children}</Button>
+        </Box>
       </Tooltip>
     );
   }
