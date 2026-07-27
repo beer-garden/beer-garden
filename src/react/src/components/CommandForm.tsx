@@ -875,7 +875,7 @@ function CommandForm({
           return (
             <Box
               key={`${commentId}-box`}
-              sx={{ display: "flex", justifyContent: "flex-end", m: 2 }}
+              sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
             >
               <Tooltip title={`Add Comment`}>
                 <TextField
@@ -888,6 +888,7 @@ function CommandForm({
                     setRequest({ ...request, comment: event.target.value });
                   }}
                   fullWidth
+                  multiline
                   disabled={disabled}
                 />
               </Tooltip>
