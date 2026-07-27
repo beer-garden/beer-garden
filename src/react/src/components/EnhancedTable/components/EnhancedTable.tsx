@@ -87,16 +87,26 @@ const EnhancedTable = ({
       onRequestSort(event, property);
     };
 
+  const findValue = (path: string, obj: any) => {
+    return path
+      .replace(/\[(\d+)\]/g, ".$1") // convert [0] to .0
+      .split(".")
+      .filter(Boolean)
+      .reduce((acc, key) => (acc == null ? undefined : acc[key]), obj);
+  };
+
   const columnData = (column: ColumnField, row: any) => {
     if (column.template) {
       return column.template(row);
     }
     if (column.field) {
-      if (Object.hasOwn(row, column.field)) {
+      const columnValue = findValue(column.field, row);
+
+      if (columnValue !== undefined && columnValue !== null) {
         if (column.isDate) {
-          return formatDate(row?.[column.field]);
+          return formatDate(columnValue);
         }
-        return row?.[column.field];
+        return columnValue;
       }
     }
     return undefined;
@@ -138,9 +148,7 @@ const EnhancedTable = ({
           }
 
           // Grab Compare Value
-          let compare = Object.hasOwn(record, filter.column)
-            ? record?.[filter.column]
-            : undefined;
+          let compare = findValue(filter.column, record);
 
           if (compare === undefined) {
             return false;
@@ -250,10 +258,30 @@ const EnhancedTable = ({
     ];
 
     setDisplayFiltered(filteredData.length);
-    const sortedData = filteredData.sort((a, b) => {
-      if (orderBy) {
-        const field_a = Object.hasOwn(a, orderBy) ? a?.[orderBy] : undefined;
-        const field_b = Object.hasOwn(b, orderBy) ? b?.[orderBy] : undefined;
+    const orderByField = columns.find((column) => column.id === orderBy)?.field;
+    const sortedData = [...filteredData].sort((a, b) => {
+      if (orderByField) {
+        const field_a = findValue(orderByField, a);
+        const field_b = findValue(orderByField, b);
+        if (
+          columns.some((column) => column.id === orderBy && column.isNumeric)
+        ) {
+          return order === "asc"
+            ? Number(field_a) - Number(field_b)
+            : Number(field_b) - Number(field_a);
+        }
+        if (columns.some((column) => column.id === orderBy && column.isDate)) {
+          return order === "asc"
+            ? new Date(field_a).getTime() - new Date(field_b).getTime()
+            : new Date(field_b).getTime() - new Date(field_a).getTime();
+        }
+        if (
+          columns.some((column) => column.id === orderBy && column.isString)
+        ) {
+          return order === "asc"
+            ? (field_a as string).localeCompare(field_b as string)
+            : (field_b as string).localeCompare(field_a as string);
+        }
         return order === "asc" ? field_a - field_b : field_b - field_a;
       }
       return 0;
@@ -330,7 +358,6 @@ const EnhancedTable = ({
             {columns.map((column) => (
               <TableCell
                 key={column.id}
-                align={column.isNumeric ? "right" : "left"}
                 sortDirection={orderBy === column.id ? order : false}
               >
                 <TableSortLabel
