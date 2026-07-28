@@ -528,7 +528,7 @@ function JobIndex({
           {
             id: "status",
             field: "status",
-            label: "status",
+            label: "Status",
             sortable: true,
             filterable: true,
             isString: true,
