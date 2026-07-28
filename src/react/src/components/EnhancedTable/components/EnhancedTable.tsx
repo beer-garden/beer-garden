@@ -84,8 +84,10 @@ const EnhancedTable = ({
   };
 
   const createSortHandler =
-    (property: string) => (event: React.MouseEvent<unknown>) => {
-      onRequestSort(event, property);
+    (property?: string) => (event: React.MouseEvent<unknown>) => {
+      if (property) {
+        onRequestSort(event, property);
+      }
     };
 
   const findValue = (path: string, obj: any) => {
@@ -259,25 +261,29 @@ const EnhancedTable = ({
     ];
 
     setDisplayFiltered(filteredData.length);
-    const orderByField = columns.find((column) => column.id === orderBy)?.field;
+    const orderByField = columns.find(
+      (column) => column.field === orderBy,
+    )?.field;
     const sortedData = [...filteredData].sort((a, b) => {
       if (orderByField) {
         const field_a = findValue(orderByField, a);
         const field_b = findValue(orderByField, b);
         if (
-          columns.some((column) => column.id === orderBy && column.isNumeric)
+          columns.some((column) => column.field === orderBy && column.isNumeric)
         ) {
           return order === "asc"
             ? Number(field_a) - Number(field_b)
             : Number(field_b) - Number(field_a);
         }
-        if (columns.some((column) => column.id === orderBy && column.isDate)) {
+        if (
+          columns.some((column) => column.field === orderBy && column.isDate)
+        ) {
           return order === "asc"
             ? new Date(field_a).getTime() - new Date(field_b).getTime()
             : new Date(field_b).getTime() - new Date(field_a).getTime();
         }
         if (
-          columns.some((column) => column.id === orderBy && column.isString)
+          columns.some((column) => column.field === orderBy && column.isString)
         ) {
           return order === "asc"
             ? (field_a as string).localeCompare(field_b as string)
@@ -361,15 +367,15 @@ const EnhancedTable = ({
             {columns.map((column) => (
               <TableCell
                 key={column.id}
-                sortDirection={orderBy === column.id ? order : false}
+                sortDirection={orderBy === column.field ? order : false}
               >
                 <TableSortLabel
-                  active={orderBy === column.id}
-                  direction={orderBy === column.id ? order : "asc"}
-                  onClick={createSortHandler(column.id)}
+                  active={orderBy === column.field}
+                  direction={orderBy === column.field ? order : "asc"}
+                  onClick={createSortHandler(column.field)}
                 >
                   {column.label}
-                  {orderBy === column.id ? (
+                  {orderBy === column.field ? (
                     <Box component="span" sx={visuallyHidden}>
                       {order === "desc"
                         ? "sorted descending"

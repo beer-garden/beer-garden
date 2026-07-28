@@ -265,21 +265,22 @@ export const EnhancedTableFilterOptions = ({
         if (filter.id === id) {
           const tableColumnIsDate = columns.some(
             (tableColumn) =>
-              tableColumn.id === column && tableColumn.isDate === true,
+              tableColumn.field === column && tableColumn.isDate === true,
           );
           const tableColumnIsNumeric = columns.some(
             (tableColumn) =>
-              tableColumn.id === column && tableColumn.isNumeric === true,
+              tableColumn.field === column && tableColumn.isNumeric === true,
           );
           const tableColumnIsArray = columns.some(
             (tableColumn) =>
-              tableColumn.id === column && tableColumn.options !== undefined,
+              tableColumn.field === column && tableColumn.options !== undefined,
           );
 
           const tableColumnOptions = columns.some(
-            (tableColumn) => tableColumn.id === column && tableColumn.options,
+            (tableColumn) =>
+              tableColumn.field === column && tableColumn.options,
           )
-            ? columns.filter((tableColumn) => tableColumn.id === column)[0]
+            ? columns.filter((tableColumn) => tableColumn.field === column)[0]
                 .options
             : undefined;
 
@@ -287,7 +288,7 @@ export const EnhancedTableFilterOptions = ({
             tableColumnIsArray === false &&
             (columns.some(
               (tableColumn) =>
-                tableColumn.id === column && tableColumn.isString === true,
+                tableColumn.field === column && tableColumn.isString === true,
             ) ||
               (tableColumnIsDate === false &&
                 tableColumnIsNumeric === false &&
@@ -423,7 +424,7 @@ export const EnhancedTableFilterOptions = ({
               {columns
                 .filter((tableColumns) => tableColumns.filterable === true)
                 .map((tableColumns) => (
-                  <MenuItem key={tableColumns.label} value={tableColumns.id}>
+                  <MenuItem key={tableColumns.label} value={tableColumns.field}>
                     {tableColumns.label}
                   </MenuItem>
                 ))}

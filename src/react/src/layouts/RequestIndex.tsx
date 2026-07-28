@@ -334,6 +334,7 @@ function RequestIndex({
     },
     {
       id: "command",
+      field: "command",
       label: "Command",
       template: commandNameTemplate,
       sortable: true,
