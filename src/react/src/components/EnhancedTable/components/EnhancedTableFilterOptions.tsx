@@ -233,19 +233,24 @@ export const EnhancedTableFilterOptions = ({
     const filter = columnFiltersRef.current.filter(
       (filter) => filter.id === id,
     )[0];
-    setFilterColumn(filter?.column);
-    setFilterModifier(defaultModifier(filter));
-    if (filter?.value !== filterValue) {
-      triggerReload();
-    }
-    setFilterValue(filter?.value);
 
-    const isArray = filter?.options !== undefined;
-    setIsDate(!isArray && filter?.isDate === true);
-    setIsString(!isArray && filter?.isString === true);
-    setIsNumeric(!isArray && filter?.isNumeric === true);
-    setIsArray(isArray);
-    setOptions(filter?.options);
+    if (filter.modifier === undefined) {
+      updateModifier(id, defaultModifier(filter));
+    } else {
+      setFilterColumn(filter?.column);
+      setFilterModifier(defaultModifier(filter));
+      if (filter?.value !== filterValue) {
+        triggerReload();
+      }
+      setFilterValue(filter?.value);
+
+      const isArray = filter?.options !== undefined;
+      setIsDate(!isArray && filter?.isDate === true);
+      setIsString(!isArray && filter?.isString === true);
+      setIsNumeric(!isArray && filter?.isNumeric === true);
+      setIsArray(isArray);
+      setOptions(filter?.options);
+    }
   }, [columnFilters]);
 
   const updateColumn = (id: string, column: string) => {
