@@ -90,7 +90,9 @@ function CommandList({
         }}
         tooltip={`Select Command ${command.name}`}
         label="Select"
-      />
+      >
+        Select
+      </AccessButton>
     );
   }
 
