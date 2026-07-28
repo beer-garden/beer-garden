@@ -311,7 +311,7 @@ const EnhancedTable = ({
     if (remoteFilter) {
       // Accept remote updates
       setDisplayData(data);
-      setPageRecords(totalDataLength !== undefined && totalDataLength > 5);
+      setPageRecords(dataLength !== undefined && dataLength > 5);
     } else {
       // Local Filter
       setPageRecords(data.length > 5);
