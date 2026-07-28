@@ -1,10 +1,18 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Badge } from "primereact/badge";
-import { MultiSelect } from "primereact/multiselect";
-import { Skeleton } from "primereact/skeleton";
-import { Tag } from "primereact/tag";
-import { Tooltip } from "primereact/tooltip";
+import {
+  Box,
+  Chip,
+  FormControl,
+  Grid,
+  InputLabel,
+  MenuItem,
+  OutlinedInput,
+  Select,
+  SelectChangeEvent,
+  Skeleton,
+  Tooltip,
+} from "@mui/material";
 import { Tree } from "primereact/tree";
 import { RefObject, useEffect, useRef, useState } from "react";
 
@@ -75,12 +83,6 @@ function GardenDashboard({
     "ERROR",
     "UNKNOWN",
   ] as string[];
-
-  const instanceStatusTemplate = (option: string) => {
-    const statusSeverity = GetSeverity(option);
-
-    return <Tag value={option} severity={statusSeverity} />;
-  };
 
   const updateFilteredSystems = () => {
     if (selectedGardenRef?.current) {
@@ -333,22 +335,19 @@ function GardenDashboard({
     if (!parentRouting) {
       return (
         <>
-          <Tooltip
-            content="Upstream Routing Error"
-            target={`#GARDEN_MENU_${garden.id}`}
-            position="bottom"
-          />
-          <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
-            <FontAwesomeIcon
-              icon="play"
-              style={{ color: "var(--warning-color)" }}
-              rotation={270}
-            />
-            <FontAwesomeIcon
-              icon="triangle-exclamation"
-              style={{ color: "var(--warning-background-color)" }}
-            />
-          </span>
+          <Tooltip title="Upstream Routing Error" placement="bottom">
+            <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
+              <FontAwesomeIcon
+                icon="play"
+                style={{ color: "var(--warning-color)" }}
+                rotation={270}
+              />
+              <FontAwesomeIcon
+                icon="triangle-exclamation"
+                style={{ color: "var(--warning-background-color)" }}
+              />
+            </span>
+          </Tooltip>
         </>
       );
     } else if (publishing && receiving) {
@@ -363,60 +362,60 @@ function GardenDashboard({
       return (
         <>
           <Tooltip
-            content={`Routing Error for ${garden.name}`}
-            target={`#GARDEN_MENU_${garden.id}`}
-            position="bottom"
-          />
-          <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
-            <FontAwesomeIcon
-              icon="circle"
-              style={{ color: "var(--danger-color)" }}
-            />
-            <FontAwesomeIcon
-              icon="circle-exclamation"
-              style={{ color: "var(--danger-background-color)" }}
-            />
-          </span>
+            title={`Routing Error for ${garden.name}`}
+            placement="bottom"
+          >
+            <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
+              <FontAwesomeIcon
+                icon="circle"
+                style={{ color: "var(--danger-color)" }}
+              />
+              <FontAwesomeIcon
+                icon="circle-exclamation"
+                style={{ color: "var(--danger-background-color)" }}
+              />
+            </span>
+          </Tooltip>
         </>
       );
     } else if (!publishing) {
       return (
         <>
           <Tooltip
-            content={`Publishing Connection Error for ${garden.name}`}
-            target={`#GARDEN_MENU_${garden.id}`}
-            position="bottom"
-          />
-          <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
-            <FontAwesomeIcon
-              icon="circle"
-              style={{ color: "var(--danger-color)" }}
-            />
-            <FontAwesomeIcon
-              icon="circle-exclamation"
-              style={{ color: "var(--danger-background-color)" }}
-            />
-          </span>
+            title={`Publishing Connection Error for ${garden.name}`}
+            placement="bottom"
+          >
+            <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
+              <FontAwesomeIcon
+                icon="circle"
+                style={{ color: "var(--danger-color)" }}
+              />
+              <FontAwesomeIcon
+                icon="circle-exclamation"
+                style={{ color: "var(--danger-background-color)" }}
+              />
+            </span>
+          </Tooltip>
         </>
       );
     } else if (!receiving) {
       return (
         <>
           <Tooltip
-            content={`Receiving Connection Error for ${garden.name}`}
-            target={`#GARDEN_MENU_${garden.id}`}
-            position="bottom"
-          />
-          <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
-            <FontAwesomeIcon
-              icon="circle"
-              style={{ color: "var(--danger-color)" }}
-            />
-            <FontAwesomeIcon
-              icon="circle-exclamation"
-              style={{ color: "var(--danger-background-color)" }}
-            />
-          </span>
+            title={`Receiving Connection Error for ${garden.name}`}
+            placement="bottom"
+          >
+            <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
+              <FontAwesomeIcon
+                icon="circle"
+                style={{ color: "var(--danger-color)" }}
+              />
+              <FontAwesomeIcon
+                icon="circle-exclamation"
+                style={{ color: "var(--danger-background-color)" }}
+              />
+            </span>
+          </Tooltip>
         </>
       );
     }
@@ -439,16 +438,16 @@ function GardenDashboard({
         return (
           <div key={`${status}_${garden?.name}_count`}>
             <Tooltip
-              content={`${status} Count ${count} for ${garden?.name}`}
-              target={`#${status}_${garden?.id}_menu_severity_system_summary`}
-              position="bottom"
-            />
-            <Badge
-              value={count}
-              id={`${status}_${garden?.id}_menu_severity_system_summary`}
-              severity={statusSeverity}
-              key={`${status}_${garden?.name}`}
-            />
+              title={`${status} Count ${count} for ${garden?.name}`}
+              placement="bottom"
+            >
+              <Chip
+                label={count}
+                id={`${status}_${garden?.id}_menu_severity_system_summary`}
+                color={statusSeverity}
+                key={`${status}_${garden?.name}`}
+              />
+            </Tooltip>
           </div>
         );
       }
@@ -630,47 +629,56 @@ function GardenDashboard({
             <Skeleton width="100%" height="350px"></Skeleton>
           ) : (
             <>
-              <MultiSelect
-                value={filteredStatuses}
-                onChange={(e) => setFilteredStatuses(e.value)}
-                options={instanceStatuses}
-                itemTemplate={instanceStatusTemplate}
-                placeholder="Filter by Instance Status"
-                className="mb-3"
-                filter
-                pt={{
-                  input: {
-                    "aria-label": "Filter by Instance Status",
-                    "aria-controls": "instance_status_multiselect_input",
-                    autoComplete: "off",
-                  },
-                  triggerIcon: {
-                    role: "img",
-                    "aria-label": "Toggle Instance Status Filter",
-                  },
-                }}
-              />
+              <FormControl sx={{ m: 1, minWidth: 300 }}>
+                <InputLabel id="instance-select-label">
+                  Filter By Input Status
+                </InputLabel>
+                <Select
+                  id="instanceStatuses"
+                  labelId="instance-select-lable"
+                  value={filteredStatuses}
+                  multiple
+                  input={<OutlinedInput label="Filter By Input Status" />}
+                  onChange={(
+                    event: SelectChangeEvent<typeof instanceStatuses | null>,
+                  ) => {
+                    const {
+                      target: { value },
+                    } = event;
 
-              <div className="flex justify-content-left">
-                <div className="grid grid-nogutter gap-2">
+                    if (value === null) {
+                      setFilteredStatuses([]);
+                    } else {
+                      setFilteredStatuses(
+                        typeof value === "string" ? value.split(",") : value,
+                      );
+                    }
+                  }}
+                >
+                  {instanceStatuses?.map((option) => {
+                    const statusSeverity = GetSeverity(option);
+
+                    return (
+                      <MenuItem key={option} value={option}>
+                        <Chip label={option} color={statusSeverity} />
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+              </FormControl>
+
+              <Box sx={{ display: "flex", justifyContent: "left" }}>
+                <Grid container spacing={1}>
                   {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
-                    <div
-                      key={runnerGroup.path}
-                      className="mb-4 mr-2"
-                      style={{ width: "26.5vw", minWidth: "250px" }}
-                    >
+                    <Grid size={4} sx={{ minWidth: "250px" }}>
                       <UnassociatedRunnerCard
                         runnerGroup={runnerGroup}
                         config={config}
                       />
-                    </div>
+                    </Grid>
                   ))}
                   {filteredSystems?.map((system: System) => (
-                    <div
-                      key={system.id}
-                      className="mr-2 mb-2"
-                      style={{ width: "26.5vw", minWidth: "250px" }}
-                    >
+                    <Grid size={4} sx={{ minWidth: "250px" }}>
                       <SystemCard
                         system={system}
                         tourStepsRef={tourStepsRef}
@@ -679,10 +687,10 @@ function GardenDashboard({
                         config={config}
                         associatedRunners={associatedRunners}
                       />
-                    </div>
+                    </Grid>
                   ))}
-                </div>
-              </div>
+                </Grid>
+              </Box>
             </>
           )}
         </div>

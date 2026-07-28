@@ -78,14 +78,7 @@ export const GetBaseURL = (): string => {
 
 export const GetSeverity = (
   status?: string,
-):
-  | "warning"
-  | "success"
-  | "info"
-  | "error"
-  | "primary"
-  | "secondary"
-  | "inherit" => {
+): "warning" | "success" | "info" | "error" | "primary" | "secondary" => {
   switch (status?.toUpperCase()) {
     case "RUNNING": // Instance
     case "HEALTHY": // Connection (Summary)

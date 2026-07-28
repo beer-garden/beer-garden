@@ -1,11 +1,10 @@
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ButtonGroup, MenuItem } from "@mui/material";
+import { ButtonGroup, Chip, MenuItem, Tooltip } from "@mui/material";
 import { Menu } from "@mui/material";
 import { confirmDialog } from "primereact/confirmdialog";
 import { Divider } from "primereact/divider";
 import { Panel } from "primereact/panel";
-import { Tag } from "primereact/tag";
-import { Tooltip } from "primereact/tooltip";
 import React, { RefObject, useEffect, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
@@ -161,15 +160,7 @@ function SystemCard({
 
   const getSeverity = (
     status?: string,
-  ):
-    | "warning"
-    | "success"
-    | "info"
-    | "danger"
-    | "secondary"
-    | "contrast"
-    | null
-    | undefined => {
+  ): "warning" | "success" | "info" | "error" | "primary" | "secondary" => {
     if (status === "INITIALIZING") {
       return "warning";
     }
@@ -183,10 +174,10 @@ function SystemCard({
       return "info";
     }
     if (status === "DEAD") {
-      return "danger";
+      return "error";
     }
     if (status === "UNRESPONSIVE") {
-      return "danger";
+      return "error";
     }
     if (status === "STARTING") {
       return "warning";
@@ -195,15 +186,15 @@ function SystemCard({
       return "warning";
     }
     if (status === "UNKNOWN") {
-      return "danger";
+      return "error";
     }
     if (status === "AWAITING_SYSTEM") {
       return "warning";
     }
     if (status === "ERROR") {
-      return "danger";
+      return "error";
     }
-    return "danger";
+    return "error";
   };
 
   const statusList = [
@@ -330,16 +321,16 @@ function SystemCard({
     return (
       <>
         <Tooltip
-          content={`Status ${instance.status} for instance ${instance.name} in system ${system.namespace}.${system.name}.${system.version}`}
-          target={`#status_${instance.id}`}
-          position="bottom"
-        />
-        <Tag
-          value={instance.status}
-          severity={statusSeverity}
-          {...GenerateTourProps(statusInstanceTourStep)}
-          id={`status_${instance.id}`}
-        />
+          title={`Status ${instance.status} for instance ${instance.name} in system ${system.namespace}.${system.name}.${system.version}`}
+          placement="bottom"
+        >
+          <Chip
+            label={instance.status}
+            color={statusSeverity}
+            {...GenerateTourProps(statusInstanceTourStep)}
+            id={`status_${instance.id}`}
+          />
+        </Tooltip>
       </>
     );
   }
@@ -395,8 +386,9 @@ function SystemCard({
 
     return (
       <>
-        {label && <Tooltip content={label} target={`#ICON_${instance.id}`} />}
-        {icon && <FontAwesomeIcon id={`ICON_${instance.id}`} icon={icon} />}
+        <Tooltip title={label}>
+          <FontAwesomeIcon id={`ICON_${instance.id}`} icon={icon as IconProp} />
+        </Tooltip>
       </>
     );
   }

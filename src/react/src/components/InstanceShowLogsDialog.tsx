@@ -140,7 +140,9 @@ function InstanceShowLogsDialog({
           onClick={onClose}
           tooltip="Close Instance Show Logs Dialog"
           label="Close Logs"
-        />
+        >
+          Close Logs
+        </AccessButton>
       }
       visible={isVisible}
       style={{ width: "50vw" }}
@@ -165,14 +167,18 @@ function InstanceShowLogsDialog({
             tooltip="Get Tail logs"
             onClick={() => getLogsTail(instance)}
             label="Get Tail Logs"
-          />
+          >
+            Get Tail Logs
+          </AccessButton>
           <AccessButton
             name="stop"
             value="Stop Tail Logs"
             tooltip="Stop Tail Logs"
             onClick={() => stopLogsTail()}
             label="Stop Tail Logs"
-          />
+          >
+            Stop Tail Logs
+          </AccessButton>
           <label htmlFor="tail_line_start">Tail Lines</label>
           <input
             type="number"
@@ -191,7 +197,9 @@ function InstanceShowLogsDialog({
             <AccessButton
               tooltip="Download Full Logs File"
               label="Get Full Logs"
-            />
+            >
+              Get Full Logs
+            </AccessButton>
           </a>
         </div>
         {loadingLogs && (

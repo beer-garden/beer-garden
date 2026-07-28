@@ -1,12 +1,8 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Badge } from "primereact/badge";
-import { Card } from "primereact/card";
+import { Box, Chip, Skeleton,Tooltip } from "@mui/material";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Message } from "primereact/message";
-import { Skeleton } from "primereact/skeleton";
-import { Tag } from "primereact/tag";
-import { Tooltip } from "primereact/tooltip";
 import { RefObject, useEffect, useState } from "react";
 
 import { Connection, Garden, Runner, System } from "../models/brewtils-types";
@@ -312,10 +308,9 @@ function GardenSummary({
 
     return (
       <>
-        {url.length > 0 && (
-          <Tooltip position="bottom" content={url} target={`#${targetId}`} />
-        )}
-        <span id={targetId}>{connection.api}</span>
+        <Tooltip placement="bottom" title={url ?? ""}>
+          <span id={targetId}>{connection.api}</span>
+        </Tooltip>
       </>
     );
   };
@@ -323,7 +318,7 @@ function GardenSummary({
   const statusTemplate = (row: Connection) => {
     const severity = GetSeverity(row.status);
 
-    return <Tag value={row.status} severity={severity} />;
+    return <Chip label={row.status} color={severity} />;
   };
 
   const connectionActions = (node: Connection, type: string) => {
@@ -417,10 +412,9 @@ function GardenSummary({
   };
 
   return (
-    <Card
-      className="mb-4"
-      style={{ width: "100%" }}
-      unstyled
+    <Box
+      sx={{ mb: 4, width: "100%" }}
+      //unstyled
       key={selectedGarden?.name}
     >
       <div className="flex ml-2 page-header">
@@ -723,17 +717,17 @@ function GardenSummary({
                     return (
                       <div key={`${status}_Summary`}>
                         <Tooltip
-                          content={`${status} Count ${count}`}
-                          target={`#${status}_${selectedGarden?.id}_severity_system_summary`}
-                          position="bottom"
-                        />
-                        <Badge
-                          data-testid={`${status}_severity_system_summary`}
-                          id={`${status}_${selectedGarden?.id}_severity_system_summary`}
-                          value={count}
-                          severity={statusSeverity}
-                          key={status}
-                        />
+                          title={`${status} Count ${count}`}
+                          placement="bottom"
+                        >
+                          <Chip
+                            data-testid={`${status}_severity_system_summary`}
+                            id={`${status}_${selectedGarden?.id}_severity_system_summary`}
+                            label={count}
+                            color={statusSeverity}
+                            key={status}
+                          />
+                        </Tooltip>
                       </div>
                     );
                   }
@@ -820,7 +814,7 @@ function GardenSummary({
       ) : (
         <Skeleton width="100%" height="150px"></Skeleton>
       )}
-    </Card>
+    </Box>
   );
 }
 
