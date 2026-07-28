@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { CssBaseline, Grid } from "@mui/material";
+import { CssBaseline, DialogContent, Grid } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import { ThemeProvider } from "@mui/material/styles";
@@ -598,16 +598,18 @@ function App() {
                         </Grid>
                       </DialogTitle>
 
-                      <RequestItemCard
-                        removeItem={() => {
-                          setRequestItem(undefined);
-                        }}
-                        updateRequestItem={addRequestItem}
-                        requestItem={requestItem}
-                        listeners={listeners}
-                        config={config}
-                        isDialog={true}
-                      />
+                      <DialogContent dividers>
+                        <RequestItemCard
+                          removeItem={() => {
+                            setRequestItem(undefined);
+                          }}
+                          updateRequestItem={addRequestItem}
+                          requestItem={requestItem}
+                          listeners={listeners}
+                          config={config}
+                          isDialog={true}
+                        />
+                      </DialogContent>
                     </Dialog>
                   )}
                   <div
