@@ -867,18 +867,12 @@ function SchedulerForm({
   setScheduledJob,
   setIsJobValid,
 }: SchedulerFormProps) {
-  const jobOptions = ["CRON", "Interval", "Date", "File"];
-  let defaultJobOption = "CRON";
+  const jobOptions = ["cron", "interval", "date", "file"];
   const defaultTimeZone = "UTC";
 
-  if (scheduledJob?.trigger_type === "interval") {
-    defaultJobOption = "Interval";
-  } else if (scheduledJob?.trigger_type === "date") {
-    defaultJobOption = "Date";
-  } else if (scheduledJob?.trigger_type === "file") {
-    defaultJobOption = "File";
-  }
-  const [jobState, setJobState] = useState(defaultJobOption);
+  const [jobState, setJobState] = useState(
+    scheduledJob?.trigger_type ?? "cron",
+  );
 
   const [cronTrigger, setCronTrigger] = useState(
     scheduledJob?.trigger_type === "cron"
@@ -912,7 +906,7 @@ function SchedulerForm({
         valid = false;
       }
       if (
-        jobState === "Date" &&
+        jobState === "date" &&
         (dateTrigger?.run_date === undefined ||
           dateTrigger?.run_date === null ||
           dateTrigger?.run_date === "")
@@ -920,7 +914,7 @@ function SchedulerForm({
         valid = false;
       }
       if (
-        jobState === "File" &&
+        jobState === "file" &&
         (fileTrigger?.path === undefined ||
           fileTrigger?.path === null ||
           fileTrigger?.path === "")
@@ -939,28 +933,28 @@ function SchedulerForm({
       });
       return;
     }
-    if (jobState === "Date") {
+    if (jobState === "date") {
       if (!CompareObjects(scheduledJob?.trigger, dateTrigger)) {
         setScheduledJob({
           ...scheduledJob,
           ...{ trigger_type: "date", trigger: dateTrigger },
         });
       }
-    } else if (jobState === "Interval") {
+    } else if (jobState === "interval") {
       if (!CompareObjects(scheduledJob?.trigger, intervalTrigger)) {
         setScheduledJob({
           ...scheduledJob,
           ...{ trigger_type: "interval", trigger: intervalTrigger },
         });
       }
-    } else if (jobState === "File") {
+    } else if (jobState === "file") {
       if (!CompareObjects(scheduledJob?.trigger, fileTrigger)) {
         setScheduledJob({
           ...scheduledJob,
           ...{ trigger_type: "file", trigger: fileTrigger },
         });
       }
-    } else if (jobState === "CRON") {
+    } else if (jobState === "cron") {
       if (!CompareObjects(scheduledJob?.trigger, cronTrigger)) {
         setScheduledJob({
           ...scheduledJob,
@@ -1060,28 +1054,28 @@ function SchedulerForm({
           </Box>
         </Box>
         <Box>
-          {jobState === "CRON" && (
+          {jobState === "cron" && (
             <CronForm
               cronTrigger={cronTrigger}
               setCronTrigger={setCronTrigger}
               layoutProps={layoutProps}
             />
           )}
-          {jobState === "Interval" && (
+          {jobState === "interval" && (
             <IntervalForm
               intervalTrigger={intervalTrigger}
               setIntervalTrigger={setIntervalTrigger}
               layoutProps={layoutProps}
             />
           )}
-          {jobState === "Date" && (
+          {jobState === "date" && (
             <DateForm
               dateTrigger={dateTrigger}
               setDateTrigger={setDateTrigger}
               layoutProps={layoutProps}
             />
           )}
-          {jobState === "File" && (
+          {jobState === "file" && (
             <FileForm
               fileTrigger={fileTrigger}
               setFileTrigger={setFileTrigger}

@@ -212,10 +212,11 @@ function RequestWizard({
   );
   const updateShowScheduleJob = (showSchedule: boolean) => {
     setShowScheduleJob(showSchedule);
-
+    setJob(showSchedule ? {} : undefined);
     updateRequestItem({
       ...requestItem,
       showSchedule: showSchedule,
+      job: showSchedule ? {} : undefined,
     });
   };
 
@@ -650,7 +651,7 @@ function RequestWizard({
               onChange={(e) => updateShowScheduleJob(e.target.checked)}
             />
           </Box>
-          {showScheduleJob && (
+          {showScheduleJob && job && (
             <SchedulerForm
               scheduledJob={job}
               setScheduledJob={updateJobValue}

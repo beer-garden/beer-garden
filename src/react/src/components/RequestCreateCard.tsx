@@ -78,10 +78,11 @@ function RequestCreateCard({
   );
   const updateShowScheduleJob = (showSchedule: boolean) => {
     setShowScheduleJob(showSchedule);
-
+    setJob(showSchedule ? {} : undefined);
     updateRequestItem({
       ...requestItem,
       showSchedule: showSchedule,
+      job: showSchedule ? {} : undefined,
     });
   };
 
@@ -311,7 +312,7 @@ function RequestCreateCard({
           </Box>
 
           <Box sx={{ pt: 4, width: "100%" }}>
-            {showScheduleJob && (
+            {showScheduleJob && job && (
               <SchedulerForm
                 scheduledJob={job}
                 setScheduledJob={updateJobValue}
