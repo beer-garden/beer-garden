@@ -9,6 +9,7 @@ import {
   Stepper,
   Switch,
 } from "@mui/material";
+import { grey } from "@mui/material/colors";
 import { useEffect, useState } from "react";
 
 import {
@@ -483,6 +484,14 @@ function RequestWizard({
     }
   }, []);
 
+  const breadcrumbStyles = {
+    p: 2,
+    border: "1px solid",
+    borderColor: grey[300],
+    borderRadius: 2,
+    mb: 2,
+  };
+
   const steps = ["Pick System", "Pick command", "Form"];
 
   const handleStep = (step: number) => () => {
@@ -579,9 +588,7 @@ function RequestWizard({
     if (activeIndex == 1) {
       return (
         <>
-          <Box
-            sx={{ p: 2, border: "1px solid #e5e7eb", borderRadius: 2, mb: 2 }}
-          >
+          <Box sx={breadcrumbStyles}>
             <Breadcrumbs
               separator={<FAIcon icon="angle-right" />}
               aria-label="breadcrumb"
@@ -624,9 +631,7 @@ function RequestWizard({
     if (activeIndex == 2) {
       return (
         <>
-          <Box
-            sx={{ p: 2, border: "1px solid #e5e7eb", borderRadius: 2, mb: 2 }}
-          >
+          <Box sx={breadcrumbStyles}>
             <Breadcrumbs
               separator={<FAIcon icon="angle-right" />}
               aria-label="breadcrumb"
