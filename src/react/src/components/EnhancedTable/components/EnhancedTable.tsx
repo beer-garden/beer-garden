@@ -30,6 +30,7 @@ const EnhancedTable = ({
   footer,
   reloadTable,
   isLoading,
+  displayAll,
 }: {
   data: any[];
   dataLength?: number;
@@ -48,6 +49,7 @@ const EnhancedTable = ({
   footer?: React.ReactElement;
   reloadTable?: number;
   isLoading?: boolean;
+  displayAll?: boolean;
 }) => {
   const [displayData, setDisplayData] = useState<any[] | undefined>(undefined);
   const [displayFiltered, setDisplayFiltered] = useState<number | undefined>(
@@ -259,6 +261,10 @@ const EnhancedTable = ({
       return 0;
     });
 
+    if (displayAll === true) {
+      return sortedData;
+    }
+
     const startIndex = page * rowsPerPage;
     return sortedData.slice(startIndex, startIndex + rowsPerPage);
   };
@@ -378,27 +384,29 @@ const EnhancedTable = ({
               ))}
           </TableBody>
           <TableFooter>
-            <TableRow>
-              <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                colSpan={3}
-                count={dataLength ?? data.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                slotProps={{
-                  select: {
-                    inputProps: {
-                      "aria-label": "rows per page",
+            {(displayAll === undefined || displayAll === false) && (
+              <TableRow>
+                <TablePagination
+                  rowsPerPageOptions={[5, 10, 25]}
+                  colSpan={3}
+                  count={dataLength ?? data.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  slotProps={{
+                    select: {
+                      inputProps: {
+                        "aria-label": "rows per page",
+                      },
+                      native: true,
                     },
-                    native: true,
-                  },
-                }}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-                ActionsComponent={EnhancedTablePaginationActions}
-                labelDisplayedRows={defaultLabelDisplayedRows}
-              />
-            </TableRow>
+                  }}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                  ActionsComponent={EnhancedTablePaginationActions}
+                  labelDisplayedRows={defaultLabelDisplayedRows}
+                />
+              </TableRow>
+            )}
           </TableFooter>
         </Table>
 
