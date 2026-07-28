@@ -200,7 +200,7 @@ function JobIndex({
       hasSystemVersion: job.request_template?.system_version,
       hasCommandName: job.request_template?.command,
     };
-    
+
     return (
       <div>
         <AccessButton

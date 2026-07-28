@@ -5,7 +5,6 @@ import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
-import TableFooter from "@mui/material/TableFooter";
 import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
@@ -67,6 +66,8 @@ const EnhancedTable = ({
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+
+  const [pageRecords, setPageRecords] = useState(false);
 
   const onRequestSort = (
     event: React.MouseEvent<unknown>,
@@ -310,8 +311,10 @@ const EnhancedTable = ({
     if (remoteFilter) {
       // Accept remote updates
       setDisplayData(data);
+      setPageRecords(totalDataLength !== undefined && totalDataLength > 5);
     } else {
       // Local Filter
+      setPageRecords(data.length > 5);
       setDisplayData(filterSortData(data));
     }
   }, [data]);
@@ -404,31 +407,28 @@ const EnhancedTable = ({
                 </TableRow>
               ))}
           </TableBody>
-          <TableFooter>
-            <TableRow>
-              <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                colSpan={3}
-                count={dataLength ?? data.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                slotProps={{
-                  select: {
-                    inputProps: {
-                      "aria-label": "rows per page",
-                    },
-                    native: true,
-                  },
-                }}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-                ActionsComponent={EnhancedTablePaginationActions}
-                labelDisplayedRows={defaultLabelDisplayedRows}
-              />
-            </TableRow>
-          </TableFooter>
         </Table>
-
+        {pageRecords && (
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            colSpan={3}
+            count={dataLength ?? data.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            slotProps={{
+              select: {
+                inputProps: {
+                  "aria-label": "rows per page",
+                },
+                native: true,
+              },
+            }}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            ActionsComponent={EnhancedTablePaginationActions}
+            labelDisplayedRows={defaultLabelDisplayedRows}
+          />
+        )}
         {footer}
       </TableContainer>
       {isLoading && (
