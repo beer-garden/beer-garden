@@ -212,6 +212,12 @@ export const EnhancedTableFilterOptions = ({
   );
 
   useEffect(() => {
+    // // Validate Filters
+    const filter = columnFiltersRef.current.find((filter) => filter.id === id);
+    if (filter?.column) {
+      updateColumn(id, filter?.column);
+    }
+
     if (isHighlighted) {
       const timer = setTimeout(() => {
         setIsHighlighted(false);
