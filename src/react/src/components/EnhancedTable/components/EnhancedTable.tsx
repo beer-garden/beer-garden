@@ -408,27 +408,27 @@ const EnhancedTable = ({
               ))}
           </TableBody>
         </Table>
-        {pageRecords && (
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            colSpan={3}
-            count={dataLength ?? data.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            slotProps={{
-              select: {
-                inputProps: {
-                  "aria-label": "rows per page",
-                },
-                native: true,
+        <TablePagination
+          rowsPerPageOptions={pageRecords ? [5, 10, 25] : []}
+          colSpan={3}
+          count={dataLength ?? data.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          slotProps={{
+            select: {
+              inputProps: {
+                "aria-label": "rows per page",
               },
-            }}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            ActionsComponent={EnhancedTablePaginationActions}
-            labelDisplayedRows={defaultLabelDisplayedRows}
-          />
-        )}
+              native: true,
+            },
+          }}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          ActionsComponent={
+            pageRecords ? EnhancedTablePaginationActions : () => <></>
+          }
+          labelDisplayedRows={defaultLabelDisplayedRows}
+        />
         {footer}
       </TableContainer>
       {isLoading && (
