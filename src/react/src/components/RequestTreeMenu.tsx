@@ -230,8 +230,9 @@ function RequestTreeMenu({
       <TreeMenu
         items={[node]}
         itemTemplate={nodeTemplate}
+        expandAll={true}
         changeSelected={(id: string) => findRequest(id, rootRequest)}
-        selectedItems={request ? request.id : null}
+        selectedItems={request && request.id ? request.id : undefined}
         sx={{ mt: 2 }}
       />
     )

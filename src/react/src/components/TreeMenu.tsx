@@ -1,4 +1,5 @@
 import { useTreeItemModel } from "@mui/x-tree-view/hooks";
+import { TreeViewItemId } from "@mui/x-tree-view/models";
 import { RichTreeView, RichTreeViewProps } from "@mui/x-tree-view/RichTreeView";
 import {
   TreeItemCheckbox,
@@ -30,11 +31,42 @@ interface CustomTreeItemProps
 function TreeMenu<T extends ExtendedTreeItemProps, M extends boolean = false>({
   itemTemplate,
   changeSelected,
+  disableToggle,
+  expandAll,
   ...richTreeProps
 }: {
-  itemTemplate: (node: ExtendedTreeItemProps) => ReactElement;
+  itemTemplate?: (node: ExtendedTreeItemProps) => ReactElement;
   changeSelected: (id: string) => void;
+  disableToggle?: boolean;
+  expandAll?: boolean;
 } & RichTreeViewProps<T, M>) {
+  const getAllItemsWithChildrenItemIds = () => {
+    const itemIds: TreeViewItemId[] = [];
+    const registerItemId = (item: ExtendedTreeItemProps) => {
+      if (item.children?.length) {
+        if (item.id) {
+          itemIds.push(item.id);
+        }
+        item.children.forEach(registerItemId);
+      }
+    };
+
+    richTreeProps.items.forEach(registerItemId);
+
+    return itemIds;
+  };
+
+  const [expandedItems, setExpandedItems] = useState<string[]>(
+    expandAll ? getAllItemsWithChildrenItemIds() : [],
+  );
+
+  const handleExpandedItemsChange = (
+    event: React.SyntheticEvent | null,
+    itemIds: string[],
+  ) => {
+    setExpandedItems(itemIds);
+  };
+
   const handleItemSelectionToggle = (
     _event: React.SyntheticEvent | null,
     itemId: string,
@@ -43,15 +75,6 @@ function TreeMenu<T extends ExtendedTreeItemProps, M extends boolean = false>({
     if (isSelected) {
       changeSelected(itemId);
     }
-  };
-
-  const [expandedItems, setExpandedItems] = useState<string[]>([]);
-
-  const handleExpandedItemsChange = (
-    event: React.SyntheticEvent | null,
-    itemIds: string[],
-  ) => {
-    setExpandedItems(itemIds);
   };
 
   const CustomTreeItem = forwardRef(function CustomTreeItem(
@@ -76,15 +99,17 @@ function TreeMenu<T extends ExtendedTreeItemProps, M extends boolean = false>({
       <TreeItemProvider {...getContextProviderProps()}>
         <TreeItemRoot {...getRootProps(other)}>
           <TreeItemContent {...getContentProps()}>
-            <TreeItemIconContainer {...getIconContainerProps()}>
-              <TreeItemIcon status={status} />
-            </TreeItemIconContainer>
+            {disableToggle !== true && (
+              <TreeItemIconContainer {...getIconContainerProps()}>
+                <TreeItemIcon status={status} />
+              </TreeItemIconContainer>
+            )}
             <TreeItemCheckbox {...getCheckboxProps()} />
             {itemTemplate && itemTemplate(item)}
             {itemTemplate === undefined && item.label}
             <TreeItemDragAndDropOverlay {...getDragAndDropOverlayProps()} />
           </TreeItemContent>
-          {children}
+          {(status.expanded || disableToggle === true) && children}
         </TreeItemRoot>
       </TreeItemProvider>
     );
@@ -94,6 +119,8 @@ function TreeMenu<T extends ExtendedTreeItemProps, M extends boolean = false>({
     <RichTreeView
       slots={{ item: CustomTreeItem }}
       onItemSelectionToggle={handleItemSelectionToggle}
+      expandedItems={expandedItems}
+      onExpandedItemsChange={handleExpandedItemsChange}
       {...richTreeProps}
     />
   );

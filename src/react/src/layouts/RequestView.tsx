@@ -1,3 +1,4 @@
+import { Skeleton } from "@mui/material";
 import { Card } from "primereact/card";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -266,6 +267,14 @@ function RequestView({
                   rootRequest={rootRequest}
                   request={request}
                   setRequest={setRequest}
+                />
+              )}
+              {rootRequest === undefined && (
+                <Skeleton
+                  variant="rectangular"
+                  width={210}
+                  height={"100%"}
+                  sx={{ m: 2 }}
                 />
               )}
             </div>
