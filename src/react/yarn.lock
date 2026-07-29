@@ -247,7 +247,7 @@
     "@floating-ui/utils" "^0.2.11"
     use-sync-external-store "^1.6.0"
 
-"@base-ui/utils@^0.3.0", "@base-ui/utils@0.3.1":
+"@base-ui/utils@^0.3.1", "@base-ui/utils@0.3.1":
   version "0.3.1"
   resolved "https://registry.npmjs.org/@base-ui/utils/-/utils-0.3.1.tgz"
   integrity sha512-gFFiltORVmW/N6IILTGxizP3PBpVpysqML1ALY5Vk0mH+7faVkCknOU31goYHN5Aoek2dkjxva1XOD2Ce9WuIg==
@@ -697,16 +697,30 @@
     prop-types "^15.8.1"
     react-transition-group "^4.4.5"
 
-"@mui/x-internals@^9.9.0":
-  version "9.9.0"
-  resolved "https://registry.npmjs.org/@mui/x-internals/-/x-internals-9.9.0.tgz"
-  integrity sha512-RMddUd59Qie2o4dralFUcp4Hzu0HOyeYqjh2t3zkpURX1CGX2tUbYZxCwC5UjLJ/PBcSqmSDrGalx7Z8UQFX+g==
+"@mui/x-internals@^9.10.1", "@mui/x-internals@^9.9.0":
+  version "9.10.1"
+  resolved "https://registry.npmjs.org/@mui/x-internals/-/x-internals-9.10.1.tgz"
+  integrity sha512-pKFVzFQHB34TuMG3gOVx+LfIR8VBsi/ZhX/erRX2WOXu+ewEYGvdeK1mW9hLe7e2v3uyUbgT8RNeN0cy10cDjg==
   dependencies:
     "@babel/runtime" "^7.29.7"
-    "@base-ui/utils" "^0.3.0"
+    "@base-ui/utils" "^0.3.1"
     "@mui/utils" "^9.2.0"
     reselect "^5.2.0"
     use-sync-external-store "^1.6.0"
+
+"@mui/x-tree-view@^9.10.1":
+  version "9.10.1"
+  resolved "https://registry.npmjs.org/@mui/x-tree-view/-/x-tree-view-9.10.1.tgz"
+  integrity sha512-MTXh1Ua1sBqtykvEaNbTIo0fp+iLIPj8LAxq28XcXRRO8Guu2hr0PXUq9C3HoO9+N8RPc1CHpJHzOOlHbDpaWw==
+  dependencies:
+    "@babel/runtime" "^7.29.7"
+    "@base-ui/utils" "^0.3.1"
+    "@mui/utils" "^9.2.0"
+    "@mui/x-internals" "^9.10.1"
+    "@types/react-transition-group" "^4.4.12"
+    clsx "^2.1.1"
+    prop-types "^15.8.1"
+    react-transition-group "^4.4.5"
 
 "@pkgjs/parseargs@^0.11.0":
   version "0.11.0"

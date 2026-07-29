@@ -1,12 +1,12 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Tag } from "primereact/tag";
-import { Tooltip } from "primereact/tooltip";
-import { Tree, TreeSelectionEvent } from "primereact/tree";
-import { TreeNode } from "primereact/treenode";
+import { Box, Chip, Typography } from "@mui/material";
+import Stack from "@mui/material/Stack";
+import Tooltip from "@mui/material/Tooltip";
 import { useEffect, useState } from "react";
 
 import { Request } from "../models/brewtils-types";
-import { GetSeverity } from "../services/util_service";
+import { FAIcon, GetSeverity } from "../services/util_service";
+import TreeMenu, { ExtendedTreeItemProps } from "./TreeMenu";
 
 function timeDelta(createdDate: Date, statusUpdated: Date) {
   if (!createdDate || !statusUpdated) {
@@ -43,9 +43,9 @@ function timeDelta(createdDate: Date, statusUpdated: Date) {
   return "<1s";
 }
 
-function parseRequest(request: Request): TreeNode {
+function parseRequest(request: Request): ExtendedTreeItemProps {
   const item = {
-    key: request.id,
+    id: request.id,
     label: request.command,
     data: {
       id: request.id,
@@ -70,7 +70,7 @@ function parseRequest(request: Request): TreeNode {
       ),
       raw_request: request,
     },
-    children: [] as Array<any>,
+    children: [] as Array<ExtendedTreeItemProps>,
   };
 
   if (
@@ -87,19 +87,6 @@ function parseRequest(request: Request): TreeNode {
   return item;
 }
 
-function expandAllKeys(nodes: TreeNode[]): Record<string, boolean> {
-  const expanded: Record<string, boolean> = {};
-  for (const node of nodes) {
-    if (node && node.key) {
-      expanded[String(node.key)] = true;
-    }
-    if (node.children && node.children.length > 0) {
-      Object.assign(expanded, expandAllKeys(node.children));
-    }
-  }
-  return expanded;
-}
-
 interface RequestTreeMenuProps {
   rootRequest?: Request | undefined;
   request?: Request;
@@ -114,21 +101,16 @@ function RequestTreeMenu({
   const [node, setNode] = useState(
     rootRequest !== undefined ? parseRequest(rootRequest) : {},
   );
-  const [expandedKeys, setExpandedKeys] = useState<Record<string, boolean>>(
-    expandAllKeys([node]),
-  );
 
   useEffect(() => {
     if (rootRequest && rootRequest !== undefined) {
       setNode(parseRequest(rootRequest));
     }
   }, [rootRequest]);
-
-  useEffect(() => {
-    setExpandedKeys(expandAllKeys([node]));
-  }, [node]);
-
-  const findRequest = (requestId: string, request: Request) => {
+  const findRequest = (requestId: string, request?: Request) => {
+    if (request === undefined) {
+      return;
+    }
     if (request.id === requestId) {
       setRequest(request);
       return;
@@ -141,134 +123,116 @@ function RequestTreeMenu({
     }
   };
 
-  const updateSelectedRequest = (event: TreeSelectionEvent) => {
-    if (event.value && typeof event.value === "string") {
-      setSelectedKey(event.value);
-      if (rootRequest) {
-        findRequest(event.value, rootRequest);
-      }
-    }
-  };
-
   const commandIcons = (node: any) => {
     return (
       <div>
         {node.data?.topic && (
           <>
-            <Tooltip
-              content={node.data?.topic}
-              target={`#TOPIC_${node.data?.id}`}
-            />
-            <FontAwesomeIcon
-              icon="envelope"
-              className="mr-2"
-              id={`TOPIC_${node.data?.id}`}
-            />
+            <Tooltip title={node.data?.topic}>
+              <span>
+                <FontAwesomeIcon icon="envelope" className="mr-2" />
+              </span>
+            </Tooltip>
           </>
         )}
-        <Tooltip
-          content={`${node?.data?.command_type} Command`}
-          target={`#ICON_${node.data?.id}`}
-        />
-        {(node.data?.command_type === undefined ||
-          node.data?.command_type.length === 0 ||
-          node.data?.command_type === "ACTION") && (
-          <FontAwesomeIcon
-            icon="a"
-            className="mr-2"
-            id={`ICON_${node.data?.id}`}
-          />
-        )}
-        {node.data?.command_type === "INFO" && (
-          <FontAwesomeIcon
-            icon="i"
-            className="mr-2"
-            id={`ICON_${node.data?.id}`}
-          />
-        )}
-        {node.data?.command_type === "TEMP" && (
-          <FontAwesomeIcon
-            icon="hourglass"
-            className="mr-2"
-            id={`ICON_${node.data?.id}`}
-          />
-        )}
+        <Tooltip title={`${node?.data?.command_type} Command`}>
+          <span>
+            {(node.data?.command_type === undefined ||
+              node.data?.command_type.length === 0 ||
+              node.data?.command_type === "ACTION") && (
+              <FontAwesomeIcon icon="a" className="mr-2" />
+            )}
+            {node.data?.command_type === "INFO" && (
+              <FontAwesomeIcon icon="i" className="mr-2" />
+            )}
+            {node.data?.command_type === "TEMP" && (
+              <FontAwesomeIcon icon="hourglass" className="mr-2" />
+            )}
+          </span>
+        </Tooltip>
       </div>
     );
   };
 
-  const [selectedKey, setSelectedKey] = useState<string>(request?.id ?? "");
-  const nodeTemplate = (node: any, options: any) => {
+  const nodeTemplate = (node: any) => {
     const statusSeverity = GetSeverity(node.data.status);
 
     return (
-      <div className={options.className}>
-        <div className="flex">
-          <div>{commandIcons(node)}</div>
-          <div>
-            <strong>
+      <Box>
+        <Stack>
+          <Box sx={{ display: "flex" }}>
+            {commandIcons(node)}
+
+            <Typography sx={{ fontWeight: "bold" }} sx={{ ml: 1 }}>
               {node.data?.command_display_name ?? node.data?.command}
-            </strong>
-          </div>
-          <div>
-            <Tag
-              value={node.data.status}
-              severity={statusSeverity}
+            </Typography>
+
+            <Chip
+              label={node.data.status}
+              color={statusSeverity}
               id={`request_menu_status_${node.data.id}`}
-              className="ml-2"
+              sx={{ ml: 1 }}
             />
-          </div>
-          <div>
-            <div className="flex">
-              {node.data?.status && ["SUCCESS"].includes(node.data?.status) && (
-                <span className="ml-2">{node.data.deltaTime}</span>
-              )}
-              <Tooltip target={`#request_duration_${node.data?.id}`}>
-                <div>
-                  <div className="flex">
-                    <div className="flex-1">Created At:</div>
-                    <div className="ml-2 flex-2">{node.data?.created_at}</div>
-                  </div>
-                  <div className="flex">
-                    <div className="flex-1">Status Updated At:</div>
-                    <div className="ml-2 flex-2">
+
+            {node.data?.status && ["SUCCESS"].includes(node.data?.status) && (
+              <Typography sx={{ ml: 1 }}>{node.data.deltaTime}</Typography>
+            )}
+            <Tooltip
+              title={
+                <Box>
+                  <Box sx={{ display: "flex" }}>
+                    <Typography variant="caption" sx={{ mr: 2 }}>
+                      Created At:
+                    </Typography>
+                    <Typography variant="caption" sx={{ marginLeft: "auto" }}>
+                      {node.data?.created_at}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex" }}>
+                    <Typography variant="caption" sx={{ mr: 2 }}>
+                      Status Updated At:
+                    </Typography>
+                    <Typography variant="caption" sx={{ marginLeft: "auto" }}>
                       {node.data?.status_updated_at}
-                    </div>
-                  </div>
-                  <div className="flex">
-                    <div className="flex-1">Last Updated At:</div>
-                    <div className="ml-2 flex-2">{node.data?.updated_at}</div>
-                  </div>
-                </div>
-              </Tooltip>
-              <FontAwesomeIcon
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: "flex" }}>
+                    <Typography variant="caption" sx={{ mr: 2 }}>
+                      Last Updated At:
+                    </Typography>
+                    <Typography variant="caption" sx={{ marginLeft: "auto" }}>
+                      {node.data?.updated_at}
+                    </Typography>
+                  </Box>
+                </Box>
+              }
+            >
+              <FAIcon
                 icon="clock"
-                className="ml-2"
+                sx={{ ml: 1 }}
                 id={`request_duration_${node.data?.id}`}
               />
-            </div>
-          </div>
-        </div>
-        <div className="flex">
-          <sub>
-            {node.data.namespace}-{node.data.system}-{node.data.system_version}-
-            {node.data.instance_name}
-          </sub>
-        </div>
-      </div>
+            </Tooltip>
+          </Box>
+          <Box>
+            <Typography variant="caption">
+              {node.data.namespace}-{node.data.system}-
+              {node.data.system_version}-{node.data.instance_name}
+            </Typography>
+          </Box>
+        </Stack>
+      </Box>
     );
   };
 
   return (
     node && (
-      <Tree
-        value={[node]}
-        selectionMode="single"
-        selectionKeys={selectedKey}
-        onSelectionChange={updateSelectedRequest}
-        nodeTemplate={nodeTemplate}
-        className="w-auto"
-        expandedKeys={expandedKeys}
+      <TreeMenu
+        items={[node]}
+        itemTemplate={nodeTemplate}
+        changeSelected={(id: string) => findRequest(id, rootRequest)}
+        selectedItems={request ? request.id : null}
+        sx={{ mt: 2 }}
       />
     )
   );
