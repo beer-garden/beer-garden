@@ -246,6 +246,11 @@ function RequestWizard({
         setSelectedSystem(chosenSystem);
         updateRequestValue({
           ...request,
+          namespace: namespace,
+          system: system,
+          system_version: system_version,
+          instance_name: instance_name,
+          command: command,
           target_garden: chosenSystem?.garden_name,
           source_garden: config.garden_name,
         });
