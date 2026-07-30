@@ -212,6 +212,12 @@ export const EnhancedTableFilterOptions = ({
   );
 
   useEffect(() => {
+    // // Validate Filters
+    const filter = columnFiltersRef.current.find((filter) => filter.id === id);
+    if (filter?.column) {
+      updateColumn(id, filter?.column);
+    }
+
     if (isHighlighted) {
       const timer = setTimeout(() => {
         setIsHighlighted(false);
@@ -233,19 +239,24 @@ export const EnhancedTableFilterOptions = ({
     const filter = columnFiltersRef.current.filter(
       (filter) => filter.id === id,
     )[0];
-    setFilterColumn(filter?.column);
-    setFilterModifier(defaultModifier(filter));
-    if (filter?.value !== filterValue) {
-      triggerReload();
-    }
-    setFilterValue(filter?.value);
 
-    const isArray = filter?.options !== undefined;
-    setIsDate(!isArray && filter?.isDate === true);
-    setIsString(!isArray && filter?.isString === true);
-    setIsNumeric(!isArray && filter?.isNumeric === true);
-    setIsArray(isArray);
-    setOptions(filter?.options);
+    if (filter.modifier === undefined) {
+      updateModifier(id, defaultModifier(filter));
+    } else {
+      setFilterColumn(filter?.column);
+      setFilterModifier(defaultModifier(filter));
+      if (filter?.value !== filterValue) {
+        triggerReload();
+      }
+      setFilterValue(filter?.value);
+
+      const isArray = filter?.options !== undefined;
+      setIsDate(!isArray && filter?.isDate === true);
+      setIsString(!isArray && filter?.isString === true);
+      setIsNumeric(!isArray && filter?.isNumeric === true);
+      setIsArray(isArray);
+      setOptions(filter?.options);
+    }
   }, [columnFilters]);
 
   const updateColumn = (id: string, column: string) => {
@@ -254,21 +265,22 @@ export const EnhancedTableFilterOptions = ({
         if (filter.id === id) {
           const tableColumnIsDate = columns.some(
             (tableColumn) =>
-              tableColumn.id === column && tableColumn.isDate === true,
+              tableColumn.field === column && tableColumn.isDate === true,
           );
           const tableColumnIsNumeric = columns.some(
             (tableColumn) =>
-              tableColumn.id === column && tableColumn.isNumeric === true,
+              tableColumn.field === column && tableColumn.isNumeric === true,
           );
           const tableColumnIsArray = columns.some(
             (tableColumn) =>
-              tableColumn.id === column && tableColumn.options !== undefined,
+              tableColumn.field === column && tableColumn.options !== undefined,
           );
 
           const tableColumnOptions = columns.some(
-            (tableColumn) => tableColumn.id === column && tableColumn.options,
+            (tableColumn) =>
+              tableColumn.field === column && tableColumn.options,
           )
-            ? columns.filter((tableColumn) => tableColumn.id === column)[0]
+            ? columns.filter((tableColumn) => tableColumn.field === column)[0]
                 .options
             : undefined;
 
@@ -276,7 +288,7 @@ export const EnhancedTableFilterOptions = ({
             tableColumnIsArray === false &&
             (columns.some(
               (tableColumn) =>
-                tableColumn.id === column && tableColumn.isString === true,
+                tableColumn.field === column && tableColumn.isString === true,
             ) ||
               (tableColumnIsDate === false &&
                 tableColumnIsNumeric === false &&
@@ -412,7 +424,7 @@ export const EnhancedTableFilterOptions = ({
               {columns
                 .filter((tableColumns) => tableColumns.filterable === true)
                 .map((tableColumns) => (
-                  <MenuItem key={tableColumns.label} value={tableColumns.id}>
+                  <MenuItem key={tableColumns.label} value={tableColumns.field}>
                     {tableColumns.label}
                   </MenuItem>
                 ))}

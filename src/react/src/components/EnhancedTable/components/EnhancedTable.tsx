@@ -5,7 +5,6 @@ import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
-import TableFooter from "@mui/material/TableFooter";
 import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
@@ -76,6 +75,8 @@ const EnhancedTable = ({
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
+  const [pageRecords, setPageRecords] = useState(false);
+
   const onRequestSort = (
     event: React.MouseEvent<unknown>,
     property: string,
@@ -91,28 +92,40 @@ const EnhancedTable = ({
   };
 
   const createSortHandler =
-    (property: string) => (event: React.MouseEvent<unknown>) => {
-      onRequestSort(event, property);
+    (property?: string) => (event: React.MouseEvent<unknown>) => {
+      if (property) {
+        onRequestSort(event, property);
+      }
     };
+
+  const findValue = (path: string, obj: any) => {
+    return path
+      .replace(/\[(\d+)\]/g, ".$1") // convert [0] to .0
+      .split(".")
+      .filter(Boolean)
+      .reduce((acc, key) => (acc == null ? undefined : acc[key]), obj);
+  };
 
   const columnData = (column: ColumnField, row: any) => {
     if (column.template) {
       return column.template(row);
     }
     if (column.field) {
-      if (Object.hasOwn(row, column.field)) {
+      const columnValue = findValue(column.field, row);
+
+      if (columnValue !== undefined && columnValue !== null) {
         if (column.isDate) {
-          return formatDate(row?.[column.field]);
+          return formatDate(columnValue);
         }
-        return row?.[column.field];
+        return columnValue;
       }
     }
     return undefined;
   };
 
   const filterSortData = (data: any[]) => {
-    if (data.length > 0){
-      console.log("Run Filter")
+    if (data.length > 0) {
+      console.log("Run Filter");
     }
     const flatData = flattenByData([...data]);
     const filteredData = flatData.filter((record) => {
@@ -203,13 +216,12 @@ const EnhancedTable = ({
           ) {
             return filter.value.some((field) => field === compare);
           }
-        } else if (filter.modifier === "nin") {
-          if (
-            typeof compare === "string" &&
-            typeof filter.value === "object" &&
-            Array.isArray(filter.value)
-          ) {
-            return !filter.value.some((field) => field === compare);
+
+          // Grab Compare Value
+          const compare = findValue(filter.column, record);
+
+          if (compare === undefined) {
+            return false;
           }
         } else if (filter.modifier === "exists") {
           if (filter.value === "true") {
@@ -249,37 +261,93 @@ const EnhancedTable = ({
 
     const startIndex = page * rowsPerPage;
 
+    const orderByField = columns.find(
+      (column) => column.field === orderBy,
+    )?.field;
+
     if (groupBy) {
       const groupedData = groupByData(filteredData);
       setDisplayFiltered(groupedData.length);
       // Sort Data, then groups
 
-      const sortedGroupData = groupedData.map((group) => {
-        return {
-          group: group.group,
-          data: group.data.sort((a, b) => {
-            if (orderBy) {
-              const field_a = Object.hasOwn(a, orderBy)
-                ? a?.[orderBy]
-                : undefined;
-              const field_b = Object.hasOwn(b, orderBy)
-                ? b?.[orderBy]
-                : undefined;
-              return order === "asc" ? field_a - field_b : field_b - field_a;
-            }
-            return 0;
-          }),
-        };
-      });
+      const sortedGroupData =
+        orderByField === groupBy
+          ? groupedData
+          : groupedData.map((group) => {
+              return {
+                group: group.group,
+                data: group.data.sort((a, b) => {
+                  if (orderByField) {
+                    const field_a = findValue(orderByField, a);
+                    const field_b = findValue(orderByField, b);
+                    if (
+                      columns.some(
+                        (column) =>
+                          column.field === orderBy && column.isNumeric,
+                      )
+                    ) {
+                      return order === "asc"
+                        ? Number(field_a) - Number(field_b)
+                        : Number(field_b) - Number(field_a);
+                    }
+                    if (
+                      columns.some(
+                        (column) => column.field === orderBy && column.isDate,
+                      )
+                    ) {
+                      return order === "asc"
+                        ? new Date(field_a).getTime() -
+                            new Date(field_b).getTime()
+                        : new Date(field_b).getTime() -
+                            new Date(field_a).getTime();
+                    }
+                    if (
+                      columns.some(
+                        (column) => column.field === orderBy && column.isString,
+                      )
+                    ) {
+                      return order === "asc"
+                        ? (field_a as string).localeCompare(field_b as string)
+                        : (field_b as string).localeCompare(field_a as string);
+                    }
+                    return order === "asc"
+                      ? field_a - field_b
+                      : field_b - field_a;
+                  }
+                  return 0;
+                }),
+              };
+            });
 
       const sortedGroups = sortedGroupData.sort((a, b) => {
-        if (orderBy) {
-          const field_a = Object.hasOwn(a.data[0], orderBy)
-            ? a.data[0]?.[orderBy]
-            : undefined;
-          const field_b = Object.hasOwn(b.data[0], orderBy)
-            ? a.data[0]?.[orderBy]
-            : undefined;
+        if (orderByField) {
+          const field_a = findValue(orderByField, a.data[0]);
+          const field_b = findValue(orderByField, b.data[0]);
+          if (
+            columns.some(
+              (column) => column.field === orderBy && column.isNumeric,
+            )
+          ) {
+            return order === "asc"
+              ? Number(field_a) - Number(field_b)
+              : Number(field_b) - Number(field_a);
+          }
+          if (
+            columns.some((column) => column.field === orderBy && column.isDate)
+          ) {
+            return order === "asc"
+              ? new Date(field_a).getTime() - new Date(field_b).getTime()
+              : new Date(field_b).getTime() - new Date(field_a).getTime();
+          }
+          if (
+            columns.some(
+              (column) => column.field === orderBy && column.isString,
+            )
+          ) {
+            return order === "asc"
+              ? (field_a as string).localeCompare(field_b as string)
+              : (field_b as string).localeCompare(field_a as string);
+          }
           return order === "asc" ? field_a - field_b : field_b - field_a;
         }
         return 0;
@@ -289,10 +357,32 @@ const EnhancedTable = ({
     }
 
     setDisplayFiltered(filteredData.length);
-    const sortedData = filteredData.sort((a, b) => {
-      if (orderBy) {
-        const field_a = Object.hasOwn(a, orderBy) ? a?.[orderBy] : undefined;
-        const field_b = Object.hasOwn(b, orderBy) ? b?.[orderBy] : undefined;
+
+    const sortedData = [...filteredData].sort((a, b) => {
+      if (orderByField) {
+        const field_a = findValue(orderByField, a);
+        const field_b = findValue(orderByField, b);
+        if (
+          columns.some((column) => column.field === orderBy && column.isNumeric)
+        ) {
+          return order === "asc"
+            ? Number(field_a) - Number(field_b)
+            : Number(field_b) - Number(field_a);
+        }
+        if (
+          columns.some((column) => column.field === orderBy && column.isDate)
+        ) {
+          return order === "asc"
+            ? new Date(field_a).getTime() - new Date(field_b).getTime()
+            : new Date(field_b).getTime() - new Date(field_a).getTime();
+        }
+        if (
+          columns.some((column) => column.field === orderBy && column.isString)
+        ) {
+          return order === "asc"
+            ? (field_a as string).localeCompare(field_b as string)
+            : (field_b as string).localeCompare(field_a as string);
+        }
         return order === "asc" ? field_a - field_b : field_b - field_a;
       }
       return 0;
@@ -318,10 +408,13 @@ const EnhancedTable = ({
   const flattenByData = (data: any[]) => {
     if (flattenBy) {
       const flattenRecords = [] as any[];
-      for (const record of data){
-        if (Object.hasOwn(record, flattenBy) && Array.isArray(record?.[flattenBy])){
-          for (const flatten of record?.[flattenBy]){
-            flattenRecords.push({...record, [flattenBy]:flatten});
+      for (const record of data) {
+        if (
+          Object.hasOwn(record, flattenBy) &&
+          Array.isArray(record?.[flattenBy])
+        ) {
+          for (const flatten of record?.[flattenBy]) {
+            flattenRecords.push({ ...record, [flattenBy]: flatten });
           }
         } else {
           flattenRecords.push(record);
@@ -334,18 +427,18 @@ const EnhancedTable = ({
 
   const groupByData = (data: any[]) => {
     const groupedData = [] as { group: string; data: any[] }[];
-    if (groupBy) {    
-      for (const record of data){
-        if (Object.hasOwn(record, groupBy) ){
-          if (groupedData.some((group) => group.group === record?.[groupBy])){
+    if (groupBy) {
+      for (const record of data) {
+        if (Object.hasOwn(record, groupBy)) {
+          if (groupedData.some((group) => group.group === record?.[groupBy])) {
             groupedData.map((group) => {
-              if (group.group === record?.[groupBy]){
+              if (group.group === record?.[groupBy]) {
                 group.data.push(record);
               }
               return group;
-            })
+            });
           } else {
-            groupedData.push({group: record?.[groupBy], data: [record]});
+            groupedData.push({ group: record?.[groupBy], data: [record] });
           }
         }
       }
@@ -356,8 +449,9 @@ const EnhancedTable = ({
   useEffect(() => {
     if (remoteFilter) {
       // Accept remote updates
+      setPageRecords(dataLength !== undefined && dataLength > 5);
       if (groupBy) {
-        const filteredGroupedData =  groupByData(flattenByData(data));
+        const filteredGroupedData = groupByData(flattenByData(data));
         setDisplayGroupData(filteredGroupedData);
       } else {
         setDisplayData(flattenByData(data));
@@ -365,9 +459,11 @@ const EnhancedTable = ({
     } else {
       // Local Filter
       if (groupBy) {
-        const filteredGroupedData =  filterSortData(data);
+        const filteredGroupedData = filterSortData(data);
+        setPageRecords(filteredGroupedData.length > 5);
         setDisplayGroupData(filteredGroupedData);
       } else {
+        setPageRecords(data.length > 5);
         setDisplayData(filterSortData(data));
       }
     }
@@ -379,7 +475,7 @@ const EnhancedTable = ({
       remoteFilter(filters, orderBy, order, page, rowsPerPage);
     } else {
       if (groupBy) {
-        const filteredGroupedData =  filterSortData(data);
+        const filteredGroupedData = filterSortData(data);
         setDisplayGroupData(filteredGroupedData);
       } else {
         setDisplayData(filterSortData(data));
@@ -405,7 +501,7 @@ const EnhancedTable = ({
       remoteFilter(filters, orderBy, order, 0, rowsPerPage);
     } else {
       if (groupBy) {
-        const filteredGroupedData =  filterSortData(data);
+        const filteredGroupedData = filterSortData(data);
         setDisplayGroupData(filteredGroupedData);
       } else {
         setDisplayData(filterSortData(data));
@@ -425,16 +521,15 @@ const EnhancedTable = ({
             {columns.map((column) => (
               <TableCell
                 key={column.id}
-                align={column.isNumeric ? "right" : "left"}
-                sortDirection={orderBy === column.id ? order : false}
+                sortDirection={orderBy === column.field ? order : false}
               >
                 <TableSortLabel
-                  active={orderBy === column.id}
-                  direction={orderBy === column.id ? order : "asc"}
-                  onClick={createSortHandler(column.id)}
+                  active={orderBy === column.field}
+                  direction={orderBy === column.field ? order : "asc"}
+                  onClick={createSortHandler(column.field)}
                 >
                   {column.label}
-                  {orderBy === column.id ? (
+                  {orderBy === column.field ? (
                     <Box component="span" sx={visuallyHidden}>
                       {order === "desc"
                         ? "sorted descending"
@@ -476,7 +571,7 @@ const EnhancedTable = ({
               displayGroupData.map((group) => {
                 if (group.data.length === 1) {
                   return (
-                    <TableRow key={group.data[0].id ?? undefined}>
+                    <TableRow>
                       {columns.map((column) => (
                         <TableCell>
                           {columnData(column, group.data[0])}
@@ -487,19 +582,23 @@ const EnhancedTable = ({
                 }
                 if (group.data.length > 1) {
                   return group.data.map((groupData, index) => (
-                    <TableRow key={group.data[0].id ?? undefined}>
+                    <TableRow>
                       {columns.map((column) => {
                         if (column.field === groupBy) {
                           if (index === 0) {
-                            return (<TableCell rowSpan={group.data.length}>
-                              {columnData(column, groupData)}
-                            </TableCell>);
+                            return (
+                              <TableCell rowSpan={group.data.length}>
+                                {columnData(column, groupData)}
+                              </TableCell>
+                            );
                           } else {
                             return;
                           }
                         } else {
                           return (
-                            <TableCell>{columnData(column, groupData)}</TableCell>
+                            <TableCell>
+                              {columnData(column, groupData)}
+                            </TableCell>
                           );
                         }
                       })}
@@ -508,31 +607,28 @@ const EnhancedTable = ({
                 }
               })}
           </TableBody>
-          <TableFooter>
-            <TableRow>
-              <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                colSpan={3}
-                count={dataLength ?? data.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                slotProps={{
-                  select: {
-                    inputProps: {
-                      "aria-label": "rows per page",
-                    },
-                    native: true,
-                  },
-                }}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-                ActionsComponent={EnhancedTablePaginationActions}
-                labelDisplayedRows={defaultLabelDisplayedRows}
-              />
-            </TableRow>
-          </TableFooter>
         </Table>
-
+        <TablePagination
+          rowsPerPageOptions={pageRecords ? [5, 10, 25] : []}
+          colSpan={3}
+          count={dataLength ?? data.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          slotProps={{
+            select: {
+              inputProps: {
+                "aria-label": "rows per page",
+              },
+              native: true,
+            },
+          }}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          ActionsComponent={
+            pageRecords ? EnhancedTablePaginationActions : () => <></>
+          }
+          labelDisplayedRows={defaultLabelDisplayedRows}
+        />
         {footer}
       </TableContainer>
       {isLoading && (
