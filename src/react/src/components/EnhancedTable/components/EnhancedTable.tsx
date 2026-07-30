@@ -5,7 +5,6 @@ import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
-import TableFooter from "@mui/material/TableFooter";
 import TableHead from "@mui/material/TableHead";
 import TablePagination from "@mui/material/TablePagination";
 import TableRow from "@mui/material/TableRow";
@@ -68,6 +67,8 @@ const EnhancedTable = ({
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
+  const [pageRecords, setPageRecords] = useState(false);
+
   const onRequestSort = (
     event: React.MouseEvent<unknown>,
     property: string,
@@ -83,20 +84,32 @@ const EnhancedTable = ({
   };
 
   const createSortHandler =
-    (property: string) => (event: React.MouseEvent<unknown>) => {
-      onRequestSort(event, property);
+    (property?: string) => (event: React.MouseEvent<unknown>) => {
+      if (property) {
+        onRequestSort(event, property);
+      }
     };
+
+  const findValue = (path: string, obj: any) => {
+    return path
+      .replace(/\[(\d+)\]/g, ".$1") // convert [0] to .0
+      .split(".")
+      .filter(Boolean)
+      .reduce((acc, key) => (acc == null ? undefined : acc[key]), obj);
+  };
 
   const columnData = (column: ColumnField, row: any) => {
     if (column.template) {
       return column.template(row);
     }
     if (column.field) {
-      if (Object.hasOwn(row, column.field)) {
+      const columnValue = findValue(column.field, row);
+
+      if (columnValue !== undefined && columnValue !== null) {
         if (column.isDate) {
-          return formatDate(row?.[column.field]);
+          return formatDate(columnValue);
         }
-        return row?.[column.field];
+        return columnValue;
       }
     }
     return undefined;
@@ -138,9 +151,7 @@ const EnhancedTable = ({
           }
 
           // Grab Compare Value
-          let compare = Object.hasOwn(record, filter.column)
-            ? record?.[filter.column]
-            : undefined;
+          let compare = findValue(filter.column, record);
 
           if (compare === undefined) {
             return false;
@@ -250,10 +261,34 @@ const EnhancedTable = ({
     ];
 
     setDisplayFiltered(filteredData.length);
-    const sortedData = filteredData.sort((a, b) => {
-      if (orderBy) {
-        const field_a = Object.hasOwn(a, orderBy) ? a?.[orderBy] : undefined;
-        const field_b = Object.hasOwn(b, orderBy) ? b?.[orderBy] : undefined;
+    const orderByField = columns.find(
+      (column) => column.field === orderBy,
+    )?.field;
+    const sortedData = [...filteredData].sort((a, b) => {
+      if (orderByField) {
+        const field_a = findValue(orderByField, a);
+        const field_b = findValue(orderByField, b);
+        if (
+          columns.some((column) => column.field === orderBy && column.isNumeric)
+        ) {
+          return order === "asc"
+            ? Number(field_a) - Number(field_b)
+            : Number(field_b) - Number(field_a);
+        }
+        if (
+          columns.some((column) => column.field === orderBy && column.isDate)
+        ) {
+          return order === "asc"
+            ? new Date(field_a).getTime() - new Date(field_b).getTime()
+            : new Date(field_b).getTime() - new Date(field_a).getTime();
+        }
+        if (
+          columns.some((column) => column.field === orderBy && column.isString)
+        ) {
+          return order === "asc"
+            ? (field_a as string).localeCompare(field_b as string)
+            : (field_b as string).localeCompare(field_a as string);
+        }
         return order === "asc" ? field_a - field_b : field_b - field_a;
       }
       return 0;
@@ -282,8 +317,10 @@ const EnhancedTable = ({
     if (remoteFilter) {
       // Accept remote updates
       setDisplayData(data);
+      setPageRecords(dataLength !== undefined && dataLength > 5);
     } else {
       // Local Filter
+      setPageRecords(data.length > 5);
       setDisplayData(filterSortData(data));
     }
   }, [data]);
@@ -330,16 +367,15 @@ const EnhancedTable = ({
             {columns.map((column) => (
               <TableCell
                 key={column.id}
-                align={column.isNumeric ? "right" : "left"}
-                sortDirection={orderBy === column.id ? order : false}
+                sortDirection={orderBy === column.field ? order : false}
               >
                 <TableSortLabel
-                  active={orderBy === column.id}
-                  direction={orderBy === column.id ? order : "asc"}
-                  onClick={createSortHandler(column.id)}
+                  active={orderBy === column.field}
+                  direction={orderBy === column.field ? order : "asc"}
+                  onClick={createSortHandler(column.field)}
                 >
                   {column.label}
-                  {orderBy === column.id ? (
+                  {orderBy === column.field ? (
                     <Box component="span" sx={visuallyHidden}>
                       {order === "desc"
                         ? "sorted descending"
@@ -377,31 +413,28 @@ const EnhancedTable = ({
                 </TableRow>
               ))}
           </TableBody>
-          <TableFooter>
-            <TableRow>
-              <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                colSpan={3}
-                count={dataLength ?? data.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                slotProps={{
-                  select: {
-                    inputProps: {
-                      "aria-label": "rows per page",
-                    },
-                    native: true,
-                  },
-                }}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-                ActionsComponent={EnhancedTablePaginationActions}
-                labelDisplayedRows={defaultLabelDisplayedRows}
-              />
-            </TableRow>
-          </TableFooter>
         </Table>
-
+        <TablePagination
+          rowsPerPageOptions={pageRecords ? [5, 10, 25] : []}
+          colSpan={3}
+          count={dataLength ?? data.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          slotProps={{
+            select: {
+              inputProps: {
+                "aria-label": "rows per page",
+              },
+              native: true,
+            },
+          }}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+          ActionsComponent={
+            pageRecords ? EnhancedTablePaginationActions : () => <></>
+          }
+          labelDisplayedRows={defaultLabelDisplayedRows}
+        />
         {footer}
       </TableContainer>
       {isLoading && (
