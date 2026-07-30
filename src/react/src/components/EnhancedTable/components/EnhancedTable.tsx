@@ -26,6 +26,8 @@ const EnhancedTable = ({
   remoteFilter,
   defaultOrderBy,
   defaultOrder,
+  groupBy,
+  flattenBy,
   header,
   footer,
   reloadTable,
@@ -44,12 +46,18 @@ const EnhancedTable = ({
   ) => void;
   defaultOrderBy?: string;
   defaultOrder?: "asc" | "desc";
+  groupBy?: string;
+  flattenBy?: string;
   header?: React.ReactElement;
   footer?: React.ReactElement;
   reloadTable?: number;
   isLoading?: boolean;
 }) => {
   const [displayData, setDisplayData] = useState<any[] | undefined>(undefined);
+  const [displayGroupData, setDisplayGroupData] = useState<
+    { group: string; data: any[] }[] | undefined
+  >(undefined);
+
   const [displayFiltered, setDisplayFiltered] = useState<number | undefined>(
     undefined,
   );
@@ -103,151 +111,182 @@ const EnhancedTable = ({
   };
 
   const filterSortData = (data: any[]) => {
-    const filteredData = [
-      ...data.filter((record) => {
+    if (data.length > 0){
+      console.log("Run Filter")
+    }
+    const flatData = flattenByData([...data]);
+    const filteredData = flatData.filter((record) => {
+      if (
+        columnFiltersRef.current === undefined ||
+        columnFiltersRef.current.length === 0
+      ) {
+        return true;
+      }
+
+      return columnFiltersRef.current.every((filter: FilterColumn) => {
+        // No Modifier
+        if (filter.modifier === undefined) {
+          return true;
+        }
+
+        // Is Number and Is Date Empty
+        if (filter.value === undefined) {
+          return true;
+        }
+
+        // Is String Empty
+        if (typeof filter.value === "string" && filter.value.length === 0) {
+          return true;
+        }
+
+        // Is Array Empty
         if (
-          columnFiltersRef.current === undefined ||
-          columnFiltersRef.current.length === 0
+          typeof filter.value === "object" &&
+          Array.isArray(filter.value) &&
+          filter.value.length === 0
         ) {
           return true;
         }
 
-        return columnFiltersRef.current.every((filter: FilterColumn) => {
-          // No Modifier
-          if (filter.modifier === undefined) {
-            return true;
-          }
+        // Grab Compare Value
+        let compare = Object.hasOwn(record, filter.column)
+          ? record?.[filter.column]
+          : undefined;
 
-          // Is Number and Is Date Empty
-          if (filter.value === undefined) {
-            return true;
-          }
+        if (compare === undefined) {
+          return false;
+        }
 
-          // Is String Empty
-          if (typeof filter.value === "string" && filter.value.length === 0) {
-            return true;
+        if (filter.isNumeric) {
+          if (typeof compare === "string") {
+            compare = Number(compare);
           }
+        } else if (filter.isDate) {
+          if (typeof compare === "string") {
+            compare = dayjs(new Date(compare));
+          }
+        }
 
-          // Is Array Empty
+        if (filter.modifier === "eq") {
+          return filter.value === compare;
+        } else if (filter.modifier === "neq") {
+          return filter.value !== compare;
+        } else if (filter.modifier === "startswith") {
+          if (typeof compare === "string" && typeof filter.value === "string") {
+            return compare.startsWith(filter.value);
+          }
+        } else if (filter.modifier === "endswith") {
+          if (typeof compare === "string" && typeof filter.value === "string") {
+            return compare.endsWith(filter.value);
+          }
+        } else if (filter.modifier === "contains") {
+          if (typeof compare === "string" && typeof filter.value === "string") {
+            return compare.includes(filter.value);
+          }
+        } else if (filter.modifier === "not__contains") {
+          if (typeof compare === "string" && typeof filter.value === "string") {
+            return !compare.includes(filter.value);
+          }
+        } else if (filter.modifier === "gt") {
+          return compare > filter.value;
+        } else if (filter.modifier === "gte") {
+          return compare >= filter.value;
+        } else if (filter.modifier === "lt") {
+          return compare < filter.value;
+        } else if (filter.modifier === "lte") {
+          return compare <= filter.value;
+        } else if (filter.modifier === "in") {
           if (
+            typeof compare === "string" &&
             typeof filter.value === "object" &&
-            Array.isArray(filter.value) &&
-            filter.value.length === 0
+            Array.isArray(filter.value)
           ) {
-            return true;
+            return filter.value.some((field) => field === compare);
           }
-
-          // Grab Compare Value
-          let compare = Object.hasOwn(record, filter.column)
-            ? record?.[filter.column]
-            : undefined;
-
-          if (compare === undefined) {
-            return false;
+        } else if (filter.modifier === "nin") {
+          if (
+            typeof compare === "string" &&
+            typeof filter.value === "object" &&
+            Array.isArray(filter.value)
+          ) {
+            return !filter.value.some((field) => field === compare);
           }
-
-          if (filter.isNumeric) {
-            if (typeof compare === "string") {
-              compare = Number(compare);
-            }
-          } else if (filter.isDate) {
-            if (typeof compare === "string") {
-              compare = dayjs(new Date(compare));
-            }
-          }
-
-          if (filter.modifier === "eq") {
-            return filter.value === compare;
-          } else if (filter.modifier === "neq") {
-            return filter.value !== compare;
-          } else if (filter.modifier === "startswith") {
-            if (
-              typeof compare === "string" &&
-              typeof filter.value === "string"
-            ) {
-              return compare.startsWith(filter.value);
-            }
-          } else if (filter.modifier === "endswith") {
-            if (
-              typeof compare === "string" &&
-              typeof filter.value === "string"
-            ) {
-              return compare.endsWith(filter.value);
-            }
-          } else if (filter.modifier === "contains") {
-            if (
-              typeof compare === "string" &&
-              typeof filter.value === "string"
-            ) {
-              return compare.includes(filter.value);
-            }
-          } else if (filter.modifier === "not__contains") {
-            if (
-              typeof compare === "string" &&
-              typeof filter.value === "string"
-            ) {
-              return !compare.includes(filter.value);
-            }
-          } else if (filter.modifier === "gt") {
-            return compare > filter.value;
-          } else if (filter.modifier === "gte") {
-            return compare >= filter.value;
-          } else if (filter.modifier === "lt") {
-            return compare < filter.value;
-          } else if (filter.modifier === "lte") {
-            return compare <= filter.value;
-          } else if (filter.modifier === "in") {
-            if (
-              typeof compare === "string" &&
-              typeof filter.value === "object" &&
-              Array.isArray(filter.value)
-            ) {
-              return filter.value.some((field) => field === compare);
-            }
-          } else if (filter.modifier === "nin") {
-            if (
-              typeof compare === "string" &&
-              typeof filter.value === "object" &&
-              Array.isArray(filter.value)
-            ) {
-              return !filter.value.some((field) => field === compare);
-            }
-          } else if (filter.modifier === "exists") {
-            if (filter.value === "true") {
-              // Value Present
-              if (compare === undefined) {
-                return false;
-              }
-
-              if (
-                typeof compare === "string" &&
-                (compare === "" || compare.trim().length === 0)
-              ) {
-                return false;
-              }
-
-              return true;
-            } else {
-              // Value is empty
-              if (compare === undefined) {
-                return true;
-              }
-              if (
-                typeof compare === "string" &&
-                (compare === "" || compare.trim().length === 0)
-              ) {
-                return true;
-              }
-
+        } else if (filter.modifier === "exists") {
+          if (filter.value === "true") {
+            // Value Present
+            if (compare === undefined) {
               return false;
             }
-          }
 
-          // Default response if field is populated
-          return false;
-        });
-      }),
-    ];
+            if (
+              typeof compare === "string" &&
+              (compare === "" || compare.trim().length === 0)
+            ) {
+              return false;
+            }
+
+            return true;
+          } else {
+            // Value is empty
+            if (compare === undefined) {
+              return true;
+            }
+            if (
+              typeof compare === "string" &&
+              (compare === "" || compare.trim().length === 0)
+            ) {
+              return true;
+            }
+
+            return false;
+          }
+        }
+
+        // Default response if field is populated
+        return false;
+      });
+    });
+
+    const startIndex = page * rowsPerPage;
+
+    if (groupBy) {
+      const groupedData = groupByData(filteredData);
+      setDisplayFiltered(groupedData.length);
+      // Sort Data, then groups
+
+      const sortedGroupData = groupedData.map((group) => {
+        return {
+          group: group.group,
+          data: group.data.sort((a, b) => {
+            if (orderBy) {
+              const field_a = Object.hasOwn(a, orderBy)
+                ? a?.[orderBy]
+                : undefined;
+              const field_b = Object.hasOwn(b, orderBy)
+                ? b?.[orderBy]
+                : undefined;
+              return order === "asc" ? field_a - field_b : field_b - field_a;
+            }
+            return 0;
+          }),
+        };
+      });
+
+      const sortedGroups = sortedGroupData.sort((a, b) => {
+        if (orderBy) {
+          const field_a = Object.hasOwn(a.data[0], orderBy)
+            ? a.data[0]?.[orderBy]
+            : undefined;
+          const field_b = Object.hasOwn(b.data[0], orderBy)
+            ? a.data[0]?.[orderBy]
+            : undefined;
+          return order === "asc" ? field_a - field_b : field_b - field_a;
+        }
+        return 0;
+      });
+
+      return sortedGroups.slice(startIndex, startIndex + rowsPerPage);
+    }
 
     setDisplayFiltered(filteredData.length);
     const sortedData = filteredData.sort((a, b) => {
@@ -259,7 +298,6 @@ const EnhancedTable = ({
       return 0;
     });
 
-    const startIndex = page * rowsPerPage;
     return sortedData.slice(startIndex, startIndex + rowsPerPage);
   };
 
@@ -277,14 +315,61 @@ const EnhancedTable = ({
     setPage(0);
   };
 
+  const flattenByData = (data: any[]) => {
+    if (flattenBy) {
+      const flattenRecords = [] as any[];
+      for (const record of data){
+        if (Object.hasOwn(record, flattenBy) && Array.isArray(record?.[flattenBy])){
+          for (const flatten of record?.[flattenBy]){
+            flattenRecords.push({...record, [flattenBy]:flatten});
+          }
+        } else {
+          flattenRecords.push(record);
+        }
+      }
+      return flattenRecords;
+    }
+    return data;
+  };
+
+  const groupByData = (data: any[]) => {
+    const groupedData = [] as { group: string; data: any[] }[];
+    if (groupBy) {    
+      for (const record of data){
+        if (Object.hasOwn(record, groupBy) ){
+          if (groupedData.some((group) => group.group === record?.[groupBy])){
+            groupedData.map((group) => {
+              if (group.group === record?.[groupBy]){
+                group.data.push(record);
+              }
+              return group;
+            })
+          } else {
+            groupedData.push({group: record?.[groupBy], data: [record]});
+          }
+        }
+      }
+    }
+    return groupedData;
+  };
   // Data Updated Externally
   useEffect(() => {
     if (remoteFilter) {
       // Accept remote updates
-      setDisplayData(data);
+      if (groupBy) {
+        const filteredGroupedData =  groupByData(flattenByData(data));
+        setDisplayGroupData(filteredGroupedData);
+      } else {
+        setDisplayData(flattenByData(data));
+      }
     } else {
       // Local Filter
-      setDisplayData(filterSortData(data));
+      if (groupBy) {
+        const filteredGroupedData =  filterSortData(data);
+        setDisplayGroupData(filteredGroupedData);
+      } else {
+        setDisplayData(filterSortData(data));
+      }
     }
   }, [data]);
 
@@ -293,7 +378,12 @@ const EnhancedTable = ({
     if (remoteFilter) {
       remoteFilter(filters, orderBy, order, page, rowsPerPage);
     } else {
-      setDisplayData(filterSortData(data));
+      if (groupBy) {
+        const filteredGroupedData =  filterSortData(data);
+        setDisplayGroupData(filteredGroupedData);
+      } else {
+        setDisplayData(filterSortData(data));
+      }
     }
   }, [reloadTable, order, orderBy, page, rowsPerPage]);
 
@@ -314,7 +404,12 @@ const EnhancedTable = ({
     if (remoteFilter) {
       remoteFilter(filters, orderBy, order, 0, rowsPerPage);
     } else {
-      setDisplayData(filterSortData(data));
+      if (groupBy) {
+        const filteredGroupedData =  filterSortData(data);
+        setDisplayGroupData(filteredGroupedData);
+      } else {
+        setDisplayData(filterSortData(data));
+      }
     }
   };
 
@@ -376,6 +471,42 @@ const EnhancedTable = ({
                   ))}
                 </TableRow>
               ))}
+
+            {displayGroupData &&
+              displayGroupData.map((group) => {
+                if (group.data.length === 1) {
+                  return (
+                    <TableRow key={group.data[0].id ?? undefined}>
+                      {columns.map((column) => (
+                        <TableCell>
+                          {columnData(column, group.data[0])}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  );
+                }
+                if (group.data.length > 1) {
+                  return group.data.map((groupData, index) => (
+                    <TableRow key={group.data[0].id ?? undefined}>
+                      {columns.map((column) => {
+                        if (column.field === groupBy) {
+                          if (index === 0) {
+                            return (<TableCell rowSpan={group.data.length}>
+                              {columnData(column, groupData)}
+                            </TableCell>);
+                          } else {
+                            return;
+                          }
+                        } else {
+                          return (
+                            <TableCell>{columnData(column, groupData)}</TableCell>
+                          );
+                        }
+                      })}
+                    </TableRow>
+                  ));
+                }
+              })}
           </TableBody>
           <TableFooter>
             <TableRow>

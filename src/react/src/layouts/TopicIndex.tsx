@@ -25,6 +25,8 @@ import {
   SyncTopics,
 } from "../services/topic_service";
 import { PaginatorTemplate } from "../services/util_service";
+import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
+import { ColumnField } from "../components/EnhancedTable/models/EnhancedTableModels";
 
 interface TopicSubscriber {
   topic?: Topic;
@@ -43,6 +45,7 @@ function TopicIndex({
   const [topicSubscribers, setTopicSubscribers] = useState<
     Array<TopicSubscriber>
   >([]);
+  const [rawTopics, setRawTopics] = useState<Topic[]>([])
   const [loading, setLoading] = useState(false);
   const [first, setFirst] = useState<number>(0);
   const [rows, setRows] = useState<number>(10);
@@ -105,6 +108,7 @@ function TopicIndex({
           },
         );
         setTopicSubscribers(topicSubscribers);
+        setRawTopics(topics)
         setLoading(false);
       })
       .catch((error) => {
@@ -576,8 +580,102 @@ function TopicIndex({
       );
     };
 
+    const tableColumns = [
+{
+      id: "topic",
+      label: "Topic",
+      field: "name"
+    },
+    {
+      id: "publisher_count",
+      label: "Publisher Count",
+      field: "publisher_count",
+      sortable: true,
+      filterable: true,
+      isNumeric: true,
+    },
+    {
+      id: "subscribers.garden",
+      label: "Garden",
+      field: "subscribers.garden",
+      sortable: true,
+      filterable: true,
+      isString: true,
+    },
+    {
+      id: "subscribers.namespace",
+      label: "Namespace",
+      field: "subscribers.namespace",
+      sortable: true,
+      filterable: true,
+      isString: true,
+    },
+    {
+      id: "subscribers.system",
+      label: "System",
+      field: "subscribers.system",
+      sortable: true,
+      filterable: true,
+      isString: true,
+    },
+    {
+      id: "subscribers.version",
+      label: "Version",
+      field: "subscribers.version",
+      sortable: true,
+      filterable: true,
+      isString: true,
+    },
+    {
+      id: "subscribers.instance",
+      label: "Instance",
+      field: "subscribers.instance",
+      sortable: true,
+      filterable: true,
+      isString: true,
+    },
+    {
+      id: "subscribers.command",
+      label: "Command",
+      field: "subscribers.command",
+      sortable: true,
+      filterable: true,
+      isString: true,
+    },
+    {
+      id: "subscribers.consumer_count",
+      label: "Consumer Count",
+      field: "subscribers.consumer_count",
+      sortable: true,
+      filterable: true,
+      isNumeric: true,
+    },
+    {
+      id: "subscribers.subscriber_type",
+      label: "Subscriber Type",
+      field: "subscribers.subscriber_type",
+      sortable: true,
+      filterable: true,
+      isString: true,
+    },
+    ] as ColumnField[];
+
     return (
       <>
+        <EnhancedTable
+          data={rawTopics}
+          columns={tableColumns}
+          header={header}
+          flattenBy="subscribers"
+          groupBy="name"
+          // remoteFilter={tableLoadData}
+          // dataLength={filteredRecords}
+          // totalDataLength={totalRecords}
+          // reloadTable={reloadRequestsTrigger}
+          // defaultOrderBy="created_at"
+          // defaultOrder="desc"
+          // isLoading={loading}
+        />
         <DataTable
           data-testid="topic-datatable"
           value={topicSubscribers}
