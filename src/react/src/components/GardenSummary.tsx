@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Box, Chip, Skeleton,Tooltip } from "@mui/material";
+import { Box, Chip, Grid, Skeleton, Tooltip } from "@mui/material";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Message } from "primereact/message";
@@ -703,7 +703,69 @@ function GardenSummary({
               }}
             />
           )}
-          <div className="grid">
+          <Grid container spacing={1}>
+            <Grid size={3}>
+              <h2>Version</h2>
+              <p>{selectedGarden?.version}</p>
+            </Grid>
+            <Grid size={3}>
+              <h2>Systems</h2>
+              <div className="flex">
+                {Array.from(systemCounts, ([status, count]) => {
+                  if (count && count > 0) {
+                    const statusSeverity = GetSeverity(status);
+                    return (
+                      <div key={`${status}_Summary`}>
+                        <Tooltip
+                          title={`${status} Count ${count}`}
+                          placement="bottom"
+                        >
+                          <Chip
+                            data-testid={`${status}_severity_system_summary`}
+                            id={`${status}_${selectedGarden?.id}_severity_system_summary`}
+                            label={count}
+                            color={statusSeverity}
+                            key={status}
+                          />
+                        </Tooltip>
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })}
+              </div>
+            </Grid>
+
+            {selectedGarden?.children &&
+              selectedGarden?.children.length > 0 && (
+                <Grid size={3}>
+                  <h2>Downstream</h2>
+
+                  {selectedGarden?.children &&
+                    selectedGarden?.children.length > 0 && (
+                      <ul>
+                        {" "}
+                        {Array.from(
+                          selectedGarden.children ?? [],
+                          (child: Garden) => {
+                            return <li key={child.name}>{child.name}</li>;
+                          },
+                        )}
+                      </ul>
+                    )}
+                </Grid>
+              )}
+            {selectedGarden?.parent && (
+              <Grid size={3}>
+                <h2>Upstream</h2>
+                <ul>
+                  <li>{selectedGarden?.parent}</li>
+                </ul>
+              </Grid>
+            )}
+          </Grid>
+          {/* <div className="grid">
             <div className="col-3">
               <h2>Version</h2>
               <p>{selectedGarden?.version}</p>
@@ -763,10 +825,10 @@ function GardenSummary({
                 </ul>
               </div>
             )}
-          </div>
-          <div className="grid">
+          </div> */}
+          <Grid container spacing={1}>
             {receivingConnections && receivingConnections.length > 0 && (
-              <div className="col-4">
+              <Grid size={4}>
                 <h2>Receiving</h2>
 
                 <DataTable value={receivingConnections}>
@@ -785,11 +847,10 @@ function GardenSummary({
                     body={(node: any) => connectionActions(node, "RECEIVING")}
                   />
                 </DataTable>
-              </div>
+              </Grid>
             )}
-
             {publishingConnections && publishingConnections.length > 0 && (
-              <div className="col-4">
+              <Grid size={4}>
                 <h2>Publishing</h2>
                 <DataTable value={publishingConnections}>
                   <Column
@@ -807,9 +868,9 @@ function GardenSummary({
                     body={(node: any) => connectionActions(node, "PUBLISHING")}
                   />
                 </DataTable>
-              </div>
+              </Grid>
             )}
-          </div>
+          </Grid>
         </div>
       ) : (
         <Skeleton width="100%" height="150px"></Skeleton>
