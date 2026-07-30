@@ -163,7 +163,7 @@ function RequestTreeMenu({
           <Box sx={{ display: "flex" }}>
             {commandIcons(node)}
 
-            <Typography sx={{ fontWeight: "bold" }} sx={{ ml: 1 }}>
+            <Typography sx={{ fontWeight: "bold", ml: 1 }}>
               {node.data?.command_display_name ?? node.data?.command}
             </Typography>
 
