@@ -1,11 +1,11 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Card } from "primereact/card";
-import { Column } from "primereact/column";
-import { confirmDialog } from "primereact/confirmdialog";
-import { DataTable } from "primereact/datatable";
+import { Box, DialogContent, Grid, Typography } from "@mui/material";
+import { Dayjs } from "dayjs";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import ConfirmDialog from "../components/ConfirmDialog";
+import { FilterColumn } from "../components/EnhancedTable//models/EnhancedTableModels";
+import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import {
   CronTrigger,
   DateTrigger,
@@ -23,36 +23,33 @@ import {
   RunAdhocJob,
 } from "../services/job_service";
 import { GetRequestList } from "../services/request_service";
-// import HasAccess from "./HasAccess";
+import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
 
 function SchedulerViewCard({
   jobId,
   listeners,
-  removeItem,
   editJob,
   deleteJob,
-  isDialog,
   config,
 }: {
   jobId: string;
   listeners: Record<string, any>;
-  removeItem: (id: string) => void;
   editJob: () => void;
   deleteJob: () => void;
-  isDialog: boolean;
   config: Config;
 }) {
   const [job, setJob] = useState<Job | undefined>(undefined);
 
-  const [requests, setRequests] = useState<Array<Request> | undefined>(
-    undefined,
-  );
+  const [requests, setRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [lazyParams, setLazyParams] = useState({ first: 0, rows: 5, page: 0 });
+  const [filteredRecords, setFilteredRecords] = useState<number>(0);
+  const [reloadRequestsTrigger, setReloadRequestsTrigger] = useState(0);
   const [recordsUpdated, setRecordsUpdated] = useState(false);
+
+  const [showDelete, setShowDelete] = useState(false);
 
   const navigate = useNavigate();
   const showSnackbar = useSnackbar();
@@ -73,9 +70,9 @@ function SchedulerViewCard({
           });
         });
     } else {
-      queryJobRequests();
+      setReloadRequestsTrigger(reloadRequestsTrigger + 1);
     }
-  }, [job, lazyParams]);
+  }, [job]);
 
   useEffect(() => {
     if (!(jobId && jobId in listeners)) {
@@ -156,12 +153,22 @@ function SchedulerViewCard({
     altRequests.current = requests;
   };
 
-  const queryJobRequests = () => {
+  const tableLoadData = (
+    columnFilters?: FilterColumn[],
+    orderBy?: string,
+    order?: "asc" | "desc",
+    page?: number,
+    rowsPerPage?: number,
+  ) => {
+    if (job === undefined && jobId !== undefined) {
+      return;
+    }
+
     setLoading(true);
 
     const queryHeaders = {
-      length: lazyParams.rows,
-      start: lazyParams.first,
+      length: rowsPerPage,
+      start: (rowsPerPage ?? 0) * (page ?? 0),
       include: [
         "id",
         "command",
@@ -176,7 +183,83 @@ function SchedulerViewCard({
           value: jobId,
         }),
       ],
-    };
+    } as Record<string, string | number | string[]>;
+
+    if (columnFilters) {
+      for (const filter of columnFilters) {
+        let validFilter = true;
+
+        if (
+          filter.column === undefined ||
+          filter.modifier === undefined ||
+          filter.value === undefined
+        ) {
+          validFilter = false;
+        }
+
+        // Is String Empty
+        if (
+          validFilter &&
+          typeof filter.value === "string" &&
+          filter.value.length === 0
+        ) {
+          validFilter = false;
+        }
+
+        // Is Array Empty
+        if (
+          validFilter &&
+          typeof filter.value === "object" &&
+          Array.isArray(filter.value) &&
+          filter.value.length === 0
+        ) {
+          validFilter = false;
+        }
+
+        if (validFilter) {
+          queryHeaders["query"] = queryHeaders["query"] || [];
+
+          if (Array.isArray(queryHeaders["query"])) {
+            if (filter.isDate) {
+              queryHeaders["query"].push(
+                JSON.stringify({
+                  field_name: filter.column,
+                  modifier: filter.modifier === "eq" ? "" : filter.modifier,
+                  value: (filter.value as Dayjs)
+                    .toISOString()
+                    .substring(0, 19)
+                    .replace("T", " "),
+                }),
+              );
+            } else if (filter.isNumeric) {
+              queryHeaders["query"].push(
+                JSON.stringify({
+                  field_name: filter.column,
+                  modifier: filter.modifier === "eq" ? "" : filter.modifier,
+                  value: String(filter.value),
+                }),
+              );
+            } else {
+              queryHeaders["query"].push(
+                JSON.stringify({
+                  field_name: filter.column,
+                  modifier: filter.modifier === "eq" ? "" : filter.modifier,
+                  value:
+                    filter.modifier === "exists"
+                      ? filter.value === "true"
+                      : filter.value,
+                }),
+              );
+            }
+          }
+        }
+      }
+    }
+
+    if (order && orderBy) {
+      queryHeaders["order_by"] = order === "asc" ? orderBy : "-" + orderBy;
+    }
+
     GetRequestList(queryHeaders)
       .then((data: [Array<Request>, Headers]) => {
         const [requests, headers] = data;
@@ -184,27 +267,29 @@ function SchedulerViewCard({
         setDisplayRequests(requests);
         setRecordsUpdated(false);
 
-        if (headers.has("recordsfiltered")) {
-          setTotalRecords(parseInt(headers.get("recordsfiltered") || "0", 10));
+        if (headers.has("Recordstotal")) {
+          setTotalRecords(parseInt(headers.get("Recordstotal") || "0", 10));
         } else {
           setTotalRecords(requests.length);
+        }
+        if (headers.has("Recordsfiltered")) {
+          setFilteredRecords(
+            parseInt(headers.get("Recordsfiltered") || "0", 10),
+          );
+        } else {
+          setFilteredRecords(requests.length);
         }
         setLoading(false);
       })
       .catch((error) => {
-        console.error("Error fetching request list:", error);
+        setLoading(false);
         showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching request list: ${error}`,
           life: 3000,
         });
-        setLoading(false);
       });
-  };
-
-  const onPage = (event: any) => {
-    setLazyParams(event);
   };
 
   const formatDate = (value: string | undefined) => {
@@ -215,38 +300,41 @@ function SchedulerViewCard({
 
   const commandNameTemplate = (request: Request) => {
     return (
-      <div>
+      <>
         <AccessButton
           rounded
           raised
-          link
           onClick={() => void navigate(`/request/${request.id}`)}
           title={
             "Open Request " +
             (request.command_display_name ?? request.command ?? request.id)
           }
-          className="mr-2"
+          sx={{ mr: 2 }}
         >
-          <FontAwesomeIcon icon="arrow-up-right-from-square" />
+          <FAIcon icon="arrow-up-right-from-square" />
         </AccessButton>
         {request.command_display_name ?? request.command ?? request.id}
-      </div>
+      </>
     );
   };
 
   const tableHeader = (
-    <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-      <span className="text-xl text-900 font-bold">Associated Requests</span>
-      <AccessButton
-        rounded
-        raised
-        onClick={queryJobRequests}
-        tooltip={recordsUpdated ? "New updates available" : "Refresh"}
-      >
-        {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
-        <FontAwesomeIcon icon="refresh" />
-      </AccessButton>
-    </div>
+    <Grid container sx={{ mx: 2, mt: 2 }}>
+      <Grid size="grow">
+        <Typography variant="subtitle1">Associated Requests</Typography>
+      </Grid>
+      <Grid>
+        <AccessButton
+          rounded
+          raised
+          onClick={() => setReloadRequestsTrigger(reloadRequestsTrigger + 1)}
+          tooltip={recordsUpdated ? "New updates available" : "Refresh"}
+        >
+          {recordsUpdated && <FAIcon icon={"circle-exclamation"} />}
+          <FAIcon icon="refresh" />
+        </AccessButton>
+      </Grid>
+    </Grid>
   );
 
   const permissions = {
@@ -258,350 +346,362 @@ function SchedulerViewCard({
     hasCommandName: job?.request_template?.command,
   };
 
-  const confirmDeleteJob = () => {
-    const accept = () => {
-      deleteJob();
-    };
-    const reject = () => {};
-    const confirm = () => {
-      confirmDialog({
-        message: "Are you sure you want to delete this job?",
-        header: `Confirm Delete ${job?.name}`,
-        icon: "pi pi-exclamation-triangle",
-        defaultFocus: "accept",
-        accept,
-        reject,
-      });
-    };
-    confirm();
+  const jobDetailDisplay = (label: string, value: any) => {
+    return (
+      <Box sx={{ display: "flex" }}>
+        <Typography
+          variant="h6"
+          sx={{
+            justifyContent: "center",
+            alignItems: "center",
+            display: "flex",
+            mx: 1,
+          }}
+        >
+          {label}:
+        </Typography>
+        <Typography
+          variant="body1"
+          sx={{
+            justifyContent: "center",
+            alignItems: "center",
+            display: "flex",
+            mx: 1,
+          }}
+        >
+          {value}
+        </Typography>
+      </Box>
+    );
   };
 
   return (
-    <Card
-      className="justify-content-center"
-      unstyled={isDialog}
-      style={{ maxHeight: "80vh", overflowY: "auto" }}
-      header={
-        !isDialog && (
-          <AccessButton
-            onClick={() => {
-              removeItem(jobId);
-            }}
-            className="mr-2 ml-2 mt-2"
-            tooltip={"Close Job " + job?.name}
-            data-testid={"CLOSE_JOB_" + job?.name}
-          >
-            <FontAwesomeIcon icon="xmark" />
-          </AccessButton>
-        )
-      }
-      title={
-        <div className="flex mb-2">
-          <div className="flex-1 flex">
-            <div className="mr-2">{job ? job.name : "Loading..."}</div>
-          </div>
+    <>
+      <ConfirmDialog
+        open={showDelete}
+        setOpen={setShowDelete}
+        accept={deleteJob}
+        reject={() => {}}
+        header={`Confirm Delete ${job?.name}`}
+        message="Are you sure you want to delete this job?"
+      />
+      <DialogContent dividers>
+        <Grid container>
+          <Grid
+            size="grow"
+            sx={{
+              justifyContent: "center",
+              alignItems: "center",
 
-          <AccessButton
-            rounded
-            raised
-            link
-            onClick={() => {
-              if (job?.id) {
-                RunAdhocJob(job.id).catch((error) => {
-                  console.error("Error running job:", error);
-                  showSnackbar({
-                    severity: "error",
-                    summary: "Error",
-                    detail: `Error running job: ${error}`,
-                    life: 3000,
-                  });
-                });
-              }
+              mx: 1,
             }}
-            title={"Run Now " + job?.name}
-            className="mr-2"
-            {...permissions}
-            permission="OPERATOR"
           >
-            <FontAwesomeIcon icon="forward" />
-          </AccessButton>
-
-          <AccessButton
-            rounded
-            raised
-            link
-            onClick={() => {
-              editJob();
+            <Typography variant="h2" sx={{ m: 2 }}>
+              {job ? job.name : "Loading..."}
+            </Typography>
+          </Grid>
+          <Grid
+            sx={{
+              alignSelf: "center",
             }}
-            title={"Update Job " + job?.name}
-            className="mr-2"
-            {...permissions}
-            permission="OPERATOR"
           >
-            <FontAwesomeIcon icon="edit" />
-          </AccessButton>
-          {job?.status === "RUNNING" && (
             <AccessButton
               rounded
               raised
-              link
               onClick={() => {
-                PauseJob(job)
-                  .then((updatedJob) => {
-                    setJob(updatedJob);
-                  })
-                  .catch((error) => {
-                    console.error("Error pausing job:", error);
+                if (job?.id) {
+                  RunAdhocJob(job.id).catch((error) => {
+                    console.error("Error running job:", error);
                     showSnackbar({
                       severity: "error",
                       summary: "Error",
-                      detail: `Error pausing job: ${error}`,
+                      detail: `Error running job: ${error}`,
                       life: 3000,
                     });
                   });
+                }
               }}
-              title={"Pause Job " + job?.name}
+              title={"Run Now " + job?.name}
               className="mr-2"
               {...permissions}
               permission="OPERATOR"
             >
-              <FontAwesomeIcon icon="pause" />
+              <FAIcon icon="forward" />
             </AccessButton>
-          )}
-          {job?.status === "PAUSED" && (
+
             <AccessButton
               rounded
               raised
-              link
               onClick={() => {
-                ResumeJob(job)
-                  .then((updatedJob) => {
-                    setJob(updatedJob);
-                  })
-                  .catch((error) => {
-                    console.error("Error resuming job:", error);
-                    showSnackbar({
-                      severity: "error",
-                      summary: "Error",
-                      detail: `Error resuming job: ${error}`,
-                      life: 3000,
-                    });
-                  });
+                editJob();
               }}
-              title={"Resume Job " + job?.name}
+              title={"Update Job " + job?.name}
               className="mr-2"
               {...permissions}
               permission="OPERATOR"
             >
-              <FontAwesomeIcon icon="play" />
+              <FAIcon icon="edit" />
             </AccessButton>
-          )}
-          <AccessButton
-            rounded
-            raised
-            link
-            onClick={() => confirmDeleteJob(job)}
-            title={"Delete Job " + job?.name}
-            className="mr-2"
-            {...permissions}
-            permission="OPERATOR"
-          >
-            <FontAwesomeIcon icon="trash" />
-          </AccessButton>
-        </div>
-      }
-    >
-      <div className="flex-1 flex flex-wrap gap-4">
-        <div className="mr-4">
-          <h2>Job Details</h2>
-          {job ? (
-            <div>
-              <p>
-                <strong className="mr-2">Status:</strong>
-                {job.status}
-              </p>
-              <p>
-                <strong className="mr-2">Coalesce:</strong>
-                {job.coalesce ? "True" : "False"}
-              </p>
-              <p>
-                <strong className="mr-2">Misfire Grace Time:</strong>
-                {job.misfire_grace_time ?? "N/A"}
-              </p>
-              <p>
-                <strong className="mr-2">Max Instances:</strong>
-                {job.max_instances ?? "N/A"}
-              </p>
-              <p>
-                <strong className="mr-2">Timeout:</strong>
-                {job.timeout ?? "N/A"}
-              </p>
-              <p>
-                <strong className="mr-2">Trigger Type:</strong>
-                {job.trigger_type?.toUpperCase()}
-              </p>
-              {job.trigger_type === "cron" && job.trigger && (
-                <div>
-                  <p>
-                    <strong className="mr-2">Cron Expression:</strong>
-                    {(job.trigger as CronTrigger).second ?? "*"}{" "}
-                    {(job.trigger as CronTrigger).minute ?? "*"}{" "}
-                    {(job.trigger as CronTrigger).hour ?? "*"}{" "}
-                    {(job.trigger as CronTrigger).day ?? "*"}{" "}
-                    {(job.trigger as CronTrigger).month ?? "*"}{" "}
-                    {(job.trigger as CronTrigger).dayOfWeek ?? "*"}{" "}
-                    {(job.trigger as CronTrigger).year ?? "*"}
-                  </p>
-                  <p>
-                    <strong className="mr-2">Start Date:</strong>
-                    {formatDate((job.trigger as CronTrigger).startDate)}
-                  </p>
-                  <p>
-                    <strong className="mr-2">End Date:</strong>
-                    {formatDate((job.trigger as CronTrigger).endDate)}
-                  </p>
-                  <p>
-                    <strong className="mr-2">Timezone:</strong>
-                    {(job.trigger as CronTrigger).timezone ?? "N/A"}
-                  </p>
-                  <p>
-                    <strong className="mr-2">Jitter:</strong>
-                    {(job.trigger as CronTrigger).jitter ?? "N/A"}
-                  </p>
-                </div>
-              )}
-              {job.trigger_type === "date" && job.trigger && (
-                <div>
-                  <p>
-                    <strong className="mr-2">Run Date:</strong>
-                    {formatDate((job.trigger as DateTrigger).run_date)}
-                  </p>
-                  <p>
-                    <strong className="mr-2">Timezone:</strong>
-                    {(job.trigger as DateTrigger).timezone ?? "N/A"}
-                  </p>
-                </div>
-              )}
-              {job.trigger_type === "interval" && job.trigger && (
-                <div>
-                  <p>
-                    <strong className="mr-2">Interval:</strong>
+            {job?.status === "RUNNING" && (
+              <AccessButton
+                rounded
+                raised
+                onClick={() => {
+                  PauseJob(job)
+                    .then((updatedJob) => {
+                      setJob(updatedJob);
+                    })
+                    .catch((error) => {
+                      console.error("Error pausing job:", error);
+                      showSnackbar({
+                        severity: "error",
+                        summary: "Error",
+                        detail: `Error pausing job: ${error}`,
+                        life: 3000,
+                      });
+                    });
+                }}
+                title={"Pause Job " + job?.name}
+                className="mr-2"
+                {...permissions}
+                permission="OPERATOR"
+              >
+                <FAIcon icon="pause" />
+              </AccessButton>
+            )}
+            {job?.status === "PAUSED" && (
+              <AccessButton
+                rounded
+                raised
+                onClick={() => {
+                  ResumeJob(job)
+                    .then((updatedJob) => {
+                      setJob(updatedJob);
+                    })
+                    .catch((error) => {
+                      console.error("Error resuming job:", error);
+                      showSnackbar({
+                        severity: "error",
+                        summary: "Error",
+                        detail: `Error resuming job: ${error}`,
+                        life: 3000,
+                      });
+                    });
+                }}
+                title={"Resume Job " + job?.name}
+                className="mr-2"
+                {...permissions}
+                permission="OPERATOR"
+              >
+                <FAIcon icon="play" />
+              </AccessButton>
+            )}
+            <AccessButton
+              rounded
+              raised
+              onClick={() => setShowDelete(true)}
+              title={"Delete Job " + job?.name}
+              className="mr-2"
+              {...permissions}
+              permission="OPERATOR"
+            >
+              <FAIcon icon="trash" />
+            </AccessButton>
+          </Grid>
+        </Grid>
+
+        <Grid container>
+          <Grid sx={{ m: 2 }}>
+            <Typography variant="h6" sx={{ m: 1 }}>
+              Job Details
+            </Typography>
+            {job ? (
+              <>
+                {jobDetailDisplay("Status", job.status)}
+                {jobDetailDisplay("Coalesce", job.coalesce ? "True" : "False")}
+                {jobDetailDisplay(
+                  "Misfire Grace Time",
+                  job.misfire_grace_time ?? "N/A",
+                )}
+
+                {jobDetailDisplay("Max Instances", job.max_instances ?? "N/A")}
+                {jobDetailDisplay("Timeout", job.timeout ?? "N/A")}
+                {jobDetailDisplay(
+                  "Trigger Type",
+                  job.trigger_type?.toUpperCase(),
+                )}
+
+                {job.trigger_type === "cron" && job.trigger && (
+                  <>
+                    {jobDetailDisplay(
+                      "Cron Expression",
+                      `${(job.trigger as CronTrigger).second ?? "*"} ${(job.trigger as CronTrigger).minute ?? "*"} ${(job.trigger as CronTrigger).hour ?? "*"} ${(job.trigger as CronTrigger).day ?? "*"} ${(job.trigger as CronTrigger).month ?? "*"} ${(job.trigger as CronTrigger).dayOfWeek ?? "*"} ${(job.trigger as CronTrigger).year ?? "*"}`,
+                    )}
+                    {jobDetailDisplay(
+                      "Start Date",
+                      formatDate((job.trigger as CronTrigger).startDate),
+                    )}
+                    {jobDetailDisplay(
+                      "End Date",
+                      formatDate((job.trigger as CronTrigger).endDate),
+                    )}
+                    {jobDetailDisplay(
+                      "Timezone",
+                      (job.trigger as CronTrigger).timezone ?? "N/A",
+                    )}
+                    {jobDetailDisplay(
+                      "Jitter",
+                      (job.trigger as CronTrigger).jitter ?? "N/A",
+                    )}
+                  </>
+                )}
+                {job.trigger_type === "date" && job.trigger && (
+                  <>
+                    {jobDetailDisplay(
+                      "Run Date",
+                      formatDate((job.trigger as DateTrigger).run_date),
+                    )}
+                    {jobDetailDisplay(
+                      "Timezone",
+                      (job.trigger as DateTrigger).timezone ?? "N/A",
+                    )}
+                  </>
+                )}
+                {job.trigger_type === "interval" && job.trigger && (
+                  <>
                     {(job.trigger as IntervalTrigger).weeks !== undefined &&
                       (job.trigger as IntervalTrigger).weeks !== 0 &&
-                      "Every " +
-                        (job.trigger as IntervalTrigger).weeks +
-                        " Weeks"}
+                      jobDetailDisplay(
+                        "Interval",
+                        `Every ${(job.trigger as IntervalTrigger).weeks} Weeks`,
+                      )}
                     {(job.trigger as IntervalTrigger).days !== undefined &&
                       (job.trigger as IntervalTrigger).days !== 0 &&
-                      "Every " +
-                        (job.trigger as IntervalTrigger).days +
-                        " Days"}
+                      jobDetailDisplay(
+                        "Interval",
+                        `Every ${(job.trigger as IntervalTrigger).days} Days`,
+                      )}
                     {(job.trigger as IntervalTrigger).hours !== undefined &&
                       (job.trigger as IntervalTrigger).hours !== 0 &&
-                      "Every " +
-                        (job.trigger as IntervalTrigger).hours +
-                        " Hours"}
+                      jobDetailDisplay(
+                        "Interval",
+                        `Every ${(job.trigger as IntervalTrigger).hours} Hours`,
+                      )}
                     {(job.trigger as IntervalTrigger).minutes !== undefined &&
                       (job.trigger as IntervalTrigger).minutes !== 0 &&
-                      "Every " +
-                        (job.trigger as IntervalTrigger).minutes +
-                        " Minutes"}
+                      jobDetailDisplay(
+                        "Interval",
+                        `Every ${(job.trigger as IntervalTrigger).minutes} Minutes`,
+                      )}
                     {(job.trigger as IntervalTrigger).seconds !== undefined &&
                       (job.trigger as IntervalTrigger).seconds !== 0 &&
-                      "Every " +
-                        (job.trigger as IntervalTrigger).seconds +
-                        " Seconds"}
-                  </p>
-                  <p>
-                    <strong className="mr-2">Start Date:</strong>
-                    {formatDate((job.trigger as IntervalTrigger).startDate)}
-                  </p>
-                  <p>
-                    <strong className="mr-2">End Date:</strong>
-                    {formatDate((job.trigger as IntervalTrigger).endDate)}
-                  </p>
-                  <p>
-                    <strong className="mr-2">Timezone:</strong>
-                    {(job.trigger as IntervalTrigger).timezone ?? "N/A"}
-                  </p>
-                  <p>
-                    <strong className="mr-2">Jitter:</strong>
-                    {(job.trigger as IntervalTrigger).jitter ?? "N/A"}
-                  </p>
-                  <p>
-                    <strong className="mr-2">Reschedule On Finish:</strong>
-                    {(job.trigger as IntervalTrigger).rescheduleOnFinish
-                      ? "True"
-                      : "False"}
-                  </p>
-                </div>
-              )}
-              {job.trigger_type === "file" && job.trigger && (
-                <div>
-                  <p>
-                    <strong className="mr-2">Path:</strong>
-                    {(job.trigger as FileTrigger).path}
-                  </p>
-                  <p>
-                    <strong className="mr-2">Pattern:</strong>
-                    {(job.trigger as FileTrigger).pattern}
-                  </p>
-                  <p>
-                    <strong className="mr-2">Recursive:</strong>
-                    {(job.trigger as FileTrigger).recursive ? "True" : "False"}
-                  </p>
-                  <p>
-                    <strong className="mr-2">Create:</strong>
-                    {(job.trigger as FileTrigger).create ? "True" : "False"}
-                  </p>
-                  <p>
-                    <strong className="mr-2">Modify:</strong>
-                    {(job.trigger as FileTrigger).modify ? "True" : "False"}
-                  </p>
-                  <p>
-                    <strong className="mr-2">Delete:</strong>
-                    {(job.trigger as FileTrigger).delete ? "True" : "False"}
-                  </p>
-                  <p>
-                    <strong className="mr-2">Move:</strong>
-                    {(job.trigger as FileTrigger).move ? "True" : "False"}
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <p>Loading job details...</p>
-          )}
-        </div>
-        <div style={{ flexGrow: "1" }}>
-          {requests ? (
-            <DataTable
-              value={requests}
-              loading={loading}
-              lazy
-              paginator
+                      jobDetailDisplay(
+                        "Interval",
+                        `Every ${(job.trigger as IntervalTrigger).seconds} Seconds`,
+                      )}
+                    {jobDetailDisplay(
+                      "Start Date",
+                      formatDate((job.trigger as IntervalTrigger).startDate),
+                    )}
+                    {jobDetailDisplay(
+                      "End Date",
+                      formatDate((job.trigger as IntervalTrigger).endDate),
+                    )}
+                    {jobDetailDisplay(
+                      "Timezone",
+                      (job.trigger as IntervalTrigger).timezone ?? "N/A",
+                    )}
+                    {jobDetailDisplay(
+                      "Jitter",
+                      (job.trigger as IntervalTrigger).jitter ?? "N/A",
+                    )}
+                    {jobDetailDisplay(
+                      "Reschedule On Finish",
+                      (job.trigger as IntervalTrigger).rescheduleOnFinish
+                        ? "True"
+                        : "False",
+                    )}
+                  </>
+                )}
+                {job.trigger_type === "file" && job.trigger && (
+                  <>
+                    {jobDetailDisplay(
+                      "Path",
+                      (job.trigger as FileTrigger).path,
+                    )}
+                    {jobDetailDisplay(
+                      "Pattern",
+                      (job.trigger as FileTrigger).pattern,
+                    )}
+                    {jobDetailDisplay(
+                      "Recursive",
+                      (job.trigger as FileTrigger).recursive ? "True" : "False",
+                    )}
+                    {jobDetailDisplay(
+                      "Create",
+                      (job.trigger as FileTrigger).create ? "True" : "False",
+                    )}
+                    {jobDetailDisplay(
+                      "Modify",
+                      (job.trigger as FileTrigger).modify ? "True" : "False",
+                    )}
+                    {jobDetailDisplay(
+                      "Delete",
+                      (job.trigger as FileTrigger).delete ? "True" : "False",
+                    )}
+                    {jobDetailDisplay(
+                      "Move",
+                      (job.trigger as FileTrigger).move ? "True" : "False",
+                    )}
+                  </>
+                )}
+              </>
+            ) : (
+              <Typography variant="body1" sx={{ m: 1 }}>
+                Loading job details...
+              </Typography>
+            )}
+          </Grid>
+
+          <Grid size="grow">
+            <EnhancedTable
+              data={requests}
+              columns={[
+                {
+                  id: "command",
+                  label: "Command",
+                  template: commandNameTemplate,
+                },
+                {
+                  id: "status",
+                  field: "status",
+                  label: "status",
+                  sortable: true,
+                  filterable: true,
+                  isString: true,
+                },
+                {
+                  id: "created_at",
+                  field: "created_at",
+                  label: "Created",
+                  sortable: true,
+                  filterable: true,
+                  isDate: true,
+                },
+              ]}
               header={tableHeader}
-              rows={lazyParams.rows}
-              first={lazyParams.first}
-              totalRecords={totalRecords}
-              onPage={onPage}
-              rowsPerPageOptions={[5, 10, 20, 50]}
-            >
-              <Column header="Command" body={commandNameTemplate} />
-              <Column field="status" header="Status" />
-              <Column
-                field="created_at"
-                dataType="date"
-                header="Created"
-                body={(rowData) => formatDate(rowData.created_at)}
-              />
-            </DataTable>
-          ) : (
-            <p>Loading Requests...</p>
-          )}
-        </div>
-      </div>
-    </Card>
+              remoteFilter={tableLoadData}
+              dataLength={filteredRecords}
+              totalDataLength={totalRecords}
+              reloadTable={reloadRequestsTrigger}
+              defaultOrderBy="created_at"
+              defaultOrder="desc"
+              isLoading={loading}
+            />
+          </Grid>
+        </Grid>
+      </DialogContent>
+    </>
   );
 }
 
