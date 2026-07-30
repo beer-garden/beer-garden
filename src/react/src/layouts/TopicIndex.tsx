@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Box, Grid, Typography } from "@mui/material";
 import { FilterMatchMode } from "primereact/api";
 import { Checkbox } from "primereact/checkbox";
 import { Column } from "primereact/column";
@@ -11,6 +12,8 @@ import { Messages } from "primereact/messages";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
+import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
+import { ColumnField } from "../components/EnhancedTable/models/EnhancedTableModels";
 import SubscriberItem from "../components/SubscriberItem";
 import { Subscriber, Topic } from "../models/brewtils-types";
 import { Config, RequestItem } from "../models/models";
@@ -26,9 +29,8 @@ import {
 } from "../services/topic_service";
 import { PaginatorTemplate } from "../services/util_service";
 
-interface TopicSubscriber {
-  topic?: Topic;
-  subscriber?: Subscriber;
+interface TopicFlatten extends Omit<Topic, "subscribers"> {
+  subscribers?: Subscriber;
 }
 
 function TopicIndex({
@@ -40,38 +42,18 @@ function TopicIndex({
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
   const showSnackbar = useSnackbar();
-  const [topicSubscribers, setTopicSubscribers] = useState<
-    Array<TopicSubscriber>
-  >([]);
+
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const topicsRef = useRef<Topic[]>([]);
+  const [reloadTopicsTrigger, setReloadTopicsTrigger] = useState(0);
+
+  const updateTopics = (values: Topic[]) => {
+    topicsRef.current = values;
+    setTopics(values);
+  };
+
   const [loading, setLoading] = useState(false);
-  const [first, setFirst] = useState<number>(0);
-  const [rows, setRows] = useState<number>(10);
-  const [filters] = useState({
-    "topic.name": {
-      value: null,
-      matchMode: FilterMatchMode.CONTAINS,
-    },
-    "topic.publisher_count": { value: null, matchMode: FilterMatchMode.EQUALS },
-    "subscriber.namespace": {
-      value: null,
-      matchMode: FilterMatchMode.CONTAINS,
-    },
-    "subscriber.garden": { value: null, matchMode: FilterMatchMode.CONTAINS },
-    "subscriber.system": { value: null, matchMode: FilterMatchMode.CONTAINS },
-    "subscriber.version": { value: null, matchMode: FilterMatchMode.CONTAINS },
-    "subscriber.instance": { value: null, matchMode: FilterMatchMode.CONTAINS },
-    "subscriber.command": { value: null, matchMode: FilterMatchMode.CONTAINS },
-    "subscriber.consumer_count": {
-      value: null,
-      matchMode: FilterMatchMode.EQUALS,
-    },
-    "subscriber.subscriber_type": {
-      value: null,
-      matchMode: FilterMatchMode.CONTAINS,
-    },
-  });
-  const [sortField, setSortField] = useState<string | undefined>(undefined);
-  const [sortOrder, setSortOrder] = useState<SortOrder>(undefined);
+
   const [hideGenerated, setHideGenerated] = useState<boolean>(true);
   const generatedRef = useRef<boolean>(true);
 
@@ -95,16 +77,8 @@ function TopicIndex({
     setLoading(true);
 
     GetTopics({ hide_generated: generatedRef.current })
-      .then((topics: Array<Topic>) => {
-        const topicSubscribers: TopicSubscriber[] = topics.flatMap(
-          (topic: Topic) => {
-            const subscribers = topic.subscribers || [];
-            return subscribers.map((subscriber: Subscriber) => {
-              return { topic: topic, subscriber: subscriber };
-            });
-          },
-        );
-        setTopicSubscribers(topicSubscribers);
+      .then((topicValues: Array<Topic>) => {
+        updateTopics(topicValues);
         setLoading(false);
       })
       .catch((error) => {
@@ -116,11 +90,15 @@ function TopicIndex({
           life: 3000,
         });
       });
-  }, [topicSubscribers]);
+  }, [topics]);
 
   useEffect(() => {
     loadTopics();
   }, []);
+
+  useEffect(() => {
+    setReloadTopicsTrigger(reloadTopicsTrigger + 1);
+  }, [topics]);
 
   useEffect(() => {
     if (!dialogVisible) {
@@ -168,10 +146,14 @@ function TopicIndex({
     }
 
     return (
-      <div className="flex items-end ml-2 page-header">
-        <h1 className="flex-1">Topic Management</h1>
+      <Grid container>
+        <Grid size="grow">
+          <Typography variant="h2" component="h1">
+            Topic Management
+          </Typography>
+        </Grid>
 
-        <div>
+        <Grid sx={{ display: "flex", alignItems: "center" }}>
           <AccessButton
             raised
             onClick={handleSync}
@@ -179,8 +161,10 @@ function TopicIndex({
             data-testid="rescan-btn"
             config={config}
             permission="PLUGIN_ADMIN"
-            className="mr-2"
-          />
+            sx={{ m: 2 }}
+          >
+            Sync Topics
+          </AccessButton>
           <AccessButton
             raised
             onClick={openTopicDialog}
@@ -188,59 +172,68 @@ function TopicIndex({
             data-testid="create-btn"
             config={config}
             permission="PLUGIN_ADMIN"
-            className="mr-2"
-          />
-        </div>
-      </div>
+            sx={{ m: 2 }}
+          >
+            Create Topic
+          </AccessButton>
+        </Grid>
+      </Grid>
     );
   }
 
   function TopicTable() {
-    function clearCount(topic: Topic, subscriber?: Subscriber) {
+    function clearCount(clearTopic: Topic, clearSubscriber?: Subscriber) {
       const accept = () => {
-        ResetCount(topic.id, subscriber)
+        ResetCount(clearTopic.id, clearSubscriber)
           .then((updatedTopic: Topic) => {
-            if (subscriber) {
-              setTopicSubscribers((currTopicSubscribers: TopicSubscriber[]) => {
-                const subscribers = updatedTopic.subscribers || [];
-                const updatedSubscriber: Subscriber = subscribers.find(
-                  (s) =>
-                    s.command == subscriber.command &&
-                    s.instance == subscriber.instance &&
-                    s.version == subscriber.version &&
-                    s.system == subscriber.system &&
-                    s.garden == subscriber.garden &&
-                    s.namespace == subscriber.namespace,
+            console.error("Updating Topics");
+            updateTopics(
+              topicsRef.current.map((topicRefValue) => {
+                console.log(
+                  `Compare ${topicRefValue.id} === ${updatedTopic.id}`,
                 );
-                const newTopicSubscribers = currTopicSubscribers.map(
-                  (topicSubscriber: TopicSubscriber) => {
-                    return topicSubscriber.topic?.id === topic.id
-                      ? {
-                          ...topicSubscriber,
-                          topic: updatedTopic,
-                          subscriber: updatedSubscriber,
-                        }
-                      : topicSubscriber;
-                  },
-                );
-                return newTopicSubscribers;
-              });
-            } else {
-              setTopicSubscribers((currTopicSubscribers: TopicSubscriber[]) => {
-                const newTopicSubscribers = currTopicSubscribers.map(
-                  (topicSubscriber: TopicSubscriber) => {
-                    return topicSubscriber.topic?.id === topic.id
-                      ? { ...topicSubscriber, topic: updatedTopic }
-                      : topicSubscriber;
-                  },
-                );
-                return newTopicSubscribers;
-              });
-            }
+                if (topicRefValue.id === updatedTopic.id) {
+                  console.error("Map values");
+                  if (clearSubscriber) {
+                    const updatedTopicValue = {
+                      ...updatedTopic,
+                      subscribers: topicRefValue.subscribers?.map(
+                        (valueSubscriber) => {
+                          if (
+                            valueSubscriber.command ==
+                              clearSubscriber.command &&
+                            valueSubscriber.instance ==
+                              clearSubscriber.instance &&
+                            valueSubscriber.version ==
+                              clearSubscriber.version &&
+                            valueSubscriber.system == clearSubscriber.system &&
+                            valueSubscriber.garden == clearSubscriber.garden &&
+                            valueSubscriber.namespace ==
+                              clearSubscriber.namespace
+                          ) {
+                            return {
+                              ...valueSubscriber,
+                              consumer_count: 0,
+                            } as Subscriber;
+                          }
+                          return valueSubscriber;
+                        },
+                      ),
+                    };
+                    console.log(`Return ${updatedTopicValue.id}`);
+                    return updatedTopicValue;
+                  }
+                  console.log(`Return ${updatedTopic.id}`);
+                  return updatedTopic;
+                }
+                console.log(`Return ${topicRefValue.id}`);
+                return topicRefValue;
+              }),
+            );
             showSnackbar({
               severity: "info",
               summary: "Confirmation",
-              detail: `Cleared ${subscriber ? "consumer" : "publisher"} count for ${topic.name}`,
+              detail: `Cleared ${clearSubscriber ? "consumer" : "publisher"} count for ${clearTopic.name}`,
               life: 3000,
             });
           })
@@ -256,8 +249,8 @@ function TopicIndex({
       const reject = () => {};
       const confirm = () => {
         confirmDialog({
-          message: `Are you sure you want to reset the ${subscriber ? "consumer" : "publisher"} count?`,
-          header: `Confirm Clear ${subscriber ? "Consumer" : "Publisher"} Count ${topic.name}`,
+          message: `Are you sure you want to reset the ${clearSubscriber ? "consumer" : "publisher"} count?`,
+          header: `Confirm Clear ${clearSubscriber ? "Consumer" : "Publisher"} Count ${clearTopic.name}`,
           icon: "pi pi-exclamation-triangle",
           defaultFocus: "accept",
           accept,
@@ -271,17 +264,17 @@ function TopicIndex({
     function removeSubscriber(topic: Topic, subscriber: Subscriber) {
       RemoveSubscriber(topic.id!, subscriber)
         .then(() => {
-          setTopicSubscribers((currentTopicSubscribers: TopicSubscriber[]) => {
-            const newTopicSubs = currentTopicSubscribers.filter(
-              (ts: TopicSubscriber) => {
-                return (
-                  ts.topic?.id !== topic.id ||
-                  (ts.topic?.id == topic.id && ts.subscriber !== subscriber)
+          updateTopics(
+            topicsRef.current.map((value) => {
+              if (value.id === topic.id && value.subscribers) {
+                value.subscribers = value.subscribers.filter(
+                  (valueSubscriber) => valueSubscriber !== subscriber,
                 );
-              },
-            );
-            return newTopicSubs;
-          });
+              }
+              return value;
+            }),
+          );
+
           showSnackbar({
             severity: "info",
             summary: "Removed Subscriber",
@@ -299,22 +292,27 @@ function TopicIndex({
         });
     }
 
-    function publisherCountTemplate(topicSubscriber: TopicSubscriber) {
+    function publisherCountTemplate(topicSubscriber: TopicFlatten) {
       return (
         <div className="flex align-items-center gap-2">
-          <span>{topicSubscriber.topic?.publisher_count}</span>
+          <span>{topicSubscriber.publisher_count}</span>
 
-          {((topicSubscriber.topic !== undefined &&
-            topicSubscriber.topic.publisher_count) ||
+          {((topicSubscriber !== undefined &&
+            topicSubscriber.publisher_count) ||
             0) > 0 && (
             <AccessButton
               basic
               rounded
               raised
               size="small"
-              aria-label={`Clear Publisher Count ${topicSubscriber.topic?.publisher_count} from Topic ${topicSubscriber.topic?.name}`}
+              aria-label={`Clear Publisher Count ${topicSubscriber?.publisher_count} from Topic ${topicSubscriber?.name}`}
               tooltip="Clear Publisher Count"
-              onClick={() => clearCount(topicSubscriber.topic as Topic)}
+              onClick={() =>
+                clearCount({
+                  id: topicSubscriber.id,
+                  name: topicSubscriber.name,
+                } as Topic)
+              }
               config={config}
               permission="PLUGIN_ADMIN"
             >
@@ -333,11 +331,10 @@ function TopicIndex({
 
         DeleteTopic(topic.id)
           .then(() => {
-            setTopicSubscribers((currentTopicSubscribers) => {
-              return currentTopicSubscribers.filter(
-                (ts: TopicSubscriber) => ts.topic?.id !== topic.id,
-              );
-            });
+            updateTopics(
+              topicsRef.current.filter((value) => value.id !== topic.id),
+            );
+
             showSnackbar({
               severity: "info",
               summary: "Confirmation",
@@ -388,50 +385,50 @@ function TopicIndex({
       openTopicDialog();
     }
 
-    function gardenTemplate(topicSubscriber: TopicSubscriber) {
-      return topicSubscriber.subscriber?.garden || "*";
+    function gardenTemplate(topicSubscriber: TopicFlatten) {
+      return topicSubscriber.subscribers?.garden || "*";
     }
 
-    function namespaceTemplate(topicSubscriber: TopicSubscriber) {
-      return topicSubscriber.subscriber?.namespace || "*";
+    function namespaceTemplate(topicSubscriber: TopicFlatten) {
+      return topicSubscriber.subscribers?.namespace || "*";
     }
 
-    function systemTemplate(topicSubscriber: TopicSubscriber) {
-      return topicSubscriber.subscriber?.system || "*";
+    function systemTemplate(topicSubscriber: TopicFlatten) {
+      return topicSubscriber.subscribers?.system || "*";
     }
 
-    function versionTemplate(topicSubscriber: TopicSubscriber) {
-      return topicSubscriber.subscriber?.version || "*";
+    function versionTemplate(topicSubscriber: TopicFlatten) {
+      return topicSubscriber.subscribers?.version || "*";
     }
 
-    function instanceTemplate(topicSubscriber: TopicSubscriber) {
-      return topicSubscriber.subscriber?.instance || "*";
+    function instanceTemplate(topicSubscriber: TopicFlatten) {
+      return topicSubscriber.subscribers?.instance || "*";
     }
 
-    function commandTemplate(topicSubscriber: TopicSubscriber) {
-      return topicSubscriber.subscriber?.command || "*";
+    function commandTemplate(topicSubscriber: TopicFlatten) {
+      return topicSubscriber.subscribers?.command || "*";
     }
 
-    function consumerCountTemplate(topicSubscriber: TopicSubscriber) {
+    function consumerCountTemplate(topicSubscriber: TopicFlatten) {
       return (
         <div className="flex align-items-center gap-2">
-          <span>{topicSubscriber.subscriber?.consumer_count}</span>
+          <span>{topicSubscriber.subscribers?.consumer_count}</span>
 
-          {topicSubscriber.subscriber != undefined &&
-            topicSubscriber.subscriber.consumer_count != undefined &&
-            (topicSubscriber.subscriber.consumer_count || 0) > 0 && (
+          {topicSubscriber.subscribers != undefined &&
+            topicSubscriber.subscribers.consumer_count != undefined &&
+            (topicSubscriber.subscribers.consumer_count || 0) > 0 && (
               <AccessButton
                 basic
                 rounded
                 raised
                 size="small"
                 className="ml-2"
-                aria-label={`Clear Count of ${topicSubscriber.subscriber.consumer_count} for Topic ${topicSubscriber?.topic?.name} Subscriber ${topicSubscriber.subscriber.garden ?? "*"} ${topicSubscriber.subscriber.namespace ?? "*"} ${topicSubscriber.subscriber.system ?? "*"} ${topicSubscriber.subscriber.version ?? "*"} ${topicSubscriber.subscriber.instance ?? "*"} ${topicSubscriber.subscriber.command ?? "*"}`}
+                aria-label={`Clear Count of ${topicSubscriber.subscribers.consumer_count} for Topic ${topicSubscriber?.name} Subscriber ${topicSubscriber.subscribers.garden ?? "*"} ${topicSubscriber.subscribers.namespace ?? "*"} ${topicSubscriber.subscribers.system ?? "*"} ${topicSubscriber.subscribers.version ?? "*"} ${topicSubscriber.subscribers.instance ?? "*"} ${topicSubscriber.subscribers.command ?? "*"}`}
                 tooltip="Clear count"
                 onClick={() =>
                   clearCount(
-                    topicSubscriber.topic as Topic,
-                    topicSubscriber.subscriber as Subscriber,
+                    { id: topicSubscriber.id } as Topic,
+                    topicSubscriber.subscribers as Subscriber,
                   )
                 }
                 config={config}
@@ -444,26 +441,29 @@ function TopicIndex({
       );
     }
 
-    function subscriberTypeTemplate(topicSubscriber: TopicSubscriber) {
+    function subscriberTypeTemplate(topicSubscriber: TopicFlatten) {
       return (
         <div className="flex align-items-center gap-2">
-          <span>{topicSubscriber.subscriber?.subscriber_type}</span>
+          <span>{topicSubscriber.subscribers?.subscriber_type}</span>
 
-          {topicSubscriber.subscriber !== undefined &&
-            topicSubscriber.subscriber.subscriber_type == "DYNAMIC" && (
+          {topicSubscriber.subscribers !== undefined &&
+            topicSubscriber.subscribers.subscriber_type == "DYNAMIC" && (
               <AccessButton
                 basic
                 rounded
                 raised
                 onClick={() =>
                   removeSubscriber(
-                    topicSubscriber.topic!,
-                    topicSubscriber.subscriber!,
+                    {
+                      id: topicSubscriber.id,
+                      name: topicSubscriber.name,
+                    } as Topic,
+                    topicSubscriber.subscribers!,
                   )
                 }
                 size="small"
                 className="ml-2"
-                aria-label={`Remove from Topic ${topicSubscriber?.topic?.name}, Subscriber ${topicSubscriber.subscriber.garden ?? "*"} ${topicSubscriber.subscriber.namespace ?? "*"} ${topicSubscriber.subscriber.system ?? "*"} ${topicSubscriber.subscriber.version ?? "*"} ${topicSubscriber.subscriber.instance ?? "*"} ${topicSubscriber.subscriber.command ?? "*"}`}
+                aria-label={`Remove from Topic ${topicSubscriber?.name}, Subscriber ${topicSubscriber.subscribers.garden ?? "*"} ${topicSubscriber.subscribers.namespace ?? "*"} ${topicSubscriber.subscribers.system ?? "*"} ${topicSubscriber.subscribers.version ?? "*"} ${topicSubscriber.subscribers.instance ?? "*"} ${topicSubscriber.subscribers.command ?? "*"}`}
                 tooltip="Remove Subscriber"
                 config={config}
                 permission="PLUGIN_ADMIN"
@@ -475,60 +475,68 @@ function TopicIndex({
       );
     }
 
-    function topicButtonTemplate(topicSubscriber: TopicSubscriber) {
-      const has_only_dynamic_subscribers =
-        topicSubscriber.topic?.subscribers?.every(
+    function topicButtonTemplate(topic: TopicFlatten) {
+      const has_only_dynamic_subscribers = topicsRef.current
+        .find((value: Topic) => value.id === topic.id)
+        ?.subscribers?.every(
           (subscriber) => subscriber.subscriber_type == "DYNAMIC",
         );
 
       return (
-        <div className="flex">
-          <AccessButton
-            basic
-            rounded
-            raised
-            onClick={() =>
-              addRequestItem({
-                topic: topicSubscriber.topic,
-                type: "VIEW_TOPIC",
-              })
-            }
-            tooltip="View Topic"
-            className="mr-2"
-            aria-label={`ViewTopic ${topicSubscriber.topic?.name}`}
-            config={config}
-            permission="PLUGIN_ADMIN"
-          >
-            <FontAwesomeIcon icon="eye" />
-          </AccessButton>
-          <AccessButton
-            basic
-            rounded
-            raised
-            onClick={() => addSubscriber(topicSubscriber.topic!)}
-            aria-label={`Add Subscriber to Topic ${topicSubscriber.topic?.name}`}
-            tooltip="Add Subscriber"
-            className="mr-2"
-            config={config}
-            permission="PLUGIN_ADMIN"
-          >
-            <FontAwesomeIcon icon="square-plus" />
-          </AccessButton>
-          {has_only_dynamic_subscribers && (
+        <Grid container>
+          <Grid size="grow">
+            <Typography sx={{ wordBreak: "break-word" }}>
+              {topic.name}
+            </Typography>
+          </Grid>
+          <Grid>
             <AccessButton
               basic
               rounded
               raised
-              onClick={() => deleteTopic(topicSubscriber.topic!)}
-              aria-label={`Delete Topic ${topicSubscriber.topic?.name}`}
-              tooltip="Delete Topic"
+              onClick={() =>
+                addRequestItem({
+                  topic: { id: topic.id } as Topic,
+                  type: "VIEW_TOPIC",
+                })
+              }
+              tooltip="View Topic"
+              className="mr-2"
+              aria-label={`ViewTopic ${topic?.name}`}
               config={config}
               permission="PLUGIN_ADMIN"
             >
-              <FontAwesomeIcon icon="trash" />
+              <FontAwesomeIcon icon="eye" />
             </AccessButton>
-          )}
-        </div>
+            <AccessButton
+              basic
+              rounded
+              raised
+              onClick={() => addSubscriber({ id: topic.id } as Topic)}
+              aria-label={`Add Subscriber to Topic ${topic?.name}`}
+              tooltip="Add Subscriber"
+              className="mr-2"
+              config={config}
+              permission="PLUGIN_ADMIN"
+            >
+              <FontAwesomeIcon icon="square-plus" />
+            </AccessButton>
+            {has_only_dynamic_subscribers && (
+              <AccessButton
+                basic
+                rounded
+                raised
+                onClick={() => deleteTopic({ id: topic.id } as Topic)}
+                aria-label={`Delete Topic ${topic?.name}`}
+                tooltip="Delete Topic"
+                config={config}
+                permission="PLUGIN_ADMIN"
+              >
+                <FontAwesomeIcon icon="trash" />
+              </AccessButton>
+            )}
+          </Grid>
+        </Grid>
       );
     }
 
@@ -559,144 +567,109 @@ function TopicIndex({
       </div>
     );
 
-    // Custom filter template
-    const filterElement = (props: any) => {
-      return (
-        <InputText
-          value={props.value}
-          onChange={(e) => props.filterApplyCallback(e.target.value)}
-          pt={{
-            root: {
-              autoComplete: "off",
-              "aria-label": `Input Filter for ${props?.field}`,
-              type: "text",
-            },
-          }}
-        />
-      );
-    };
+    const tableColumns = [
+      {
+        id: "topic",
+        label: "Topic",
+        field: "name",
+        isString: true,
+        template: topicButtonTemplate,
+      },
+      {
+        id: "publisher_count",
+        label: "Publisher Count",
+        field: "publisher_count",
+        sortable: true,
+        filterable: true,
+        isNumeric: true,
+        template: publisherCountTemplate,
+      },
+      {
+        id: "subscribers.garden",
+        label: "Garden",
+        field: "subscribers.garden",
+        sortable: true,
+        filterable: true,
+        isString: true,
+        template: gardenTemplate,
+      },
+      {
+        id: "subscribers.namespace",
+        label: "Namespace",
+        field: "subscribers.namespace",
+        sortable: true,
+        filterable: true,
+        isString: true,
+        template: namespaceTemplate,
+      },
+      {
+        id: "subscribers.system",
+        label: "System",
+        field: "subscribers.system",
+        sortable: true,
+        filterable: true,
+        isString: true,
+        template: systemTemplate,
+      },
+      {
+        id: "subscribers.version",
+        label: "Version",
+        field: "subscribers.version",
+        sortable: true,
+        filterable: true,
+        isString: true,
+        template: versionTemplate,
+      },
+      {
+        id: "subscribers.instance",
+        label: "Instance",
+        field: "subscribers.instance",
+        sortable: true,
+        filterable: true,
+        isString: true,
+        template: instanceTemplate,
+      },
+      {
+        id: "subscribers.command",
+        label: "Command",
+        field: "subscribers.command",
+        sortable: true,
+        filterable: true,
+        isString: true,
+        template: commandTemplate,
+      },
+      {
+        id: "subscribers.consumer_count",
+        label: "Consumer Count",
+        field: "subscribers.consumer_count",
+        sortable: true,
+        filterable: true,
+        isNumeric: true,
+        template: consumerCountTemplate,
+      },
+      {
+        id: "subscribers.subscriber_type",
+        label: "Subscriber Type",
+        field: "subscribers.subscriber_type",
+        sortable: true,
+        filterable: true,
+        isString: true,
+        template: subscriberTypeTemplate,
+      },
+    ] as ColumnField[];
 
     return (
       <>
-        <DataTable
-          data-testid="topic-datatable"
-          value={topicSubscribers}
-          loading={loading}
+        <EnhancedTable
+          data={topics}
+          columns={tableColumns}
           header={header}
-          paginator
-          rows={rows}
-          first={first}
-          filterDisplay="row"
-          filters={filters}
-          rowGroupMode="rowspan"
-          groupRowsBy="topic.name"
-          sortField={sortField}
-          sortOrder={sortOrder}
-          rowsPerPageOptions={[10, 25, 50]}
-          paginatorTemplate={PaginatorTemplate}
-          onPage={(e: any) => {
-            setFirst(e.first);
-            setRows(e.rows);
-          }}
-          onSort={(e: any) => {
-            setSortField(e.sortField);
-            setSortOrder(e.sortOrder);
-            setFirst(0);
-          }}
-        >
-          <Column
-            field="topic.name"
-            sortable
-            filter
-            header="Topic"
-            style={{ maxWidth: "400px", overflowWrap: "break-word" }}
-            showFilterMenu={false}
-            filterElement={filterElement}
-          />
-          <Column field="topic.name" header="" body={topicButtonTemplate} />
-          <Column
-            field="topic.publisher_count"
-            sortable
-            filter
-            header="Publisher Count"
-            body={publisherCountTemplate}
-            showFilterMenu={false}
-            filterElement={filterElement}
-          />
-          <Column
-            field="subscriber.garden"
-            sortable
-            filter
-            header="Garden"
-            body={gardenTemplate}
-            showFilterMenu={false}
-            filterElement={filterElement}
-          />
-          <Column
-            field="subscriber.namespace"
-            sortable
-            filter
-            header="Namespace"
-            body={namespaceTemplate}
-            showFilterMenu={false}
-            filterElement={filterElement}
-          />
-          <Column
-            field="subscriber.system"
-            sortable
-            filter
-            header="System"
-            body={systemTemplate}
-            showFilterMenu={false}
-            filterElement={filterElement}
-          />
-          <Column
-            field="subscriber.version"
-            sortable
-            filter
-            header="Version"
-            body={versionTemplate}
-            showFilterMenu={false}
-            filterElement={filterElement}
-          />
-          <Column
-            field="subscriber.instance"
-            sortable
-            filter
-            header="Instance"
-            body={instanceTemplate}
-            showFilterMenu={false}
-            filterElement={filterElement}
-          />
-          <Column
-            field="subscriber.command"
-            sortable
-            filter
-            header="Command"
-            body={commandTemplate}
-            style={{ maxWidth: "300px", overflowWrap: "break-word" }}
-            showFilterMenu={false}
-            filterElement={filterElement}
-          />
-          <Column
-            field="subscriber.consumer_count"
-            sortable
-            filter
-            header="Consumer Count"
-            body={consumerCountTemplate}
-            showFilterMenu={false}
-            filterElement={filterElement}
-          />
-          <Column
-            field="subscriber.subscriber_type"
-            sortable
-            filter
-            header="Subscriber Type"
-            body={subscriberTypeTemplate}
-            showFilterMenu={false}
-            filterElement={filterElement}
-          />
-        </DataTable>
+          flattenBy="subscribers"
+          groupBy="name"
+          defaultOrderBy="name"
+          defaultOrder="desc"
+          isLoading={loading}
+        />
       </>
     );
   }
@@ -740,19 +713,7 @@ function TopicIndex({
       } else {
         CreateTopic(topicObj)
           .then((createdTopic: Topic) => {
-            const subscribers = createdTopic.subscribers;
-            const newTopicSubscribers = subscribers?.map(
-              (subscriber: Subscriber) => {
-                return {
-                  topic: createdTopic,
-                  subscriber: subscriber,
-                } as TopicSubscriber;
-              },
-            );
-            setTopicSubscribers([
-              ...topicSubscribers,
-              ...(newTopicSubscribers || []),
-            ]);
+            updateTopics([...topicsRef.current, createdTopic]);
             topicId.current = undefined;
             setDialogVisible(false);
             showSnackbar({
