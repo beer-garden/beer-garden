@@ -1,8 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Box, Chip, Grid, Skeleton, Tooltip } from "@mui/material";
+import { Alert, Box, Chip, Grid, Skeleton, Tooltip } from "@mui/material";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
-import { Message } from "primereact/message";
 import { RefObject, useEffect, useState } from "react";
 
 import { Connection, Garden, Runner, System } from "../models/brewtils-types";
@@ -23,7 +22,11 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { GenerateStatusCounts, GetSeverity } from "../services/util_service";
+import {
+  FAIcon,
+  GenerateStatusCounts,
+  GetSeverity,
+} from "../services/util_service";
 import AccessButton from "./AccessButton";
 
 function GardenSummary({
@@ -686,22 +689,23 @@ function GardenSummary({
       {selectedGarden?.name ? (
         <div>
           {invalidRouting && (
-            <Message
-              className="mx-2 mb-2"
-              color="warning"
-              text="Warning - Upstream routing error. Requests or Syncs might be interrupted or missed. Please contact your Garden Admin"
-              pt={{
-                icon: {
-                  role: "img",
-                  "aria-label": "Close Alert Message",
-                  style: { color: "var(--warning-color)" },
-                },
+            <Alert
+              sx={{
+                mx: 1,
+                mb: 1,
               }}
-              style={{
-                backgroundColor: "var(--warning-background-color)",
-                color: "var(--warning-color)",
-              }}
-            />
+              severity="warning"
+              icon={
+                <FAIcon
+                  icon="triangle-exclamation"
+                  role="img"
+                  aria-label="Warning alert icon"
+                />
+              }
+            >
+              Warning - Upstream routing error. Requests or Syncs might be
+              interrupted or missed. Please contact your Garden Admin
+            </Alert>
           )}
           <Grid container spacing={1}>
             <Grid size={3}>
