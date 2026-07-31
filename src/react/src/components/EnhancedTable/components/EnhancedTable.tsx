@@ -397,7 +397,7 @@ const EnhancedTable = ({
           Object.hasOwn(record, flattenBy) &&
           Array.isArray(record?.[flattenBy])
         ) {
-          for (const flatten of record?.[flattenBy]) {
+          for (const flatten of record[flattenBy]) {
             flattenRecords.push({ ...record, [flattenBy]: flatten });
           }
         } else {

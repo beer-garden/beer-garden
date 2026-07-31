@@ -1,17 +1,20 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Box, Grid, Typography } from "@mui/material";
-import { FilterMatchMode } from "primereact/api";
-import { Checkbox } from "primereact/checkbox";
-import { Column } from "primereact/column";
-import { confirmDialog } from "primereact/confirmdialog";
-import { DataTable, SortOrder } from "primereact/datatable";
-import { Dialog } from "primereact/dialog";
-import { Divider } from "primereact/divider";
-import { InputText } from "primereact/inputtext";
+import { Alert, Box, Checkbox, DialogActions, DialogContent, Grid, TextField, Typography } from "@mui/material";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import Divider from '@mui/material/Divider';
 import { Messages } from "primereact/messages";
-import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+  ChangeEvent,
+  JSX,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 import AccessButton from "../components/AccessButton";
+import ConfirmDialog from "../components/ConfirmDialog";
 import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import { ColumnField } from "../components/EnhancedTable/models/EnhancedTableModels";
 import SubscriberItem from "../components/SubscriberItem";
@@ -27,7 +30,6 @@ import {
   ResetCount,
   SyncTopics,
 } from "../services/topic_service";
-import { PaginatorTemplate } from "../services/util_service";
 
 interface TopicFlatten extends Omit<Topic, "subscribers"> {
   subscribers?: Subscriber;
@@ -46,6 +48,10 @@ function TopicIndex({
   const [topics, setTopics] = useState<Topic[]>([]);
   const topicsRef = useRef<Topic[]>([]);
   const [reloadTopicsTrigger, setReloadTopicsTrigger] = useState(0);
+
+  const [confirmDialogElement, setConfirmDialogElement] = useState<
+    JSX.Element | undefined
+  >(undefined);
 
   const updateTopics = (values: Topic[]) => {
     topicsRef.current = values;
@@ -72,7 +78,8 @@ function TopicIndex({
     } as Subscriber,
   ]);
 
-  const msgs = useRef<Messages>(null);
+  const [alertItem, setAlertItem] = useState<string|undefined>(undefined);
+
   const loadTopics = useCallback(() => {
     setLoading(true);
 
@@ -186,16 +193,11 @@ function TopicIndex({
       const accept = () => {
         ResetCount(clearTopic.id, clearSubscriber)
           .then((updatedTopic: Topic) => {
-            console.error("Updating Topics");
             updateTopics(
               topicsRef.current.map((topicRefValue) => {
-                console.log(
-                  `Compare ${topicRefValue.id} === ${updatedTopic.id}`,
-                );
                 if (topicRefValue.id === updatedTopic.id) {
-                  console.error("Map values");
                   if (clearSubscriber) {
-                    const updatedTopicValue = {
+                    return {
                       ...updatedTopic,
                       subscribers: topicRefValue.subscribers?.map(
                         (valueSubscriber) => {
@@ -220,13 +222,9 @@ function TopicIndex({
                         },
                       ),
                     };
-                    console.log(`Return ${updatedTopicValue.id}`);
-                    return updatedTopicValue;
                   }
-                  console.log(`Return ${updatedTopic.id}`);
                   return updatedTopic;
                 }
-                console.log(`Return ${topicRefValue.id}`);
                 return topicRefValue;
               }),
             );
@@ -246,19 +244,19 @@ function TopicIndex({
             });
           });
       };
-      const reject = () => {};
-      const confirm = () => {
-        confirmDialog({
-          message: `Are you sure you want to reset the ${clearSubscriber ? "consumer" : "publisher"} count?`,
-          header: `Confirm Clear ${clearSubscriber ? "Consumer" : "Publisher"} Count ${clearTopic.name}`,
-          icon: "pi pi-exclamation-triangle",
-          defaultFocus: "accept",
-          accept,
-          reject,
-        });
-      };
 
-      confirm();
+      setConfirmDialogElement(
+        <ConfirmDialog
+          open={true}
+          setOpen={(_: boolean) => {
+            setConfirmDialogElement(undefined);
+          }}
+          accept={accept}
+          reject={() => {}}
+          header={`Confirm Clear ${clearSubscriber ? "Consumer" : "Publisher"} Count ${clearTopic.name}`}
+          message={`Are you sure you want to reset the ${clearSubscriber ? "consumer" : "publisher"} count?`}
+        />,
+      );
     }
 
     function removeSubscriber(topic: Topic, subscriber: Subscriber) {
@@ -294,8 +292,8 @@ function TopicIndex({
 
     function publisherCountTemplate(topicSubscriber: TopicFlatten) {
       return (
-        <div className="flex align-items-center gap-2">
-          <span>{topicSubscriber.publisher_count}</span>
+        <Box sx={{display:"flex"}}>
+          <Typography sx={{mr:2}}>{topicSubscriber.publisher_count}</Typography>
 
           {((topicSubscriber !== undefined &&
             topicSubscriber.publisher_count) ||
@@ -319,7 +317,7 @@ function TopicIndex({
               <FontAwesomeIcon icon="trash-can" />
             </AccessButton>
           )}
-        </div>
+        </Box>
       );
     }
 
@@ -351,20 +349,21 @@ function TopicIndex({
             });
           });
       };
-      const reject = () => {};
-      const confirm = () => {
-        confirmDialog({
-          message:
-            'Are you sure you want to delete Topic "' + topic.name + '"?',
-          header: `Confirm Delete ${topic.name}`,
-          icon: "pi pi-exclamation-triangle",
-          defaultFocus: "accept",
-          accept,
-          reject,
-        });
-      };
 
-      confirm();
+      setConfirmDialogElement(
+        <ConfirmDialog
+          open={true}
+          setOpen={(_: boolean) => {
+            setConfirmDialogElement(undefined);
+          }}
+          accept={accept}
+          reject={() => {}}
+          header={`Confirm Delete ${topic.name}`}
+          message={
+            'Are you sure you want to delete Topic "' + topic.name + '"?'
+          }
+        />,
+      );
     }
 
     function addSubscriber(topic: Topic) {
@@ -411,8 +410,8 @@ function TopicIndex({
 
     function consumerCountTemplate(topicSubscriber: TopicFlatten) {
       return (
-        <div className="flex align-items-center gap-2">
-          <span>{topicSubscriber.subscribers?.consumer_count}</span>
+        <Box sx={{display:"flex"}}>
+          <Typography sx={{mr:2}}>{topicSubscriber.subscribers?.consumer_count}</Typography>
 
           {topicSubscriber.subscribers != undefined &&
             topicSubscriber.subscribers.consumer_count != undefined &&
@@ -422,12 +421,15 @@ function TopicIndex({
                 rounded
                 raised
                 size="small"
-                className="ml-2"
+
                 aria-label={`Clear Count of ${topicSubscriber.subscribers.consumer_count} for Topic ${topicSubscriber?.name} Subscriber ${topicSubscriber.subscribers.garden ?? "*"} ${topicSubscriber.subscribers.namespace ?? "*"} ${topicSubscriber.subscribers.system ?? "*"} ${topicSubscriber.subscribers.version ?? "*"} ${topicSubscriber.subscribers.instance ?? "*"} ${topicSubscriber.subscribers.command ?? "*"}`}
                 tooltip="Clear count"
                 onClick={() =>
                   clearCount(
-                    { id: topicSubscriber.id } as Topic,
+                    {
+                      id: topicSubscriber.id,
+                      name: topicSubscriber.name,
+                    } as Topic,
                     topicSubscriber.subscribers as Subscriber,
                   )
                 }
@@ -437,14 +439,14 @@ function TopicIndex({
                 <FontAwesomeIcon icon="trash-can" />
               </AccessButton>
             )}
-        </div>
+        </Box>
       );
     }
 
     function subscriberTypeTemplate(topicSubscriber: TopicFlatten) {
       return (
-        <div className="flex align-items-center gap-2">
-          <span>{topicSubscriber.subscribers?.subscriber_type}</span>
+        <Box sx={{display:"flex"}}>
+          <Typography sx={{mr:2}}>{topicSubscriber.subscribers?.subscriber_type}</Typography>
 
           {topicSubscriber.subscribers !== undefined &&
             topicSubscriber.subscribers.subscriber_type == "DYNAMIC" && (
@@ -462,7 +464,6 @@ function TopicIndex({
                   )
                 }
                 size="small"
-                className="ml-2"
                 aria-label={`Remove from Topic ${topicSubscriber?.name}, Subscriber ${topicSubscriber.subscribers.garden ?? "*"} ${topicSubscriber.subscribers.namespace ?? "*"} ${topicSubscriber.subscribers.system ?? "*"} ${topicSubscriber.subscribers.version ?? "*"} ${topicSubscriber.subscribers.instance ?? "*"} ${topicSubscriber.subscribers.command ?? "*"}`}
                 tooltip="Remove Subscriber"
                 config={config}
@@ -471,7 +472,7 @@ function TopicIndex({
                 <FontAwesomeIcon icon="xmark-square" />
               </AccessButton>
             )}
-        </div>
+        </Box>
       );
     }
 
@@ -501,7 +502,7 @@ function TopicIndex({
                 })
               }
               tooltip="View Topic"
-              className="mr-2"
+              sx={{mr:2}}
               aria-label={`ViewTopic ${topic?.name}`}
               config={config}
               permission="PLUGIN_ADMIN"
@@ -515,7 +516,7 @@ function TopicIndex({
               onClick={() => addSubscriber({ id: topic.id } as Topic)}
               aria-label={`Add Subscriber to Topic ${topic?.name}`}
               tooltip="Add Subscriber"
-              className="mr-2"
+              sx={{mr:2}}
               config={config}
               permission="PLUGIN_ADMIN"
             >
@@ -526,7 +527,9 @@ function TopicIndex({
                 basic
                 rounded
                 raised
-                onClick={() => deleteTopic({ id: topic.id } as Topic)}
+                onClick={() =>
+                  deleteTopic({ id: topic.id, name: topic.name } as Topic)
+                }
                 aria-label={`Delete Topic ${topic?.name}`}
                 tooltip="Delete Topic"
                 config={config}
@@ -541,30 +544,28 @@ function TopicIndex({
     }
 
     const handleChange = (event: any) => {
-      setHideGenerated(event.checked);
-      generatedRef.current = event.checked;
+      setHideGenerated(event.target.checked);
+      generatedRef.current = event.target.checked;
       loadTopics();
     };
 
     const header = (
-      <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-        <span className="text-xl text-900 font-bold">Topics</span>
-        <div className="flex-1 text-center">
+      <Grid container>
+        <Grid size="grow" sx={{ display: "flex", alignItems: "center", m: 2 }}>
+          <Typography variant="h3" component="h2">
+            Topics
+          </Typography>
+        </Grid>
+        <Grid sx={{ display: "flex", alignItems: "center", m: 2 }}>
+          
           <Checkbox
-            onChange={handleChange}
+            id={`hide-generated`}
             checked={hideGenerated}
-            className="mr-2"
-            pt={{
-              icon: {
-                role: "img",
-                "aria-label": "Image of toggle state for Hide Generated Topics",
-              },
-              input: { "aria-label": "Toggle state for Hide Generated Topics" },
-            }}
+            onChange={handleChange}
           />
-          Hide Generated
-        </div>
-      </div>
+          <Typography variant="button">Hide Generated</Typography>
+        </Grid>
+      </Grid>
     );
 
     const tableColumns = [
@@ -660,6 +661,7 @@ function TopicIndex({
 
     return (
       <>
+        {confirmDialogElement !== undefined && confirmDialogElement}
         <EnhancedTable
           data={topics}
           columns={tableColumns}
@@ -681,6 +683,8 @@ function TopicIndex({
 
   function handleDialogSubmit() {
     if (topicName) {
+      setAlertItem(undefined);
+
       const topicObj = {
         name: topicName,
         subscribers: subscriberList,
@@ -737,11 +741,7 @@ function TopicIndex({
       if (!topicName) {
         reqs.push("Name");
       }
-      msgs.current?.show({
-        severity: "error",
-        detail: `Missing required field(s): ${reqs.join(", ")}`,
-        sticky: true,
-      });
+      setAlertItem(`Missing required field(s): ${reqs.join(", ")}`);
     }
   }
 
@@ -749,46 +749,35 @@ function TopicIndex({
     <div>
       <Dialog
         data-testid="topic-dialog"
-        appendTo={"self"}
-        header={isEdit.current ? "Add Subscriber" : "Create Topic"}
-        footer={
-          <>
-            <AccessButton onClick={handleDialogClose} label="Close" />
-            <AccessButton
-              data-testid={`submit-btn-dialog`}
-              severity="danger"
-              onClick={handleDialogSubmit}
-              label="Submit"
-            />
-          </>
-        }
-        visible={dialogVisible}
-        onHide={() => {
+        open={dialogVisible}
+        onClose={() => {
           handleDialogClose();
         }}
       >
-        <Messages ref={msgs} />
+        <DialogTitle>
+          {isEdit.current ? "Add Subscriber" : "Create Topic"}
+        </DialogTitle>
+        <DialogContent>
+        {alertItem && (
+          <Alert severity="error">
+            {alertItem}
+          </Alert>
+        )}
         <div className="flex flex-column gap-2">
           <label htmlFor="topicName" className="font-bold">
             Name
           </label>
-          <InputText
-            required
-            id="topicName"
-            type="text"
-            className="mb-2"
-            value={topicName}
+          <TextField
+                        
+                        variant="outlined"
+                        placeholder="Topic Name"
+          value={topicName}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setTopicName(e.target.value)
             }
             disabled={isEdit.current}
-            pt={{
-              root: {
-                "aria-label": undefined,
-                required: undefined,
-              },
-            }}
-          />
+            required
+                      />
         </div>
         <Divider />
         <SubscriberItem
@@ -796,6 +785,18 @@ function TopicIndex({
           setSubscriberList={setSubscriberList}
           isEdit={isEdit.current}
         />
+        </DialogContent>
+        <DialogActions>
+            <>
+            <AccessButton onClick={handleDialogClose} label="Close" >Close</AccessButton>
+            <AccessButton
+              data-testid={`submit-btn-dialog`}
+              color="error"
+              onClick={handleDialogSubmit}
+              label="Submit"
+            >Submit</AccessButton>
+          </>
+        </DialogActions>
       </Dialog>
       <TopicHeader />
       <TopicTable />
