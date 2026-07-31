@@ -1,3 +1,4 @@
+import { Skeleton } from "@mui/material";
 import { useTreeItemModel } from "@mui/x-tree-view/hooks";
 import { TreeViewItemId } from "@mui/x-tree-view/models";
 import { RichTreeView, RichTreeViewProps } from "@mui/x-tree-view/RichTreeView";
@@ -33,12 +34,14 @@ function TreeMenu<T extends ExtendedTreeItemProps, M extends boolean = false>({
   changeSelected,
   disableToggle,
   expandAll,
+  isLoading,
   ...richTreeProps
 }: {
   itemTemplate?: (node: ExtendedTreeItemProps) => ReactElement;
   changeSelected: (id: string) => void;
   disableToggle?: boolean;
   expandAll?: boolean;
+  isLoading?: boolean;
 } & RichTreeViewProps<T, M>) {
   const getAllItemsWithChildrenItemIds = () => {
     const itemIds: TreeViewItemId[] = [];
@@ -116,13 +119,25 @@ function TreeMenu<T extends ExtendedTreeItemProps, M extends boolean = false>({
   });
 
   return (
-    <RichTreeView
-      slots={{ item: CustomTreeItem }}
-      onItemSelectionToggle={handleItemSelectionToggle}
-      expandedItems={expandedItems}
-      onExpandedItemsChange={handleExpandedItemsChange}
-      {...richTreeProps}
-    />
+    <>
+      {isLoading === true && (
+        <Skeleton
+          variant="rectangular"
+          width={210}
+          height={"100%"}
+          sx={richTreeProps?.sx}
+        />
+      )}
+      {(isLoading === undefined || isLoading === false) && (
+        <RichTreeView
+          slots={{ item: CustomTreeItem }}
+          onItemSelectionToggle={handleItemSelectionToggle}
+          expandedItems={expandedItems}
+          onExpandedItemsChange={handleExpandedItemsChange}
+          {...richTreeProps}
+        />
+      )}
+    </>
   );
 }
 

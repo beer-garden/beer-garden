@@ -1,4 +1,3 @@
-import { Skeleton } from "@mui/material";
 import { Card } from "primereact/card";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -262,21 +261,11 @@ function RequestView({
         <div>
           <div className="flex">
             <div className="mr-2" style={{ width: "auto" }}>
-              {rootRequest && (
-                <RequestTreeMenu
-                  rootRequest={rootRequest}
-                  request={request}
-                  setRequest={setRequest}
-                />
-              )}
-              {rootRequest === undefined && (
-                <Skeleton
-                  variant="rectangular"
-                  width={210}
-                  height={"100%"}
-                  sx={{ m: 2 }}
-                />
-              )}
+              <RequestTreeMenu
+                rootRequest={rootRequest}
+                request={request}
+                setRequest={setRequest}
+              />
             </div>
 
             <Card

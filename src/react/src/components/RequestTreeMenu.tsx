@@ -102,9 +102,12 @@ function RequestTreeMenu({
     rootRequest !== undefined ? parseRequest(rootRequest) : {},
   );
 
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
     if (rootRequest && rootRequest !== undefined) {
       setNode(parseRequest(rootRequest));
+      setIsLoading(false);
     }
   }, [rootRequest]);
   const findRequest = (requestId: string, request?: Request) => {
@@ -234,6 +237,7 @@ function RequestTreeMenu({
         changeSelected={(id: string) => findRequest(id, rootRequest)}
         selectedItems={request && request.id ? request.id : undefined}
         sx={{ mt: 2 }}
+        isLoading={isLoading}
       />
     )
   );
