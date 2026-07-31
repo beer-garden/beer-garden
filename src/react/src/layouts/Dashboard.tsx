@@ -1,15 +1,17 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Box } from "@mui/material";
+import { grey } from "@mui/material/colors";
 import { Badge } from "primereact/badge";
 import { MultiSelect } from "primereact/multiselect";
 import { Skeleton } from "primereact/skeleton";
 import { Tag } from "primereact/tag";
 import { Tooltip } from "primereact/tooltip";
-import { Tree } from "primereact/tree";
 import { RefObject, useEffect, useRef, useState } from "react";
 
 import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
+import TreeMenu from "../components/TreeMenu";
 import UnassociatedRunnerCard from "../components/UnassociatedRunnerCard";
 import { Garden, Runner, System } from "../models/brewtils-types";
 import { Config } from "../models/models";
@@ -268,6 +270,7 @@ function GardenDashboard({
     const receiving = receivingStatus(garden);
     const publishing = publishingStatus(garden);
     return {
+      id: garden.id,
       key: garden.id,
       label: garden.name,
       statusCounts: generateStatusCounts(garden, systems),
@@ -567,18 +570,16 @@ function GardenDashboard({
     };
   }, []);
 
-  const [selectedKey, setSelectedKey] = useState<any | null>("");
-
-  const gardenTreeNode = (node: any, options: any) => {
+  const gardenTreeNode = (node: any) => {
     return (
-      <div className={options.className}>
+      <div>
         <div>
           {node.gardenIcon}
-          <span className="ml-1">{node.label}</span>
+          <Box component="span" sx={{ ml: 1 }}>
+            {node.label}
+          </Box>
         </div>
-        <div style={{ flexWrap: "wrap" }} className="flex ml-4">
-          {node.statusCounts}
-        </div>
+        <div>{node.statusCounts}</div>
       </div>
     );
   };
@@ -591,21 +592,24 @@ function GardenDashboard({
           style={{ width: "16%", minWidth: "250px" }}
           className="surface-border p-3"
         >
-          <Tree
+          <TreeMenu
+            sx={{
+              border: "1px solid",
+              borderColor: grey[300],
+              borderRadius: 2,
+              p: 2,
+            }}
             {...GenerateTourProps(gardenTreeTourStep)}
-            loading={loading}
-            value={gardenMenu}
-            emptyMessage={"No gardens found"}
-            nodeTemplate={gardenTreeNode}
-            selectionMode="single"
-            selectionKeys={selectedKey}
-            onSelectionChange={(e) => {
-              setSelectedKey(e.value);
-              if (typeof e.value === "string") {
-                findSelectedGarden(e.value);
+            items={gardenMenu ?? []}
+            itemTemplate={gardenTreeNode}
+            expandAll={true}
+            disableToggle={true}
+            isLoading={loading}
+            changeSelected={(id: string) => {
+              if (typeof id === "string") {
+                findSelectedGarden(id);
               }
             }}
-            togglerTemplate={<></>}
           />
         </div>
 
