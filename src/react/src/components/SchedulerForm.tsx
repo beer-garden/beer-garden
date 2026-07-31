@@ -18,7 +18,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { PickerValue } from "@mui/x-date-pickers/internals";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { Dayjs } from "dayjs";
+import dayjs from "dayjs";
 import { ChangeEvent, useEffect, useState } from "react";
 import { Cron } from "react-js-cron";
 
@@ -309,7 +309,7 @@ function DateForm({
         <Box sx={{ width: layoutProps.valueWidth }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DateTimePicker
-              value={runDate as Dayjs}
+              value={dayjs(runDate)}
               onChange={(newValue: PickerValue) => {
                 if (newValue && newValue.isValid()) {
                   updateRunDate(newValue);
@@ -540,7 +540,7 @@ function IntervalForm({
         <Box sx={{ width: layoutProps.valueWidth }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DateTimePicker
-              value={startDate as Dayjs}
+              value={dayjs(startDate)}
               onChange={(newValue: PickerValue) => {
                 if (newValue && newValue.isValid()) {
                   setStartDate(newValue);
@@ -573,7 +573,7 @@ function IntervalForm({
         <Box sx={{ width: layoutProps.valueWidth }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DateTimePicker
-              value={endDate as Dayjs}
+              value={dayjs(endDate)}
               onChange={(newValue: PickerValue) => {
                 if (newValue && newValue.isValid()) {
                   setEndDate(newValue);
@@ -779,7 +779,7 @@ function CronForm({
         <Box sx={{ width: layoutProps.valueWidth }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DateTimePicker
-              value={startDate as Dayjs}
+              value={dayjs(startDate)}
               onChange={(newValue: PickerValue) => {
                 if (newValue && newValue.isValid()) {
                   setStartDate(newValue);
@@ -812,7 +812,7 @@ function CronForm({
         <Box sx={{ width: layoutProps.valueWidth }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DateTimePicker
-              value={endDate as Dayjs}
+              value={dayjs(endDate)}
               onChange={(newValue: PickerValue) => {
                 if (newValue && newValue.isValid()) {
                   setEndDate(newValue);
