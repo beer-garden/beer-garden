@@ -2,8 +2,6 @@ import "react-js-cron/dist/styles.css";
 
 import {
   Box,
-  Button,
-  ButtonGroup,
   Checkbox,
   FormControlLabel,
   FormLabel,
@@ -12,6 +10,8 @@ import {
   Select,
   SelectChangeEvent,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -980,17 +980,18 @@ function SchedulerForm({
   return (
     <Box>
       <Box sx={{ justifyContent: "center", mb: 4, display: "flex" }}>
-        <ButtonGroup variant="contained" aria-label="">
+        <ToggleButtonGroup aria-label="" value={jobState}>
           {jobOptions.map((option) => (
-            <Button
+            <ToggleButton
               key={option}
+              value={option}
               onClick={() => setJobState(option)}
               aria-label={`Change Job Type ${option}`}
             >
               <Typography>{option}</Typography>
-            </Button>
+            </ToggleButton>
           ))}
-        </ButtonGroup>
+        </ToggleButtonGroup>
       </Box>
 
       <Box sx={{ display: "flex", justifyContent: "center" }}>
