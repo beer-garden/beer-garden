@@ -30,9 +30,7 @@ describe("RequestWizard", () => {
         <RequestWizard
           requestItem={newItem}
           updateRequestItem={() => {}}
-          removeItem={() => {}}
           config={{}}
-          isDialog={false}
         />
       </SnackbarProvider>,
     );

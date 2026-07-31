@@ -7,11 +7,11 @@ import { RefObject, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import AccessButton from "../components/AccessButton";
+import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import {
   ColumnField,
   FilterColumn,
-} from "../components/EnhancedTable//models/EnhancedTableModels";
-import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
+} from "../components/EnhancedTable/models/EnhancedTableModels";
 import { Request } from "../models/brewtils-types";
 import { RequestItem } from "../models/models";
 import { TourStepProps } from "../models/models";
@@ -334,6 +334,7 @@ function RequestIndex({
     },
     {
       id: "command",
+      field: "command",
       label: "Command",
       template: commandNameTemplate,
       sortable: true,

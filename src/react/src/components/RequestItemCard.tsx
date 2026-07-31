@@ -36,8 +36,6 @@ function RequestItemCard({
         <RequestWizard
           requestItem={requestItem}
           updateRequestItem={updateRequestItem}
-          removeItem={removeItem}
-          isDialog={isDialog}
           config={config}
         />
       )}
@@ -62,9 +60,7 @@ function RequestItemCard({
       {requestItem?.type === "VIEW_JOB" && requestItem?.jobId && (
         <SchedulerViewCard
           jobId={requestItem.jobId}
-          removeItem={removeItem}
           listeners={listeners}
-          isDialog={isDialog}
           config={config}
           editJob={() => {
             updateRequestItem({
