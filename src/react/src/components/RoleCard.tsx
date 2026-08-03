@@ -210,14 +210,18 @@ function RoleCard({
       }
       footer={
         <>
-          <AccessButton onClick={onClose} label="Close" />
+          <AccessButton onClick={onClose} label="Close">
+            Close
+          </AccessButton>
           {!disabled && updateRoles !== undefined && (
             <AccessButton
               data-testid={`submit-btn-dialog`}
-              severity="danger"
+              color="error"
               onClick={handleDialogSubmit}
               label="Submit"
-            />
+            >
+              Submit
+            </AccessButton>
           )}
         </>
       }
