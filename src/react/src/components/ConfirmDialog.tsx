@@ -26,7 +26,6 @@ function ConfirmDialog({
         <Grid container>
           <Grid size="grow">
             <Box sx={{ display: "flex" }}>
-              <FAIcon icon="triangle-exclamation" sx={{ ml: 1 }} />
               <Box sx={{ mx: 1 }}>{header}</Box>
             </Box>
           </Grid>
@@ -42,7 +41,9 @@ function ConfirmDialog({
           </Grid>
         </Grid>
       </DialogTitle>
-      <DialogContent sx={{ mx: 3, my: 1 }}>{message}</DialogContent>
+      <DialogContent sx={{ mx: 3, my: 1 }}>
+        <FAIcon icon="triangle-exclamation" sx={{ mr: 1 }} /> {message}
+      </DialogContent>
       <DialogActions sx={{ justifyContent: "space-between" }}>
         <AccessButton
           onClick={() => {
