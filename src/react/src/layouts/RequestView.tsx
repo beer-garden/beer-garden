@@ -261,13 +261,11 @@ function RequestView({
         <Box sx={{ m: 2 }}>
           <Grid container>
             <Grid>
-              {rootRequest && (
                 <RequestTreeMenu
                   rootRequest={rootRequest}
                   request={request}
                   setRequest={setRequest}
                 />
-              )}
             </Grid>
             <Grid size="grow">
               <Box sx={{ mx: 2 }} key={request?.id}>
