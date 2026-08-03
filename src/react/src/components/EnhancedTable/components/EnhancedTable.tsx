@@ -32,6 +32,7 @@ const EnhancedTable = ({
   footer,
   reloadTable,
   isLoading,
+  displayAll,
 }: {
   data?: any[];
   dataRef?: RefObject<any[]>;
@@ -53,6 +54,7 @@ const EnhancedTable = ({
   footer?: React.ReactElement;
   reloadTable?: number;
   isLoading?: boolean;
+  displayAll?: boolean;
 }) => {
   const [displayData, setDisplayData] = useState<any[] | undefined>(undefined);
   const [displayFiltered, setDisplayFiltered] = useState<number | undefined>(
@@ -352,6 +354,10 @@ const EnhancedTable = ({
         return 0;
       });
 
+      if (displayAll === true) {
+      return sortedGroups;
+    }
+
       return sortedGroups.slice(startIndex, startIndex + rowsPerPage);
     }
     setDisplayFiltered(filteredData.length);
@@ -385,6 +391,10 @@ const EnhancedTable = ({
       }
       return 0;
     });
+
+    if (displayAll === true) {
+      return sortedData;
+    }
 
     return sortedData.slice(startIndex, startIndex + rowsPerPage);
   };
@@ -616,27 +626,29 @@ const EnhancedTable = ({
               })}
           </TableBody>
         </Table>
-        <TablePagination
-          rowsPerPageOptions={pageRecords ? [5, 10, 25] : []}
-          colSpan={3}
-          count={dataLength ?? displayDataLength}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          slotProps={{
-            select: {
-              inputProps: {
-                "aria-label": "rows per page",
+        {(displayAll === undefined || displayAll === false) && (
+          <TablePagination
+            rowsPerPageOptions={pageRecords ? [5, 10, 25] : []}
+            colSpan={3}
+            count={dataLength ?? displayDataLength}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            slotProps={{
+              select: {
+                inputProps: {
+                  "aria-label": "rows per page",
+                },
+                native: true,
               },
-              native: true,
-            },
-          }}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          ActionsComponent={
-            pageRecords ? EnhancedTablePaginationActions : () => <></>
-          }
-          labelDisplayedRows={defaultLabelDisplayedRows}
-        />
+            }}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            ActionsComponent={
+              pageRecords ? EnhancedTablePaginationActions : () => <></>
+            }
+            labelDisplayedRows={defaultLabelDisplayedRows}
+          />
+        )}
         {footer}
       </TableContainer>
       {isLoading && (
