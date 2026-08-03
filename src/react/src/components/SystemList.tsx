@@ -59,7 +59,9 @@ function SystemList({ systemListButtonClick }: { systemListButtonClick: any }) {
           systemListButtonClick(system);
         }}
         label="Select"
-      />
+      >
+        Select
+      </AccessButton>
     );
   }
 
