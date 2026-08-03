@@ -25,6 +25,7 @@ function RoleIndex({
 }) {
   const showSnackbar = useSnackbar();
   const [roles, setRoles] = useState<Array<Role>>([]);
+  const [loading, setLoading] = useState(false);
 
   const [dialogVisible, setDialogVisible] = useState(false);
   const roleId = useRef<string | undefined>(undefined);
@@ -309,9 +310,10 @@ function RoleIndex({
     }
 
     return (
-      <div>
+      <div data-testid="role-datatable">
         <EnhancedTable
           data={roles}
+          isLoading={loading}
           columns={[
             {
               id: "name",
