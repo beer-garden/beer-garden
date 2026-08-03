@@ -23,6 +23,7 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
+import { GetSeverity } from "../services/util_service";
 
 interface SystemCardProps {
   system: System;
@@ -158,45 +159,6 @@ function SystemCard({
     };
   }, [system]);
 
-  const getSeverity = (
-    status?: string,
-  ): "warning" | "success" | "info" | "error" | "primary" | "secondary" => {
-    if (status === "INITIALIZING") {
-      return "warning";
-    }
-    if (status === "RUNNING") {
-      return "success";
-    }
-    if (status === "PAUSED") {
-      return "info";
-    }
-    if (status === "STOPPED") {
-      return "info";
-    }
-    if (status === "DEAD") {
-      return "error";
-    }
-    if (status === "UNRESPONSIVE") {
-      return "error";
-    }
-    if (status === "STARTING") {
-      return "warning";
-    }
-    if (status === "STOPPING") {
-      return "warning";
-    }
-    if (status === "UNKNOWN") {
-      return "error";
-    }
-    if (status === "AWAITING_SYSTEM") {
-      return "warning";
-    }
-    if (status === "ERROR") {
-      return "error";
-    }
-    return "error";
-  };
-
   const statusList = [
     "INITIALIZING",
     "RUNNING",
@@ -316,13 +278,12 @@ function SystemCard({
   }
 
   function statusTemplate(instance: Instance) {
-    const statusSeverity = getSeverity(instance.status);
+    const statusSeverity = GetSeverity(instance.status);
 
     return (
       <>
         <Tooltip
           title={`Status ${instance.status} for instance ${instance.name} in system ${system.namespace}.${system.name}.${system.version}`}
-          placement="bottom"
         >
           <Chip
             label={instance.status}

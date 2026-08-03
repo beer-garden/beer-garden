@@ -311,7 +311,7 @@ function GardenSummary({
 
     return (
       <>
-        <Tooltip placement="bottom" title={url ?? ""}>
+        <Tooltip title={url ?? ""}>
           <span id={targetId}>{connection.api}</span>
         </Tooltip>
       </>
@@ -720,10 +720,7 @@ function GardenSummary({
                     const statusSeverity = GetSeverity(status);
                     return (
                       <div key={`${status}_Summary`}>
-                        <Tooltip
-                          title={`${status} Count ${count}`}
-                          placement="bottom"
-                        >
+                        <Tooltip title={`${status} Count ${count}`}>
                           <Chip
                             data-testid={`${status}_severity_system_summary`}
                             id={`${status}_${selectedGarden?.id}_severity_system_summary`}
@@ -769,67 +766,6 @@ function GardenSummary({
               </Grid>
             )}
           </Grid>
-          {/* <div className="grid">
-            <div className="col-3">
-              <h2>Version</h2>
-              <p>{selectedGarden?.version}</p>
-            </div>
-            <div className="col-3">
-              <h2>Systems</h2>
-              <div className="flex">
-                {Array.from(systemCounts, ([status, count]) => {
-                  if (count && count > 0) {
-                    const statusSeverity = GetSeverity(status);
-                    return (
-                      <div key={`${status}_Summary`}>
-                        <Tooltip
-                          title={`${status} Count ${count}`}
-                          placement="bottom"
-                        >
-                          <Chip
-                            data-testid={`${status}_severity_system_summary`}
-                            id={`${status}_${selectedGarden?.id}_severity_system_summary`}
-                            label={count}
-                            color={statusSeverity}
-                            key={status}
-                          />
-                        </Tooltip>
-                      </div>
-                    );
-                  }
-
-                  return null;
-                })}
-              </div>
-            </div>
-            {selectedGarden?.children &&
-              selectedGarden?.children.length > 0 && (
-                <div className="col-3">
-                  <h2>Downstream</h2>
-
-                  {selectedGarden?.children &&
-                    selectedGarden?.children.length > 0 && (
-                      <ul>
-                        {" "}
-                        {Array.from(
-                          selectedGarden.children ?? [],
-                          (child: Garden) => {
-                            return <li key={child.name}>{child.name}</li>;
-                          },
-                        )}
-                      </ul>
-                    )}
-                </div>
-              )}
-            {selectedGarden?.parent && (
-              <div className="col-3">
-                <h2>Upstream</h2>
-                <ul>
-                  <li>{selectedGarden?.parent}</li>
-                </ul>
-              </div>
-            )}
-          </div> */}
           <Grid container spacing={1}>
             {receivingConnections && receivingConnections.length > 0 && (
               <Grid size={4}>

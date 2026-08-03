@@ -335,7 +335,7 @@ function GardenDashboard({
     if (!parentRouting) {
       return (
         <>
-          <Tooltip title="Upstream Routing Error" placement="bottom">
+          <Tooltip title="Upstream Routing Error">
             <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
               <FontAwesomeIcon
                 icon="play"
@@ -361,10 +361,7 @@ function GardenDashboard({
     } else if (!publishing && !receiving) {
       return (
         <>
-          <Tooltip
-            title={`Routing Error for ${garden.name}`}
-            placement="bottom"
-          >
+          <Tooltip title={`Routing Error for ${garden.name}`}>
             <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
               <FontAwesomeIcon
                 icon="circle"
@@ -381,10 +378,7 @@ function GardenDashboard({
     } else if (!publishing) {
       return (
         <>
-          <Tooltip
-            title={`Publishing Connection Error for ${garden.name}`}
-            placement="bottom"
-          >
+          <Tooltip title={`Publishing Connection Error for ${garden.name}`}>
             <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
               <FontAwesomeIcon
                 icon="circle"
@@ -401,10 +395,7 @@ function GardenDashboard({
     } else if (!receiving) {
       return (
         <>
-          <Tooltip
-            title={`Receiving Connection Error for ${garden.name}`}
-            placement="bottom"
-          >
+          <Tooltip title={`Receiving Connection Error for ${garden.name}`}>
             <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
               <FontAwesomeIcon
                 icon="circle"
@@ -437,10 +428,7 @@ function GardenDashboard({
         const statusSeverity = GetSeverity(status);
         return (
           <div key={`${status}_${garden?.name}_count`}>
-            <Tooltip
-              title={`${status} Count ${count} for ${garden?.name}`}
-              placement="bottom"
-            >
+            <Tooltip title={`${status} Count ${count} for ${garden?.name}`}>
               <Chip
                 label={count}
                 id={`${status}_${garden?.id}_menu_severity_system_summary`}
