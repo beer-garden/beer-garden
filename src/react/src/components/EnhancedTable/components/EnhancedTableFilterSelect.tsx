@@ -17,8 +17,8 @@ export const EnhancedTableFilterSelect = ({
   updateColumnFilters,
   anchor,
   setShowFilter,
-  addColumn,
   triggerReload,
+  addColumn,
 }: {
   columns: ColumnField[];
   columnFilters: FilterColumn[];
@@ -26,8 +26,8 @@ export const EnhancedTableFilterSelect = ({
   updateColumnFilters: (filters: FilterColumn[]) => void;
   anchor: HTMLButtonElement | undefined;
   setShowFilter: (filter: boolean) => void;
-  addColumn: string;
   triggerReload: () => void;
+  addColumn?: string;
 }) => {
   const addFilter = (defaultColumn?: string) => {
     updateColumnFilters([

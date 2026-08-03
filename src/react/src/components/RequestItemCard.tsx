@@ -36,8 +36,6 @@ function RequestItemCard({
         <RequestWizard
           requestItem={requestItem}
           updateRequestItem={updateRequestItem}
-          removeItem={removeItem}
-          isDialog={isDialog}
           config={config}
         />
       )}
