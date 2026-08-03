@@ -1,9 +1,18 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Alert, Box, Checkbox, DialogActions, DialogContent, Grid, TextField, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Checkbox,
+  DialogActions,
+  DialogContent,
+  Grid,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
-import Divider from '@mui/material/Divider';
-import { Messages } from "primereact/messages";
+import Divider from "@mui/material/Divider";
 import {
   ChangeEvent,
   JSX,
@@ -78,7 +87,7 @@ function TopicIndex({
     } as Subscriber,
   ]);
 
-  const [alertItem, setAlertItem] = useState<string|undefined>(undefined);
+  const [alertItem, setAlertItem] = useState<string | undefined>(undefined);
 
   const loadTopics = useCallback(() => {
     setLoading(true);
@@ -292,8 +301,10 @@ function TopicIndex({
 
     function publisherCountTemplate(topicSubscriber: TopicFlatten) {
       return (
-        <Box sx={{display:"flex"}}>
-          <Typography sx={{mr:2}}>{topicSubscriber.publisher_count}</Typography>
+        <Box sx={{ display: "flex" }}>
+          <Typography sx={{ mr: 2 }}>
+            {topicSubscriber.publisher_count}
+          </Typography>
 
           {((topicSubscriber !== undefined &&
             topicSubscriber.publisher_count) ||
@@ -410,8 +421,10 @@ function TopicIndex({
 
     function consumerCountTemplate(topicSubscriber: TopicFlatten) {
       return (
-        <Box sx={{display:"flex"}}>
-          <Typography sx={{mr:2}}>{topicSubscriber.subscribers?.consumer_count}</Typography>
+        <Box sx={{ display: "flex" }}>
+          <Typography sx={{ mr: 2 }}>
+            {topicSubscriber.subscribers?.consumer_count}
+          </Typography>
 
           {topicSubscriber.subscribers != undefined &&
             topicSubscriber.subscribers.consumer_count != undefined &&
@@ -421,7 +434,6 @@ function TopicIndex({
                 rounded
                 raised
                 size="small"
-
                 aria-label={`Clear Count of ${topicSubscriber.subscribers.consumer_count} for Topic ${topicSubscriber?.name} Subscriber ${topicSubscriber.subscribers.garden ?? "*"} ${topicSubscriber.subscribers.namespace ?? "*"} ${topicSubscriber.subscribers.system ?? "*"} ${topicSubscriber.subscribers.version ?? "*"} ${topicSubscriber.subscribers.instance ?? "*"} ${topicSubscriber.subscribers.command ?? "*"}`}
                 tooltip="Clear count"
                 onClick={() =>
@@ -445,8 +457,10 @@ function TopicIndex({
 
     function subscriberTypeTemplate(topicSubscriber: TopicFlatten) {
       return (
-        <Box sx={{display:"flex"}}>
-          <Typography sx={{mr:2}}>{topicSubscriber.subscribers?.subscriber_type}</Typography>
+        <Box sx={{ display: "flex" }}>
+          <Typography sx={{ mr: 2 }}>
+            {topicSubscriber.subscribers?.subscriber_type}
+          </Typography>
 
           {topicSubscriber.subscribers !== undefined &&
             topicSubscriber.subscribers.subscriber_type == "DYNAMIC" && (
@@ -502,7 +516,7 @@ function TopicIndex({
                 })
               }
               tooltip="View Topic"
-              sx={{mr:2}}
+              sx={{ mr: 2 }}
               aria-label={`ViewTopic ${topic?.name}`}
               config={config}
               permission="PLUGIN_ADMIN"
@@ -513,10 +527,12 @@ function TopicIndex({
               basic
               rounded
               raised
-              onClick={() => addSubscriber({ id: topic.id } as Topic)}
+              onClick={() =>
+                addSubscriber({ id: topic.id, name: topic?.name } as Topic)
+              }
               aria-label={`Add Subscriber to Topic ${topic?.name}`}
               tooltip="Add Subscriber"
-              sx={{mr:2}}
+              sx={{ mr: 2 }}
               config={config}
               permission="PLUGIN_ADMIN"
             >
@@ -557,7 +573,6 @@ function TopicIndex({
           </Typography>
         </Grid>
         <Grid sx={{ display: "flex", alignItems: "center", m: 2 }}>
-          
           <Checkbox
             id={`hide-generated`}
             checked={hideGenerated}
@@ -746,7 +761,7 @@ function TopicIndex({
   }
 
   return (
-    <div>
+    <>
       <Dialog
         data-testid="topic-dialog"
         open={dialogVisible}
@@ -758,49 +773,46 @@ function TopicIndex({
           {isEdit.current ? "Add Subscriber" : "Create Topic"}
         </DialogTitle>
         <DialogContent>
-        {alertItem && (
-          <Alert severity="error">
-            {alertItem}
-          </Alert>
-        )}
-        <div className="flex flex-column gap-2">
-          <label htmlFor="topicName" className="font-bold">
-            Name
-          </label>
-          <TextField
-                        
-                        variant="outlined"
-                        placeholder="Topic Name"
-          value={topicName}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setTopicName(e.target.value)
-            }
-            disabled={isEdit.current}
-            required
-                      />
-        </div>
-        <Divider />
-        <SubscriberItem
-          subscriberList={subscriberList}
-          setSubscriberList={setSubscriberList}
-          isEdit={isEdit.current}
-        />
+          {alertItem && <Alert severity="error">{alertItem}</Alert>}
+          <Stack spacing={1}>
+            <Typography sx={{ fontWeight: "bold" }}>Name</Typography>
+            <TextField
+              variant="outlined"
+              placeholder="Topic Name"
+              value={topicName}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setTopicName(e.target.value)
+              }
+              disabled={isEdit.current}
+              required
+            />
+          </Stack>
+          <Divider />
+          <SubscriberItem
+            subscriberList={subscriberList}
+            setSubscriberList={setSubscriberList}
+            isEdit={isEdit.current}
+          />
         </DialogContent>
         <DialogActions>
-            <>
-            <AccessButton onClick={handleDialogClose} label="Close" >Close</AccessButton>
+          <>
+            <AccessButton onClick={handleDialogClose} label="Close">
+              Close
+            </AccessButton>
             <AccessButton
               data-testid={`submit-btn-dialog`}
               color="error"
               onClick={handleDialogSubmit}
               label="Submit"
-            >Submit</AccessButton>
+            >
+              Submit
+            </AccessButton>
           </>
         </DialogActions>
       </Dialog>
       <TopicHeader />
       <TopicTable />
-    </div>
+    </>
   );
 }
 

@@ -355,8 +355,8 @@ const EnhancedTable = ({
       });
 
       if (displayAll === true) {
-      return sortedGroups;
-    }
+        return sortedGroups;
+      }
 
       return sortedGroups.slice(startIndex, startIndex + rowsPerPage);
     }
