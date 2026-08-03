@@ -68,7 +68,7 @@ export const EnhancedTableColumnHeaderFilter = ({
           updateColumnFilters={updateColumnFilters}
           anchor={filterAnchorRef.current}
           setShowFilter={handleFilterMenuClose}
-          addColumn={column.id}
+          addColumn={column.field}
           triggerReload={triggerReload}
         />
       )}

@@ -1,11 +1,10 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Column } from "primereact/column";
+import { Typography } from "@mui/material";
+import { styled } from "@mui/material/styles";
 import { confirmDialog } from "primereact/confirmdialog";
-import { DataTable } from "primereact/datatable";
-import { FileUpload } from "primereact/fileupload";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
+import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import { Job } from "../models/brewtils-types";
 import { Config, RequestItem, TourStepProps } from "../models/models";
 import { useSnackbar } from "../providers/SnackbarProvider";
@@ -23,7 +22,7 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { PaginatorTemplate } from "../services/util_service";
+import { FAIcon } from "../services/util_service";
 
 function JobIndex({
   listeners,
@@ -114,6 +113,8 @@ function JobIndex({
     pos: 7,
   };
 
+  const buttonStyle = { m: 1 };
+
   useEffect(() => {
     ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
     AddTourStep(tourStepsRef, createJobTourStep);
@@ -121,8 +122,8 @@ function JobIndex({
     AddTourStep(tourStepsRef, exportJobTourStep);
 
     if (jobs.length > 0) {
-      AddTourStep(tourStepsRef, runNowTourStep);
       AddTourStep(tourStepsRef, viewJobTourStep);
+      AddTourStep(tourStepsRef, runNowTourStep);
       AddTourStep(tourStepsRef, editJobTourStep);
       AddTourStep(tourStepsRef, pauseResumeJobTourStep);
       AddTourStep(tourStepsRef, deleteJobTourStep);
@@ -132,7 +133,6 @@ function JobIndex({
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
     };
   }, [jobs]);
-  const jobImportFileRef = useRef<FileUpload | null>(null);
 
   useEffect(() => {
     const MonitorJobs = (message: any) => {
@@ -187,17 +187,6 @@ function JobIndex({
       });
   }, []);
 
-  const runTimeTemplate = (job: Job) => {
-    if (
-      job?.next_run_time &&
-      (typeof job.next_run_time === "string" ||
-        typeof job.next_run_time === "number")
-    ) {
-      return new Date(job.next_run_time).toLocaleString();
-    }
-    return job.next_run_time;
-  };
-
   const editJob = (jobId: string) => {
     addRequestItem({ jobId: jobId, type: "REQUEST" });
   };
@@ -211,25 +200,24 @@ function JobIndex({
       hasSystemVersion: job.request_template?.system_version,
       hasCommandName: job.request_template?.command,
     };
+
     return (
       <div>
         <AccessButton
           rounded
           raised
-          link
           basic
           onClick={() => addRequestItem({ jobId: job.id, type: "VIEW_JOB" })}
           title={"View Job " + job.name}
-          className="mr-2"
+          sx={buttonStyle}
           {...GenerateTourProps(viewJobTourStep)}
         >
-          <FontAwesomeIcon icon="arrow-up-right-from-square" />
+          <FAIcon icon="arrow-up-right-from-square" />
         </AccessButton>
         <>
           <AccessButton
             rounded
             raised
-            link
             basic
             onClick={() => {
               if (job.id) {
@@ -244,18 +232,17 @@ function JobIndex({
               }
             }}
             title={"Run Now " + job.name}
-            className="mr-2"
+            sx={buttonStyle}
             {...GenerateTourProps(runNowTourStep)}
             {...permissions}
             permission="OPERATOR"
           >
-            <FontAwesomeIcon icon="forward" />
+            <FAIcon icon="forward" />
           </AccessButton>
 
           <AccessButton
             rounded
             raised
-            link
             basic
             onClick={() => {
               if (job.id) {
@@ -263,18 +250,17 @@ function JobIndex({
               }
             }}
             title={"Update Job " + job.name}
-            className="mr-2"
+            sx={buttonStyle}
             {...GenerateTourProps(editJobTourStep)}
             {...permissions}
             permission="OPERATOR"
           >
-            <FontAwesomeIcon icon="edit" />
+            <FAIcon icon="edit" />
           </AccessButton>
           {job.status === "RUNNING" && (
             <AccessButton
               rounded
               raised
-              link
               basic
               onClick={() => {
                 PauseJob(job)
@@ -295,19 +281,18 @@ function JobIndex({
                   });
               }}
               title={"Pause Job " + job.name}
-              className="mr-2"
+              sx={buttonStyle}
               {...GenerateTourProps(pauseResumeJobTourStep)}
               {...permissions}
               permission="OPERATOR"
             >
-              <FontAwesomeIcon icon="pause" />
+              <FAIcon icon="pause" />
             </AccessButton>
           )}
           {job.status === "PAUSED" && (
             <AccessButton
               rounded
               raised
-              link
               basic
               onClick={() => {
                 ResumeJob(job)
@@ -328,18 +313,17 @@ function JobIndex({
                   });
               }}
               title={"Resume Job " + job.name}
-              className="mr-2"
+              sx={buttonStyle}
               {...GenerateTourProps(pauseResumeJobTourStep)}
               {...permissions}
               permission="OPERATOR"
             >
-              <FontAwesomeIcon icon="play" />
+              <FAIcon icon="play" />
             </AccessButton>
           )}
           <AccessButton
             rounded
             raised
-            link
             basic
             onClick={() => {
               const accept = () => {
@@ -372,12 +356,12 @@ function JobIndex({
               confirm();
             }}
             title={"Delete Job " + job.name}
-            className="mr-2"
+            sx={buttonStyle}
             {...GenerateTourProps(deleteJobTourStep)}
             {...permissions}
             permission="OPERATOR"
           >
-            <FontAwesomeIcon icon="trash" />
+            <FAIcon icon="trash" />
           </AccessButton>
         </>
       </div>
@@ -389,7 +373,7 @@ function JobIndex({
   };
 
   const customJobImporter = (event: any) => {
-    const file = event?.files?.[0];
+    const file = event?.target?.files?.[0];
 
     if (!file) {
       showSnackbar({
@@ -413,10 +397,6 @@ function JobIndex({
             detail: "Jobs imported successfully",
             life: 3000,
           });
-
-          if (jobImportFileRef.current) {
-            jobImportFileRef.current.clear();
-          }
 
           // Refresh the job list after successful import
           GetJobList()
@@ -455,43 +435,56 @@ function JobIndex({
     reader.readAsText(file);
   };
 
+  const VisuallyHiddenInput = styled("input")({
+    clip: "rect(0 0 0 0)",
+    clipPath: "inset(50%)",
+    height: 1,
+    overflow: "hidden",
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    whiteSpace: "nowrap",
+    width: 1,
+  });
+
   const header = (
     <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-      <h1 className="text-xl text-900 font-bold">Requests Scheduler</h1>
+      <Typography variant="h2" component="h1">
+        Requests Scheduler
+      </Typography>
 
       <div className="flex">
         <AccessButton
-          className="mr-2"
+          sx={buttonStyle}
           raised
           onClick={createJob}
+          startIcon={<FAIcon icon="pencil" />}
           {...GenerateTourProps(createJobTourStep)}
           config={config}
           permission="OPERATOR"
-          label="Create Job"
-        />
-
-        <FileUpload
-          ref={jobImportFileRef}
-          className="mr-2"
-          mode="basic"
-          name="file"
-          accept=".json"
-          maxFileSize={1000000}
-          chooseLabel="Import Jobs"
-          customUpload
-          auto
-          uploadHandler={customJobImporter}
-          {...GenerateTourProps(importJobTourStep)}
-          pt={{
-            uploadIcon: { role: "img", "aria-label": "Upload Job File" },
-            cancelIcon: { role: "img", "aria-label": "Remove Upload Job File" },
-            chooseIcon: { role: "img", "aria-label": "Choose Upload Job File" },
-            basicButton: { role: "button" },
-          }}
-        />
+        >
+          Create Job
+        </AccessButton>
 
         <AccessButton
-          className="mr-2"
+          component="label"
+          role={undefined}
+          variant="contained"
+          tabIndex={-1}
+          startIcon={<FAIcon icon="upload" />}
+          sx={buttonStyle}
+          {...GenerateTourProps(importJobTourStep)}
+        >
+          Import Jobs
+          <VisuallyHiddenInput
+            type="file"
+            accept=".json,application/json"
+            onChange={customJobImporter}
+          />
+        </AccessButton>
+
+        <AccessButton
+          sx={buttonStyle}
           raised
           onClick={() =>
             ExportJobs().catch((error) =>
@@ -503,45 +496,112 @@ function JobIndex({
               }),
             )
           }
+          startIcon={<FAIcon icon="file-export" />}
           {...GenerateTourProps(exportJobTourStep)}
           config={config}
           permission="OPERATOR"
-          label="Export Jobs"
-        />
+        >
+          Export Jobs
+        </AccessButton>
       </div>
     </div>
   );
 
   return (
     <div>
-      <DataTable
-        value={jobs}
+      <EnhancedTable
+        data={jobs}
+        columns={[
+          {
+            id: "action",
+            label: "Action",
+            template: actionTemplate,
+          },
+          {
+            id: "name",
+            field: "name",
+            label: "Name",
+            sortable: true,
+            filterable: true,
+            isString: true,
+          },
+          {
+            id: "status",
+            field: "status",
+            label: "Status",
+            sortable: true,
+            filterable: true,
+            isString: true,
+          },
+          {
+            id: "system",
+            field: "request_template.system",
+            label: "System",
+            sortable: true,
+            filterable: true,
+            isString: true,
+          },
+          {
+            id: "instance",
+            field: "request_template.instance_name",
+            label: "Instance",
+            sortable: true,
+            filterable: true,
+            isString: true,
+          },
+          {
+            id: "command",
+            field: "request_template.command",
+            label: "Command",
+            sortable: true,
+            filterable: true,
+            isString: true,
+          },
+          {
+            id: "next_run_time",
+            field: "next_run_time",
+            label: "Next Run Time",
+            sortable: true,
+            filterable: true,
+            isDate: true,
+          },
+          {
+            id: "success_count",
+            field: "success_count",
+            label: "Success Count",
+            sortable: true,
+            filterable: true,
+            isNumeric: true,
+          },
+          {
+            id: "error_count",
+            field: "error_count",
+            label: "Error Count",
+            sortable: true,
+            filterable: true,
+            isNumeric: true,
+          },
+          {
+            id: "canceled_count",
+            field: "canceled_count",
+            label: "Canceled Count",
+            sortable: true,
+            filterable: true,
+            isNumeric: true,
+          },
+          {
+            id: "skip_count",
+            field: "skip_count",
+            label: "Skip Count",
+            sortable: true,
+            filterable: true,
+            isNumeric: true,
+          },
+        ]}
         header={header}
-        paginator
-        rows={5}
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        paginatorTemplate={PaginatorTemplate}
-        tableStyle={{ minWidth: "50rem" }}
-      >
-        <Column field="name" header="Actions" body={actionTemplate}></Column>
-        <Column field="name" header="Name"></Column>
-        <Column field="status" header="Status"></Column>
-        <Column field="request_template.system" header="System"></Column>
-        <Column
-          field="request_template.instance_name"
-          header="Instance"
-        ></Column>
-        <Column field="request_template.command" header="Command"></Column>
-        <Column
-          field="next_run_time"
-          header="Next Run Time"
-          body={runTimeTemplate}
-        ></Column>
-        <Column field="success_count" header="Success Count"></Column>
-        <Column field="error_count" header="Error Count"></Column>
-        <Column field="canceled_count" header="Canceled Count"></Column>
-        <Column field="skip_count" header="Skip Count"></Column>
-      </DataTable>
+        defaultOrderBy="name"
+        defaultOrder="desc"
+      />
     </div>
   );
 }

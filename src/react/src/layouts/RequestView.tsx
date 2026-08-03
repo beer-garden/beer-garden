@@ -1,4 +1,4 @@
-import { Card } from "primereact/card";
+import { Box, Grid } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -258,37 +258,31 @@ function RequestView({
           errorMsg={`Request ${requestId} was not found`}
         />
       ) : (
-        <div>
-          <div className="flex">
-            <div className="mr-2" style={{ width: "auto" }}>
-              {rootRequest && (
-                <RequestTreeMenu
-                  rootRequest={rootRequest}
-                  request={request}
-                  setRequest={setRequest}
-                />
-              )}
-            </div>
-
-            <Card
-              className="mb-4"
-              style={{ width: "100%" }}
-              unstyled
-              key={request?.id}
-            >
-              {request && (
-                <RequestViewMain
-                  request={request}
-                  setRequest={setRequest}
-                  addRequestItem={addRequestItem}
-                  showProjections={true}
-                  config={config}
-                  isCard={false}
-                />
-              )}
-            </Card>
-          </div>
-        </div>
+        <Box sx={{ m: 2 }}>
+          <Grid container>
+            <Grid>
+              <RequestTreeMenu
+                rootRequest={rootRequest}
+                request={request}
+                setRequest={setRequest}
+              />
+            </Grid>
+            <Grid size="grow">
+              <Box sx={{ mx: 2 }} key={request?.id}>
+                {request && (
+                  <RequestViewMain
+                    request={request}
+                    setRequest={setRequest}
+                    addRequestItem={addRequestItem}
+                    showProjections={true}
+                    config={config}
+                    isCard={false}
+                  />
+                )}
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
       )}
     </>
   );
