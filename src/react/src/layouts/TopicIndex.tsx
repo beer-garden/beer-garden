@@ -399,26 +399,44 @@ function TopicIndex({
     }
 
     function gardenTemplate(topicSubscriber: TopicFlatten) {
+      if (topicSubscriber.subscribers === undefined) {
+        return undefined;
+      }
       return topicSubscriber.subscribers?.garden || "*";
     }
 
     function namespaceTemplate(topicSubscriber: TopicFlatten) {
+      if (topicSubscriber.subscribers === undefined) {
+        return undefined;
+      }
       return topicSubscriber.subscribers?.namespace || "*";
     }
 
     function systemTemplate(topicSubscriber: TopicFlatten) {
+      if (topicSubscriber.subscribers === undefined) {
+        return undefined;
+      }
       return topicSubscriber.subscribers?.system || "*";
     }
 
     function versionTemplate(topicSubscriber: TopicFlatten) {
+      if (topicSubscriber.subscribers === undefined) {
+        return undefined;
+      }
       return topicSubscriber.subscribers?.version || "*";
     }
 
     function instanceTemplate(topicSubscriber: TopicFlatten) {
+      if (topicSubscriber.subscribers === undefined) {
+        return undefined;
+      }
       return topicSubscriber.subscribers?.instance || "*";
     }
 
     function commandTemplate(topicSubscriber: TopicFlatten) {
+      if (topicSubscriber.subscribers === undefined) {
+        return undefined;
+      }
       return topicSubscriber.subscribers?.command || "*";
     }
 
