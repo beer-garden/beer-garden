@@ -30,6 +30,7 @@ const EnhancedTable = ({
   reloadTable,
   isLoading,
   displayAll,
+  ...props
 }: {
   data: any[];
   dataLength?: number;
@@ -368,8 +369,9 @@ const EnhancedTable = ({
         sx={{ position: "relative", opacity: isLoading ? 0.5 : 1 }}
       >
         {header}
-        <Table>
+        <Table {...props}>
           <TableHead>
+            <TableRow>
             {columns.map((column) => (
               <TableCell
                 key={column.id}
@@ -407,6 +409,7 @@ const EnhancedTable = ({
                 )}
               </TableCell>
             ))}
+            </TableRow>
           </TableHead>
 
           <TableBody>

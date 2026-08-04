@@ -156,7 +156,7 @@ function RoleIndex({
     <div>
       <div className="flex flex-wrap align-items-center justify-content-between gap-2">
         <Typography variant="h2" component="h1">
-          Roles
+          Role Management
         </Typography>
 
         <div className="flex">
@@ -310,8 +310,9 @@ function RoleIndex({
     }
 
     return (
-      <div data-testid="role-datatable">
+      <div>
         <EnhancedTable
+          data-testid="role-datatable"
           data={roles}
           isLoading={loading}
           columns={[
