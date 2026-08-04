@@ -410,7 +410,11 @@ function InstanceCancelDeleteRequestsDialog({
   return (
     <Dialog
       header={`Cancel/Delete Requests: ${system.name}[${system.version}]-${instance.name}`}
-      footer={<AccessButton label="Close" onClick={onClose} />}
+      footer={
+        <AccessButton label="Close" onClick={onClose}>
+          Close
+        </AccessButton>
+      }
       visible={isVisible}
       style={{ width: "50vw" }}
       onHide={onClose}

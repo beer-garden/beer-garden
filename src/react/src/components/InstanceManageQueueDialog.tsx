@@ -96,7 +96,9 @@ function InstanceManageQueueDialog({
           onClick={onClose}
           tooltip="Close Instance Manage Queue Dialog"
           label="Close"
-        />
+        >
+          Close
+        </AccessButton>
       }
       visible={isVisible}
       style={{ width: "50vw" }}
@@ -119,7 +121,9 @@ function InstanceManageQueueDialog({
                 <AccessButton
                   onClick={() => clearQueue(queue.name)}
                   label="Clear Queue"
-                />
+                >
+                  Clear Queue
+                </AccessButton>
               </td>
             </tr>
           ))}
