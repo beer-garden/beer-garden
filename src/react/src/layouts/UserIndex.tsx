@@ -1,9 +1,6 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Column } from "primereact/column";
 import { confirmDialog } from "primereact/confirmdialog";
 import { DataTable, SortOrder } from "primereact/datatable";
-import { Message } from "primereact/message";
-import { Tag } from "primereact/tag";
 import { RefObject, useCallback, useEffect, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
@@ -22,7 +19,8 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { DeleteUser, GetUsers, RescanUsers } from "../services/user_service";
-import { PaginatorTemplate } from "../services/util_service";
+import { FAIcon, PaginatorTemplate } from "../services/util_service";
+import { Alert, Chip } from "@mui/material";
 
 function UserIndex({
   config,
@@ -217,7 +215,7 @@ function UserIndex({
     if (rowData.protected) {
       return (
         <span {...GenerateTourProps(protectedUserTourStep)}>
-          <FontAwesomeIcon icon="user-shield" title="Protected User" />{" "}
+          <FAIcon icon="user-shield" title="Protected User" />{" "}
           {rowData.username}
         </span>
       );
@@ -225,14 +223,14 @@ function UserIndex({
     if (rowData.file_generated) {
       return (
         <span {...GenerateTourProps(fileGeneratedUserTourStep)}>
-          <FontAwesomeIcon icon="user-tag" title="File Generated User" />{" "}
+          <FAIcon icon="user-tag" title="File Generated User" />{" "}
           {rowData.username}
         </span>
       );
     }
     return (
       <span {...GenerateTourProps(userUserTourStep)}>
-        <FontAwesomeIcon icon="user" title="Regular User" /> {rowData.username}
+        <FAIcon icon="user" title="Regular User" /> {rowData.username}
       </span>
     );
   }
@@ -302,9 +300,9 @@ function UserIndex({
               setShowViewRolesDialog(true);
             }}
             rounded
-            severity="info"
+            color="info"
             tooltip={`View Local Role: ${role.name}`}
-          />
+          >{role.name}</AccessButton>
         ))}
       </div>
     );
@@ -322,9 +320,9 @@ function UserIndex({
               setShowViewRolesDialog(true);
             }}
             rounded
-            severity="secondary"
+            color="secondary"
             tooltip={`View Upstream Role: ${role.name}`}
-          />
+          >{role.name}</AccessButton>
         ))}
       </div>
     );
@@ -400,7 +398,7 @@ function UserIndex({
           permission="GARDEN_ADMIN"
           isGlobal={true}
         >
-          <FontAwesomeIcon icon="arrow-right-from-bracket" />
+          <FAIcon icon="arrow-right-from-bracket" />
         </AccessButton>
         <AccessButton
           onClick={() => {
@@ -415,7 +413,7 @@ function UserIndex({
           permission="GARDEN_ADMIN"
           isGlobal={true}
         >
-          <FontAwesomeIcon icon="globe" />
+          <FAIcon icon="globe" />
         </AccessButton>
         {(rowData.protected === undefined || rowData.protected === false) && (
           <AccessButton
@@ -431,7 +429,7 @@ function UserIndex({
             permission="GARDEN_ADMIN"
             isGlobal={true}
           >
-            <FontAwesomeIcon icon="user-plus" />
+            <FAIcon icon="user-plus" />
           </AccessButton>
         )}
         {(rowData.protected === undefined || rowData.protected === false) && (
@@ -450,7 +448,7 @@ function UserIndex({
             permission="GARDEN_ADMIN"
             isGlobal={true}
           >
-            <FontAwesomeIcon icon="key" />
+            <FAIcon icon="key" />
           </AccessButton>
         )}
 
@@ -501,7 +499,7 @@ function UserIndex({
             permission="GARDEN_ADMIN"
             isGlobal={true}
           >
-            <FontAwesomeIcon icon="trash" />
+            <FAIcon icon="trash" />
           </AccessButton>
         )}
       </div>
@@ -511,17 +509,17 @@ function UserIndex({
   function activeUserTemplate(rowData: User) {
     if (rowData.metadata?.has_token) {
       return (
-        <Tag
-          severity="success"
-          value="Active"
+        <Chip
+          color="success"
+          label="Active"
           {...GenerateTourProps(activeTokenUserTourStep)}
         />
       );
     }
     return (
-      <Tag
-        severity="danger"
-        value="Inactive"
+      <Chip
+        color="error"
+        label="Inactive"
         {...GenerateTourProps(activeTokenUserTourStep)}
       />
     );
@@ -624,7 +622,7 @@ function UserIndex({
             config={config}
             permission="GARDEN_ADMIN"
             isGlobal={true}
-          />
+          >Rescan Users</AccessButton>
           <AccessButton
             onClick={() => {
               setShowCreateUserDialog(true);
@@ -636,28 +634,15 @@ function UserIndex({
             config={config}
             permission="GARDEN_ADMIN"
             isGlobal={true}
-          />
+          >Create User</AccessButton>
         </div>
       </div>
       {config?.auth_enabled == false && (
-        <Message
-          className="mx-2 mb-2"
-          severity="error"
-          text="Warning - Beergarden authorization is currently disabled. Changes made here
-                  will be persisted, but permissions will not be enforced. Contact your
-                  administator to enable this feature."
-          pt={{
-            icon: {
-              role: "img",
-              "aria-label": "Close Alert Message",
-              style: { color: "var(--danger-color)" },
-            },
-          }}
-          style={{
-            backgroundColor: "var(--danger-background-color)",
-            color: "var(--danger-color)",
-          }}
-        />
+        <Alert severity="error" sx={{m:2}}>
+          Warning - Beergarden authorization is currently disabled. Changes made here
+          will be persisted, but permissions will not be enforced. Contact your
+          administator to enable this feature.
+        </Alert>
       )}
       {showPasswordDialog && passwordUsername && (
         <UserChangePassword
