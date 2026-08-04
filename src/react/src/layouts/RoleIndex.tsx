@@ -147,6 +147,8 @@ function RoleIndex({
   }
 
   function openRoleDialog() {
+    roleId.current = undefined;
+    isEdit.current = false;
     setDialogVisible(true);
   }
 
@@ -421,6 +423,7 @@ function RoleIndex({
         <RoleCard
           isEdit={isEdit.current}
           roleId={roleId.current}
+          dialogVisible={dialogVisible}
           updateRoles={updateRoles}
           onClose={() => {
             setDialogVisible(false);
