@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Alert,
   Box,
+  ButtonGroup,
   Checkbox,
   DialogActions,
   DialogContent,
@@ -301,34 +302,36 @@ function TopicIndex({
 
     function publisherCountTemplate(topicSubscriber: TopicFlatten) {
       return (
-        <Box sx={{ display: "flex" }}>
-          <Typography sx={{ mr: 2 }}>
-            {topicSubscriber.publisher_count}
-          </Typography>
-
+        <Grid container>
+          <Grid size="grow">
+            <Typography>{topicSubscriber.publisher_count}</Typography>
+          </Grid>
           {((topicSubscriber !== undefined &&
             topicSubscriber.publisher_count) ||
             0) > 0 && (
-            <AccessButton
-              basic
-              rounded
-              raised
-              size="small"
-              aria-label={`Clear Publisher Count ${topicSubscriber?.publisher_count} from Topic ${topicSubscriber?.name}`}
-              tooltip="Clear Publisher Count"
-              onClick={() =>
-                clearCount({
-                  id: topicSubscriber.id,
-                  name: topicSubscriber.name,
-                } as Topic)
-              }
-              config={config}
-              permission="PLUGIN_ADMIN"
-            >
-              <FontAwesomeIcon icon="trash-can" />
-            </AccessButton>
+            <Grid sx={{ justifyContent: "flex-end" }}>
+              <AccessButton
+                basic
+                rounded
+                raised
+                size="small"
+                aria-label={`Clear Publisher Count ${topicSubscriber?.publisher_count} from Topic ${topicSubscriber?.name}`}
+                tooltip="Clear Publisher Count"
+                onClick={() =>
+                  clearCount({
+                    id: topicSubscriber.id,
+                    name: topicSubscriber.name,
+                  } as Topic)
+                }
+                config={config}
+                permission="PLUGIN_ADMIN"
+                sx={{ ml: 1 }}
+              >
+                <FontAwesomeIcon icon="trash-can" />
+              </AccessButton>
+            </Grid>
           )}
-        </Box>
+        </Grid>
       );
     }
 
@@ -421,72 +424,81 @@ function TopicIndex({
 
     function consumerCountTemplate(topicSubscriber: TopicFlatten) {
       return (
-        <Box sx={{ display: "flex" }}>
-          <Typography sx={{ mr: 2 }}>
-            {topicSubscriber.subscribers?.consumer_count}
-          </Typography>
+        <Grid container>
+          <Grid size="grow">
+            <Typography>
+              {topicSubscriber.subscribers?.consumer_count}
+            </Typography>
+          </Grid>
 
           {topicSubscriber.subscribers != undefined &&
             topicSubscriber.subscribers.consumer_count != undefined &&
             (topicSubscriber.subscribers.consumer_count || 0) > 0 && (
-              <AccessButton
-                basic
-                rounded
-                raised
-                size="small"
-                aria-label={`Clear Count of ${topicSubscriber.subscribers.consumer_count} for Topic ${topicSubscriber?.name} Subscriber ${topicSubscriber.subscribers.garden ?? "*"} ${topicSubscriber.subscribers.namespace ?? "*"} ${topicSubscriber.subscribers.system ?? "*"} ${topicSubscriber.subscribers.version ?? "*"} ${topicSubscriber.subscribers.instance ?? "*"} ${topicSubscriber.subscribers.command ?? "*"}`}
-                tooltip="Clear count"
-                onClick={() =>
-                  clearCount(
-                    {
-                      id: topicSubscriber.id,
-                      name: topicSubscriber.name,
-                    } as Topic,
-                    topicSubscriber.subscribers as Subscriber,
-                  )
-                }
-                config={config}
-                permission="PLUGIN_ADMIN"
-              >
-                <FontAwesomeIcon icon="trash-can" />
-              </AccessButton>
+              <Grid sx={{ justifyContent: "flex-end" }}>
+                <AccessButton
+                  basic
+                  rounded
+                  raised
+                  size="small"
+                  aria-label={`Clear Count of ${topicSubscriber.subscribers.consumer_count} for Topic ${topicSubscriber?.name} Subscriber ${topicSubscriber.subscribers.garden ?? "*"} ${topicSubscriber.subscribers.namespace ?? "*"} ${topicSubscriber.subscribers.system ?? "*"} ${topicSubscriber.subscribers.version ?? "*"} ${topicSubscriber.subscribers.instance ?? "*"} ${topicSubscriber.subscribers.command ?? "*"}`}
+                  tooltip="Clear count"
+                  onClick={() =>
+                    clearCount(
+                      {
+                        id: topicSubscriber.id,
+                        name: topicSubscriber.name,
+                      } as Topic,
+                      topicSubscriber.subscribers as Subscriber,
+                    )
+                  }
+                  config={config}
+                  permission="PLUGIN_ADMIN"
+                  sx={{ ml: 1 }}
+                >
+                  <FontAwesomeIcon icon="trash-can" />
+                </AccessButton>
+              </Grid>
             )}
-        </Box>
+        </Grid>
       );
     }
 
     function subscriberTypeTemplate(topicSubscriber: TopicFlatten) {
       return (
-        <Box sx={{ display: "flex" }}>
-          <Typography sx={{ mr: 2 }}>
-            {topicSubscriber.subscribers?.subscriber_type}
-          </Typography>
-
+        <Grid container>
+          <Grid size="grow">
+            <Typography sx={{ mr: 2 }}>
+              {topicSubscriber.subscribers?.subscriber_type}
+            </Typography>
+          </Grid>
           {topicSubscriber.subscribers !== undefined &&
             topicSubscriber.subscribers.subscriber_type == "DYNAMIC" && (
-              <AccessButton
-                basic
-                rounded
-                raised
-                onClick={() =>
-                  removeSubscriber(
-                    {
-                      id: topicSubscriber.id,
-                      name: topicSubscriber.name,
-                    } as Topic,
-                    topicSubscriber.subscribers!,
-                  )
-                }
-                size="small"
-                aria-label={`Remove from Topic ${topicSubscriber?.name}, Subscriber ${topicSubscriber.subscribers.garden ?? "*"} ${topicSubscriber.subscribers.namespace ?? "*"} ${topicSubscriber.subscribers.system ?? "*"} ${topicSubscriber.subscribers.version ?? "*"} ${topicSubscriber.subscribers.instance ?? "*"} ${topicSubscriber.subscribers.command ?? "*"}`}
-                tooltip="Remove Subscriber"
-                config={config}
-                permission="PLUGIN_ADMIN"
-              >
-                <FontAwesomeIcon icon="xmark-square" />
-              </AccessButton>
+              <Grid sx={{ justifyContent: "flex-end" }}>
+                <AccessButton
+                  basic
+                  rounded
+                  raised
+                  onClick={() =>
+                    removeSubscriber(
+                      {
+                        id: topicSubscriber.id,
+                        name: topicSubscriber.name,
+                      } as Topic,
+                      topicSubscriber.subscribers!,
+                    )
+                  }
+                  size="small"
+                  aria-label={`Remove from Topic ${topicSubscriber?.name}, Subscriber ${topicSubscriber.subscribers.garden ?? "*"} ${topicSubscriber.subscribers.namespace ?? "*"} ${topicSubscriber.subscribers.system ?? "*"} ${topicSubscriber.subscribers.version ?? "*"} ${topicSubscriber.subscribers.instance ?? "*"} ${topicSubscriber.subscribers.command ?? "*"}`}
+                  tooltip="Remove Subscriber"
+                  config={config}
+                  permission="PLUGIN_ADMIN"
+                  sx={{ ml: 1 }}
+                >
+                  <FontAwesomeIcon icon="xmark-square" />
+                </AccessButton>
+              </Grid>
             )}
-        </Box>
+        </Grid>
       );
     }
 
@@ -504,45 +516,45 @@ function TopicIndex({
               {topic.name}
             </Typography>
           </Grid>
-          <Grid>
-            <AccessButton
-              basic
-              rounded
-              raised
-              onClick={() =>
-                addRequestItem({
-                  topic: { id: topic.id } as Topic,
-                  type: "VIEW_TOPIC",
-                })
-              }
-              tooltip="View Topic"
-              sx={{ mr: 2 }}
-              aria-label={`ViewTopic ${topic?.name}`}
-              config={config}
-              permission="PLUGIN_ADMIN"
-            >
-              <FontAwesomeIcon icon="eye" />
-            </AccessButton>
-            <AccessButton
-              basic
-              rounded
-              raised
-              onClick={() =>
-                addSubscriber({ id: topic.id, name: topic?.name } as Topic)
-              }
-              aria-label={`Add Subscriber to Topic ${topic?.name}`}
-              tooltip="Add Subscriber"
-              sx={{ mr: 2 }}
-              config={config}
-              permission="PLUGIN_ADMIN"
-            >
-              <FontAwesomeIcon icon="square-plus" />
-            </AccessButton>
-            {has_only_dynamic_subscribers && (
+          <Grid sx={{ justifyContent: "flex-end" }}>
+            <ButtonGroup sx={{ ml: 1 }}>
               <AccessButton
                 basic
                 rounded
                 raised
+                onClick={() =>
+                  addRequestItem({
+                    topic: { id: topic.id } as Topic,
+                    type: "VIEW_TOPIC",
+                  })
+                }
+                tooltip="View Topic"
+                aria-label={`ViewTopic ${topic?.name}`}
+                config={config}
+                permission="PLUGIN_ADMIN"
+              >
+                <FontAwesomeIcon icon="eye" />
+              </AccessButton>
+              <AccessButton
+                basic
+                rounded
+                raised
+                onClick={() =>
+                  addSubscriber({ id: topic.id, name: topic?.name } as Topic)
+                }
+                aria-label={`Add Subscriber to Topic ${topic?.name}`}
+                tooltip="Add Subscriber"
+                config={config}
+                permission="PLUGIN_ADMIN"
+                sx={{ ml: 1 }}
+              >
+                <FontAwesomeIcon icon="square-plus" />
+              </AccessButton>
+              <AccessButton
+                basic
+                rounded
+                raised
+                disabled={has_only_dynamic_subscribers !== true}
                 onClick={() =>
                   deleteTopic({ id: topic.id, name: topic.name } as Topic)
                 }
@@ -550,10 +562,11 @@ function TopicIndex({
                 tooltip="Delete Topic"
                 config={config}
                 permission="PLUGIN_ADMIN"
+                sx={{ ml: 1 }}
               >
                 <FontAwesomeIcon icon="trash" />
               </AccessButton>
-            )}
+            </ButtonGroup>
           </Grid>
         </Grid>
       );
@@ -566,21 +579,21 @@ function TopicIndex({
     };
 
     const header = (
-      <Grid container>
-        <Grid size="grow" sx={{ display: "flex", alignItems: "center", m: 2 }}>
-          <Typography variant="h3" component="h2">
-            Topics
-          </Typography>
-        </Grid>
-        <Grid sx={{ display: "flex", alignItems: "center", m: 2 }}>
-          <Checkbox
-            id={`hide-generated`}
-            checked={hideGenerated}
-            onChange={handleChange}
-          />
-          <Typography variant="button">Hide Generated</Typography>
-        </Grid>
-      </Grid>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          m: 2,
+        }}
+      >
+        <Checkbox
+          id={`hide-generated`}
+          checked={hideGenerated}
+          onChange={handleChange}
+        />
+        <Typography variant="button">Hide Generated</Typography>
+      </Box>
     );
 
     const tableColumns = [
