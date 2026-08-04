@@ -70,48 +70,26 @@ describe("SchedulerViewCard", () => {
           jobId="1"
           editJob={() => {}}
           deleteJob={() => {}}
-          removeItem={() => {}}
           config={{}}
-          isDialog={true}
         />
       </SnackbarProvider>,
     );
 
     await waitFor(() => {
       expect(screen.getByText("example_job")).toBeInTheDocument();
-      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent(
-        "Status:RUNNING",
-      );
-      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent(
-        "Coalesce:False",
-      );
-      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent(
-        "Misfire Grace Time:1",
-      );
-      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent(
-        "Max Instances:1",
-      );
-      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent(
-        "Timeout:5",
-      );
-      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent(
-        "Trigger Type:CRON",
-      );
+      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent("RUNNING");
+      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent("False");
+      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent("5");
+      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent("CRON");
       expect(screen.getAllByRole("paragraph")[6]).toHaveTextContent(
-        "Cron Expression:* * * * * * *",
+        "* * * * * * *",
       );
-      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent(
-        "Start Date:N/A",
-      );
-      expect(screen.getAllByRole("paragraph")[8]).toHaveTextContent(
-        "End Date:N/A",
-      );
-      expect(screen.getAllByRole("paragraph")[9]).toHaveTextContent(
-        "Timezone:N/A",
-      );
-      expect(screen.getAllByRole("paragraph")[10]).toHaveTextContent(
-        "Jitter:N/A",
-      );
+      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent("N/A");
+      expect(screen.getAllByRole("paragraph")[8]).toHaveTextContent("N/A");
+      expect(screen.getAllByRole("paragraph")[9]).toHaveTextContent("N/A");
+      expect(screen.getAllByRole("paragraph")[10]).toHaveTextContent("N/A");
     });
   });
 
@@ -256,19 +234,15 @@ describe("SchedulerViewCard", () => {
           jobId="1"
           editJob={() => {}}
           deleteJob={() => {}}
-          removeItem={() => {}}
           config={{}}
-          isDialog={true}
         />
       </SnackbarProvider>,
     );
 
     await waitFor(() => {
-      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent(
-        "Trigger Type:CRON",
-      );
+      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent("CRON");
       expect(screen.getAllByRole("paragraph")[6]).toHaveTextContent(
-        `Cron Expression:${expected}`,
+        `${expected}`,
       );
     });
   });
@@ -306,48 +280,26 @@ describe("SchedulerViewCard", () => {
           jobId="1"
           editJob={() => {}}
           deleteJob={() => {}}
-          removeItem={() => {}}
           config={{}}
-          isDialog={true}
         />
       </SnackbarProvider>,
     );
 
     await waitFor(() => {
       expect(screen.getByText("example_job")).toBeInTheDocument();
-      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent(
-        "Status:RUNNING",
-      );
-      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent(
-        "Coalesce:False",
-      );
-      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent(
-        "Misfire Grace Time:1",
-      );
-      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent(
-        "Max Instances:1",
-      );
-      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent(
-        "Timeout:5",
-      );
-      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent(
-        "Trigger Type:INTERVAL",
-      );
+      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent("RUNNING");
+      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent("False");
+      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent("5");
+      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent("INTERVAL");
       expect(screen.getAllByRole("paragraph")[6]).toHaveTextContent(
-        "Interval:Every 5 Seconds",
+        "Every 5 Seconds",
       );
-      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent(
-        "Start Date:N/A",
-      );
-      expect(screen.getAllByRole("paragraph")[8]).toHaveTextContent(
-        "End Date:N/A",
-      );
-      expect(screen.getAllByRole("paragraph")[9]).toHaveTextContent(
-        "Timezone:N/A",
-      );
-      expect(screen.getAllByRole("paragraph")[10]).toHaveTextContent(
-        "Jitter:N/A",
-      );
+      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent("N/A");
+      expect(screen.getAllByRole("paragraph")[8]).toHaveTextContent("N/A");
+      expect(screen.getAllByRole("paragraph")[9]).toHaveTextContent("N/A");
+      expect(screen.getAllByRole("paragraph")[10]).toHaveTextContent("N/A");
     });
   });
 
@@ -409,19 +361,15 @@ describe("SchedulerViewCard", () => {
           jobId="1"
           editJob={() => {}}
           deleteJob={() => {}}
-          removeItem={() => {}}
           config={{}}
-          isDialog={true}
         />
       </SnackbarProvider>,
     );
 
     await waitFor(() => {
-      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent(
-        "Trigger Type:INTERVAL",
-      );
+      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent("INTERVAL");
       expect(screen.getAllByRole("paragraph")[6]).toHaveTextContent(
-        `Interval:Every 5 ${expected}`,
+        `Every 5 ${expected}`,
       );
     });
   });
@@ -456,39 +404,23 @@ describe("SchedulerViewCard", () => {
           jobId="1"
           editJob={() => {}}
           deleteJob={() => {}}
-          removeItem={() => {}}
           config={{}}
-          isDialog={true}
         />
       </SnackbarProvider>,
     );
 
     await waitFor(() => {
       expect(screen.getByText("example_job")).toBeInTheDocument();
-      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent(
-        "Status:RUNNING",
-      );
-      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent(
-        "Coalesce:False",
-      );
-      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent(
-        "Misfire Grace Time:1",
-      );
-      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent(
-        "Max Instances:1",
-      );
-      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent(
-        "Timeout:5",
-      );
-      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent(
-        "Trigger Type:DATE",
-      );
+      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent("RUNNING");
+      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent("False");
+      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent("5");
+      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent("DATE");
       expect(screen.getAllByRole("paragraph")[6]).toHaveTextContent(
-        "Run Date:1/1/2000 12:00:00 AM",
+        "1/1/2000 12:00:00 AM",
       );
-      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent(
-        "Timezone:UTC",
-      );
+      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent("UTC");
     });
   });
 
@@ -527,54 +459,28 @@ describe("SchedulerViewCard", () => {
           jobId="1"
           editJob={() => {}}
           deleteJob={() => {}}
-          removeItem={() => {}}
           config={{}}
-          isDialog={true}
         />
       </SnackbarProvider>,
     );
 
     await waitFor(() => {
       expect(screen.getByText("example_job")).toBeInTheDocument();
-      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent(
-        "Status:RUNNING",
-      );
-      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent(
-        "Coalesce:False",
-      );
-      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent(
-        "Misfire Grace Time:1",
-      );
-      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent(
-        "Max Instances:1",
-      );
-      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent(
-        "Timeout:5",
-      );
-      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent(
-        "Trigger Type:FILE",
-      );
+      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent("RUNNING");
+      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent("False");
+      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent("5");
+      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent("FILE");
       expect(screen.getAllByRole("paragraph")[6]).toHaveTextContent(
-        "Path:/path/to/files",
+        "/path/to/files",
       );
-      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent(
-        "Pattern:*.txt",
-      );
-      expect(screen.getAllByRole("paragraph")[8]).toHaveTextContent(
-        "Recursive:True",
-      );
-      expect(screen.getAllByRole("paragraph")[9]).toHaveTextContent(
-        "Create:True",
-      );
-      expect(screen.getAllByRole("paragraph")[10]).toHaveTextContent(
-        "Modify:True",
-      );
-      expect(screen.getAllByRole("paragraph")[11]).toHaveTextContent(
-        "Delete:True",
-      );
-      expect(screen.getAllByRole("paragraph")[12]).toHaveTextContent(
-        "Move:True",
-      );
+      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent("*.txt");
+      expect(screen.getAllByRole("paragraph")[8]).toHaveTextContent("True");
+      expect(screen.getAllByRole("paragraph")[9]).toHaveTextContent("True");
+      expect(screen.getAllByRole("paragraph")[10]).toHaveTextContent("True");
+      expect(screen.getAllByRole("paragraph")[11]).toHaveTextContent("True");
+      expect(screen.getAllByRole("paragraph")[12]).toHaveTextContent("True");
     });
   });
 
@@ -620,9 +526,7 @@ describe("SchedulerViewCard", () => {
           jobId="1"
           editJob={() => {}}
           deleteJob={() => {}}
-          removeItem={() => {}}
           config={{}}
-          isDialog={true}
         />
       </SnackbarProvider>,
     );
@@ -635,9 +539,7 @@ describe("SchedulerViewCard", () => {
     await waitFor(() => {
       expect(screen.getByText("example_job")).toBeInTheDocument();
       expect(jobService.PauseJob).toHaveBeenCalled();
-      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent(
-        "Status:PAUSED",
-      );
+      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent("PAUSED");
     });
   });
 
@@ -682,9 +584,7 @@ describe("SchedulerViewCard", () => {
           jobId="1"
           editJob={() => {}}
           deleteJob={() => {}}
-          removeItem={() => {}}
           config={{}}
-          isDialog={true}
         />
       </SnackbarProvider>,
     );
@@ -698,9 +598,7 @@ describe("SchedulerViewCard", () => {
     await waitFor(() => {
       expect(screen.getByText("example_job")).toBeInTheDocument();
       expect(jobService.ResumeJob).toHaveBeenCalled();
-      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent(
-        "Status:RUNNING",
-      );
+      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent("RUNNING");
     });
   });
 
@@ -745,9 +643,7 @@ describe("SchedulerViewCard", () => {
             jobId="1"
             editJob={() => {}}
             deleteJob={deleteJobMock}
-            removeItem={() => {}}
             config={{}}
-            isDialog={true}
           />
         </SnackbarProvider>
       </>,
@@ -757,7 +653,7 @@ describe("SchedulerViewCard", () => {
       name: /Delete Job/i,
     });
     await userEvent.click(deleteButton);
-    await userEvent.click(screen.getByRole("button", { name: /yes/i }));
+    await userEvent.click(screen.getByRole("button", { name: /Accept/i }));
 
     await waitFor(() => {
       expect(screen.getByText("example_job")).toBeInTheDocument();
@@ -803,9 +699,7 @@ describe("SchedulerViewCard", () => {
           jobId="1"
           editJob={() => {}}
           deleteJob={() => {}}
-          removeItem={() => {}}
           config={{}}
-          isDialog={true}
         />
       </SnackbarProvider>,
     );
@@ -818,60 +712,6 @@ describe("SchedulerViewCard", () => {
     await waitFor(() => {
       expect(screen.getByText("example_job")).toBeInTheDocument();
       expect(jobService.RunAdhocJob).toHaveBeenCalled();
-    });
-  });
-
-  test("Close Job Button", async () => {
-    const mockJob = {
-      id: "1",
-      name: "example_job",
-      trigger_type: "cron",
-      trigger: {
-        year: "*",
-        month: "*",
-        day: "*",
-        week: "*",
-        dayOfWeek: "*",
-        hour: "*",
-        minute: "*",
-        second: "*",
-      } as CronTrigger,
-      coalesce: false,
-      misfire_grace_time: 1,
-      next_run_time: null,
-      status: "PAUSED",
-      max_instances: 1,
-      timeout: 5,
-    } as Job;
-
-    vi.mocked(jobService.GetJob).mockResolvedValue(mockJob);
-    vi.mocked(requestService.GetRequestList).mockResolvedValue([
-      [],
-      new Headers(),
-    ]);
-
-    const closeJobMock = vi.fn().mockResolvedValue({} as Job);
-
-    render(
-      <SnackbarProvider>
-        <SchedulerViewCard
-          listeners={{}}
-          jobId="1"
-          editJob={() => {}}
-          deleteJob={() => {}}
-          removeItem={closeJobMock}
-          config={{}}
-          isDialog={false}
-        />
-      </SnackbarProvider>,
-    );
-
-    const closeButton = await screen.findByTestId("CLOSE_JOB_" + mockJob?.name);
-    await userEvent.click(closeButton);
-
-    await waitFor(() => {
-      expect(screen.getByText("example_job")).toBeInTheDocument();
-      expect(closeJobMock).toHaveBeenCalled();
     });
   });
 
@@ -921,9 +761,7 @@ describe("SchedulerViewCard", () => {
           jobId="1"
           editJob={() => {}}
           deleteJob={() => {}}
-          removeItem={() => {}}
           config={{}}
-          isDialog={true}
         />
       </SnackbarProvider>,
     );
