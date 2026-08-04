@@ -1,5 +1,12 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Autocomplete, Box, Card, CardContent, TextField } from "@mui/material";
+import {
+  Autocomplete,
+  Box,
+  Card,
+  CardContent,
+  FormLabel,
+  TextField,
+} from "@mui/material";
 import { grey } from "@mui/material/colors";
 import React, { useEffect, useRef, useState } from "react";
 import { CardHeader } from "react-bootstrap";
@@ -126,11 +133,11 @@ function RoleScopeCard({
   }
 
   return (
-    <div className="flex flex-column gap-2">
-      <label className="font-bold" htmlFor={`${scopeName}Scopes`}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      <FormLabel sx={{ fontWeight: "bold" }} htmlFor={`${scopeName}Scopes`}>
         {scopeName.charAt(0).toUpperCase() + scopeName.slice(1)} Scopes
-      </label>
-      <div className="card" id={`${scopeName}Scopes`}>
+      </FormLabel>
+      <div id={`${scopeName}Scopes`}>
         {scopeList.map((item, index) => (
           <>
             <Card
@@ -161,16 +168,16 @@ function RoleScopeCard({
           </>
         ))}
         {!disabled && (
-          <div className="flex">
+          <Box sx={{ display: "flex" }}>
             <AccessButton
-              className="mt-1 mb-3"
+              sx={{ mt: 1, mb: 3 }}
               label={`Add ${scopeName}`}
               onClick={handleAddScope}
             >{`Add ${scopeName}`}</AccessButton>
-          </div>
+          </Box>
         )}
       </div>
-    </div>
+    </Box>
   );
 }
 

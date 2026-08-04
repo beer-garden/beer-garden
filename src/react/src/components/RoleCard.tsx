@@ -2,11 +2,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Alert,
   Autocomplete,
+  Box,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
+  FormLabel,
   Grid,
   TextField,
 } from "@mui/material";
@@ -248,41 +250,41 @@ function RoleCard({
             {alert.detail}
           </Alert>
         )}
-        <div className="flex flex-column gap-2">
-          <label htmlFor="roleName" className="font-bold">
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <FormLabel sx={{ fontWeight: "bold" }} htmlFor="roleName">
             Name
-          </label>
+          </FormLabel>
           <TextField
             required
             id="roleName"
             type="text"
-            className="mb-2"
+            sx={{ mb: 1 }}
             value={roleName}
             disabled={disabled}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setRoleName(e.target.value)
             }
           />
-        </div>
-        <div className="flex flex-column gap-2">
-          <label htmlFor="roleDescription" className="font-bold">
+        </Box>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <FormLabel sx={{ fontWeight: "bold" }} htmlFor="roleDescription">
             Description
-          </label>
+          </FormLabel>
           <TextField
             id="roleDescription"
             type="text"
-            className="mb-2"
+            sx={{ mb: 1 }}
             value={roleDescription}
             disabled={disabled}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setRoleDescription(e.target.value)
             }
           />
-        </div>
-        <div className="flex flex-column gap-2">
-          <label htmlFor="rolePermission" className="font-bold">
+        </Box>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <FormLabel sx={{ fontWeight: "bold" }} htmlFor="rolePermission">
             Permission
-          </label>
+          </FormLabel>
           <Autocomplete
             id="rolePermission"
             options={permissions}
@@ -293,7 +295,7 @@ function RoleCard({
             disabled={disabled}
             renderInput={(params) => <TextField {...params} />}
           />
-        </div>
+        </Box>
         <Divider sx={{ my: 2 }} />
         <RoleScopeCard
           scopeName="garden"

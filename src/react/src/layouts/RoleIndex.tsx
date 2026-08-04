@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Alert, Typography } from "@mui/material";
+import { Alert, Box, Typography } from "@mui/material";
 import { RefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
@@ -15,6 +15,7 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
+import { FAIcon } from "../services/util_service";
 
 function RoleIndex({
   config,
@@ -156,12 +157,20 @@ function RoleIndex({
 
   const header = (
     <div>
-      <div className="flex flex-wrap align-items-center justify-content-between gap-2">
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+        }}
+      >
         <Typography variant="h2" component="h1">
           Role Management
         </Typography>
 
-        <div className="flex">
+        <Box sx={{ display: "flex" }}>
           <AccessButton
             sx={buttonStyle}
             onClick={handleRescan}
@@ -186,8 +195,8 @@ function RoleIndex({
           >
             Create Role
           </AccessButton>
-        </div>
-      </div>
+        </Box>
+      </Box>
       <div>
         {config?.auth_enabled == false && (
           <Alert sx={{ mx: 1, mb: 1 }} severity="error">
@@ -235,36 +244,28 @@ function RoleIndex({
     function roleNameTemplate(role: Role) {
       if (role.protected) {
         return (
-          <div className="flex">
-            <FontAwesomeIcon
-              icon="user-shield"
-              title="Protected Role"
-              className="mr-1"
-            />
+          <Box sx={{ display: "flex" }}>
+            <FAIcon icon="user-shield" title="Protected Role" sx={{ mr: 1 }} />
             {role.name}
-          </div>
+          </Box>
         );
       } else if (role.file_generated) {
         return (
-          <div className="flex">
-            <FontAwesomeIcon
+          <Box sx={{ display: "flex" }}>
+            <FAIcon
               icon="user-tag"
               title="File Generated Role"
-              className="mr-1"
+              sx={{ mr: 1 }}
             />
             {role.name}
-          </div>
+          </Box>
         );
       } else {
         return (
-          <div className="flex">
-            <FontAwesomeIcon
-              icon="user-gear"
-              title="Unprotected Role"
-              className="mr-1"
-            />
+          <Box sx={{ display: "flex" }}>
+            <FAIcon icon="user-gear" title="Unprotected Role" sx={{ mr: 1 }} />
             {role.name}
-          </div>
+          </Box>
         );
       }
     }
@@ -275,7 +276,7 @@ function RoleIndex({
         return <></>;
       }
       return (
-        <div className="flex">
+        <Box sx={{ display: "flex" }}>
           <AccessButton
             data-testid={`duplicate-btn-${role.name}`}
             aria-label={`Duplicate ${role.name}`}
@@ -307,7 +308,7 @@ function RoleIndex({
               <FontAwesomeIcon icon="trash-can" />
             </AccessButton>
           )}
-        </div>
+        </Box>
       );
     }
 
