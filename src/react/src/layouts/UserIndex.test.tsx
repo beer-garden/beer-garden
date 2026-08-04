@@ -194,7 +194,7 @@ describe("UserIndex", () => {
 
     fireEvent.click(screen.getByTestId(`delete-user-${userTwo.id}`));
     // Click Yes on modal
-    fireEvent.click(screen.getByRole("button", { name: /yes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /accept/i }));
 
     await waitFor(() => {
       expect(userService.DeleteUser).toHaveBeenCalled();
