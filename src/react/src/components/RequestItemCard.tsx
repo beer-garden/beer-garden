@@ -92,7 +92,6 @@ function RequestItemCard({
           requestItem={requestItem}
           removeItem={removeItem}
           listeners={listeners}
-          isDialog={isDialog}
         />
       )}
     </>
