@@ -300,7 +300,7 @@ function TopicCard({
 
   return (
     <>
-      <DialogContent>
+      <DialogContent dividers>
         <Stack spacing={2}>
           {topic && (
             <Box sx={{ display: "flex" }}>
