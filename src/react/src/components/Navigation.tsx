@@ -142,23 +142,13 @@ function NavigationMenu({
     pos: 3,
   };
 
-  const workspaceTourStep: TourStepProps = {
-    prefix: tourPrefix,
-    uuid: tourUuid,
-    label: "Workspace Link",
-    content:
-      "Navigate to the Workspace to see your current workbench of requests and scheduled jobs.",
-    layer: "NAVIGATION",
-    pos: 4,
-  };
-
   const topicTourStep: TourStepProps = {
     prefix: tourPrefix,
     uuid: tourUuid,
     label: "Topics Link",
     content: "Navigate to the Topics Page to see available topics.",
     layer: "NAVIGATION",
-    pos: 5,
+    pos: 4,
   };
 
   const userTourStep: TourStepProps = {
@@ -167,7 +157,7 @@ function NavigationMenu({
     label: "Users Link",
     content: "Navigate to the Users Page to manage users.",
     layer: "NAVIGATION",
-    pos: 6,
+    pos: 5,
   };
 
   const rolesTourStep: TourStepProps = {
@@ -176,7 +166,7 @@ function NavigationMenu({
     label: "Roles Link",
     content: "Navigate to the Roles Page to manage roles.",
     layer: "NAVIGATION",
-    pos: 7,
+    pos: 6,
   };
 
   const aboutTourStep: TourStepProps = {
@@ -186,7 +176,7 @@ function NavigationMenu({
     content:
       "Navigate to the About Page to see information about the application.",
     layer: "NAVIGATION",
-    pos: 8,
+    pos: 7,
   };
 
   const [userPopperOpen, setUserPopperOpen] = React.useState(false);
@@ -538,7 +528,6 @@ function NavigationMenu({
     AddTourStep(tourStepsRef, createRequestTourStep);
     AddTourStep(tourStepsRef, requestTourStep);
     AddTourStep(tourStepsRef, schedulerTourStep);
-    AddTourStep(tourStepsRef, workspaceTourStep);
     AddTourStep(tourStepsRef, topicTourStep);
     if (authEnabled) {
       AddTourStep(tourStepsRef, userTourStep);
