@@ -373,12 +373,12 @@ export interface Role {
   description?: string;
   id?: string;
   name?: string;
-  scope_gardens?: string[];
-  scope_namespaces?: string[];
-  scope_systems?: string[];
-  scope_instances?: string[];
-  scope_versions?: string[];
-  scope_commands?: string[];
+  scope_gardens?: any[];
+  scope_namespaces?: any[];
+  scope_systems?: any[];
+  scope_instances?: any[];
+  scope_versions?: any[];
+  scope_commands?: any[];
   protected?: boolean;
   file_generated?: boolean;
 }

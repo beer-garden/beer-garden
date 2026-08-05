@@ -350,7 +350,7 @@ function RoleIndex({
               label: "Garden Scope",
               sortable: true,
               filterable: true,
-              isStrArray: true,
+              isString: true,
             },
             {
               id: "scope_namespaces",
@@ -358,7 +358,7 @@ function RoleIndex({
               label: "Namespace Scope",
               sortable: true,
               filterable: true,
-              isStrArray: true,
+              isString: true,
             },
             {
               id: "scope_systems",
@@ -366,7 +366,7 @@ function RoleIndex({
               label: "System Scope",
               sortable: true,
               filterable: true,
-              isStrArray: true,
+              isString: true,
             },
             {
               id: "scope_versions",
@@ -374,7 +374,7 @@ function RoleIndex({
               label: "Version Scope",
               sortable: true,
               filterable: true,
-              isStrArray: true,
+              isString: true,
             },
             {
               id: "scope_instances",
@@ -382,7 +382,7 @@ function RoleIndex({
               label: "Instance Scope",
               sortable: true,
               filterable: true,
-              isStrArray: true,
+              isString: true,
             },
             {
               id: "scope_commands",
@@ -390,7 +390,7 @@ function RoleIndex({
               label: "Command Scope",
               sortable: true,
               filterable: true,
-              isStrArray: true,
+              isString: true,
             },
             {
               id: "action",
