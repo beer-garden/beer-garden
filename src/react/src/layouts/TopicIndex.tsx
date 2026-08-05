@@ -620,6 +620,8 @@ function TopicIndex({
         label: "Topic",
         field: "name",
         isString: true,
+        sortable: true,
+        filterable: true,
         template: topicButtonTemplate,
       },
       {
