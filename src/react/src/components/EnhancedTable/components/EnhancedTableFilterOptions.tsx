@@ -271,6 +271,10 @@ export const EnhancedTableFilterOptions = ({
             (tableColumn) =>
               tableColumn.field === column && tableColumn.isNumeric === true,
           );
+          const tableColumnIsStrArray = columns.some(
+            (tableColumn) =>
+              tableColumn.field === column && tableColumn.isStrArray === true,
+          );
           const tableColumnIsArray = columns.some(
             (tableColumn) =>
               tableColumn.field === column && tableColumn.options !== undefined,
@@ -292,7 +296,8 @@ export const EnhancedTableFilterOptions = ({
             ) ||
               (tableColumnIsDate === false &&
                 tableColumnIsNumeric === false &&
-                tableColumnIsArray === false));
+                tableColumnIsArray === false &&
+                tableColumnIsStrArray === false));
 
           if (
             filter.isDate !== tableColumnIsDate ||
@@ -335,6 +340,7 @@ export const EnhancedTableFilterOptions = ({
             isDate: tableColumnIsDate,
             isNumeric: tableColumnIsNumeric,
             isString: tableColumnIsString,
+            isStrArray: tableColumnIsStrArray,
             options: tableColumnOptions,
           } as FilterColumn;
         }

@@ -111,6 +111,8 @@ const EnhancedTable = ({
       if (columnValue !== undefined && columnValue !== null) {
         if (column.isDate) {
           return formatDate(columnValue);
+        } else if (column.isStrArray) {
+          return columnValue.join(", ");
         }
         return columnValue;
       }
@@ -158,6 +160,12 @@ const EnhancedTable = ({
 
           if (compare === undefined) {
             return false;
+          }
+
+          if (filter.isStrArray) {
+            if (Array.isArray(compare)) {
+              compare = compare.join(", ");
+            }
           }
 
           if (filter.isNumeric) {
@@ -291,6 +299,19 @@ const EnhancedTable = ({
           return order === "asc"
             ? (field_a as string).localeCompare(field_b as string)
             : (field_b as string).localeCompare(field_a as string);
+        }
+        if (
+          columns.some(
+            (column) => column.field === orderBy && column.isStrArray,
+          )
+        ) {
+          return order === "asc"
+            ? (field_a.join(", ") as string).localeCompare(
+                field_b.join(", ") as string,
+              )
+            : (field_b.join(", ") as string).localeCompare(
+                field_a.join(", ") as string,
+              );
         }
         return order === "asc" ? field_a - field_b : field_b - field_a;
       }
