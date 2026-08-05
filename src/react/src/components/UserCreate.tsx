@@ -3,6 +3,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Grid,
   Stack,
 } from "@mui/material";
 import TextField from "@mui/material/TextField";
@@ -10,6 +11,7 @@ import { useState } from "react";
 
 import { useSnackbar } from "../providers/SnackbarProvider";
 import { CreateUser } from "../services/user_service";
+import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
 
 function UserCreate({
@@ -94,7 +96,21 @@ function UserCreate({
         handleUserCreateDialogClose();
       }}
     >
-      <DialogTitle>Create User</DialogTitle>
+      <DialogTitle>
+        <Grid container>
+          <Grid size="grow">Create User</Grid>
+          <Grid>
+            <AccessButton
+              sx={{ mr: 2 }}
+              onClick={() => {
+                handleUserCreateDialogClose();
+              }}
+            >
+              <FAIcon icon="xmark" />
+            </AccessButton>
+          </Grid>
+        </Grid>
+      </DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2}>
           <TextField
