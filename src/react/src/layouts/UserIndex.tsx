@@ -213,25 +213,25 @@ function UserIndex({
   function userNameTemplate(rowData: User) {
     if (rowData.protected) {
       return (
-        <Box {...GenerateTourProps(protectedUserTourStep)}>
+        <span {...GenerateTourProps(protectedUserTourStep)}>
           <FAIcon icon="user-shield" title="Protected User" sx={{ mr: 1 }} />
           {rowData.username}
-        </Box>
+        </span>
       );
     }
     if (rowData.file_generated) {
       return (
-        <Box {...GenerateTourProps(fileGeneratedUserTourStep)}>
+        <span {...GenerateTourProps(fileGeneratedUserTourStep)}>
           <FAIcon icon="user-tag" title="File Generated User" sx={{ mr: 1 }} />
           {rowData.username}
-        </Box>
+        </span>
       );
     }
     return (
-      <Box {...GenerateTourProps(userUserTourStep)}>
+      <span {...GenerateTourProps(userUserTourStep)}>
         <FAIcon icon="user" title="Regular User" sx={{ mr: 1 }} />
         {rowData.username}
-      </Box>
+      </span>
     );
   }
   function maxPermissionTemplate(rowData: User) {
@@ -246,35 +246,37 @@ function UserIndex({
     }
 
     if (permissions.length === 0) {
-      return <Box {...GenerateTourProps(maxPermissionUserTourStep)}>None</Box>;
+      return (
+        <span {...GenerateTourProps(maxPermissionUserTourStep)}>None</span>
+      );
     }
     if (permissions.includes("GARDEN_ADMIN")) {
       return (
-        <Box {...GenerateTourProps(maxPermissionUserTourStep)}>
+        <span {...GenerateTourProps(maxPermissionUserTourStep)}>
           GARDEN_ADMIN
-        </Box>
+        </span>
       );
     }
     if (permissions.includes("PLUGIN_ADMIN")) {
       return (
-        <Box {...GenerateTourProps(maxPermissionUserTourStep)}>
+        <span {...GenerateTourProps(maxPermissionUserTourStep)}>
           PLUGIN_ADMIN
-        </Box>
+        </span>
       );
     }
     if (permissions.includes("OPERATOR")) {
       return (
-        <Box {...GenerateTourProps(maxPermissionUserTourStep)}>OPERATOR</Box>
+        <span {...GenerateTourProps(maxPermissionUserTourStep)}>OPERATOR</span>
       );
     }
     return (
-      <Box {...GenerateTourProps(maxPermissionUserTourStep)}>READ_ONLY</Box>
+      <span {...GenerateTourProps(maxPermissionUserTourStep)}>READ_ONLY</span>
     );
   }
 
   function localRolesTemplate(rowData: User) {
     return (
-      <Box {...GenerateTourProps(localRolesUserTourStep)}>
+      <div {...GenerateTourProps(localRolesUserTourStep)}>
         {rowData?.local_roles?.map((role: Role) => (
           <AccessButton
             id={role.id}
@@ -290,13 +292,13 @@ function UserIndex({
             {role.name}
           </AccessButton>
         ))}
-      </Box>
+      </div>
     );
   }
 
   function upstreamRolesTemplate(rowData: User) {
     return (
-      <Box {...GenerateTourProps(upstreamRolesUserTourStep)}>
+      <div {...GenerateTourProps(upstreamRolesUserTourStep)}>
         {rowData?.upstream_roles?.map((role: Role) => (
           <AccessButton
             id={role.id}
@@ -312,7 +314,7 @@ function UserIndex({
             {role.name}
           </AccessButton>
         ))}
-      </Box>
+      </div>
     );
   }
 
@@ -322,7 +324,9 @@ function UserIndex({
       rowData.user_alias_mapping.length === 0
     ) {
       return (
-        <Box {...GenerateTourProps(aliasGardenAccountsUserTourStep)}>None</Box>
+        <span {...GenerateTourProps(aliasGardenAccountsUserTourStep)}>
+          None
+        </span>
       );
     }
     return (
