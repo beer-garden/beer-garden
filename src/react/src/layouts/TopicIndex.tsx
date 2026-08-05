@@ -136,6 +136,17 @@ function TopicIndex({
     }
   }, [dialogVisible]);
 
+  function findTopic(topicId?: string) {
+    if (topicId && topicsRef) {
+      for (const topic of topicsRef.current) {
+        if (topic.id === topicId) {
+          return topic;
+        }
+      }
+    }
+    return undefined;
+  }
+
   function openTopicDialog() {
     setDialogVisible(true);
   }
@@ -199,7 +210,16 @@ function TopicIndex({
   }
 
   function TopicTable() {
-    function clearCount(clearTopic: Topic, clearSubscriber?: Subscriber) {
+    function clearCount(clearTopic?: Topic, clearSubscriber?: Subscriber) {
+      if (clearTopic === undefined) {
+        showSnackbar({
+          severity: "error",
+          summary: "Error",
+          detail: `Error finding topic associated with subscriber`,
+          life: 3000,
+        });
+        return;
+      }
       const accept = () => {
         ResetCount(clearTopic.id, clearSubscriber)
           .then((updatedTopic: Topic) => {
@@ -269,7 +289,28 @@ function TopicIndex({
       );
     }
 
-    function removeSubscriber(topic: Topic, subscriber: Subscriber) {
+    function removeSubscriber(topic?: Topic, subscriber?: Subscriber) {
+      if (topic === undefined) {
+        showSnackbar({
+          severity: "error",
+          summary: "Error",
+          detail: `Error finding topic associated with subscriber`,
+          life: 3000,
+        });
+
+        return;
+      }
+
+      if (subscriber === undefined) {
+        showSnackbar({
+          severity: "error",
+          summary: "Error",
+          detail: `Error finding subscriber associated with topic`,
+          life: 3000,
+        });
+
+        return;
+      }
       RemoveSubscriber(topic.id!, subscriber)
         .then(() => {
           updateTopics(
@@ -317,12 +358,7 @@ function TopicIndex({
                 size="small"
                 aria-label={`Clear Publisher Count ${topicSubscriber?.publisher_count} from Topic ${topicSubscriber?.name}`}
                 tooltip="Clear Publisher Count"
-                onClick={() =>
-                  clearCount({
-                    id: topicSubscriber.id,
-                    name: topicSubscriber.name,
-                  } as Topic)
-                }
+                onClick={() => clearCount(findTopic(topicSubscriber.id))}
                 config={config}
                 permission="PLUGIN_ADMIN"
                 sx={{ ml: 1 }}
@@ -335,7 +371,16 @@ function TopicIndex({
       );
     }
 
-    function deleteTopic(topic: Topic) {
+    function deleteTopic(topic?: Topic) {
+      if (topic === undefined) {
+        showSnackbar({
+          severity: "error",
+          summary: "Error",
+          detail: `Error finding topic to delete`,
+          life: 3000,
+        });
+        return;
+      }
       const accept = () => {
         if (!topic.id) {
           return;
@@ -380,7 +425,17 @@ function TopicIndex({
       );
     }
 
-    function addSubscriber(topic: Topic) {
+    function addSubscriber(topic?: Topic) {
+      if (topic === undefined) {
+        showSnackbar({
+          severity: "error",
+          summary: "Error",
+          detail: `Error finding topic to add subscriber`,
+          life: 3000,
+        });
+
+        return;
+      }
       setTopicName(topic.name || "");
       setSubscriberList([
         {
@@ -462,10 +517,7 @@ function TopicIndex({
                   tooltip="Clear count"
                   onClick={() =>
                     clearCount(
-                      {
-                        id: topicSubscriber.id,
-                        name: topicSubscriber.name,
-                      } as Topic,
+                      findTopic(topicSubscriber.id),
                       topicSubscriber.subscribers as Subscriber,
                     )
                   }
@@ -498,11 +550,8 @@ function TopicIndex({
                   raised
                   onClick={() =>
                     removeSubscriber(
-                      {
-                        id: topicSubscriber.id,
-                        name: topicSubscriber.name,
-                      } as Topic,
-                      topicSubscriber.subscribers!,
+                      findTopic(topicSubscriber.id),
+                      topicSubscriber.subscribers,
                     )
                   }
                   size="small"
@@ -542,7 +591,7 @@ function TopicIndex({
                 raised
                 onClick={() =>
                   addRequestItem({
-                    topic: { id: topic.id } as Topic,
+                    topic: findTopic(topic.id),
                     type: "VIEW_TOPIC",
                   })
                 }
@@ -557,9 +606,7 @@ function TopicIndex({
                 basic
                 rounded
                 raised
-                onClick={() =>
-                  addSubscriber({ id: topic.id, name: topic?.name } as Topic)
-                }
+                onClick={() => addSubscriber(findTopic(topic.id))}
                 aria-label={`Add Subscriber to Topic ${topic?.name}`}
                 tooltip="Add Subscriber"
                 config={config}
@@ -573,9 +620,7 @@ function TopicIndex({
                 rounded
                 raised
                 disabled={has_only_dynamic_subscribers !== true}
-                onClick={() =>
-                  deleteTopic({ id: topic.id, name: topic.name } as Topic)
-                }
+                onClick={() => deleteTopic(findTopic(topic.id))}
                 aria-label={`Delete Topic ${topic?.name}`}
                 tooltip="Delete Topic"
                 config={config}
