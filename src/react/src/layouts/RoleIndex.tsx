@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Alert, Box, Typography } from "@mui/material";
+import { Alert, Box, ButtonGroup, Typography } from "@mui/material";
 import { RefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
@@ -277,37 +277,39 @@ function RoleIndex({
       }
       return (
         <Box sx={{ display: "flex" }}>
-          <AccessButton
-            data-testid={`duplicate-btn-${role.name}`}
-            aria-label={`Duplicate ${role.name}`}
-            tooltip={`Duplicate ${role.name}`}
-            onClick={() => handleLoadRole(role, true)}
-            {...GenerateTourProps(duplicateRoleTourStep)}
-          >
-            <FontAwesomeIcon icon="clone" />
-          </AccessButton>
-          {!role.file_generated && !role.protected && (
+          <ButtonGroup>
             <AccessButton
-              data-testid={`edit-btn-${role.name}`}
-              aria-label={`Edit ${role.name}`}
-              tooltip={`Edit ${role.name}`}
-              onClick={() => handleLoadRole(role, false)}
-              {...GenerateTourProps(editRoleTourStep)}
+              data-testid={`duplicate-btn-${role.name}`}
+              aria-label={`Duplicate ${role.name}`}
+              tooltip={`Duplicate ${role.name}`}
+              onClick={() => handleLoadRole(role, true)}
+              {...GenerateTourProps(duplicateRoleTourStep)}
             >
-              <FontAwesomeIcon icon="pencil" />
+              <FontAwesomeIcon icon="clone" />
             </AccessButton>
-          )}
-          {!role.file_generated && !role.protected && (
-            <AccessButton
-              data-testid={`delete-btn-${role.name}`}
-              aria-label={`Delete ${role.name}`}
-              tooltip={`Delete ${role.name}`}
-              onClick={() => handleDeleteRole(role)}
-              {...GenerateTourProps(deleteRoleTourStep)}
-            >
-              <FontAwesomeIcon icon="trash-can" />
-            </AccessButton>
-          )}
+            {!role.file_generated && !role.protected && (
+              <AccessButton
+                data-testid={`edit-btn-${role.name}`}
+                aria-label={`Edit ${role.name}`}
+                tooltip={`Edit ${role.name}`}
+                onClick={() => handleLoadRole(role, false)}
+                {...GenerateTourProps(editRoleTourStep)}
+              >
+                <FontAwesomeIcon icon="pencil" />
+              </AccessButton>
+            )}
+            {!role.file_generated && !role.protected && (
+              <AccessButton
+                data-testid={`delete-btn-${role.name}`}
+                aria-label={`Delete ${role.name}`}
+                tooltip={`Delete ${role.name}`}
+                onClick={() => handleDeleteRole(role)}
+                {...GenerateTourProps(deleteRoleTourStep)}
+              >
+                <FontAwesomeIcon icon="trash-can" />
+              </AccessButton>
+            )}
+          </ButtonGroup>
         </Box>
       );
     }
@@ -348,49 +350,49 @@ function RoleIndex({
               id: "scope_gardens",
               field: "scope_gardens",
               label: "Garden Scope",
-              sortable: true,
-              filterable: true,
-              isString: true,
+              template: (role: Role) => {
+                return <span>{role.scope_gardens?.join(", ")}</span>;
+              },
             },
             {
               id: "scope_namespaces",
               field: "scope_namespaces",
               label: "Namespace Scope",
-              sortable: true,
-              filterable: true,
-              isString: true,
+              template: (role: Role) => {
+                return <span>{role.scope_namespaces?.join(", ")}</span>;
+              },
             },
             {
               id: "scope_systems",
               field: "scope_systems",
               label: "System Scope",
-              sortable: true,
-              filterable: true,
-              isString: true,
+              template: (role: Role) => {
+                return <span>{role.scope_systems?.join(", ")}</span>;
+              },
             },
             {
               id: "scope_versions",
               field: "scope_versions",
               label: "Version Scope",
-              sortable: true,
-              filterable: true,
-              isString: true,
+              template: (role: Role) => {
+                return <span>{role.scope_versions?.join(", ")}</span>;
+              },
             },
             {
               id: "scope_instances",
               field: "scope_instances",
               label: "Instance Scope",
-              sortable: true,
-              filterable: true,
-              isString: true,
+              template: (role: Role) => {
+                return <span>{role.scope_instances?.join(", ")}</span>;
+              },
             },
             {
               id: "scope_commands",
               field: "scope_commands",
               label: "Command Scope",
-              sortable: true,
-              filterable: true,
-              isString: true,
+              template: (role: Role) => {
+                return <span>{role.scope_commands?.join(", ")}</span>;
+              },
             },
             {
               id: "action",
