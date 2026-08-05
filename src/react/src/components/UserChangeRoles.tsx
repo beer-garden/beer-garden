@@ -177,6 +177,7 @@ function UserChangeRoles({
           columns={[
             {
               id: "selected",
+              field: "selected",
               label: (
                 <Checkbox
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -189,6 +190,9 @@ function UserChangeRoles({
                 />
               ),
               template: roleSelectionTemplate,
+              sortable: true,
+              filterable: true,
+              isBoolean: true,
             },
             {
               id: "name",
@@ -268,13 +272,17 @@ function UserChangeRoles({
         />
       </DialogContent>
       <DialogActions>
-        <AccessButton onClick={handleUserRolesDialogClose} label="Close" />
+        <AccessButton onClick={handleUserRolesDialogClose} label="Close">
+          Close
+        </AccessButton>
         <AccessButton
           data-testid={`submit-btn-dialog`}
           color="error"
           onClick={updateRoles}
           label="Submit"
-        />
+        >
+          Submit
+        </AccessButton>
       </DialogActions>
     </Dialog>
   );
