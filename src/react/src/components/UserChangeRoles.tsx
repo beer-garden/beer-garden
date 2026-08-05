@@ -52,6 +52,7 @@ function UserChangeRoles({
     return (
       <Checkbox
         checked={role.selected}
+        aria-label={`Row ${role.selected ? "Selected":"Unselected"} ${role.id}`}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
           if (role.name) {
             selectRole(role.name, event.target.checked);
