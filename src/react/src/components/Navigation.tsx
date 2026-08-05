@@ -24,6 +24,7 @@ import CurrentRequestsTemplate from "../components/CurrentRequestsTemplate";
 import UserLogin from "../components/UserLogin";
 import { Config, RequestItem, TourStepProps } from "../models/models";
 import { useSnackbar } from "../providers/SnackbarProvider";
+import { checkPermission } from "../services/permission_service";
 import {
   ClearRefresh,
   ClearToken,
@@ -38,7 +39,6 @@ import {
 import { GetCurrentUser } from "../services/user_service";
 import { ClearThemes, FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
-import HasAccess from "./HasAccess";
 import UserOverlay from "./UserOverlay";
 
 interface linkProps {
@@ -396,40 +396,36 @@ function NavigationMenu({
       label: "Roles",
       buttonTemplate: () => {
         return (
-          <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
-            <Button
-              sx={navButtonStyles}
-              component={NavLink}
-              to="/roles"
-              onKeyDown={handleKeyDown}
-              {...GenerateTourProps(rolesTourStep)}
-            >
-              <Stack direction="row" spacing={1}>
-                <FAIcon icon="user-gear" />
-                <Box component="span">Roles</Box>
-              </Stack>
-            </Button>
-          </HasAccess>
+          <Button
+            sx={navButtonStyles}
+            component={NavLink}
+            to="/roles"
+            onKeyDown={handleKeyDown}
+            {...GenerateTourProps(rolesTourStep)}
+          >
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="user-gear" />
+              <Box component="span">Roles</Box>
+            </Stack>
+          </Button>
         );
       },
       linkTemplate: () => {
         return (
-          <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
-            <Link
-              component={NavLink}
-              underline="none"
-              to="/roles"
-              onKeyDown={handleKeyDown}
-            >
-              <Stack direction="row" spacing={1}>
-                <FAIcon icon="user-gear" />
-                <Box component="span">Roles</Box>
-              </Stack>
-            </Link>
-          </HasAccess>
+          <Link
+            component={NavLink}
+            underline="none"
+            to="/roles"
+            onKeyDown={handleKeyDown}
+          >
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="user-gear" />
+              <Box component="span">Roles</Box>
+            </Stack>
+          </Link>
         );
       },
-      visible: authEnabled,
+      visible: authEnabled && checkPermission(config, "GARDEN_ADMIN", {}),
     },
     {
       label: "About",
@@ -612,7 +608,7 @@ function NavigationMenu({
           {items
             .filter((item: linkProps) => item.visible !== false)
             .map((item: linkProps) => (
-              <Box key={item.label}>{item.buttonTemplate()}</Box>
+              <span key={item.label}>{item.buttonTemplate()}</span>
             ))}
 
           <Box sx={{ ml: "auto" }} />
@@ -641,8 +637,7 @@ function NavigationMenu({
           )}
           <Box sx={{ display: "flex", alignItems: "center", gap: 0 }}>
             <AccessButton
-              sx={{ height: "36px" }}
-              color="secondary"
+              sx={{ height: "36px", color: "white" }}
               text
               className="mr-2"
               onClick={toggleRunTour}
@@ -654,8 +649,7 @@ function NavigationMenu({
             </AccessButton>
             <CurrentRequestsTemplate listeners={listeners} config={config} />
             <AccessButton
-              sx={{ height: "36px" }}
-              color="secondary"
+              sx={{ height: "36px", color: "white" }}
               tooltip="User Preferences Menu"
               basic
               onClick={handleUserPopperOpen}
