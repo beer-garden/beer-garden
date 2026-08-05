@@ -375,36 +375,40 @@ const EnhancedTable = ({
                 key={column.id}
                 sortDirection={orderBy === column.field ? order : false}
               >
-                <TableSortLabel
-                  active={orderBy === column.field}
-                  direction={orderBy === column.field ? order : "asc"}
-                  onClick={createSortHandler(column.field)}
-                >
+                <Box sx={{ display: "flex" }}>
                   {column.label}
-                  {orderBy === column.field ? (
-                    <Box component="span" sx={visuallyHidden}>
-                      {order === "desc"
-                        ? "sorted descending"
-                        : "sorted ascending"}
-                    </Box>
-                  ) : null}
-                </TableSortLabel>
-                {column.sortable && (
-                  <>
-                    <EnhancedTableColumnHeaderFilter
-                      column={column}
-                      columns={columns}
-                      columnFilters={filters}
-                      columnFiltersRef={columnFiltersRef}
-                      updateColumnFilters={updateFilters}
-                      order={order}
-                      setOrder={setOrder}
-                      orderBy={orderBy}
-                      setOrderBy={setOrderBy}
-                      triggerReload={filterTriggerReload}
-                    />
-                  </>
-                )}
+                  {column.sortable && (
+                    <TableSortLabel
+                      active={orderBy === column.field}
+                      direction={orderBy === column.field ? order : "asc"}
+                      onClick={createSortHandler(column.field)}
+                    >
+                      {orderBy === column.field ? (
+                        <Box component="span" sx={visuallyHidden}>
+                          {order === "desc"
+                            ? "sorted descending"
+                            : "sorted ascending"}
+                        </Box>
+                      ) : null}
+                    </TableSortLabel>
+                  )}
+                  {column.sortable && (
+                    <>
+                      <EnhancedTableColumnHeaderFilter
+                        column={column}
+                        columns={columns}
+                        columnFilters={filters}
+                        columnFiltersRef={columnFiltersRef}
+                        updateColumnFilters={updateFilters}
+                        order={order}
+                        setOrder={setOrder}
+                        orderBy={orderBy}
+                        setOrderBy={setOrderBy}
+                        triggerReload={filterTriggerReload}
+                      />
+                    </>
+                  )}
+                </Box>
               </TableCell>
             ))}
           </TableHead>

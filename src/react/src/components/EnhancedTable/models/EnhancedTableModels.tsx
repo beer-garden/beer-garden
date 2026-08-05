@@ -2,7 +2,7 @@ import { Dayjs } from "dayjs";
 
 export interface ColumnField {
   id: string;
-  label: string;
+  label: string | React.ReactElement;
 
   field?: string;
   template?: (row: any) => React.ReactElement;
