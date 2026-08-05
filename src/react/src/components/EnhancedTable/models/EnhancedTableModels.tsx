@@ -14,6 +14,7 @@ export interface ColumnField {
   isNumeric?: boolean;
   isString?: boolean;
   isDate?: boolean;
+  isBoolean?: boolean;
 
   // Evaluated to determine if is Array
   options?: string[];
@@ -27,6 +28,7 @@ export interface FilterColumn {
   isString?: boolean;
   isDate?: boolean;
   isNumeric?: boolean;
+  isBoolean?: boolean;
 
   options?: string[];
 
