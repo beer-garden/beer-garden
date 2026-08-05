@@ -1,6 +1,7 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import {
   AppBar,
+  Avatar,
   Box,
   Button,
   ClickAwayListener,
@@ -15,9 +16,7 @@ import {
 } from "@mui/material";
 import Fade from "@mui/material/Fade";
 import Popper from "@mui/material/Popper";
-import { Avatar } from "primereact/avatar";
-import { OverlayPanel } from "primereact/overlaypanel";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useState } from "react";
 import React from "react";
 import { NavLink } from "react-router-dom";
 
@@ -75,16 +74,12 @@ function NavigationMenu({
     config?.auth_enabled === true,
   );
 
-  const op = useRef<OverlayPanel>(null);
-
   const onLogout = async () => {
     await LogoutCurrentUser().catch((error) => {
       console.error("Error logging out user:", error);
     });
     updateUserName(undefined);
     runReloadUI();
-
-    op.current?.hide();
   };
 
   const onClearSession = () => {
@@ -380,7 +375,6 @@ function NavigationMenu({
             sx={navButtonStyles}
             component={NavLink}
             to="/users"
-            className="p-menuitem-link"
             onKeyDown={handleKeyDown}
             {...GenerateTourProps(userTourStep)}
           >
@@ -590,7 +584,7 @@ function NavigationMenu({
             />
 
             {applicationName && (
-              <Typography className="mr-2">{applicationName}</Typography>
+              <Typography sx={{ mr: 1 }}>{applicationName}</Typography>
             )}
           </Button>
 
@@ -638,15 +632,14 @@ function NavigationMenu({
               {username === undefined && (
                 <>
                   <AccessButton
-                    sx={{ borderRadius: 20 }}
+                    sx={{ borderRadius: 20, mr: 1 }}
                     color="secondary"
-                    className="mr-2"
                     onClick={() => setLoginVisible(true)}
                     data-testid="user-login"
                     tooltip="User Login"
                     label="Login"
                   >
-                    Login{" "}
+                    Login
                   </AccessButton>
                   <UserLogin
                     visible={loginVisible}
@@ -681,11 +674,9 @@ function NavigationMenu({
               title="Preferences"
             >
               {username !== undefined ? (
-                <Avatar
-                  size="large"
-                  label={username.charAt(0).toUpperCase()}
-                  style={{ width: "32px", height: "32px" }}
-                />
+                <Avatar variant="square" sx={{ width: "32px", height: "32px" }}>
+                  {username.charAt(0).toUpperCase()}
+                </Avatar>
               ) : (
                 <FAIcon icon="user" />
               )}
