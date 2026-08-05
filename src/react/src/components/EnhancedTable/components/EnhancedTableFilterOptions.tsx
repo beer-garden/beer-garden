@@ -26,7 +26,6 @@ const StringFilters = [
     value: "not__contains",
     label: "Not Contains",
   },
-
   {
     value: "startswith",
     label: "Starts With",
@@ -57,6 +56,13 @@ const BooleanOptions = [
   {
     value: "false",
     label: "False",
+  },
+];
+
+const BooleaFilters = [
+  {
+    value: "eq",
+    label: "Is",
   },
 ];
 
@@ -171,6 +177,9 @@ export const EnhancedTableFilterOptions = ({
       if (filter.isNumeric) {
         return NumericFilters[0].value;
       }
+      if (filter.isBoolean) {
+        return BooleanOptions[0].value;
+      }
       if (filter.options !== undefined) {
         return ArrayFilters[0].value;
       }
@@ -196,6 +205,10 @@ export const EnhancedTableFilterOptions = ({
   const [isNumeric, setIsNumeric] = useState(
     columnFiltersRef.current.filter((filter) => filter.id === id)[0]
       ?.isNumeric === true,
+  );
+  const [isBoolean, setIsBoolean] = useState(
+    columnFiltersRef.current.filter((filter) => filter.id === id)[0]
+      ?.isBoolean === true,
   );
   const [isArray, setIsArray] = useState(
     columnFiltersRef.current.filter((filter) => filter.id === id)[0]
@@ -254,6 +267,7 @@ export const EnhancedTableFilterOptions = ({
       setIsDate(!isArray && filter?.isDate === true);
       setIsString(!isArray && filter?.isString === true);
       setIsNumeric(!isArray && filter?.isNumeric === true);
+      setIsBoolean(!isArray && filter?.isBoolean === true);
       setIsArray(isArray);
       setOptions(filter?.options);
     }
@@ -270,6 +284,10 @@ export const EnhancedTableFilterOptions = ({
           const tableColumnIsNumeric = columns.some(
             (tableColumn) =>
               tableColumn.field === column && tableColumn.isNumeric === true,
+          );
+          const tableColumnIsBoolean = columns.some(
+            (tableColumn) =>
+              tableColumn.field === column && tableColumn.isBoolean === true,
           );
           const tableColumnIsArray = columns.some(
             (tableColumn) =>
@@ -292,12 +310,14 @@ export const EnhancedTableFilterOptions = ({
             ) ||
               (tableColumnIsDate === false &&
                 tableColumnIsNumeric === false &&
+                tableColumnIsBoolean === false &&
                 tableColumnIsArray === false));
 
           if (
             filter.isDate !== tableColumnIsDate ||
             filter.isNumeric !== tableColumnIsNumeric ||
             filter.isString !== tableColumnIsString ||
+            filter.isBoolean !== tableColumnIsBoolean ||
             (filter.options !== undefined) !== tableColumnIsArray
           ) {
             // check if modifier is set and in the correct array of options
@@ -316,6 +336,9 @@ export const EnhancedTableFilterOptions = ({
             } else if (tableColumnIsString) {
               validModifier = false;
               updatedModifier = StringFilters[0].value;
+            } else if (tableColumnIsBoolean) {
+              validModifier = false;
+              updatedModifier = BooleaFilters[0].value;
             }
 
             return {
@@ -324,6 +347,7 @@ export const EnhancedTableFilterOptions = ({
               isDate: tableColumnIsDate,
               isNumeric: tableColumnIsNumeric,
               isString: tableColumnIsString,
+              isBoolean: tableColumnIsBoolean,
               options: tableColumnOptions,
               value: tableColumnIsArray ? [] : undefined,
               modifier: validModifier ? currentModifier : updatedModifier,
@@ -335,6 +359,7 @@ export const EnhancedTableFilterOptions = ({
             isDate: tableColumnIsDate,
             isNumeric: tableColumnIsNumeric,
             isString: tableColumnIsString,
+            isBoolean: tableColumnIsBoolean,
             options: tableColumnOptions,
           } as FilterColumn;
         }
@@ -442,7 +467,8 @@ export const EnhancedTableFilterOptions = ({
               />
             )}
             {filterColumn &&
-              (isString || (!isDate && !isNumeric && !isArray)) && (
+              (isString ||
+                (!isDate && !isNumeric && !isBoolean && !isArray)) && (
                 <TextField
                   sx={{ width: "100%", mr: 2 }}
                   id={`filter-modifier-${id}`}
@@ -499,6 +525,25 @@ export const EnhancedTableFilterOptions = ({
               </TextField>
             )}
 
+            {filterColumn && isBoolean && (
+              <TextField
+                sx={{ width: "100%", mr: 2 }}
+                id={`filter-modifier-${id}`}
+                select
+                label="Operator"
+                value={filterModifier}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                  updateModifier(id, event.target.value);
+                }}
+              >
+                {BooleaFilters.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
+
             {filterColumn && isArray && (
               <TextField
                 sx={{ width: "100%", mr: 2 }}
@@ -531,7 +576,8 @@ export const EnhancedTableFilterOptions = ({
             {filterColumn &&
               filterModifier &&
               filterModifier !== "exists" &&
-              (isString || (!isDate && !isNumeric && !isArray)) && (
+              (isString ||
+                (!isDate && !isNumeric && !isBoolean && !isArray)) && (
                 <TextField
                   id={`filter-value-${id}`}
                   label="Value"
@@ -545,8 +591,10 @@ export const EnhancedTableFilterOptions = ({
 
             {filterColumn &&
               filterModifier &&
-              filterModifier === "exists" &&
-              (isString || (!isDate && !isNumeric && !isArray)) && (
+              (isBoolean ||
+                (filterModifier === "exists" &&
+                  (isString ||
+                    (!isDate && !isNumeric && !isBoolean && !isArray)))) && (
                 <TextField
                   id={`filter-value-${id}`}
                   sx={{ width: "100%" }}

@@ -1,12 +1,9 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Column } from "primereact/column";
-import { confirmDialog } from "primereact/confirmdialog";
-import { DataTable, SortOrder } from "primereact/datatable";
-import { Message } from "primereact/message";
-import { Tag } from "primereact/tag";
+import { Alert, Box, Chip, Grid, Typography } from "@mui/material";
 import { RefObject, useCallback, useEffect, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
+import ConfirmDialog from "../components/ConfirmDialog";
+import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import RoleCard from "../components/RoleCard";
 import UserChangeAccountMapping from "../components/UserChangeAccountMapping";
 import UserChangePassword from "../components/UserChangePassword";
@@ -22,7 +19,7 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { DeleteUser, GetUsers, RescanUsers } from "../services/user_service";
-import { PaginatorTemplate } from "../services/util_service";
+import { FAIcon } from "../services/util_service";
 
 function UserIndex({
   config,
@@ -34,13 +31,13 @@ function UserIndex({
   const showSnackbar = useSnackbar();
   const [users, setUsers] = useState<Array<User>>([]);
   const [loading, setLoading] = useState(false);
-  const [first, setFirst] = useState<number>(0);
-  const [rows, setRows] = useState<number>(10);
-  const [sortField, setSortField] = useState<string | undefined>(undefined);
-  const [sortOrder, setSortOrder] = useState<SortOrder>(undefined);
 
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [passwordUsername, setPasswordUsername] = useState<string | undefined>(
+    undefined,
+  );
+
+  const [deleteUsername, setDeleteUsername] = useState<string | undefined>(
     undefined,
   );
 
@@ -217,7 +214,7 @@ function UserIndex({
     if (rowData.protected) {
       return (
         <span {...GenerateTourProps(protectedUserTourStep)}>
-          <FontAwesomeIcon icon="user-shield" title="Protected User" />{" "}
+          <FAIcon icon="user-shield" title="Protected User" sx={{ mr: 1 }} />
           {rowData.username}
         </span>
       );
@@ -225,14 +222,15 @@ function UserIndex({
     if (rowData.file_generated) {
       return (
         <span {...GenerateTourProps(fileGeneratedUserTourStep)}>
-          <FontAwesomeIcon icon="user-tag" title="File Generated User" />{" "}
+          <FAIcon icon="user-tag" title="File Generated User" sx={{ mr: 1 }} />
           {rowData.username}
         </span>
       );
     }
     return (
       <span {...GenerateTourProps(userUserTourStep)}>
-        <FontAwesomeIcon icon="user" title="Regular User" /> {rowData.username}
+        <FAIcon icon="user" title="Regular User" sx={{ mr: 1 }} />
+        {rowData.username}
       </span>
     );
   }
@@ -276,20 +274,6 @@ function UserIndex({
     );
   }
 
-  function lastAuthenticatedTemplate(rowData: User) {
-    if (rowData?.metadata?.last_authentication) {
-      const date = new Date(rowData.metadata.last_authentication);
-      return (
-        <span {...GenerateTourProps(lastAuthenticatedUserTourStep)}>
-          {date.toUTCString()}
-        </span>
-      );
-    }
-    return (
-      <span {...GenerateTourProps(lastAuthenticatedUserTourStep)}>Never</span>
-    );
-  }
-
   function localRolesTemplate(rowData: User) {
     return (
       <div {...GenerateTourProps(localRolesUserTourStep)}>
@@ -302,9 +286,11 @@ function UserIndex({
               setShowViewRolesDialog(true);
             }}
             rounded
-            severity="info"
+            color="info"
             tooltip={`View Local Role: ${role.name}`}
-          />
+          >
+            {role.name}
+          </AccessButton>
         ))}
       </div>
     );
@@ -322,9 +308,11 @@ function UserIndex({
               setShowViewRolesDialog(true);
             }}
             rounded
-            severity="secondary"
+            color="secondary"
             tooltip={`View Upstream Role: ${role.name}`}
-          />
+          >
+            {role.name}
+          </AccessButton>
         ))}
       </div>
     );
@@ -342,21 +330,33 @@ function UserIndex({
       );
     }
     return (
-      <DataTable
-        value={rowData.user_alias_mapping}
-        size="small"
+      <EnhancedTable
+        data={rowData.user_alias_mapping}
+        columns={[
+          {
+            id: "target_garden",
+            field: "target_garden",
+            label: "Garden Name",
+            isString: true,
+          },
+          {
+            id: "username",
+            field: "username",
+            label: "Account Name",
+            isString: true,
+          },
+        ]}
         {...GenerateTourProps(aliasGardenAccountsUserTourStep)}
-      >
-        <Column field="target_garden" header="Garden Name" />
-        <Column field="username" header="Account Name" />
-      </DataTable>
+      />
     );
   }
 
   function userActionsTemplate(rowData: User) {
+    const buttonSx = { mr: 1 };
     return (
-      <div className="flex flex-row gap-2">
+      <Box sx={{ display: "flex" }}>
         <AccessButton
+          sx={buttonSx}
           onClick={() => {
             if (rowData.username) {
               if (
@@ -364,7 +364,7 @@ function UserIndex({
                 rowData.metadata?.has_token === false
               ) {
                 showSnackbar({
-                  severity: "warn",
+                  severity: "warning",
                   summary: "Revoke Token",
                   detail: `No active token to revoke for ${rowData?.username}`,
                   life: 3000,
@@ -394,48 +394,48 @@ function UserIndex({
           }}
           tooltip={`Revoke Token for User ${rowData.username}`}
           data-testid={`revoke-user-${rowData.id}`}
-          tooltipOptions={{ position: "bottom" }}
           {...GenerateTourProps(revokeTokenUserTourStep)}
           config={config}
           permission="GARDEN_ADMIN"
           isGlobal={true}
         >
-          <FontAwesomeIcon icon="arrow-right-from-bracket" />
+          <FAIcon icon="arrow-right-from-bracket" />
         </AccessButton>
         <AccessButton
+          sx={buttonSx}
           onClick={() => {
             setAccountMappingUser(rowData);
             setShowAccountMappingDialog(true);
           }}
           tooltip={`Map Associated Accounts for ${rowData.username}`}
-          tooltipOptions={{ position: "bottom" }}
           data-testid={`map-accounts-user-${rowData.id}`}
           {...GenerateTourProps(mapAccountsUserTourStep)}
           config={config}
           permission="GARDEN_ADMIN"
           isGlobal={true}
         >
-          <FontAwesomeIcon icon="globe" />
+          <FAIcon icon="globe" />
         </AccessButton>
         {(rowData.protected === undefined || rowData.protected === false) && (
           <AccessButton
+            sx={buttonSx}
             onClick={() => {
               setRolesUser(rowData);
               setShowRolesDialog(true);
             }}
             tooltip={`Add/Remove Roles for User ${rowData.username}`}
             data-testid={`roles-user-${rowData.id}`}
-            tooltipOptions={{ position: "bottom" }}
             {...GenerateTourProps(addRemoveRolesUserTourStep)}
             config={config}
             permission="GARDEN_ADMIN"
             isGlobal={true}
           >
-            <FontAwesomeIcon icon="user-plus" />
+            <FAIcon icon="user-plus" />
           </AccessButton>
         )}
         {(rowData.protected === undefined || rowData.protected === false) && (
           <AccessButton
+            sx={buttonSx}
             onClick={() => {
               if (rowData.username) {
                 setPasswordUsername(rowData.username);
@@ -443,85 +443,50 @@ function UserIndex({
               }
             }}
             tooltip={`Change Password for User ${rowData.username}`}
-            tooltipOptions={{ position: "bottom" }}
             data-testid={`change-password-user-${rowData.id}`}
             {...GenerateTourProps(changePasswordUserTourStep)}
             config={config}
             permission="GARDEN_ADMIN"
             isGlobal={true}
           >
-            <FontAwesomeIcon icon="key" />
+            <FAIcon icon="key" />
           </AccessButton>
         )}
 
         {(rowData.protected === undefined || rowData.protected === false) && (
           <AccessButton
+            sx={buttonSx}
             onClick={() => {
-              const accept = () => {
-                if (rowData.username) {
-                  DeleteUser(rowData.username)
-                    .then(() => {
-                      showSnackbar({
-                        severity: "info",
-                        summary: "Delete User",
-                        detail: `Successfully deleted ${rowData.username}`,
-                        life: 3000,
-                      });
-                      loadUsers();
-                    })
-                    .catch((error) =>
-                      showSnackbar({
-                        severity: "error",
-                        summary: "Error",
-                        detail: `Error attempting to delete user: ${error}`,
-                        life: 3000,
-                      }),
-                    );
-                }
-              };
-
-              const reject = () => {};
-
-              if (rowData.username) {
-                confirmDialog({
-                  message: `Are you sure you want to delete user ${rowData.username}?`,
-                  header: "Confirmation",
-                  icon: "pi pi-exclamation-triangle",
-                  defaultFocus: "accept",
-                  accept,
-                  reject,
-                });
-              }
+              setDeleteUsername(rowData.username);
             }}
             tooltip={`Delete User ${rowData.username}`}
-            tooltipOptions={{ position: "bottom" }}
             data-testid={`delete-user-${rowData.id}`}
             {...GenerateTourProps(deleteUserTourStep)}
             config={config}
             permission="GARDEN_ADMIN"
             isGlobal={true}
           >
-            <FontAwesomeIcon icon="trash" />
+            <FAIcon icon="trash" />
           </AccessButton>
         )}
-      </div>
+      </Box>
     );
   }
 
   function activeUserTemplate(rowData: User) {
     if (rowData.metadata?.has_token) {
       return (
-        <Tag
-          severity="success"
-          value="Active"
+        <Chip
+          color="success"
+          label="Active"
           {...GenerateTourProps(activeTokenUserTourStep)}
         />
       );
     }
     return (
-      <Tag
-        severity="danger"
-        value="Inactive"
+      <Chip
+        color="error"
+        label="Inactive"
         {...GenerateTourProps(activeTokenUserTourStep)}
       />
     );
@@ -610,54 +575,48 @@ function UserIndex({
   }, [users]);
 
   return (
-    <div>
-      <div className="flex items-end ml-2 page-header">
-        <h1 className="flex-1">User Management</h1>
-
-        <div>
+    <>
+      <Grid container sx={{ m: 1 }}>
+        <Grid size="grow">
+          <Typography variant="h2" component="h1">
+            User Management
+          </Typography>
+        </Grid>
+        <Grid sx={{ display: "flex", alignItems: "center" }}>
           <AccessButton
             onClick={handleRescan}
             label="Rescan Users"
             data-testid="rescan-btn"
-            className="mr-2"
+            sx={{ mr: 2 }}
             {...GenerateTourProps(rescanUserTourStep)}
             config={config}
             permission="GARDEN_ADMIN"
             isGlobal={true}
-          />
+          >
+            Rescan Users
+          </AccessButton>
           <AccessButton
             onClick={() => {
               setShowCreateUserDialog(true);
             }}
             label="Create User"
             data-testid="create-btn"
-            className="mr-2"
+            sx={{ mr: 2 }}
             {...GenerateTourProps(createUserTourStep)}
             config={config}
             permission="GARDEN_ADMIN"
             isGlobal={true}
-          />
-        </div>
-      </div>
+          >
+            Create User
+          </AccessButton>
+        </Grid>
+      </Grid>
       {config?.auth_enabled == false && (
-        <Message
-          className="mx-2 mb-2"
-          severity="error"
-          text="Warning - Beergarden authorization is currently disabled. Changes made here
-                  will be persisted, but permissions will not be enforced. Contact your
-                  administator to enable this feature."
-          pt={{
-            icon: {
-              role: "img",
-              "aria-label": "Close Alert Message",
-              style: { color: "var(--danger-color)" },
-            },
-          }}
-          style={{
-            backgroundColor: "var(--danger-background-color)",
-            color: "var(--danger-color)",
-          }}
-        />
+        <Alert severity="error" sx={{ m: 2 }}>
+          Warning - Beergarden authorization is currently disabled. Changes made
+          here will be persisted, but permissions will not be enforced. Contact
+          your administator to enable this feature.
+        </Alert>
       )}
       {showPasswordDialog && passwordUsername && (
         <UserChangePassword
@@ -705,46 +664,102 @@ function UserIndex({
         />
       )}
 
-      <DataTable
+      <EnhancedTable
         data-testid="user-datatable"
-        value={users}
-        loading={loading}
-        paginator
-        rows={rows}
-        first={first}
-        sortField={sortField}
-        sortOrder={sortOrder}
-        rowsPerPageOptions={[10, 25, 50]}
-        paginatorTemplate={PaginatorTemplate}
-        onPage={(e: any) => {
-          setFirst(e.first);
-          setRows(e.rows);
-        }}
-        onSort={(e: any) => {
-          setSortField(e.sortField);
-          setSortOrder(e.sortOrder);
-          setFirst(0);
-        }}
-        dataKey="id"
-      >
-        <Column
-          field="username"
-          sortable
-          header="Username"
-          body={userNameTemplate}
+        data={users}
+        isLoading={loading}
+        columns={[
+          {
+            id: "username",
+            field: "username",
+            label: "Username",
+            isString: true,
+            sortable: true,
+            filterable: true,
+            template: userNameTemplate,
+          },
+          {
+            id: "max_permission",
+            label: "Max Permission",
+            isString: true,
+            template: maxPermissionTemplate,
+          },
+          {
+            id: "last_authentication",
+            field: "metadata.last_authentication",
+            label: "Last Authentication",
+            isDate: true,
+            sortable: true,
+            filterable: true,
+          },
+          {
+            id: "local_roles",
+            field: "local_roles.name",
+            label: "Local Roles",
+            template: localRolesTemplate,
+          },
+          {
+            id: "upstream_roles",
+            field: "upstream_roles.name",
+            label: "Upstream Roles",
+            template: upstreamRolesTemplate,
+          },
+          {
+            id: "alias_garden_accounts",
+            field: "user_alias_mapping",
+            label: "Alias Garden Accounts",
+            template: aliasGardenAcountsTemplate,
+          },
+          {
+            id: "active_token",
+            field: "metadata.has_token",
+            label: "Active Token",
+            template: activeUserTemplate,
+            isBoolean: true,
+            sortable: true,
+            filterable: true,
+          },
+          {
+            id: "actions",
+            label: "Actions",
+            template: userActionsTemplate,
+          },
+        ]}
+        defaultOrderBy="username"
+        defaultOrder="desc"
+      />
+      {deleteUsername && (
+        <ConfirmDialog
+          open={true}
+          setOpen={() => setDeleteUsername(undefined)}
+          accept={() => {
+            if (deleteUsername) {
+              DeleteUser(deleteUsername)
+                .then(() => {
+                  showSnackbar({
+                    severity: "info",
+                    summary: "Delete User",
+                    detail: `Successfully deleted ${deleteUsername}`,
+                    life: 3000,
+                  });
+                  loadUsers();
+                })
+                .catch((error) =>
+                  showSnackbar({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Error attempting to delete user: ${error}`,
+                    life: 3000,
+                  }),
+                );
+            }
+          }}
+          reject={() => {}}
+          message={`Are you sure you want to delete user ${deleteUsername}?`}
+          header="Confirmation"
         />
-        <Column header="Max Permission" body={maxPermissionTemplate} />
-        <Column header="Last Authenticated" body={lastAuthenticatedTemplate} />
-        <Column header="Local Roles" body={localRolesTemplate} />
-        <Column header="Upstream Roles" body={upstreamRolesTemplate} />
-        <Column
-          header="Alias Garden Accounts"
-          body={aliasGardenAcountsTemplate}
-        />
-        <Column header="Active Token" body={activeUserTemplate} />
-        <Column header="Actions" body={userActionsTemplate} />
-      </DataTable>
-    </div>
+      )}
+    </>
   );
 }
 

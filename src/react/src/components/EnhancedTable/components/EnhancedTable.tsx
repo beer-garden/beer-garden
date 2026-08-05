@@ -33,6 +33,7 @@ const EnhancedTable = ({
   reloadTable,
   isLoading,
   displayAll,
+  ...props
 }: {
   data?: any[];
   dataRef?: RefObject<any[]>;
@@ -178,9 +179,18 @@ const EnhancedTable = ({
           if (typeof compare === "string") {
             compare = dayjs(new Date(compare));
           }
+        } else if (filter.isBoolean) {
+          if (typeof compare === "string") {
+            compare = compare.toLocaleLowerCase() === "true";
+          }
         }
 
         if (filter.modifier === "eq") {
+          if (filter.isBoolean) {
+            if (typeof filter.value === "string") {
+              return (filter.value.toLocaleLowerCase() === "true") === compare;
+            }
+          }
           return filter.value === compare;
         } else if (filter.modifier === "neq") {
           return filter.value !== compare;
@@ -281,6 +291,17 @@ const EnhancedTable = ({
                   if (orderByField) {
                     const field_a = findValue(orderByField, a);
                     const field_b = findValue(orderByField, b);
+
+                    if (field_a === undefined && field_b === undefined) {
+                      return 0;
+                    }
+                    if (field_a === undefined) {
+                      return order === "asc" ? 1 : -1;
+                    }
+                    if (field_b === undefined) {
+                      return order === "asc" ? -1 : 1;
+                    }
+
                     if (
                       columns.some(
                         (column) =>
@@ -301,6 +322,20 @@ const EnhancedTable = ({
                             new Date(field_b).getTime()
                         : new Date(field_b).getTime() -
                             new Date(field_a).getTime();
+                    }
+                    if (
+                      columns.some(
+                        (column) =>
+                          column.field === orderBy && column.isBoolean,
+                      )
+                    ) {
+                      if (field_a && field_b) {
+                        return 0;
+                      }
+                      if (field_a) {
+                        return order === "asc" ? 1 : -1;
+                      }
+                      return order === "asc" ? -1 : 1;
                     }
                     if (
                       columns.some(
@@ -342,6 +377,19 @@ const EnhancedTable = ({
           }
           if (
             columns.some(
+              (column) => column.field === orderBy && column.isBoolean,
+            )
+          ) {
+            if (field_a && field_b) {
+              return 0;
+            }
+            if (field_a) {
+              return order === "asc" ? 1 : -1;
+            }
+            return order === "asc" ? -1 : 1;
+          }
+          if (
+            columns.some(
               (column) => column.field === orderBy && column.isString,
             )
           ) {
@@ -366,6 +414,16 @@ const EnhancedTable = ({
       if (orderByField) {
         const field_a = findValue(orderByField, a);
         const field_b = findValue(orderByField, b);
+
+        if (field_a === undefined && field_b === undefined) {
+          return 0;
+        }
+        if (field_a === undefined) {
+          return order === "asc" ? 1 : -1;
+        }
+        if (field_b === undefined) {
+          return order === "asc" ? -1 : 1;
+        }
         if (
           columns.some((column) => column.field === orderBy && column.isNumeric)
         ) {
@@ -379,6 +437,17 @@ const EnhancedTable = ({
           return order === "asc"
             ? new Date(field_a).getTime() - new Date(field_b).getTime()
             : new Date(field_b).getTime() - new Date(field_a).getTime();
+        }
+        if (
+          columns.some((column) => column.field === orderBy && column.isBoolean)
+        ) {
+          if (field_a && field_b) {
+            return 0;
+          }
+          if (field_a) {
+            return order === "asc" ? 1 : -1;
+          }
+          return order === "asc" ? -1 : 1;
         }
         if (
           columns.some((column) => column.field === orderBy && column.isString)
@@ -539,7 +608,7 @@ const EnhancedTable = ({
         sx={{ position: "relative", opacity: isLoading ? 0.5 : 1 }}
       >
         {header}
-        <Table>
+        <Table {...props}>
           <TableHead>
             {columns.map((column) => (
               <TableCell
