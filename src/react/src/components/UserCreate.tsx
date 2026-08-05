@@ -1,10 +1,17 @@
-import { Dialog } from "primereact/dialog";
-import { InputText } from "primereact/inputtext";
-import { Password } from "primereact/password";
-import { ChangeEvent, useState } from "react";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  Stack,
+} from "@mui/material";
+import TextField from "@mui/material/TextField";
+import { useState } from "react";
 
 import { useSnackbar } from "../providers/SnackbarProvider";
 import { CreateUser } from "../services/user_service";
+import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
 
 function UserCreate({
@@ -84,65 +91,79 @@ function UserCreate({
   return (
     <Dialog
       data-testid="create-user-dialog"
-      header={`Create User`}
-      footer={
-        <>
-          <AccessButton onClick={handleUserCreateDialogClose} label="Close" />
-          <AccessButton
-            data-testid={`submit-btn-dialog`}
-            severity="danger"
-            onClick={createUser}
-            label="Submit"
-          />
-        </>
-      }
-      visible={showCreateUserDialog}
-      style={{ width: "50vw" }}
-      onHide={() => {
+      open={showCreateUserDialog}
+      onClose={() => {
         handleUserCreateDialogClose();
       }}
     >
-      <div className="flex flex-column gap-2">
-        <label htmlFor="username" className="font-bold">
-          Username
-        </label>
-        <InputText
-          id="username"
-          className="mb-2"
-          value={username}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setUsername(e.target.value)
-          }
-        />
-        <label htmlFor="newPassword" className="font-bold">
-          New Password
-        </label>
-        <Password
-          toggleMask
-          id="newPassword"
-          className="mb-2"
-          value={newPassword}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setNewPassword(e.target.value)
-          }
-          tooltip="Enter New Password"
-        />
-        <label htmlFor="confirmPassword" className="font-bold">
-          Confirm Password
-        </label>
-        <Password
-          toggleMask
-          id="confirmPassword"
-          invalid={confirmPasswordInvalid}
-          className="mb-2"
-          value={confirmPassword}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            setConfirmPassword(e.target.value);
-            setConfirmPasswordInvalid(e.target.value !== newPassword);
-          }}
-          tooltip="Confirm New Password"
-        />
-      </div>
+      <DialogTitle>
+        <Grid container>
+          <Grid size="grow">Create User</Grid>
+          <Grid>
+            <AccessButton
+              sx={{ mr: 2 }}
+              onClick={() => {
+                handleUserCreateDialogClose();
+              }}
+            >
+              <FAIcon icon="xmark" />
+            </AccessButton>
+          </Grid>
+        </Grid>
+      </DialogTitle>
+      <DialogContent dividers>
+        <Stack spacing={2}>
+          <TextField
+            id="username"
+            label="Username"
+            value={username}
+            required
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setUsername(event.target.value);
+            }}
+          />
+          <TextField
+            id="newPassword"
+            label="Password"
+            type="password"
+            value={newPassword}
+            autoComplete="current-password"
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setNewPassword(event.target.value);
+            }}
+          />
+          <TextField
+            id="confirmPassword"
+            label="Confirm Password"
+            type="password"
+            value={confirmPassword}
+            error={confirmPasswordInvalid}
+            autoComplete="current-password"
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setConfirmPassword(event.target.value);
+              setConfirmPasswordInvalid(event.target.value !== newPassword);
+            }}
+          />
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ justifyContent: "center" }}>
+        <AccessButton
+          onClick={handleUserCreateDialogClose}
+          label="Close"
+          sx={{ mr: 1 }}
+        >
+          Close
+        </AccessButton>
+        <AccessButton
+          data-testid={`submit-btn-dialog`}
+          color="error"
+          onClick={createUser}
+          label="Submit"
+          sx={{ mr: 1 }}
+        >
+          Submit
+        </AccessButton>
+      </DialogActions>
     </Dialog>
   );
 }

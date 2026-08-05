@@ -77,39 +77,19 @@ describe("SchedulerViewCard", () => {
 
     await waitFor(() => {
       expect(screen.getByText("example_job")).toBeInTheDocument();
-      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent(
-        "RUNNING",
-      );
-      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent(
-        "False",
-      );
-      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent(
-        "1",
-      );
-      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent(
-        "1",
-      );
-      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent(
-        "5",
-      );
-      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent(
-        "CRON",
-      );
+      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent("RUNNING");
+      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent("False");
+      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent("5");
+      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent("CRON");
       expect(screen.getAllByRole("paragraph")[6]).toHaveTextContent(
         "* * * * * * *",
       );
-      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent(
-        "N/A",
-      );
-      expect(screen.getAllByRole("paragraph")[8]).toHaveTextContent(
-        "N/A",
-      );
-      expect(screen.getAllByRole("paragraph")[9]).toHaveTextContent(
-        "N/A",
-      );
-      expect(screen.getAllByRole("paragraph")[10]).toHaveTextContent(
-        "N/A",
-      );
+      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent("N/A");
+      expect(screen.getAllByRole("paragraph")[8]).toHaveTextContent("N/A");
+      expect(screen.getAllByRole("paragraph")[9]).toHaveTextContent("N/A");
+      expect(screen.getAllByRole("paragraph")[10]).toHaveTextContent("N/A");
     });
   });
 
@@ -260,9 +240,7 @@ describe("SchedulerViewCard", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent(
-        "CRON",
-      );
+      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent("CRON");
       expect(screen.getAllByRole("paragraph")[6]).toHaveTextContent(
         `${expected}`,
       );
@@ -309,39 +287,19 @@ describe("SchedulerViewCard", () => {
 
     await waitFor(() => {
       expect(screen.getByText("example_job")).toBeInTheDocument();
-      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent(
-        "RUNNING",
-      );
-      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent(
-        "False",
-      );
-      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent(
-        "1",
-      );
-      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent(
-        "1",
-      );
-      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent(
-        "5",
-      );
-      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent(
-        "INTERVAL",
-      );
+      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent("RUNNING");
+      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent("False");
+      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent("5");
+      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent("INTERVAL");
       expect(screen.getAllByRole("paragraph")[6]).toHaveTextContent(
         "Every 5 Seconds",
       );
-      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent(
-        "N/A",
-      );
-      expect(screen.getAllByRole("paragraph")[8]).toHaveTextContent(
-        "N/A",
-      );
-      expect(screen.getAllByRole("paragraph")[9]).toHaveTextContent(
-        "N/A",
-      );
-      expect(screen.getAllByRole("paragraph")[10]).toHaveTextContent(
-        "N/A",
-      );
+      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent("N/A");
+      expect(screen.getAllByRole("paragraph")[8]).toHaveTextContent("N/A");
+      expect(screen.getAllByRole("paragraph")[9]).toHaveTextContent("N/A");
+      expect(screen.getAllByRole("paragraph")[10]).toHaveTextContent("N/A");
     });
   });
 
@@ -409,9 +367,7 @@ describe("SchedulerViewCard", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent(
-        "INTERVAL",
-      );
+      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent("INTERVAL");
       expect(screen.getAllByRole("paragraph")[6]).toHaveTextContent(
         `Every 5 ${expected}`,
       );
@@ -455,30 +411,16 @@ describe("SchedulerViewCard", () => {
 
     await waitFor(() => {
       expect(screen.getByText("example_job")).toBeInTheDocument();
-      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent(
-        "RUNNING",
-      );
-      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent(
-        "False",
-      );
-      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent(
-        "1",
-      );
-      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent(
-        "1",
-      );
-      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent(
-        "5",
-      );
-      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent(
-        "DATE",
-      );
+      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent("RUNNING");
+      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent("False");
+      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent("5");
+      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent("DATE");
       expect(screen.getAllByRole("paragraph")[6]).toHaveTextContent(
         "1/1/2000 12:00:00 AM",
       );
-      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent(
-        "UTC",
-      );
+      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent("UTC");
     });
   });
 
@@ -524,45 +466,21 @@ describe("SchedulerViewCard", () => {
 
     await waitFor(() => {
       expect(screen.getByText("example_job")).toBeInTheDocument();
-      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent(
-        "RUNNING",
-      );
-      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent(
-        "False",
-      );
-      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent(
-        "1",
-      );
-      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent(
-        "1",
-      );
-      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent(
-        "5",
-      );
-      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent(
-        "FILE",
-      );
+      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent("RUNNING");
+      expect(screen.getAllByRole("paragraph")[1]).toHaveTextContent("False");
+      expect(screen.getAllByRole("paragraph")[2]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[3]).toHaveTextContent("1");
+      expect(screen.getAllByRole("paragraph")[4]).toHaveTextContent("5");
+      expect(screen.getAllByRole("paragraph")[5]).toHaveTextContent("FILE");
       expect(screen.getAllByRole("paragraph")[6]).toHaveTextContent(
         "/path/to/files",
       );
-      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent(
-        "*.txt",
-      );
-      expect(screen.getAllByRole("paragraph")[8]).toHaveTextContent(
-        "True",
-      );
-      expect(screen.getAllByRole("paragraph")[9]).toHaveTextContent(
-        "True",
-      );
-      expect(screen.getAllByRole("paragraph")[10]).toHaveTextContent(
-        "True",
-      );
-      expect(screen.getAllByRole("paragraph")[11]).toHaveTextContent(
-        "True",
-      );
-      expect(screen.getAllByRole("paragraph")[12]).toHaveTextContent(
-        "True",
-      );
+      expect(screen.getAllByRole("paragraph")[7]).toHaveTextContent("*.txt");
+      expect(screen.getAllByRole("paragraph")[8]).toHaveTextContent("True");
+      expect(screen.getAllByRole("paragraph")[9]).toHaveTextContent("True");
+      expect(screen.getAllByRole("paragraph")[10]).toHaveTextContent("True");
+      expect(screen.getAllByRole("paragraph")[11]).toHaveTextContent("True");
+      expect(screen.getAllByRole("paragraph")[12]).toHaveTextContent("True");
     });
   });
 
@@ -621,9 +539,7 @@ describe("SchedulerViewCard", () => {
     await waitFor(() => {
       expect(screen.getByText("example_job")).toBeInTheDocument();
       expect(jobService.PauseJob).toHaveBeenCalled();
-      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent(
-        "PAUSED",
-      );
+      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent("PAUSED");
     });
   });
 
@@ -682,9 +598,7 @@ describe("SchedulerViewCard", () => {
     await waitFor(() => {
       expect(screen.getByText("example_job")).toBeInTheDocument();
       expect(jobService.ResumeJob).toHaveBeenCalled();
-      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent(
-        "RUNNING",
-      );
+      expect(screen.getAllByRole("paragraph")[0]).toHaveTextContent("RUNNING");
     });
   });
 

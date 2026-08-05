@@ -1,11 +1,10 @@
+import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ButtonGroup, MenuItem } from "@mui/material";
+import { ButtonGroup, Chip, MenuItem, Tooltip } from "@mui/material";
 import { Menu } from "@mui/material";
 import { confirmDialog } from "primereact/confirmdialog";
 import { Divider } from "primereact/divider";
 import { Panel } from "primereact/panel";
-import { Tag } from "primereact/tag";
-import { Tooltip } from "primereact/tooltip";
 import React, { RefObject, useEffect, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
@@ -24,6 +23,7 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
+import { GetSeverity } from "../services/util_service";
 
 interface SystemCardProps {
   system: System;
@@ -159,53 +159,6 @@ function SystemCard({
     };
   }, [system]);
 
-  const getSeverity = (
-    status?: string,
-  ):
-    | "warning"
-    | "success"
-    | "info"
-    | "danger"
-    | "secondary"
-    | "contrast"
-    | null
-    | undefined => {
-    if (status === "INITIALIZING") {
-      return "warning";
-    }
-    if (status === "RUNNING") {
-      return "success";
-    }
-    if (status === "PAUSED") {
-      return "info";
-    }
-    if (status === "STOPPED") {
-      return "info";
-    }
-    if (status === "DEAD") {
-      return "danger";
-    }
-    if (status === "UNRESPONSIVE") {
-      return "danger";
-    }
-    if (status === "STARTING") {
-      return "warning";
-    }
-    if (status === "STOPPING") {
-      return "warning";
-    }
-    if (status === "UNKNOWN") {
-      return "danger";
-    }
-    if (status === "AWAITING_SYSTEM") {
-      return "warning";
-    }
-    if (status === "ERROR") {
-      return "danger";
-    }
-    return "danger";
-  };
-
   const statusList = [
     "INITIALIZING",
     "RUNNING",
@@ -325,21 +278,20 @@ function SystemCard({
   }
 
   function statusTemplate(instance: Instance) {
-    const statusSeverity = getSeverity(instance.status);
+    const statusSeverity = GetSeverity(instance.status);
 
     return (
       <>
         <Tooltip
-          content={`Status ${instance.status} for instance ${instance.name} in system ${system.namespace}.${system.name}.${system.version}`}
-          target={`#status_${instance.id}`}
-          position="bottom"
-        />
-        <Tag
-          value={instance.status}
-          severity={statusSeverity}
-          {...GenerateTourProps(statusInstanceTourStep)}
-          id={`status_${instance.id}`}
-        />
+          title={`Status ${instance.status} for instance ${instance.name} in system ${system.namespace}.${system.name}.${system.version}`}
+        >
+          <Chip
+            label={instance.status}
+            color={statusSeverity}
+            {...GenerateTourProps(statusInstanceTourStep)}
+            id={`status_${instance.id}`}
+          />
+        </Tooltip>
       </>
     );
   }
@@ -395,8 +347,9 @@ function SystemCard({
 
     return (
       <>
-        {label && <Tooltip content={label} target={`#ICON_${instance.id}`} />}
-        {icon && <FontAwesomeIcon id={`ICON_${instance.id}`} icon={icon} />}
+        <Tooltip title={label}>
+          <FontAwesomeIcon id={`ICON_${instance.id}`} icon={icon as IconProp} />
+        </Tooltip>
       </>
     );
   }

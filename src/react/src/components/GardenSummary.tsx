@@ -1,12 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Badge } from "primereact/badge";
-import { Card } from "primereact/card";
+import { Alert, Box, Chip, Grid, Skeleton, Tooltip } from "@mui/material";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
-import { Message } from "primereact/message";
-import { Skeleton } from "primereact/skeleton";
-import { Tag } from "primereact/tag";
-import { Tooltip } from "primereact/tooltip";
 import { RefObject, useEffect, useState } from "react";
 
 import { Connection, Garden, Runner, System } from "../models/brewtils-types";
@@ -27,7 +22,11 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { GenerateStatusCounts, GetSeverity } from "../services/util_service";
+import {
+  FAIcon,
+  GenerateStatusCounts,
+  GetSeverity,
+} from "../services/util_service";
 import AccessButton from "./AccessButton";
 
 function GardenSummary({
@@ -312,10 +311,9 @@ function GardenSummary({
 
     return (
       <>
-        {url.length > 0 && (
-          <Tooltip position="bottom" content={url} target={`#${targetId}`} />
-        )}
-        <span id={targetId}>{connection.api}</span>
+        <Tooltip title={url ?? ""}>
+          <span id={targetId}>{connection.api}</span>
+        </Tooltip>
       </>
     );
   };
@@ -323,7 +321,7 @@ function GardenSummary({
   const statusTemplate = (row: Connection) => {
     const severity = GetSeverity(row.status);
 
-    return <Tag value={row.status} severity={severity} />;
+    return <Chip label={row.status} color={severity} />;
   };
 
   const connectionActions = (node: Connection, type: string) => {
@@ -417,10 +415,9 @@ function GardenSummary({
   };
 
   return (
-    <Card
-      className="mb-4"
-      style={{ width: "100%" }}
-      unstyled
+    <Box
+      sx={{ mb: 4, width: "100%" }}
+      //unstyled
       key={selectedGarden?.name}
     >
       <div className="flex ml-2 page-header">
@@ -692,29 +689,30 @@ function GardenSummary({
       {selectedGarden?.name ? (
         <div>
           {invalidRouting && (
-            <Message
-              className="mx-2 mb-2"
-              color="warning"
-              text="Warning - Upstream routing error. Requests or Syncs might be interrupted or missed. Please contact your Garden Admin"
-              pt={{
-                icon: {
-                  role: "img",
-                  "aria-label": "Close Alert Message",
-                  style: { color: "var(--warning-color)" },
-                },
+            <Alert
+              sx={{
+                mx: 1,
+                mb: 1,
               }}
-              style={{
-                backgroundColor: "var(--warning-background-color)",
-                color: "var(--warning-color)",
-              }}
-            />
+              severity="warning"
+              icon={
+                <FAIcon
+                  icon="triangle-exclamation"
+                  role="img"
+                  aria-label="Warning alert icon"
+                />
+              }
+            >
+              Warning - Upstream routing error. Requests or Syncs might be
+              interrupted or missed. Please contact your Garden Admin
+            </Alert>
           )}
-          <div className="grid">
-            <div className="col-3">
+          <Grid container spacing={1}>
+            <Grid size={3}>
               <h2>Version</h2>
               <p>{selectedGarden?.version}</p>
-            </div>
-            <div className="col-3">
+            </Grid>
+            <Grid size={3}>
               <h2>Systems</h2>
               <div className="flex">
                 {Array.from(systemCounts, ([status, count]) => {
@@ -722,18 +720,15 @@ function GardenSummary({
                     const statusSeverity = GetSeverity(status);
                     return (
                       <div key={`${status}_Summary`}>
-                        <Tooltip
-                          content={`${status} Count ${count}`}
-                          target={`#${status}_${selectedGarden?.id}_severity_system_summary`}
-                          position="bottom"
-                        />
-                        <Badge
-                          data-testid={`${status}_severity_system_summary`}
-                          id={`${status}_${selectedGarden?.id}_severity_system_summary`}
-                          value={count}
-                          severity={statusSeverity}
-                          key={status}
-                        />
+                        <Tooltip title={`${status} Count ${count}`}>
+                          <Chip
+                            data-testid={`${status}_severity_system_summary`}
+                            id={`${status}_${selectedGarden?.id}_severity_system_summary`}
+                            label={count}
+                            color={statusSeverity}
+                            key={status}
+                          />
+                        </Tooltip>
                       </div>
                     );
                   }
@@ -741,10 +736,11 @@ function GardenSummary({
                   return null;
                 })}
               </div>
-            </div>
+            </Grid>
+
             {selectedGarden?.children &&
               selectedGarden?.children.length > 0 && (
-                <div className="col-3">
+                <Grid size={3}>
                   <h2>Downstream</h2>
 
                   {selectedGarden?.children &&
@@ -759,20 +755,20 @@ function GardenSummary({
                         )}
                       </ul>
                     )}
-                </div>
+                </Grid>
               )}
             {selectedGarden?.parent && (
-              <div className="col-3">
+              <Grid size={3}>
                 <h2>Upstream</h2>
                 <ul>
                   <li>{selectedGarden?.parent}</li>
                 </ul>
-              </div>
+              </Grid>
             )}
-          </div>
-          <div className="grid">
+          </Grid>
+          <Grid container spacing={1}>
             {receivingConnections && receivingConnections.length > 0 && (
-              <div className="col-4">
+              <Grid size={4}>
                 <h2>Receiving</h2>
 
                 <DataTable value={receivingConnections}>
@@ -791,11 +787,10 @@ function GardenSummary({
                     body={(node: any) => connectionActions(node, "RECEIVING")}
                   />
                 </DataTable>
-              </div>
+              </Grid>
             )}
-
             {publishingConnections && publishingConnections.length > 0 && (
-              <div className="col-4">
+              <Grid size={4}>
                 <h2>Publishing</h2>
                 <DataTable value={publishingConnections}>
                   <Column
@@ -813,14 +808,14 @@ function GardenSummary({
                     body={(node: any) => connectionActions(node, "PUBLISHING")}
                   />
                 </DataTable>
-              </div>
+              </Grid>
             )}
-          </div>
+          </Grid>
         </div>
       ) : (
         <Skeleton width="100%" height="150px"></Skeleton>
       )}
-    </Card>
+    </Box>
   );
 }
 

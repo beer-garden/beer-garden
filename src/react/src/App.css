@@ -51,6 +51,11 @@
   margin-left: 5px;
 }
 
+/* Override Z Layer for react-cron-js */
+.ant-select-dropdown {
+  z-index: 2000 !important;
+}
+
 /* Start 508 Color Contrast Formatting */
 
 :root {
