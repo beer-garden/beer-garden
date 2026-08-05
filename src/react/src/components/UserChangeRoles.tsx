@@ -54,7 +54,7 @@ function UserChangeRoles({
         checked={role.selected}
         slotProps={{
           input: {
-            "aria-label": `Row ${role.selected ? "Selected" : "Unselected"} ${role.id}`,
+            "aria-label": `Row ${role.selected ? "Unselected" : "Selected"} ${role.id}`,
           },
         }}
         onChange={(event: React.ChangeEvent<HTMLInputElement>) => {

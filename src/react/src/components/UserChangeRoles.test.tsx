@@ -70,9 +70,9 @@ describe("UserChangeRoles", () => {
     // Row Selected === Unchecked
     // Row Unselected === Checked
     await waitFor(() => {
-      expect(screen.getAllByLabelText("Row Selected 123").length).toBe(2);
-      expect(screen.getAllByLabelText("Row Selected 456").length).toBe(2);
-      expect(screen.getAllByLabelText("Row Selected 789").length).toBe(2);
+      expect(screen.getAllByLabelText("Row Selected 123").length).toBe(1);
+      expect(screen.getAllByLabelText("Row Selected 456").length).toBe(1);
+      expect(screen.getAllByLabelText("Row Selected 789").length).toBe(1);
     });
   });
 
@@ -139,9 +139,9 @@ describe("UserChangeRoles", () => {
     // Row Selected === Unchecked
     // Row Unselected === Checked
     await waitFor(() => {
-      expect(screen.getAllByLabelText("Row Selected 123").length).toBe(2);
-      expect(screen.getAllByLabelText("Row Selected 456").length).toBe(2);
-      expect(screen.getAllByLabelText("Row Unselected 789").length).toBe(2);
+      expect(screen.getAllByLabelText("Row Selected 123").length).toBe(1);
+      expect(screen.getAllByLabelText("Row Selected 456").length).toBe(1);
+      expect(screen.getAllByLabelText("Row Unselected 789").length).toBe(1);
     });
   });
 
@@ -208,30 +208,32 @@ describe("UserChangeRoles", () => {
     // Check for check boxes (div and input)
     // Row Selected === Unchecked
     // Row Unselected === Checked
-    await waitFor(() => {
-      expect(screen.getAllByLabelText("Row Selected 123").length).toBe(2);
-      expect(screen.getAllByLabelText("Row Selected 456").length).toBe(2);
-      expect(screen.getAllByLabelText("Row Unselected 789").length).toBe(2);
-    });
 
-    const fileRoleCheckbox =
-      await screen.findAllByLabelText("Row Selected 456");
+    const protectedCheckbox = screen.getByRole('checkbox', { name: /123/i });
+    expect(protectedCheckbox).toBeInTheDocument();
+    expect(protectedCheckbox).not.toBeChecked();
 
-    await userEvent.click(fileRoleCheckbox[1]);
+    const fileCheckbox = screen.getByRole('checkbox', { name: /456/i });
+    expect(fileCheckbox).toBeInTheDocument();
+    expect(fileCheckbox).not.toBeChecked();
 
-    await waitFor(() => {
-      expect(screen.getAllByLabelText("Row Selected 123").length).toBe(2);
-      expect(screen.getAllByLabelText("Row Unselected 456").length).toBe(2);
-      expect(screen.getAllByLabelText("Row Unselected 789").length).toBe(2);
-    });
+    const operatorCheckbox = screen.getByRole('checkbox', { name: /789/i });
+    expect(operatorCheckbox).toBeInTheDocument();
+    expect(operatorCheckbox).toBeChecked();
+
+    await userEvent.click(fileCheckbox);
+
+    expect(protectedCheckbox).not.toBeChecked();
+    expect(fileCheckbox).toBeChecked();
+    expect(operatorCheckbox).toBeChecked();
 
     const submitButton = await screen.findByTestId(`submit-btn-dialog`);
     await userEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(userService.UpdateUserRoles).toBeCalledWith(mockUser.username, [
-        "operator_role",
+      expect(userService.UpdateUserRoles).toBeCalledWith(mockUser.username, [     
         "file_role",
+        "operator_role",
       ]);
     });
   });
