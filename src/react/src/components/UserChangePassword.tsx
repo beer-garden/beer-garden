@@ -138,6 +138,11 @@ function UserChangePassword({
           {!isAdmin && (
             <TextField
               id="currentPassword"
+              slotProps={{
+                input: {
+                  "aria-label": "Current Password",
+                },
+              }}
               label="Current Password"
               type="password"
               value={currentPassword}
@@ -149,6 +154,11 @@ function UserChangePassword({
           )}
           <TextField
             id="newPassword"
+            slotProps={{
+              input: {
+                "aria-label": "New Password",
+              },
+            }}
             label="New Password"
             type="password"
             value={newPassword}
@@ -159,6 +169,11 @@ function UserChangePassword({
           />
           <TextField
             id="confirmPassword"
+            slotProps={{
+              input: {
+                "aria-label": "Confirm Password",
+              },
+            }}
             label="Confirm Password"
             type="password"
             value={confirmPassword}
