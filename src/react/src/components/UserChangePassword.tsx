@@ -1,13 +1,20 @@
-import { Dialog } from "primereact/dialog";
-import { Messages } from "primereact/messages";
-import { Password } from "primereact/password";
-import { ChangeEvent, useRef, useState } from "react";
+import {
+  Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+} from "@mui/material";
+import TextField from "@mui/material/TextField";
+import { useState } from "react";
 
 import { useSnackbar } from "../providers/SnackbarProvider";
 import {
   AdminUpdatePassword,
   UserUpdatePassword,
 } from "../services/user_service";
+import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
 
 function UserChangePassword({
@@ -33,10 +40,10 @@ function UserChangePassword({
   );
   const [confirmPasswordInvalid, setConfirmPasswordInvalid] =
     useState<boolean>(true);
-  const msgs = useRef<Messages>(null);
+  const [alertItem, setAlertItem] = useState<string | undefined>(undefined);
 
   function setPassword() {
-    msgs.current?.clear();
+    setAlertItem(undefined);
     if (isAdmin) {
       setAdminUserPassword();
     } else {
@@ -47,11 +54,7 @@ function UserChangePassword({
   function setAdminUserPassword() {
     if (username && newPassword && confirmPassword) {
       if (newPassword !== confirmPassword) {
-        msgs.current?.show({
-          severity: "error",
-          detail: "Passwords do not match",
-          sticky: true,
-        });
+        setAlertItem("Passwords do not match");
         return;
       }
       AdminUpdatePassword(username, newPassword)
@@ -69,11 +72,7 @@ function UserChangePassword({
         })
         .catch((error) => {
           console.error("Error updating password:", error);
-          msgs.current?.show({
-            severity: "error",
-            detail: `Failed to update password for ${username}`,
-            sticky: true,
-          });
+          setAlertItem(`Failed to update password for ${username}`);
         });
     }
   }
@@ -81,11 +80,7 @@ function UserChangePassword({
   function setUserPassword() {
     if (currentPassword && newPassword && confirmPassword) {
       if (newPassword !== confirmPassword) {
-        msgs.current?.show({
-          severity: "error",
-          detail: "Passwords do not match",
-          sticky: true,
-        });
+        setAlertItem("Passwords do not match");
         return;
       }
       UserUpdatePassword(newPassword, currentPassword)
@@ -103,11 +98,7 @@ function UserChangePassword({
         })
         .catch((error) => {
           console.error("Error updating password:", error);
-          msgs.current?.show({
-            severity: "error",
-            detail: `Failed to update password for ${username}`,
-            sticky: true,
-          });
+          setAlertItem(`Failed to update password for ${username}`);
         });
     }
   }
@@ -123,75 +114,76 @@ function UserChangePassword({
   return (
     <Dialog
       data-testid="change-password-dialog"
-      header={`Change Password for ${username}`}
-      footer={
-        <>
-          <AccessButton onClick={handleUserPasswordDialogClose} label="Close" />
-          <AccessButton
-            data-testid={`submit-btn-dialog`}
-            severity="danger"
-            onClick={setPassword}
-            label="Submit"
-          />
-        </>
-      }
-      visible={showPasswordDialog}
-      style={{ width: "50vw" }}
-      onHide={() => {
+      open={showPasswordDialog}
+      onClose={() => {
         handleUserPasswordDialogClose();
       }}
     >
-      <Messages ref={msgs} />
-      <div className="flex flex-column gap-2">
-        {!isAdmin && (
-          <>
-            <label htmlFor="currentPassword" className="font-bold">
-              Current Password
-            </label>
-            <Password
-              toggleMask
+      <DialogTitle>
+        <Grid container>
+          <Grid size="grow">{`Change Password for ${username}`}</Grid>
+          <Grid>
+            <AccessButton
+              sx={{ ml: 2 }}
+              onClick={handleUserPasswordDialogClose}
+            >
+              <FAIcon icon="xmark" />
+            </AccessButton>
+          </Grid>
+        </Grid>
+      </DialogTitle>
+      {alertItem && <Alert severity="error">{alertItem}</Alert>}
+      <DialogContent>
+        <div className="flex flex-column gap-2">
+          {!isAdmin && (
+            <TextField
               id="currentPassword"
-              data-testid="current-password"
-              className="mb-2"
+              label="Current Password"
+              type="password"
               value={currentPassword}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setCurrentPassword(e.target.value)
-              }
-              tooltip="Enter Current Password"
+              autoComplete="current-password"
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                setCurrentPassword(event.target.value);
+              }}
             />
-          </>
-        )}
-        <label htmlFor="newPassword" className="font-bold">
-          New Password
-        </label>
-        <Password
-          toggleMask
-          id="newPassword"
-          data-testid="new-password"
-          className="mb-2"
-          value={newPassword}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setNewPassword(e.target.value)
-          }
-          tooltip="Enter New Password"
-        />
-        <label htmlFor="confirmPassword" className="font-bold">
-          Confirm Password
-        </label>
-        <Password
-          toggleMask
-          id="confirmPassword"
-          data-testid="confirm-password"
-          invalid={confirmPasswordInvalid}
-          className="mb-2"
-          value={confirmPassword}
-          onChange={(e: ChangeEvent<HTMLInputElement>) => {
-            setConfirmPassword(e.target.value);
-            setConfirmPasswordInvalid(e.target.value !== newPassword);
-          }}
-          tooltip="Confirm New Password"
-        />
-      </div>
+          )}
+          <TextField
+            id="newPassword"
+            label="New Password"
+            type="password"
+            value={newPassword}
+            autoComplete="current-password"
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setNewPassword(event.target.value);
+            }}
+          />
+          <TextField
+            id="confirmPassword"
+            label="Confirm Password"
+            type="password"
+            value={confirmPassword}
+            autoComplete="current-password"
+            error={confirmPasswordInvalid}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setConfirmPassword(event.target.value);
+              setConfirmPasswordInvalid(event.target.value !== newPassword);
+            }}
+          />
+        </div>
+      </DialogContent>
+      <DialogActions>
+        <AccessButton onClick={handleUserPasswordDialogClose} label="Close">
+          Close
+        </AccessButton>
+        <AccessButton
+          data-testid={`submit-btn-dialog`}
+          color="error"
+          onClick={setPassword}
+          label="Submit"
+        >
+          Submit
+        </AccessButton>
+      </DialogActions>
     </Dialog>
   );
 }
