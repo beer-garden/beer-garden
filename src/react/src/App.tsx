@@ -474,233 +474,224 @@ function App() {
           </Box>
         )}
         {config && Object.keys(config).length > 0 && (
-          <div className="flex" key={reloadUI}>
-            <div className="flex-grow-1">
-              <BrowserRouter basename={baseURL}>
-                {runTour && (
-                  <Joyride
-                    onEvent={handleJoyrideEvent}
-                    continuous
-                    run={true}
-                    steps={ConvertToTourStepProps(tourStepsRef.current)}
-                  />
-                )}
-                <div role="navigation">
-                  <NavigationMenu
-                    listeners={listeners.current}
-                    config={config}
-                    runReloadUI={runReloadUI}
-                    addRequestItem={addRequestItem}
-                    toggleRunTour={toggleRunTour}
-                    tourStepsRef={tourStepsRef}
-                  />
-                </div>
-                {requestItem && (
-                  <Dialog
-                    open={requestItem !== undefined}
-                    fullScreen={fullScreenDialog}
-                    maxWidth="xl"
-                    scroll="paper"
-                    onClose={() => {
-                      setRequestItem(undefined);
-                      setFullScreenDialog(false);
-                    }}
-                    sx={{
-                      "& .MuiPaper-root": {
-                        minWidth: "50%",
-                      },
-                    }}
-                  >
-                    <DialogTitle
-                      sx={{ m: 0, p: 2 }}
-                      id="customized-dialog-title"
-                    >
-                      <Grid container>
-                        <Grid size="grow">
-                          {requestItem.type === "REQUEST" && "Create Request"}
-                          {requestItem.type === "VIEW_REQUEST" &&
-                            `View Request: ${requestItem?.requestId}`}
-                          {requestItem.type === "VIEW_JOB" &&
-                            `View Scheduled Job: ${requestItem?.jobId}`}
-                          {requestItem.type === "VIEW_TOPIC" &&
-                            `View Topic: ${requestItem?.topic?.name}`}
-                        </Grid>
-                        <Grid>
-                          {fullScreenDialog === false && (
-                            <AccessButton
-                              sx={{ mr: 2 }}
-                              onClick={() => setFullScreenDialog(true)}
-                            >
-                              <FontAwesomeIcon icon="maximize" />
-                            </AccessButton>
-                          )}
-                          {fullScreenDialog === true && (
-                            <AccessButton
-                              sx={{ mr: 2 }}
-                              onClick={() => setFullScreenDialog(false)}
-                            >
-                              <FontAwesomeIcon icon="minimize" />
-                            </AccessButton>
-                          )}
+          <div key={reloadUI}>
+            <BrowserRouter basename={baseURL}>
+              {runTour && (
+                <Joyride
+                  onEvent={handleJoyrideEvent}
+                  continuous
+                  run={true}
+                  steps={ConvertToTourStepProps(tourStepsRef.current)}
+                />
+              )}
+              <div role="navigation">
+                <NavigationMenu
+                  listeners={listeners.current}
+                  config={config}
+                  runReloadUI={runReloadUI}
+                  addRequestItem={addRequestItem}
+                  toggleRunTour={toggleRunTour}
+                  tourStepsRef={tourStepsRef}
+                />
+              </div>
+              {requestItem && (
+                <Dialog
+                  open={requestItem !== undefined}
+                  fullScreen={fullScreenDialog}
+                  maxWidth="xl"
+                  scroll="paper"
+                  onClose={() => {
+                    setRequestItem(undefined);
+                    setFullScreenDialog(false);
+                  }}
+                  sx={{
+                    "& .MuiPaper-root": {
+                      minWidth: "50%",
+                    },
+                  }}
+                >
+                  <DialogTitle sx={{ m: 0, p: 2 }} id="customized-dialog-title">
+                    <Grid container>
+                      <Grid size="grow">
+                        {requestItem.type === "REQUEST" && "Create Request"}
+                        {requestItem.type === "VIEW_REQUEST" &&
+                          `View Request: ${requestItem?.requestId}`}
+                        {requestItem.type === "VIEW_JOB" &&
+                          `View Scheduled Job: ${requestItem?.jobId}`}
+                        {requestItem.type === "VIEW_TOPIC" &&
+                          `View Topic: ${requestItem?.topic?.name}`}
+                      </Grid>
+                      <Grid>
+                        {fullScreenDialog === false && (
                           <AccessButton
                             sx={{ mr: 2 }}
-                            onClick={() => {
-                              setRequestItem(undefined);
-                              setFullScreenDialog(false);
-                            }}
+                            onClick={() => setFullScreenDialog(true)}
                           >
-                            <FontAwesomeIcon icon="xmark" />
+                            <FontAwesomeIcon icon="maximize" />
                           </AccessButton>
-                        </Grid>
+                        )}
+                        {fullScreenDialog === true && (
+                          <AccessButton
+                            sx={{ mr: 2 }}
+                            onClick={() => setFullScreenDialog(false)}
+                          >
+                            <FontAwesomeIcon icon="minimize" />
+                          </AccessButton>
+                        )}
+                        <AccessButton
+                          sx={{ mr: 2 }}
+                          onClick={() => {
+                            setRequestItem(undefined);
+                            setFullScreenDialog(false);
+                          }}
+                        >
+                          <FontAwesomeIcon icon="xmark" />
+                        </AccessButton>
                       </Grid>
-                    </DialogTitle>
+                    </Grid>
+                  </DialogTitle>
 
-                    <RequestItemCard
-                      removeItem={() => {
-                        setRequestItem(undefined);
-                      }}
-                      updateRequestItem={addRequestItem}
-                      requestItem={requestItem}
-                      listeners={listeners}
-                      config={config}
-                      isDialog={true}
-                    />
-                  </Dialog>
-                )}
-                <div
-                  className="flex-grow-1"
-                  role="main"
-                  id="main-content"
-                  tabIndex={-1}
-                >
-                  <HasAccess
+                  <RequestItemCard
+                    removeItem={() => {
+                      setRequestItem(undefined);
+                    }}
+                    updateRequestItem={addRequestItem}
+                    requestItem={requestItem}
+                    listeners={listeners}
                     config={config}
-                    permission="READ_ONLY"
-                    renderAuthFailed={
-                      <ErrorPage
-                        errorCode={401}
-                        errorMsg="Insufficient access or not logged in. Please contact Garden Administrator."
+                    isDialog={true}
+                  />
+                </Dialog>
+              )}
+              <div
+                role="main"
+                id="main-content"
+                tabIndex={-1}
+              >
+                <HasAccess
+                  config={config}
+                  permission="READ_ONLY"
+                  renderAuthFailed={
+                    <ErrorPage
+                      errorCode={401}
+                      errorMsg="Insufficient access or not logged in. Please contact Garden Administrator."
+                    />
+                  }
+                >
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <Routes>
+                      <Route
+                        path="/dashboard"
+                        element={
+                          <GardenDashboard
+                            tourStepsRef={tourStepsRef}
+                            gardenRef={rootGardenRef}
+                            systemsRef={systemsRef}
+                            gardenState={gardenState}
+                            systemState={systemState}
+                            addRequestItem={addRequestItem}
+                            config={config}
+                            listeners={listeners.current}
+                          />
+                        }
                       />
-                    }
-                  >
-                    <ErrorBoundary FallbackComponent={ErrorFallback}>
-                      <Routes>
-                        <Route
-                          path="/dashboard"
-                          element={
-                            <GardenDashboard
-                              tourStepsRef={tourStepsRef}
-                              gardenRef={rootGardenRef}
-                              systemsRef={systemsRef}
-                              gardenState={gardenState}
-                              systemState={systemState}
-                              addRequestItem={addRequestItem}
-                              config={config}
-                              listeners={listeners.current}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/request/:requestId"
-                          element={
-                            <RequestView
-                              listeners={listeners.current}
-                              config={config}
-                              addRequestItem={addRequestItem}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/requests"
-                          element={
-                            <RequestIndex
-                              listeners={listeners.current}
-                              tourStepsRef={tourStepsRef}
-                              addRequestItem={addRequestItem}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/jobs"
-                          element={
-                            <JobIndex
-                              listeners={listeners.current}
-                              tourStepsRef={tourStepsRef}
-                              addRequestItem={addRequestItem}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/about"
-                          element={<AboutIndex config={config} />}
-                        />
-                        <Route
-                          path="/roles"
-                          element={
-                            <HasAccess
-                              config={config}
-                              permission="GARDEN_ADMIN"
-                              isGlobal={true}
-                              renderAuthFailed={
-                                <ErrorPage
-                                  errorCode={401}
-                                  errorMsg="Insufficient Access for Roles Management. Please contact Garden Administrator"
-                                />
-                              }
-                            >
-                              <RoleIndex
-                                config={config}
-                                tourStepsRef={tourStepsRef}
+                      <Route
+                        path="/request/:requestId"
+                        element={
+                          <RequestView
+                            listeners={listeners.current}
+                            config={config}
+                            addRequestItem={addRequestItem}
+                          />
+                        }
+                      />
+                      <Route
+                        path="/requests"
+                        element={
+                          <RequestIndex
+                            listeners={listeners.current}
+                            tourStepsRef={tourStepsRef}
+                            addRequestItem={addRequestItem}
+                          />
+                        }
+                      />
+                      <Route
+                        path="/jobs"
+                        element={
+                          <JobIndex
+                            listeners={listeners.current}
+                            tourStepsRef={tourStepsRef}
+                            addRequestItem={addRequestItem}
+                            config={config}
+                          />
+                        }
+                      />
+                      <Route
+                        path="/about"
+                        element={<AboutIndex config={config} />}
+                      />
+                      <Route
+                        path="/roles"
+                        element={
+                          <HasAccess
+                            config={config}
+                            permission="GARDEN_ADMIN"
+                            isGlobal={true}
+                            renderAuthFailed={
+                              <ErrorPage
+                                errorCode={401}
+                                errorMsg="Insufficient Access for Roles Management. Please contact Garden Administrator"
                               />
-                            </HasAccess>
-                          }
-                        />
-                        <Route
-                          path="/topics"
-                          element={
-                            <TopicIndex
-                              config={config}
-                              listeners={listeners}
-                              addRequestItem={addRequestItem}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/users"
-                          element={
-                            <UserIndex
+                            }
+                          >
+                            <RoleIndex
                               config={config}
                               tourStepsRef={tourStepsRef}
                             />
-                          }
-                        />
-                        <Route path="/swagger" element={<Swagger />} />
-                        <Route
-                          path="/"
-                          element={
-                            <GardenDashboard
-                              tourStepsRef={tourStepsRef}
-                              gardenRef={rootGardenRef}
-                              systemsRef={systemsRef}
-                              gardenState={gardenState}
-                              systemState={systemState}
-                              addRequestItem={addRequestItem}
-                              config={config}
-                              listeners={listeners.current}
-                            />
-                          }
-                        />
-                        <Route
-                          path="*"
-                          element={<ErrorPage errorCode={404} />}
-                        />
-                      </Routes>
-                    </ErrorBoundary>
-                  </HasAccess>
-                </div>
-              </BrowserRouter>
-            </div>
+                          </HasAccess>
+                        }
+                      />
+                      <Route
+                        path="/topics"
+                        element={
+                          <TopicIndex
+                            config={config}
+                            listeners={listeners}
+                            addRequestItem={addRequestItem}
+                          />
+                        }
+                      />
+                      <Route
+                        path="/users"
+                        element={
+                          <UserIndex
+                            config={config}
+                            tourStepsRef={tourStepsRef}
+                          />
+                        }
+                      />
+                      <Route path="/swagger" element={<Swagger />} />
+                      <Route
+                        path="/"
+                        element={
+                          <GardenDashboard
+                            tourStepsRef={tourStepsRef}
+                            gardenRef={rootGardenRef}
+                            systemsRef={systemsRef}
+                            gardenState={gardenState}
+                            systemState={systemState}
+                            addRequestItem={addRequestItem}
+                            config={config}
+                            listeners={listeners.current}
+                          />
+                        }
+                      />
+                      <Route path="*" element={<ErrorPage errorCode={404} />} />
+                    </Routes>
+                  </ErrorBoundary>
+                </HasAccess>
+              </div>
+            </BrowserRouter>
           </div>
         )}
       </SnackbarProvider>
