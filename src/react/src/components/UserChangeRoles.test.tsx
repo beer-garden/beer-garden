@@ -209,15 +209,15 @@ describe("UserChangeRoles", () => {
     // Row Selected === Unchecked
     // Row Unselected === Checked
 
-    const protectedCheckbox = screen.getByRole('checkbox', { name: /123/i });
+    const protectedCheckbox = screen.getByRole("checkbox", { name: /123/i });
     expect(protectedCheckbox).toBeInTheDocument();
     expect(protectedCheckbox).not.toBeChecked();
 
-    const fileCheckbox = screen.getByRole('checkbox', { name: /456/i });
+    const fileCheckbox = screen.getByRole("checkbox", { name: /456/i });
     expect(fileCheckbox).toBeInTheDocument();
     expect(fileCheckbox).not.toBeChecked();
 
-    const operatorCheckbox = screen.getByRole('checkbox', { name: /789/i });
+    const operatorCheckbox = screen.getByRole("checkbox", { name: /789/i });
     expect(operatorCheckbox).toBeInTheDocument();
     expect(operatorCheckbox).toBeChecked();
 
@@ -231,7 +231,7 @@ describe("UserChangeRoles", () => {
     await userEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(userService.UpdateUserRoles).toBeCalledWith(mockUser.username, [     
+      expect(userService.UpdateUserRoles).toBeCalledWith(mockUser.username, [
         "file_role",
         "operator_role",
       ]);
