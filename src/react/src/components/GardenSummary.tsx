@@ -1,9 +1,16 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Alert, Box, Chip, Grid, Skeleton, Tooltip } from "@mui/material";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
+import {
+  Alert,
+  Box,
+  Chip,
+  Grid,
+  Skeleton,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { RefObject, useEffect, useState } from "react";
 
+import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import { Connection, Garden, Runner, System } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { TourStepProps } from "../models/models";
@@ -334,7 +341,7 @@ function GardenSummary({
       return <></>;
     }
     return (
-      <div className="flex gap-2">
+      <Box sx={{ display: "flex", gap: 2 }}>
         <AccessButton
           data-testid={type + "_" + node?.api + "_START"}
           {...GenerateTourProps({
@@ -410,22 +417,30 @@ function GardenSummary({
         >
           <FontAwesomeIcon icon="stop" />
         </AccessButton>
-      </div>
+      </Box>
     );
   };
 
   return (
-    <Box
-      sx={{ mb: 4, width: "100%" }}
-      //unstyled
-      key={selectedGarden?.name}
-    >
-      <div className="flex ml-2 page-header">
-        <h1 className="flex-1">
+    <Box sx={{ mb: 4, width: "100%" }} key={selectedGarden?.name}>
+      <Box
+        sx={{
+          display: "flex",
+          ml: 1,
+          pb: "9px",
+          margin: "20px 0 20px",
+          borderBottom: "1px solid #eeeeee",
+        }}
+      >
+        <Typography
+          variant="h4"
+          component="h1"
+          sx={{ flexGrow: 1, fontWeight: "bold" }}
+        >
           {selectedGarden?.name
             ? `Garden Summary: ${selectedGarden?.name}`
             : "Garden Summary"}
-        </h1>
+        </Typography>
         {selectedGarden?.name && (
           <div>
             <AccessButton
@@ -433,7 +448,7 @@ function GardenSummary({
               label="Rescan Plugins"
               tooltip={`Rescan Plugins for Garden ${selectedGarden?.name}`}
               data-testid={"RESCAN_PLUGINS"}
-              className="mr-2"
+              sx={{ mr: 1 }}
               onClick={() => {
                 if (selectedGarden?.name) {
                   Rescan(selectedGarden.name)
@@ -470,7 +485,7 @@ function GardenSummary({
               tooltip={`Rescan Downstream for Garden ${selectedGarden?.name}`}
               {...GenerateTourProps(rescanDownstreamTourStep)}
               data-testid={"RESCAN_DOWNSTREAM"}
-              className="mr-2"
+              sx={{ mr: 1 }}
               onClick={() => {
                 if (selectedGarden?.name) {
                   RescanGarden(selectedGarden.name)
@@ -504,8 +519,8 @@ function GardenSummary({
               tooltip={`Clear Plugin Queues for Garden ${selectedGarden?.name}`}
               {...GenerateTourProps(clearPluginsQueuesTourStep)}
               data-testid={"CLEAR_PLUGIN_QUEUES"}
-              className="mr-2"
-              severity="warning"
+              sx={{ mr: 1 }}
+              color="warning"
               onClick={() => {
                 if (selectedGarden?.name) {
                   ClearAllQueues(selectedGarden.name)
@@ -541,7 +556,7 @@ function GardenSummary({
                   tooltip={`Sync Garden ${selectedGarden?.name}`}
                   {...GenerateTourProps(syncGardenTourStep)}
                   data-testid={"SYNC_GARDEN"}
-                  className="mr-2"
+                  sx={{ mr: 1 }}
                   onClick={() => {
                     if (selectedGarden?.name) {
                       SyncGarden(selectedGarden.name)
@@ -577,7 +592,7 @@ function GardenSummary({
                   label="Sync All"
                   {...GenerateTourProps(syncAllTourStep)}
                   data-testid={"SYNC_ALL"}
-                  className="mr-2"
+                  sx={{ mr: 1 }}
                   onClick={() => {
                     SyncGarden()
                       .then(() => {
@@ -612,7 +627,7 @@ function GardenSummary({
                   tooltip={`Sync Users for Garden ${selectedGarden?.name}`}
                   {...GenerateTourProps(syncUsersTourStep)}
                   data-testid={"SYNC_USERS"}
-                  className="mr-2"
+                  sx={{ mr: 1 }}
                   onClick={() => {
                     if (selectedGarden?.name) {
                       SyncUsersGarden(selectedGarden.name)
@@ -653,7 +668,7 @@ function GardenSummary({
                   {...GenerateTourProps(deleteGardenTourStep)}
                   data-testid={"DELETE_GARDEN"}
                   color="error"
-                  className="mr-2"
+                  sx={{ mr: 1 }}
                   onClick={() => {
                     if (selectedGarden?.name) {
                       DeleteGarden(selectedGarden.name)
@@ -685,7 +700,7 @@ function GardenSummary({
               )}
           </div>
         )}
-      </div>
+      </Box>
       {selectedGarden?.name ? (
         <div>
           {invalidRouting && (
@@ -714,7 +729,7 @@ function GardenSummary({
             </Grid>
             <Grid size={3}>
               <h2>Systems</h2>
-              <div className="flex">
+              <Box sx={{ display: "flex" }}>
                 {Array.from(systemCounts, ([status, count]) => {
                   if (count && count > 0) {
                     const statusSeverity = GetSeverity(status);
@@ -735,7 +750,7 @@ function GardenSummary({
 
                   return null;
                 })}
-              </div>
+              </Box>
             </Grid>
 
             {selectedGarden?.children &&
@@ -771,43 +786,59 @@ function GardenSummary({
               <Grid size={4}>
                 <h2>Receiving</h2>
 
-                <DataTable value={receivingConnections}>
-                  <Column
-                    field="api"
-                    header="API"
-                    body={(row) => apiTemplate(row, "RECEIVING")}
-                  />
-                  <Column
-                    field="status"
-                    header="Status"
-                    body={statusTemplate}
-                  />
-                  <Column
-                    header="Actions"
-                    body={(node: any) => connectionActions(node, "RECEIVING")}
-                  />
-                </DataTable>
+                <EnhancedTable
+                  data={receivingConnections}
+                  displayAll={false}
+                  columns={[
+                    {
+                      id: "api",
+                      field: "api",
+                      label: "API",
+                      template: (row) => apiTemplate(row, "RECEIVING"),
+                    },
+                    {
+                      id: "status",
+                      field: "status",
+                      label: "Status",
+                      template: statusTemplate,
+                    },
+                    {
+                      id: "actions",
+                      label: "Actions",
+                      template: (node: any) =>
+                        connectionActions(node, "RECEIVING"),
+                    },
+                  ]}
+                />
               </Grid>
             )}
             {publishingConnections && publishingConnections.length > 0 && (
               <Grid size={4}>
                 <h2>Publishing</h2>
-                <DataTable value={publishingConnections}>
-                  <Column
-                    field="api"
-                    header="API"
-                    body={(row) => apiTemplate(row, "PUBLISHING")}
-                  />
-                  <Column
-                    field="status"
-                    header="Status"
-                    body={statusTemplate}
-                  />
-                  <Column
-                    header="Actions"
-                    body={(node: any) => connectionActions(node, "PUBLISHING")}
-                  />
-                </DataTable>
+                <EnhancedTable
+                  data={publishingConnections}
+                  displayAll={false}
+                  columns={[
+                    {
+                      id: "api",
+                      field: "api",
+                      label: "API",
+                      template: (row) => apiTemplate(row, "PUBLISHING"),
+                    },
+                    {
+                      id: "status",
+                      field: "status",
+                      label: "Status",
+                      template: statusTemplate,
+                    },
+                    {
+                      id: "actions",
+                      label: "Actions",
+                      template: (node: any) =>
+                        connectionActions(node, "PUBLISHING"),
+                    },
+                  ]}
+                />
               </Grid>
             )}
           </Grid>
