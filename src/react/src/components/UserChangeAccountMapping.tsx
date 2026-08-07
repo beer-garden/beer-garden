@@ -1,7 +1,12 @@
-import { Column } from "primereact/column";
-import { Dialog } from "primereact/dialog";
-import { InputText } from "primereact/inputtext";
-import { TreeTable } from "primereact/treetable";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 
 import { AliasUserMap, Garden, User } from "../models/brewtils-types";
@@ -9,7 +14,9 @@ import { Config } from "../models/models";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRootGarden } from "../services/garden_service";
 import { UpdateUserAliasMapping } from "../services/user_service";
+import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
+import EnhancedTable from "./EnhancedTable/components/EnhancedTable";
 
 function UserChangeAccountMapping({
   user,
@@ -27,12 +34,13 @@ function UserChangeAccountMapping({
   const showSnackbar = useSnackbar();
   const [gardenAccounts, setGardenAccounts] = useState<Array<any>>([]);
   const gardenAccountsRef = useRef<Array<any>>([]);
-  const seenGardens = useRef<Set<string>>(new Set());
 
   function mapGardensToAccounts(
     gardens: Array<Garden>,
     defaultUsername?: string,
-  ): Array<any> {
+    parent?: string,
+    depth?: number,
+  ) {
     const accounts = [] as Array<any>;
 
     if (gardens.length === 0) {
@@ -41,7 +49,6 @@ function UserChangeAccountMapping({
 
     for (const garden of gardens) {
       if (garden.name) {
-        seenGardens.current.add(garden.name);
         const gardenDefaultUsername =
           garden.id &&
           user.user_alias_mapping &&
@@ -54,28 +61,32 @@ function UserChangeAccountMapping({
             : defaultUsername;
 
         accounts.push({
-          key: garden.name,
-          data: {
-            garden: garden.name,
-            username:
-              garden.id &&
-              user.user_alias_mapping &&
-              user.user_alias_mapping.some(
-                (alias) => alias.target_garden === garden.name,
-              )
-                ? user.user_alias_mapping.filter(
-                    (alias) => alias.target_garden === garden.name,
-                  )[0]?.username
-                : undefined,
-            defaultUsername: gardenDefaultUsername,
-          },
-
-          expanded: true,
-          children:
-            garden?.children && garden.children.length > 0
-              ? mapGardensToAccounts(garden.children, gardenDefaultUsername)
-              : [],
+          garden: garden.name,
+          username:
+            garden.id &&
+            user.user_alias_mapping &&
+            user.user_alias_mapping.some(
+              (alias) => alias.target_garden === garden.name,
+            )
+              ? user.user_alias_mapping.filter(
+                  (alias) => alias.target_garden === garden.name,
+                )[0]?.username
+              : undefined,
+          defaultUsername: gardenDefaultUsername,
+          depth: depth ?? 0,
+          parent: parent,
         });
+        if (garden.children) {
+          for (const account of mapGardensToAccounts(
+            garden.children,
+
+            gardenDefaultUsername,
+            garden.name,
+            (depth ?? 1) + 1,
+          )) {
+            accounts.push(account);
+          }
+        }
       }
     }
     return accounts;
@@ -91,17 +102,11 @@ function UserChangeAccountMapping({
     const aliasMapping = [] as Array<AliasUserMap>;
 
     for (const account of accounts) {
-      if (account.data.username && account.data.garden) {
+      if (account.username && account.garden) {
         aliasMapping.push({
-          target_garden: account.data.garden,
-          username: account.data.username,
+          target_garden: account.garden,
+          username: account.username,
         });
-      }
-      if (account.children && account.children.length > 0) {
-        const childAliasMapping = extractAliasMappingFromAccounts(
-          account.children,
-        );
-        aliasMapping.push(...childAliasMapping);
       }
     }
 
@@ -132,11 +137,13 @@ function UserChangeAccountMapping({
     }
   }
 
-  const onEditorValueChange = (node: any, value: any) => {
+  const onEditorValueChange = (updatedNode: any, value: any) => {
     const newNodes = JSON.parse(JSON.stringify(gardenAccountsRef.current));
-    const editedNode = findNodeByKey(newNodes, node.key);
-
-    editedNode.data.username = value;
+    for (const node of newNodes) {
+      if (node.garden === updatedNode.garden) {
+        node.username = value;
+      }
+    }
 
     if (
       value !== null &&
@@ -144,9 +151,9 @@ function UserChangeAccountMapping({
       value !== "" &&
       value.length > 0
     ) {
-      for (const childNodes of editedNode.children || []) {
-        if (childNodes.data.defaultUsername !== value) {
-          childNodes.data.defaultUsername = value;
+      for (const childNode of newNodes || []) {
+        if (childNode.parent === updatedNode.garden) {
+          childNode.defaultUsername = value;
         }
       }
     }
@@ -155,37 +162,22 @@ function UserChangeAccountMapping({
     setGardenAccounts(gardenAccountsRef.current);
   };
 
-  const findNodeByKey = (nodes: Array<any>, key: string): any => {
-    for (const node of nodes) {
-      if (node.key === key) {
-        return node;
-      }
-      if (node.children && node.children.length > 0) {
-        const foundNode = findNodeByKey(node.children, key);
-        if (foundNode) {
-          return foundNode;
-        }
-      }
-    }
-
-    return undefined;
-  };
-
   const accountEditorTemplate = (node: any) => {
     return (
-      <InputText
-        type="text"
-        placeholder={node.data.defaultUsername}
-        value={node.data.username}
+      <TextField
+        placeholder={node.defaultUsername}
+        value={node.username}
         onChange={(e) => onEditorValueChange(node, e.target.value)}
-        onKeyDown={(e) => e.stopPropagation()}
-        data-testid={`edit-user-account-${node.data.garden}`}
+        slotProps={{
+          input: {
+            "aria-label": `Edit User Account ${node.garden}`,
+          },
+        }}
       />
     );
   };
 
   useEffect(() => {
-    seenGardens.current.clear();
     GetRootGarden(config, {})
       .then((garden) => {
         const accountsTree = [] as Array<any>;
@@ -199,17 +191,14 @@ function UserChangeAccountMapping({
         for (const alias of user.user_alias_mapping || []) {
           if (
             alias.target_garden &&
-            !seenGardens.current.has(alias.target_garden)
+            !accountsTree.some(
+              (account) => account.garden === alias.target_garden,
+            )
           ) {
             accountsTree.push({
-              key: alias.target_garden,
-              data: {
-                garden: alias.target_garden,
-                username: alias.username,
-                defaultUsername: user.username,
-              },
-              expanded: true,
-              children: [],
+              garden: alias.target_garden,
+              username: alias.username,
+              defaultUsername: user.username,
             });
           }
         }
@@ -230,34 +219,65 @@ function UserChangeAccountMapping({
   return (
     <Dialog
       data-testid="change-account-mapping-dialog"
-      header={`Update Account Mapping for ${user.username}`}
-      footer={
-        <>
-          <AccessButton
-            onClick={handleAccountMappingDialogClose}
-            label="Close"
-          />
-          <AccessButton
-            data-testid={`submit-btn-dialog`}
-            severity="danger"
-            onClick={updateAccounts}
-            label="Submit"
-          />
-        </>
-      }
-      visible={showAccountMappingDialog}
-      onHide={() => {
+      open={showAccountMappingDialog}
+      onClose={() => {
         handleAccountMappingDialogClose();
       }}
     >
-      <TreeTable value={gardenAccounts}>
-        <Column field="garden" header="Garden" expander></Column>
-        <Column
-          field="username"
-          header="Account Name"
-          body={accountEditorTemplate}
-        ></Column>
-      </TreeTable>
+      <DialogTitle>
+        <Grid container>
+          <Grid size="grow">{`Update Account Mapping for ${user.username}`}</Grid>
+          <Grid>
+            <AccessButton
+              sx={{ ml: 2 }}
+              onClick={handleAccountMappingDialogClose}
+            >
+              <FAIcon icon="xmark" />
+            </AccessButton>
+          </Grid>
+        </Grid>
+      </DialogTitle>
+
+      <DialogContent>
+        <EnhancedTable
+          data={gardenAccounts}
+          displayAll
+          columns={[
+            {
+              id: "garden_name",
+              label: "Garden",
+              field: "garden",
+              isString: true,
+              template: (row) => (
+                <Typography sx={{ ml: row.depth ? row.depth * 2 : 0 }}>
+                  {row.garden}
+                </Typography>
+              ),
+            },
+            {
+              id: "username",
+              label: "Alias Account",
+              field: "username",
+              isString: true,
+              template: accountEditorTemplate,
+            },
+          ]}
+        />
+      </DialogContent>
+
+      <DialogActions>
+        <AccessButton onClick={handleAccountMappingDialogClose} label="Close">
+          Close
+        </AccessButton>
+        <AccessButton
+          data-testid={`submit-btn-dialog`}
+          color="error"
+          onClick={updateAccounts}
+          label="Submit"
+        >
+          Submit
+        </AccessButton>
+      </DialogActions>
     </Dialog>
   );
 }
