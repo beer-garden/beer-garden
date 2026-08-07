@@ -33,9 +33,11 @@ describe("UserChangePassword", () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryByTestId("current-password")).not.toBeInTheDocument();
-      expect(screen.getByTestId("new-password")).toBeInTheDocument();
-      expect(screen.getByTestId("confirm-password")).toBeInTheDocument();
+      expect(
+        screen.queryByLabelText("Current Password"),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("New Password")).toBeInTheDocument();
+      expect(screen.queryByLabelText("Confirm Password")).toBeInTheDocument();
     });
   });
 
@@ -52,9 +54,9 @@ describe("UserChangePassword", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("current-password")).toBeInTheDocument();
-      expect(screen.getByTestId("new-password")).toBeInTheDocument();
-      expect(screen.getByTestId("confirm-password")).toBeInTheDocument();
+      expect(screen.getAllByLabelText("Current Password").length).toBe(1);
+      expect(screen.getAllByLabelText("New Password").length).toBe(1);
+      expect(screen.getAllByLabelText("Confirm Password").length).toBe(1);
     });
   });
 
@@ -71,17 +73,17 @@ describe("UserChangePassword", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("new-password")).toBeInTheDocument();
-      expect(screen.getByTestId("confirm-password")).toBeInTheDocument();
+      expect(screen.getAllByLabelText("New Password").length).toBe(1);
+      expect(screen.getAllByLabelText("Confirm Password").length).toBe(1);
     });
 
-    const newPassword = await screen.findByTestId(`new-password`);
-    const confirmPassword = await screen.findByTestId(`confirm-password`);
+    const newPassword = await screen.findByLabelText(`New Password`);
+    const confirmPassword = await screen.findByLabelText(`Confirm Password`);
 
     fireEvent.change(newPassword, { target: { value: "good_password" } });
     fireEvent.change(confirmPassword, { target: { value: "bad_password" } });
 
-    expect(confirmPassword).toHaveClass("p-invalid");
+    expect(confirmPassword).toHaveAttribute("aria-invalid", "true");
   });
 
   test("renders valid match password", async () => {
@@ -97,12 +99,12 @@ describe("UserChangePassword", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("new-password")).toBeInTheDocument();
-      expect(screen.getByTestId("confirm-password")).toBeInTheDocument();
+      expect(screen.getAllByLabelText("New Password").length).toBe(1);
+      expect(screen.getAllByLabelText("Confirm Password").length).toBe(1);
     });
 
-    const newPassword = await screen.findByTestId(`new-password`);
-    const confirmPassword = await screen.findByTestId(`confirm-password`);
+    const newPassword = await screen.findByLabelText(`New Password`);
+    const confirmPassword = await screen.findByLabelText(`Confirm Password`);
 
     fireEvent.change(newPassword, { target: { value: "good_password" } });
     fireEvent.change(confirmPassword, { target: { value: "good_password" } });
@@ -125,12 +127,12 @@ describe("UserChangePassword", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("new-password")).toBeInTheDocument();
-      expect(screen.getByTestId("confirm-password")).toBeInTheDocument();
+      expect(screen.getAllByLabelText("New Password").length).toBe(1);
+      expect(screen.getAllByLabelText("Confirm Password").length).toBe(1);
     });
 
-    const newPassword = await screen.findByTestId(`new-password`);
-    const confirmPassword = await screen.findByTestId(`confirm-password`);
+    const newPassword = await screen.findByLabelText(`New Password`);
+    const confirmPassword = await screen.findByLabelText(`Confirm Password`);
 
     fireEvent.change(newPassword, { target: { value: "good_password" } });
     fireEvent.change(confirmPassword, { target: { value: "good_password" } });
@@ -161,14 +163,14 @@ describe("UserChangePassword", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("current-password")).toBeInTheDocument();
-      expect(screen.getByTestId("new-password")).toBeInTheDocument();
-      expect(screen.getByTestId("confirm-password")).toBeInTheDocument();
+      expect(screen.getAllByLabelText("Current Password").length).toBe(1);
+      expect(screen.getAllByLabelText("New Password").length).toBe(1);
+      expect(screen.getAllByLabelText("Confirm Password").length).toBe(1);
     });
 
-    const currentPassword = await screen.findByTestId(`current-password`);
-    const newPassword = await screen.findByTestId(`new-password`);
-    const confirmPassword = await screen.findByTestId(`confirm-password`);
+    const currentPassword = await screen.findByLabelText(`Current Password`);
+    const newPassword = await screen.findByLabelText(`New Password`);
+    const confirmPassword = await screen.findByLabelText(`Confirm Password`);
 
     fireEvent.change(currentPassword, { target: { value: "old_password" } });
     fireEvent.change(newPassword, { target: { value: "good_password" } });
