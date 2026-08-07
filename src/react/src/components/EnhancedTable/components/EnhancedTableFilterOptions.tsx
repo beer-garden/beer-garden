@@ -449,8 +449,10 @@ export const EnhancedTableFilterOptions = ({
               {columns
                 .filter((tableColumns) => tableColumns.filterable === true)
                 .map((tableColumns) => (
-                  <MenuItem key={tableColumns.label} value={tableColumns.field}>
-                    {tableColumns.label}
+                  <MenuItem key={tableColumns.id} value={tableColumns.field}>
+                    {typeof tableColumns.label === "string"
+                      ? tableColumns.label
+                      : tableColumns.id}
                   </MenuItem>
                 ))}
             </TextField>
