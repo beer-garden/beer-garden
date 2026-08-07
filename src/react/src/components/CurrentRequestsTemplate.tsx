@@ -1,8 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Badge } from "primereact/badge";
-import { Column } from "primereact/column";
-import { ConfirmPopup, confirmPopup } from "primereact/confirmpopup";
-import { DataTable } from "primereact/datatable";
+import { Box, Chip, ClickAwayListener, Typography } from "@mui/material";
+import Fade from "@mui/material/Fade";
+import Popper from "@mui/material/Popper";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -11,8 +10,8 @@ import { Config } from "../models/models";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import { DeleteRequest, GetRequestList } from "../services/request_service";
 import { GetCurrentUser } from "../services/user_service";
-import { PaginatorTemplate } from "../services/util_service";
 import AccessButton from "./AccessButton";
+import EnhancedTable from "./EnhancedTable/components/EnhancedTable";
 
 function CurrentRequestsTemplate({
   listeners,
@@ -24,6 +23,22 @@ function CurrentRequestsTemplate({
   const [currentRequests, setCurrentRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
   const showSnackbar = useSnackbar();
+
+  const [currentRequestsOpen, setCurrentRequestsOpen] = React.useState(false);
+  const [currentRequestsAnchorEl, setCurrentRequestsAnchorEl] =
+    React.useState<null | HTMLElement>(null);
+
+  const handleCurrentRequestsOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setCurrentRequestsAnchorEl(event.currentTarget);
+    setCurrentRequestsOpen(true);
+  };
+
+  const handleCurrentRequestsClickAway = () => {
+    setCurrentRequestsOpen(false);
+  };
+
+  const canBeOpen = currentRequestsOpen && Boolean(currentRequestsAnchorEl);
+  const currentRequestsId = canBeOpen ? "currentRequestPopper" : undefined;
 
   const setAllRequests = (requests: Array<Request>) => {
     altRequests.current = requests.map((req) => {
@@ -220,7 +235,7 @@ function CurrentRequestsTemplate({
 
   const statusTemplate = (request: Request) => {
     return (
-      <Badge value={request.status} severity={SeverityCheck(request?.status)} />
+      <Chip color={SeverityCheck(request?.status)} label={request.status} />
     );
   };
 
@@ -236,7 +251,6 @@ function CurrentRequestsTemplate({
           <AccessButton
             rounded
             raised
-            link
             tooltip={`Open Request ${request.id}`}
             className="mr-2"
           >
@@ -247,7 +261,6 @@ function CurrentRequestsTemplate({
         <AccessButton
           rounded
           raised
-          link
           onClick={() => {
             DeleteRequest(request)
               .then(() => {
@@ -284,81 +297,36 @@ function CurrentRequestsTemplate({
   };
 
   const header = (
-    <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-      <span className="text-xl text-900 font-bold">Current Requests</span>
-    </div>
+    <Typography sx={{ fontWeight: "bold", m: 2 }}>Current Requests</Typography>
   );
 
-  const confirm = (event: any) => {
-    confirmPopup({
-      target: event.currentTarget,
-      message: "",
-      icon: "pi pi-exclamation-triangle",
-      defaultFocus: "accept",
-    });
-  };
+  const footer = (
+    <AccessButton
+      label="Close"
+      onClick={handleCurrentRequestsClickAway}
+      tooltip="Close Current Requests, this will capture auto focus for popup. Navigate backwards in tab order to access the list with screen readers."
+      sx={{ m: 2 }}
+    >
+      Close
+    </AccessButton>
+  );
 
   return (
-    <div className="flex align-items-center mr-2">
-      <ConfirmPopup
-        dismissable={true}
-        content={({ acceptBtnRef, hide }: { acceptBtnRef: any; hide: any }) => (
-          <div className="bg-gray-900 text-white border-round p-3">
-            <div className="card">
-              <DataTable
-                value={currentRequests}
-                header={header}
-                paginator
-                rows={5}
-                rowsPerPageOptions={[5, 10, 25, 50]}
-                paginatorTemplate={PaginatorTemplate}
-              >
-                <Column field="command" header="Command"></Column>
-                <Column header="Status" body={statusTemplate}></Column>
-                <Column header="Options" body={optionsTemplate}></Column>
-              </DataTable>
-            </div>
-            <div className="flex align-items-center gap-2 mt-3">
-              <AccessButton
-                ref={acceptBtnRef}
-                label="Close"
-                onClick={() => {
-                  hide();
-                }}
-                className="p-button-sm p-button-outlined"
-                tooltip="Close Current Requests, this will capture auto focus for popup. Navigate backwards in tab order to access the list with screen readers."
-              />
-            </div>
-          </div>
-        )}
-      />
+    <>
       <AccessButton
         sx={{ height: "36px", color: "white" }}
         label="Current Requests"
-        className="fa-layers fa-fw fa-2x"
-        onClick={confirm}
+        onClick={handleCurrentRequestsOpen}
         text
         basic
       >
-        <FontAwesomeIcon
-          icon="envelope"
-          className={
-            currentRequests.filter(
-              (request) =>
-                request.status &&
-                ["CREATED", "IN_PROGRESS"].includes(request.status),
-            ).length > 0
-              ? "fa-shake"
-              : ""
-          }
-          style={{ "--fa-animation-duration": "3s" } as React.CSSProperties}
-        />
+        <FontAwesomeIcon icon="envelope" />
         {currentRequests.filter(
           (request) =>
             request.status &&
             ["CREATED", "IN_PROGRESS"].includes(request.status),
         ).length > 0 && (
-          <span className="fa-layers-counter" style={{ fontSize: "1.5em" }}>
+          <span className="fa-layers-counter" style={{ fontSize: "3em" }}>
             {
               currentRequests.filter(
                 (request) =>
@@ -369,7 +337,76 @@ function CurrentRequestsTemplate({
           </span>
         )}
       </AccessButton>
-    </div>
+      <Popper
+        sx={{ zIndex: 1000 }}
+        disablePortal
+        id={currentRequestsId}
+        open={currentRequestsOpen}
+        anchorEl={currentRequestsAnchorEl}
+        transition
+        placement="bottom-end"
+        modifiers={[
+          {
+            name: "offset",
+            options: {
+              offset: [0, 15], // [X-offset, Y-offset] in pixels
+            },
+          },
+        ]}
+      >
+        {({ TransitionProps }) => (
+          <ClickAwayListener onClickAway={handleCurrentRequestsClickAway}>
+            <Fade {...TransitionProps} timeout={350}>
+              <Box
+                sx={{
+                  bgcolor: "background.paper",
+                }}
+              >
+                <EnhancedTable
+                  data={currentRequests}
+                  header={header}
+                  footer={footer}
+                  columns={[
+                    {
+                      id: "command",
+                      label: "Command",
+                      field: "command",
+                      sortable: true,
+                      filterable: true,
+                      isString: true,
+                    },
+
+                    {
+                      id: "status",
+                      label: "Status",
+                      field: "status",
+                      sortable: true,
+                      filterable: true,
+                      isString: true,
+                      template: statusTemplate,
+                      options: [
+                        "CREATED",
+                        "RECEIVED",
+                        "IN_PROGRESS",
+                        "CANCELED",
+                        "SUCCESS",
+                        "ERROR",
+                        "INVALID",
+                      ],
+                    },
+                    {
+                      id: "options",
+                      label: "Options",
+                      template: optionsTemplate,
+                    },
+                  ]}
+                />
+              </Box>
+            </Fade>
+          </ClickAwayListener>
+        )}
+      </Popper>
+    </>
   );
 }
 
