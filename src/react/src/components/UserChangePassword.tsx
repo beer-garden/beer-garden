@@ -5,6 +5,7 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
+  Stack,
 } from "@mui/material";
 import TextField from "@mui/material/TextField";
 import { useState } from "react";
@@ -133,8 +134,8 @@ function UserChangePassword({
         </Grid>
       </DialogTitle>
       {alertItem && <Alert severity="error">{alertItem}</Alert>}
-      <DialogContent>
-        <div className="flex flex-column gap-2">
+      <DialogContent dividers>
+        <Stack spacing={2}>
           {!isAdmin && (
             <TextField
               id="currentPassword"
@@ -184,7 +185,7 @@ function UserChangePassword({
               setConfirmPasswordInvalid(event.target.value !== newPassword);
             }}
           />
-        </div>
+        </Stack>
       </DialogContent>
       <DialogActions>
         <AccessButton onClick={handleUserPasswordDialogClose} label="Close">
