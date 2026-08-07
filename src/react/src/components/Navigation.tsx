@@ -1,6 +1,7 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import {
   AppBar,
+  Avatar,
   Box,
   Button,
   ClickAwayListener,
@@ -15,9 +16,7 @@ import {
 } from "@mui/material";
 import Fade from "@mui/material/Fade";
 import Popper from "@mui/material/Popper";
-import { Avatar } from "primereact/avatar";
-import { OverlayPanel } from "primereact/overlaypanel";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useState } from "react";
 import React from "react";
 import { NavLink } from "react-router-dom";
 
@@ -25,6 +24,7 @@ import CurrentRequestsTemplate from "../components/CurrentRequestsTemplate";
 import UserLogin from "../components/UserLogin";
 import { Config, RequestItem, TourStepProps } from "../models/models";
 import { useSnackbar } from "../providers/SnackbarProvider";
+import { checkPermission } from "../services/permission_service";
 import {
   ClearRefresh,
   ClearToken,
@@ -39,7 +39,6 @@ import {
 import { GetCurrentUser } from "../services/user_service";
 import { ClearThemes, FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
-import HasAccess from "./HasAccess";
 import UserOverlay from "./UserOverlay";
 
 interface linkProps {
@@ -75,16 +74,12 @@ function NavigationMenu({
     config?.auth_enabled === true,
   );
 
-  const op = useRef<OverlayPanel>(null);
-
   const onLogout = async () => {
     await LogoutCurrentUser().catch((error) => {
       console.error("Error logging out user:", error);
     });
     updateUserName(undefined);
     runReloadUI();
-
-    op.current?.hide();
   };
 
   const onClearSession = () => {
@@ -147,23 +142,13 @@ function NavigationMenu({
     pos: 3,
   };
 
-  const workspaceTourStep: TourStepProps = {
-    prefix: tourPrefix,
-    uuid: tourUuid,
-    label: "Workspace Link",
-    content:
-      "Navigate to the Workspace to see your current workbench of requests and scheduled jobs.",
-    layer: "NAVIGATION",
-    pos: 4,
-  };
-
   const topicTourStep: TourStepProps = {
     prefix: tourPrefix,
     uuid: tourUuid,
     label: "Topics Link",
     content: "Navigate to the Topics Page to see available topics.",
     layer: "NAVIGATION",
-    pos: 5,
+    pos: 4,
   };
 
   const userTourStep: TourStepProps = {
@@ -172,7 +157,7 @@ function NavigationMenu({
     label: "Users Link",
     content: "Navigate to the Users Page to manage users.",
     layer: "NAVIGATION",
-    pos: 6,
+    pos: 5,
   };
 
   const rolesTourStep: TourStepProps = {
@@ -181,7 +166,7 @@ function NavigationMenu({
     label: "Roles Link",
     content: "Navigate to the Roles Page to manage roles.",
     layer: "NAVIGATION",
-    pos: 7,
+    pos: 6,
   };
 
   const aboutTourStep: TourStepProps = {
@@ -191,7 +176,7 @@ function NavigationMenu({
     content:
       "Navigate to the About Page to see information about the application.",
     layer: "NAVIGATION",
-    pos: 8,
+    pos: 7,
   };
 
   const [userPopperOpen, setUserPopperOpen] = React.useState(false);
@@ -380,7 +365,6 @@ function NavigationMenu({
             sx={navButtonStyles}
             component={NavLink}
             to="/users"
-            className="p-menuitem-link"
             onKeyDown={handleKeyDown}
             {...GenerateTourProps(userTourStep)}
           >
@@ -412,40 +396,36 @@ function NavigationMenu({
       label: "Roles",
       buttonTemplate: () => {
         return (
-          <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
-            <Button
-              sx={navButtonStyles}
-              component={NavLink}
-              to="/roles"
-              onKeyDown={handleKeyDown}
-              {...GenerateTourProps(rolesTourStep)}
-            >
-              <Stack direction="row" spacing={1}>
-                <FAIcon icon="user-gear" />
-                <Box component="span">Roles</Box>
-              </Stack>
-            </Button>
-          </HasAccess>
+          <Button
+            sx={navButtonStyles}
+            component={NavLink}
+            to="/roles"
+            onKeyDown={handleKeyDown}
+            {...GenerateTourProps(rolesTourStep)}
+          >
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="user-gear" />
+              <Box component="span">Roles</Box>
+            </Stack>
+          </Button>
         );
       },
       linkTemplate: () => {
         return (
-          <HasAccess config={config} permission="GARDEN_ADMIN" isGlobal={true}>
-            <Link
-              component={NavLink}
-              underline="none"
-              to="/roles"
-              onKeyDown={handleKeyDown}
-            >
-              <Stack direction="row" spacing={1}>
-                <FAIcon icon="user-gear" />
-                <Box component="span">Roles</Box>
-              </Stack>
-            </Link>
-          </HasAccess>
+          <Link
+            component={NavLink}
+            underline="none"
+            to="/roles"
+            onKeyDown={handleKeyDown}
+          >
+            <Stack direction="row" spacing={1}>
+              <FAIcon icon="user-gear" />
+              <Box component="span">Roles</Box>
+            </Stack>
+          </Link>
         );
       },
-      visible: authEnabled,
+      visible: authEnabled && checkPermission(config, "GARDEN_ADMIN", {}),
     },
     {
       label: "About",
@@ -544,7 +524,6 @@ function NavigationMenu({
     AddTourStep(tourStepsRef, createRequestTourStep);
     AddTourStep(tourStepsRef, requestTourStep);
     AddTourStep(tourStepsRef, schedulerTourStep);
-    AddTourStep(tourStepsRef, workspaceTourStep);
     AddTourStep(tourStepsRef, topicTourStep);
     if (authEnabled) {
       AddTourStep(tourStepsRef, userTourStep);
@@ -590,7 +569,7 @@ function NavigationMenu({
             />
 
             {applicationName && (
-              <Typography className="mr-2">{applicationName}</Typography>
+              <Typography sx={{ mr: 1 }}>{applicationName}</Typography>
             )}
           </Button>
 
@@ -629,7 +608,7 @@ function NavigationMenu({
           {items
             .filter((item: linkProps) => item.visible !== false)
             .map((item: linkProps) => (
-              <Box key={item.label}>{item.buttonTemplate()}</Box>
+              <span key={item.label}>{item.buttonTemplate()}</span>
             ))}
 
           <Box sx={{ ml: "auto" }} />
@@ -638,15 +617,14 @@ function NavigationMenu({
               {username === undefined && (
                 <>
                   <AccessButton
-                    sx={{ borderRadius: 20 }}
+                    sx={{ borderRadius: 20, mr: 1 }}
                     color="secondary"
-                    className="mr-2"
                     onClick={() => setLoginVisible(true)}
                     data-testid="user-login"
                     tooltip="User Login"
                     label="Login"
                   >
-                    Login{" "}
+                    Login
                   </AccessButton>
                   <UserLogin
                     visible={loginVisible}
@@ -659,8 +637,7 @@ function NavigationMenu({
           )}
           <Box sx={{ display: "flex", alignItems: "center", gap: 0 }}>
             <AccessButton
-              sx={{ height: "36px" }}
-              color="secondary"
+              sx={{ height: "36px", color: "white" }}
               text
               className="mr-2"
               onClick={toggleRunTour}
@@ -672,8 +649,7 @@ function NavigationMenu({
             </AccessButton>
             <CurrentRequestsTemplate listeners={listeners} config={config} />
             <AccessButton
-              sx={{ height: "36px" }}
-              color="secondary"
+              sx={{ height: "36px", color: "white" }}
               tooltip="User Preferences Menu"
               basic
               onClick={handleUserPopperOpen}
@@ -681,11 +657,9 @@ function NavigationMenu({
               title="Preferences"
             >
               {username !== undefined ? (
-                <Avatar
-                  size="large"
-                  label={username.charAt(0).toUpperCase()}
-                  style={{ width: "32px", height: "32px" }}
-                />
+                <Avatar variant="square" sx={{ width: "32px", height: "32px" }}>
+                  {username.charAt(0).toUpperCase()}
+                </Avatar>
               ) : (
                 <FAIcon icon="user" />
               )}
