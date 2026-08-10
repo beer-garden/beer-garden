@@ -1,13 +1,13 @@
 import {
   Alert,
+  Box,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
+  Typography,
 } from "@mui/material";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
 import { useEffect, useState } from "react";
 
 import { Request } from "../models/brewtils-types";
@@ -17,6 +17,7 @@ import { useSnackbar } from "../providers/SnackbarProvider";
 import { DeleteRequests, GetRequestList } from "../services/request_service";
 import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
+import EnhancedTable from "./EnhancedTable/components/EnhancedTable";
 
 interface AlertDetail {
   severity: "error" | "info" | "success" | "warning";
@@ -436,14 +437,34 @@ function InstanceCancelDeleteRequestsDialog({
             {alert.detail}
           </Alert>
         ))}
-        <DataTable
-          value={countsDataModels}
-          header={`Currently ${allCount} Requests present in the database`}
-        >
-          <Column field="label" header="Status"></Column>
-          <Column field="count" header="Count"></Column>
-          <Column body={actionTemplate} header="Action"></Column>
-        </DataTable>
+        <EnhancedTable
+          data={countsDataModels}
+          displayAll={true}
+          header={
+            <Box sx={{ m: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                {`Currently ${allCount} Requests present in the database`}
+              </Typography>
+            </Box>
+          }
+          columns={[
+            {
+              id: "label",
+              field: "label",
+              label: "Status",
+            },
+            {
+              id: "count",
+              field: "count",
+              label: "Count",
+            },
+            {
+              id: "action",
+              label: "Action",
+              template: actionTemplate,
+            },
+          ]}
+        />
       </DialogContent>
       <DialogActions>
         <AccessButton onClick={onClose} label="Close">
