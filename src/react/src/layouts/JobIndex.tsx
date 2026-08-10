@@ -1,12 +1,12 @@
 import { Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import { confirmDialog } from "primereact/confirmdialog";
 import { RefObject, useEffect, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
 import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import { Job } from "../models/brewtils-types";
 import { Config, RequestItem, TourStepProps } from "../models/models";
+import { useConfirmDialog } from "../providers/ConfirmDialogProvider";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import {
   DeleteJob,
@@ -36,6 +36,7 @@ function JobIndex({
   config: Config;
 }) {
   const showSnackbar = useSnackbar();
+  const showConfirmDialog = useConfirmDialog();
   const [jobs, setJobs] = useState<Array<Job>>([]);
   const tourUuid = "job_index_tour";
   const tourPrefix = "job_index";
@@ -342,18 +343,12 @@ function JobIndex({
                     });
                   });
               };
-              const reject = () => {};
-              const confirm = () => {
-                confirmDialog({
-                  message: "Are you sure you want to delete this job?",
-                  header: `Confirm Delete ${job.name}`,
-                  icon: "pi pi-exclamation-triangle",
-                  defaultFocus: "accept",
-                  accept,
-                  reject,
-                });
-              };
-              confirm();
+
+              showConfirmDialog({
+                accept: accept,
+                message: "Are you sure you want to delete this job?",
+                header: `Confirm Delete ${job.name}`,
+              });
             }}
             title={"Delete Job " + job.name}
             sx={buttonStyle}
