@@ -1,8 +1,13 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  Box,
+  Checkbox,
+  Divider,
+  FormLabel,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { Dayjs } from "dayjs";
-import { Checkbox, CheckboxChangeEvent } from "primereact/checkbox";
-import { Divider } from "primereact/divider";
-import { Tooltip } from "primereact/tooltip";
 import { RefObject, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -22,7 +27,7 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { GetBaseURL } from "../services/util_service";
+import { FAIcon, GetBaseURL } from "../services/util_service";
 
 function RequestIndex({
   listeners,
@@ -121,45 +126,44 @@ function RequestIndex({
   }, [showChildren, showHidden]);
 
   const header = (
-    <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-      <h1 className="text-xl text-900 font-bold">Requests</h1>
-      <div className="flex align-items-center">
-        <label className="mr-2" htmlFor="autoRefreshButton">
-          <Checkbox
-            id="autoRefreshButton"
-            onChange={(e: CheckboxChangeEvent) =>
-              setAutoRefresh(e.target?.checked ?? false)
-            }
-            checked={autoRefresh}
-            className="mr-2"
-            {...GenerateTourProps(AutoRefreshTourStep)}
-          />
+    <Box sx={{ display: "flex", justifyContent: "space-between", mx: 2 }}>
+      <Typography variant="h2" component="h1">
+        Requests
+      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center" }}>
+        <Checkbox
+          id="autoRefreshButton"
+          onChange={(e) => setAutoRefresh(e.target?.checked ?? false)}
+          checked={autoRefresh}
+          sx={{ mr: 2 }}
+          {...GenerateTourProps(AutoRefreshTourStep)}
+        />
+        <FormLabel sx={{ mr: 2 }} htmlFor="autoRefreshButton">
           Auto Refresh
-        </label>
-        <label className="mr-2" htmlFor="showHiddenButton">
-          <Checkbox
-            id="showHiddenButton"
-            onChange={(e: CheckboxChangeEvent) =>
-              setShowHidden(e.target?.checked ?? false)
-            }
-            checked={showHidden}
-            className="mr-2"
-            {...GenerateTourProps(ShowHiddenTourStep)}
-          />
+        </FormLabel>
+
+        <Checkbox
+          id="showHiddenButton"
+          onChange={(e) => setShowHidden(e.target?.checked ?? false)}
+          checked={showHidden}
+          sx={{ mr: 2 }}
+          {...GenerateTourProps(ShowHiddenTourStep)}
+        />
+        <FormLabel sx={{ mr: 2 }} htmlFor="showHiddenButton">
           Show Hidden
-        </label>
-        <label className="mr-2" htmlFor="showChildrenButton">
-          <Checkbox
-            id="showChildrenButton"
-            onChange={(e: CheckboxChangeEvent) =>
-              setShowChildren(e.target?.checked ?? false)
-            }
-            checked={showChildren}
-            className="mr-2"
-            {...GenerateTourProps(ShowChildrenTourStep)}
-          />
+        </FormLabel>
+
+        <Checkbox
+          id="showChildrenButton"
+          onChange={(e) => setShowChildren(e.target?.checked ?? false)}
+          checked={showChildren}
+          sx={{ mr: 2 }}
+          {...GenerateTourProps(ShowChildrenTourStep)}
+        />
+        <FormLabel sx={{ mr: 2 }} htmlFor="showChildrenButton">
           Show Children
-        </label>
+        </FormLabel>
+
         <AccessButton
           basic
           onClick={() => setReloadRequestsTrigger(reloadRequestsTrigger + 1)}
@@ -169,8 +173,8 @@ function RequestIndex({
           {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
           <FontAwesomeIcon icon="refresh" />
         </AccessButton>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 
   const PeekRequestView = (request: Request) => {
@@ -183,31 +187,25 @@ function RequestIndex({
     return (
       <div>
         {request.parent && (
-          <>
-            <Tooltip target=".parent-icon">
-              <div className="flex flex-column">
-                <div
-                  className="justify-center font-bold"
-                  style={{ marginBottom: "4px" }}
-                >
+          <Tooltip
+            title={
+              <Box>
+                <Typography sx={{ fontWeight: "bold" }}>
                   parent request
-                </div>
-                <Divider className="p-0 mx-0 my-1" />
+                </Typography>
+                <Divider sx={{ my: 1 }} />
                 <span>{request.parent.command}</span>
-              </div>
-            </Tooltip>
+              </Box>
+            }
+          >
             <Link
               to={`${GetBaseURL()}/request/${request.parent.id}`}
               style={{ textDecoration: "none" }}
               tabIndex={-1}
             >
-              <FontAwesomeIcon
-                icon="level-up"
-                className="parent-icon mr-2"
-                data-pr-position="top"
-              />
+              <FAIcon icon="level-up" sx={{ mr: 2 }} data-pr-position="top" />
             </Link>
-          </>
+          </Tooltip>
         )}
         <span>{request.command_display_name ?? request.command}</span>
         {request.hidden && (
@@ -229,7 +227,7 @@ function RequestIndex({
           <AccessButton
             basic
             tooltip={`Open Request ${request.command_display_name ?? request.command} ${request.id}`}
-            className="mr-2"
+            sx={{ mr: 2 }}
             {...GenerateTourProps(OpenRequestTourStep)}
           >
             <FontAwesomeIcon icon="arrow-up-right-from-square" />
@@ -239,7 +237,7 @@ function RequestIndex({
           basic
           onClick={() => PeekRequestView(request)}
           tooltip={`View Request ${request.command_display_name ?? request.command} ${request.id}`}
-          className="mr-2"
+          sx={{ mr: 2 }}
           {...GenerateTourProps(ViewRequestTourStep)}
         >
           <FontAwesomeIcon icon="eye" />
