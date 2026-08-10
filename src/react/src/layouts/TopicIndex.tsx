@@ -14,22 +14,15 @@ import {
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import Divider from "@mui/material/Divider";
-import {
-  ChangeEvent,
-  JSX,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
-import ConfirmDialog from "../components/ConfirmDialog";
 import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import { ColumnField } from "../components/EnhancedTable/models/EnhancedTableModels";
 import SubscriberItem from "../components/SubscriberItem";
 import { Subscriber, Topic } from "../models/brewtils-types";
 import { Config, RequestItem } from "../models/models";
+import { useConfirmDialog } from "../providers/ConfirmDialogProvider";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import {
   AddSubscriber,
@@ -59,9 +52,7 @@ function TopicIndex({
   const topicsRef = useRef<Topic[]>([]);
   const [reloadTopicsTrigger, setReloadTopicsTrigger] = useState(0);
 
-  const [confirmDialogElement, setConfirmDialogElement] = useState<
-    JSX.Element | undefined
-  >(undefined);
+  const showConfirmDialog = useConfirmDialog();
 
   const updateTopics = (values: Topic[]) => {
     topicsRef.current = values;
@@ -275,18 +266,11 @@ function TopicIndex({
           });
       };
 
-      setConfirmDialogElement(
-        <ConfirmDialog
-          open={true}
-          setOpen={(_: boolean) => {
-            setConfirmDialogElement(undefined);
-          }}
-          accept={accept}
-          reject={() => {}}
-          header={`Confirm Clear ${clearSubscriber ? "Consumer" : "Publisher"} Count ${clearTopic.name}`}
-          message={`Are you sure you want to reset the ${clearSubscriber ? "consumer" : "publisher"} count?`}
-        />,
-      );
+      showConfirmDialog({
+        accept: accept,
+        header: `Confirm Clear ${clearSubscriber ? "Consumer" : "Publisher"} Count ${clearTopic.name}`,
+        message: `Are you sure you want to reset the ${clearSubscriber ? "consumer" : "publisher"} count?`,
+      });
     }
 
     function removeSubscriber(topic?: Topic, subscriber?: Subscriber) {
@@ -409,20 +393,11 @@ function TopicIndex({
           });
       };
 
-      setConfirmDialogElement(
-        <ConfirmDialog
-          open={true}
-          setOpen={(_: boolean) => {
-            setConfirmDialogElement(undefined);
-          }}
-          accept={accept}
-          reject={() => {}}
-          header={`Confirm Delete ${topic.name}`}
-          message={
-            'Are you sure you want to delete Topic "' + topic.name + '"?'
-          }
-        />,
-      );
+      showConfirmDialog({
+        accept: accept,
+        header: `Confirm Delete ${topic.name}`,
+        message: 'Are you sure you want to delete Topic "' + topic.name + '"?',
+      });
     }
 
     function addSubscriber(topic?: Topic) {
@@ -753,19 +728,16 @@ function TopicIndex({
     ] as ColumnField[];
 
     return (
-      <>
-        {confirmDialogElement !== undefined && confirmDialogElement}
-        <EnhancedTable
-          data={topics}
-          columns={tableColumns}
-          header={header}
-          flattenBy="subscribers"
-          groupBy="name"
-          defaultOrderBy="name"
-          defaultOrder="desc"
-          isLoading={loading}
-        />
-      </>
+      <EnhancedTable
+        data={topics}
+        columns={tableColumns}
+        header={header}
+        flattenBy="subscribers"
+        groupBy="name"
+        defaultOrderBy="name"
+        defaultOrder="desc"
+        isLoading={loading}
+      />
     );
   }
 

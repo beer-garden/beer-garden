@@ -2,7 +2,6 @@ import { Alert, Box, Chip, Grid, Typography } from "@mui/material";
 import { RefObject, useCallback, useEffect, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
-import ConfirmDialog from "../components/ConfirmDialog";
 import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import RoleCard from "../components/RoleCard";
 import UserChangeAccountMapping from "../components/UserChangeAccountMapping";
@@ -11,6 +10,7 @@ import UserChangeRoles from "../components/UserChangeRoles";
 import UserCreate from "../components/UserCreate";
 import { Role, User } from "../models/brewtils-types";
 import { Config, TourStepProps } from "../models/models";
+import { useConfirmDialog } from "../providers/ConfirmDialogProvider";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import { RevokeToken } from "../services/token_service";
 import {
@@ -37,9 +37,7 @@ function UserIndex({
     undefined,
   );
 
-  const [deleteUsername, setDeleteUsername] = useState<string | undefined>(
-    undefined,
-  );
+  const showConfirmDialog = useConfirmDialog();
 
   const [showRolesDialog, setShowRolesDialog] = useState(false);
   const [rolesUser, setRolesUser] = useState<User | undefined>(undefined);
@@ -457,7 +455,32 @@ function UserIndex({
           <AccessButton
             sx={buttonSx}
             onClick={() => {
-              setDeleteUsername(rowData.username);
+              showConfirmDialog({
+                accept: () => {
+                  if (rowData.username) {
+                    DeleteUser(rowData.username)
+                      .then(() => {
+                        showSnackbar({
+                          severity: "info",
+                          summary: "Delete User",
+                          detail: `Successfully deleted ${rowData.username}`,
+                          life: 3000,
+                        });
+                        loadUsers();
+                      })
+                      .catch((error) =>
+                        showSnackbar({
+                          severity: "error",
+                          summary: "Error",
+                          detail: `Error attempting to delete user: ${error}`,
+                          life: 3000,
+                        }),
+                      );
+                  }
+                },
+                message: `Are you sure you want to delete user ${rowData.username}?`,
+                header: "Confirmation",
+              });
             }}
             tooltip={`Delete User ${rowData.username}`}
             data-testid={`delete-user-${rowData.id}`}
@@ -728,37 +751,6 @@ function UserIndex({
         defaultOrderBy="username"
         defaultOrder="desc"
       />
-      {deleteUsername && (
-        <ConfirmDialog
-          open={true}
-          setOpen={() => setDeleteUsername(undefined)}
-          accept={() => {
-            if (deleteUsername) {
-              DeleteUser(deleteUsername)
-                .then(() => {
-                  showSnackbar({
-                    severity: "info",
-                    summary: "Delete User",
-                    detail: `Successfully deleted ${deleteUsername}`,
-                    life: 3000,
-                  });
-                  loadUsers();
-                })
-                .catch((error) =>
-                  showSnackbar({
-                    severity: "error",
-                    summary: "Error",
-                    detail: `Error attempting to delete user: ${error}`,
-                    life: 3000,
-                  }),
-                );
-            }
-          }}
-          reject={() => {}}
-          message={`Are you sure you want to delete user ${deleteUsername}?`}
-          header="Confirmation"
-        />
-      )}
     </>
   );
 }

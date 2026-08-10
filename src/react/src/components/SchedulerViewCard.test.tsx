@@ -1,6 +1,5 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ConfirmDialog } from "primereact/confirmdialog";
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
 
 import {
@@ -11,6 +10,7 @@ import {
   Job,
   Request,
 } from "../models/brewtils-types";
+import { ConfirmDialogProvider } from "../providers/ConfirmDialogProvider";
 import { SnackbarProvider } from "../providers/SnackbarProvider";
 import * as jobService from "../services/job_service";
 import * as requestService from "../services/request_service";
@@ -65,13 +65,15 @@ describe("SchedulerViewCard", () => {
 
     render(
       <SnackbarProvider>
-        <SchedulerViewCard
-          listeners={{}}
-          jobId="1"
-          editJob={() => {}}
-          deleteJob={() => {}}
-          config={{}}
-        />
+        <ConfirmDialogProvider>
+          <SchedulerViewCard
+            listeners={{}}
+            jobId="1"
+            editJob={() => {}}
+            deleteJob={() => {}}
+            config={{}}
+          />
+        </ConfirmDialogProvider>
       </SnackbarProvider>,
     );
 
@@ -229,13 +231,15 @@ describe("SchedulerViewCard", () => {
 
     render(
       <SnackbarProvider>
-        <SchedulerViewCard
-          listeners={{}}
-          jobId="1"
-          editJob={() => {}}
-          deleteJob={() => {}}
-          config={{}}
-        />
+        <ConfirmDialogProvider>
+          <SchedulerViewCard
+            listeners={{}}
+            jobId="1"
+            editJob={() => {}}
+            deleteJob={() => {}}
+            config={{}}
+          />
+        </ConfirmDialogProvider>
       </SnackbarProvider>,
     );
 
@@ -275,13 +279,15 @@ describe("SchedulerViewCard", () => {
 
     render(
       <SnackbarProvider>
-        <SchedulerViewCard
-          listeners={{}}
-          jobId="1"
-          editJob={() => {}}
-          deleteJob={() => {}}
-          config={{}}
-        />
+        <ConfirmDialogProvider>
+          <SchedulerViewCard
+            listeners={{}}
+            jobId="1"
+            editJob={() => {}}
+            deleteJob={() => {}}
+            config={{}}
+          />
+        </ConfirmDialogProvider>
       </SnackbarProvider>,
     );
 
@@ -356,13 +362,15 @@ describe("SchedulerViewCard", () => {
 
     render(
       <SnackbarProvider>
-        <SchedulerViewCard
-          listeners={{}}
-          jobId="1"
-          editJob={() => {}}
-          deleteJob={() => {}}
-          config={{}}
-        />
+        <ConfirmDialogProvider>
+          <SchedulerViewCard
+            listeners={{}}
+            jobId="1"
+            editJob={() => {}}
+            deleteJob={() => {}}
+            config={{}}
+          />
+        </ConfirmDialogProvider>
       </SnackbarProvider>,
     );
 
@@ -399,13 +407,15 @@ describe("SchedulerViewCard", () => {
 
     render(
       <SnackbarProvider>
-        <SchedulerViewCard
-          listeners={{}}
-          jobId="1"
-          editJob={() => {}}
-          deleteJob={() => {}}
-          config={{}}
-        />
+        <ConfirmDialogProvider>
+          <SchedulerViewCard
+            listeners={{}}
+            jobId="1"
+            editJob={() => {}}
+            deleteJob={() => {}}
+            config={{}}
+          />
+        </ConfirmDialogProvider>
       </SnackbarProvider>,
     );
 
@@ -454,13 +464,15 @@ describe("SchedulerViewCard", () => {
 
     render(
       <SnackbarProvider>
-        <SchedulerViewCard
-          listeners={{}}
-          jobId="1"
-          editJob={() => {}}
-          deleteJob={() => {}}
-          config={{}}
-        />
+        <ConfirmDialogProvider>
+          <SchedulerViewCard
+            listeners={{}}
+            jobId="1"
+            editJob={() => {}}
+            deleteJob={() => {}}
+            config={{}}
+          />
+        </ConfirmDialogProvider>
       </SnackbarProvider>,
     );
 
@@ -521,13 +533,15 @@ describe("SchedulerViewCard", () => {
 
     render(
       <SnackbarProvider>
-        <SchedulerViewCard
-          listeners={{}}
-          jobId="1"
-          editJob={() => {}}
-          deleteJob={() => {}}
-          config={{}}
-        />
+        <ConfirmDialogProvider>
+          <SchedulerViewCard
+            listeners={{}}
+            jobId="1"
+            editJob={() => {}}
+            deleteJob={() => {}}
+            config={{}}
+          />
+        </ConfirmDialogProvider>
       </SnackbarProvider>,
     );
 
@@ -579,13 +593,15 @@ describe("SchedulerViewCard", () => {
 
     render(
       <SnackbarProvider>
-        <SchedulerViewCard
-          listeners={{}}
-          jobId="1"
-          editJob={() => {}}
-          deleteJob={() => {}}
-          config={{}}
-        />
+        <ConfirmDialogProvider>
+          <SchedulerViewCard
+            listeners={{}}
+            jobId="1"
+            editJob={() => {}}
+            deleteJob={() => {}}
+            config={{}}
+          />
+        </ConfirmDialogProvider>
       </SnackbarProvider>,
     );
 
@@ -635,9 +651,8 @@ describe("SchedulerViewCard", () => {
 
     // Simulate ConfirmDialog in parent (i.e. App.tsx)
     render(
-      <>
-        <ConfirmDialog />
-        <SnackbarProvider>
+      <SnackbarProvider>
+        <ConfirmDialogProvider>
           <SchedulerViewCard
             listeners={{}}
             jobId="1"
@@ -645,8 +660,8 @@ describe("SchedulerViewCard", () => {
             deleteJob={deleteJobMock}
             config={{}}
           />
-        </SnackbarProvider>
-      </>,
+        </ConfirmDialogProvider>
+      </SnackbarProvider>,
     );
 
     const deleteButton = await screen.findByRole("button", {
@@ -694,13 +709,15 @@ describe("SchedulerViewCard", () => {
 
     render(
       <SnackbarProvider>
-        <SchedulerViewCard
-          listeners={{}}
-          jobId="1"
-          editJob={() => {}}
-          deleteJob={() => {}}
-          config={{}}
-        />
+        <ConfirmDialogProvider>
+          <SchedulerViewCard
+            listeners={{}}
+            jobId="1"
+            editJob={() => {}}
+            deleteJob={() => {}}
+            config={{}}
+          />
+        </ConfirmDialogProvider>
       </SnackbarProvider>,
     );
 
@@ -756,13 +773,15 @@ describe("SchedulerViewCard", () => {
 
     render(
       <SnackbarProvider>
-        <SchedulerViewCard
-          listeners={{}}
-          jobId="1"
-          editJob={() => {}}
-          deleteJob={() => {}}
-          config={{}}
-        />
+        <ConfirmDialogProvider>
+          <SchedulerViewCard
+            listeners={{}}
+            jobId="1"
+            editJob={() => {}}
+            deleteJob={() => {}}
+            config={{}}
+          />
+        </ConfirmDialogProvider>
       </SnackbarProvider>,
     );
 
