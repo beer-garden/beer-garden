@@ -7,12 +7,12 @@ import {
   Grid,
 } from "@mui/material";
 import { Column } from "primereact/column";
-import { confirmDialog } from "primereact/confirmdialog";
 import { DataTable } from "primereact/datatable";
 import { useEffect, useState } from "react";
 
 import { Request } from "../models/brewtils-types";
 import { InstanceDialogProps } from "../models/models";
+import { useConfirmDialog } from "../providers/ConfirmDialogProvider";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import { DeleteRequests, GetRequestList } from "../services/request_service";
 import { FAIcon } from "../services/util_service";
@@ -39,6 +39,7 @@ function InstanceCancelDeleteRequestsDialog({
 
   const [alerts, setAlerts] = useState<Array<AlertDetail>>([]);
   const showSnackbar = useSnackbar();
+  const showConfirmDialog = useConfirmDialog();
 
   const [countsDataModels, setCountDataModels] = useState<Array<any>>([
     { label: "SUCCESS", count: successCount },
@@ -357,11 +358,9 @@ function InstanceCancelDeleteRequestsDialog({
     const reject = () => {};
 
     const confirm = () => {
-      confirmDialog({
+      showConfirmDialog({
         message: msg,
         header: "Confirmation",
-        icon: "pi pi-exclamation-triangle",
-        defaultFocus: "accept",
         accept,
         reject,
       });
