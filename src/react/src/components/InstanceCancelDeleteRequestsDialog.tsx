@@ -1,15 +1,27 @@
+import {
+  Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+} from "@mui/material";
 import { Column } from "primereact/column";
 import { confirmDialog } from "primereact/confirmdialog";
 import { DataTable } from "primereact/datatable";
-import { Dialog } from "primereact/dialog";
-import { Messages } from "primereact/messages";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Request } from "../models/brewtils-types";
 import { InstanceDialogProps } from "../models/models";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import { DeleteRequests, GetRequestList } from "../services/request_service";
+import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
+
+interface AlertDetail {
+  severity: "error" | "info" | "success" | "warning";
+  detail: string;
+}
 
 function InstanceCancelDeleteRequestsDialog({
   instance,
@@ -25,7 +37,7 @@ function InstanceCancelDeleteRequestsDialog({
   const [receivedCount, setReceivedCount] = useState<number>(0);
   const [inProgressCount, setInProgressCount] = useState<number>(0);
 
-  const msgs = useRef<Messages>(null);
+  const [alerts, setAlerts] = useState<Array<AlertDetail>>([]);
   const showSnackbar = useSnackbar();
 
   const [countsDataModels, setCountDataModels] = useState<Array<any>>([
@@ -179,12 +191,10 @@ function InstanceCancelDeleteRequestsDialog({
         if (response.data !== undefined && response.data !== null) {
           msg += response.data;
         }
-        console.log(msg);
-        msgs.current?.show({
-          severity: "error",
-          detail: msg,
-          sticky: true,
-        });
+        setAlerts((prevAlerts) => [
+          ...prevAlerts,
+          { severity: "error", detail: msg },
+        ]);
       },
     );
 
@@ -201,12 +211,10 @@ function InstanceCancelDeleteRequestsDialog({
         if (response.data !== undefined && response.data !== null) {
           msg += response.data;
         }
-        console.log(msg);
-        msgs.current?.show({
-          severity: "error",
-          detail: msg,
-          sticky: true,
-        });
+        setAlerts((prevAlerts) => [
+          ...prevAlerts,
+          { severity: "error", detail: msg },
+        ]);
       },
     );
 
@@ -223,12 +231,10 @@ function InstanceCancelDeleteRequestsDialog({
         if (response.data !== undefined && response.data !== null) {
           msg += response.data;
         }
-        console.log(msg);
-        msgs.current?.show({
-          severity: "error",
-          detail: msg,
-          sticky: true,
-        });
+        setAlerts((prevAlerts) => [
+          ...prevAlerts,
+          { severity: "error", detail: msg },
+        ]);
       },
     );
 
@@ -245,12 +251,10 @@ function InstanceCancelDeleteRequestsDialog({
         if (response.data !== undefined && response.data !== null) {
           msg += response.data;
         }
-        console.log(msg);
-        msgs.current?.show({
-          severity: "error",
-          detail: msg,
-          sticky: true,
-        });
+        setAlerts((prevAlerts) => [
+          ...prevAlerts,
+          { severity: "error", detail: msg },
+        ]);
       },
     );
 
@@ -267,12 +271,10 @@ function InstanceCancelDeleteRequestsDialog({
         if (response.data !== undefined && response.data !== null) {
           msg += response.data;
         }
-        console.log(msg);
-        msgs.current?.show({
-          severity: "error",
-          detail: msg,
-          sticky: true,
-        });
+        setAlerts((prevAlerts) => [
+          ...prevAlerts,
+          { severity: "error", detail: msg },
+        ]);
       },
     );
 
@@ -289,30 +291,30 @@ function InstanceCancelDeleteRequestsDialog({
         if (response.data !== undefined && response.data !== null) {
           msg += response.data;
         }
-        console.log(msg);
-        msgs.current?.show({
-          severity: "error",
-          detail: msg,
-          sticky: true,
-        });
+        setAlerts((prevAlerts) => [
+          ...prevAlerts,
+          { severity: "error", detail: msg },
+        ]);
       },
     );
   }
 
   function addSuccessAlert() {
-    msgs.current?.show({
-      severity: "info",
-      detail: "Success! Requests have been deleted.",
-      sticky: true,
-    });
+    setAlerts((prevAlerts) => [
+      ...prevAlerts,
+      { severity: "info", detail: "Success! Requests have been deleted." },
+    ]);
   }
 
   function addDeleteErrorAlert() {
-    msgs.current?.show({
-      severity: "error",
-      detail: "Uh oh! It looks like there was a problem deleting the Requests.",
-      sticky: true,
-    });
+    setAlerts((prevAlerts) => [
+      ...prevAlerts,
+      {
+        severity: "error",
+        detail:
+          "Uh oh! It looks like there was a problem deleting the Requests.",
+      },
+    ]);
   }
 
   function deleteRequests(
@@ -402,32 +404,53 @@ function InstanceCancelDeleteRequestsDialog({
           }}
           tooltip={`Delete ${counter.count} ${counter.label} requests`}
           label={`Delete ${counter.label === "Non-Completed (CREATED/RECEIVED/IN PROGRESS)" ? "Non-Completed" : counter.label}`}
-        />
+        >{`Delete ${counter.label === "Non-Completed (CREATED/RECEIVED/IN PROGRESS)" ? "Non-Completed" : counter.label}`}</AccessButton>
       </div>
+    );
+  };
+
+  const dismissAlert = (index: number) => {
+    setAlerts((prevAlerts) =>
+      prevAlerts.filter((_, idx: number) => index != idx),
     );
   };
 
   return (
     <Dialog
-      header={`Cancel/Delete Requests: ${system.name}[${system.version}]-${instance.name}`}
-      footer={
-        <AccessButton label="Close" onClick={onClose}>
+      data-testid="instance-cancel-delete-requests-dialog"
+      open={isVisible}
+      onClose={onClose}
+    >
+      <DialogTitle>
+        <Grid container>
+          <Grid size="grow">{`Cancel/Delete Requests: ${system.name}[${system.version}]-${instance.name}`}</Grid>
+          <Grid>
+            <AccessButton sx={{ ml: 2 }} onClick={onClose}>
+              <FAIcon icon="xmark" />
+            </AccessButton>
+          </Grid>
+        </Grid>
+      </DialogTitle>
+      <DialogContent dividers>
+        {alerts.map((alert: AlertDetail, index: number) => (
+          <Alert severity={alert.severity} onClose={() => dismissAlert(index)}>
+            {alert.detail}
+          </Alert>
+        ))}
+        <DataTable
+          value={countsDataModels}
+          header={`Currently ${allCount} Requests present in the database`}
+        >
+          <Column field="label" header="Status"></Column>
+          <Column field="count" header="Count"></Column>
+          <Column body={actionTemplate} header="Action"></Column>
+        </DataTable>
+      </DialogContent>
+      <DialogActions>
+        <AccessButton onClick={onClose} label="Close">
           Close
         </AccessButton>
-      }
-      visible={isVisible}
-      style={{ width: "50vw" }}
-      onHide={onClose}
-    >
-      <Messages ref={msgs} />
-      <DataTable
-        value={countsDataModels}
-        header={`Currently ${allCount} Requests present in the database`}
-      >
-        <Column field="label" header="Status"></Column>
-        <Column field="count" header="Count"></Column>
-        <Column body={actionTemplate} header="Action"></Column>
-      </DataTable>
+      </DialogActions>
     </Dialog>
   );
 }
