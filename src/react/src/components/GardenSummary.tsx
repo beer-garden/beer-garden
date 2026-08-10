@@ -3,6 +3,7 @@ import {
   Alert,
   Box,
   Chip,
+  Divider,
   Grid,
   Skeleton,
   Tooltip,
@@ -429,7 +430,6 @@ function GardenSummary({
           ml: 1,
           pb: "9px",
           margin: "20px 0 20px",
-          borderBottom: "1px solid #eeeeee",
         }}
       >
         <Typography
@@ -701,6 +701,7 @@ function GardenSummary({
           </div>
         )}
       </Box>
+      <Divider />
       {selectedGarden?.name ? (
         <div>
           {invalidRouting && (
@@ -788,7 +789,7 @@ function GardenSummary({
 
                 <EnhancedTable
                   data={receivingConnections}
-                  displayAll={false}
+                  displayAll={true}
                   columns={[
                     {
                       id: "api",
@@ -817,7 +818,7 @@ function GardenSummary({
                 <h2>Publishing</h2>
                 <EnhancedTable
                   data={publishingConnections}
-                  displayAll={false}
+                  displayAll={true}
                   columns={[
                     {
                       id: "api",
