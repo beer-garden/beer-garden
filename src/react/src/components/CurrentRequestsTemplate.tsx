@@ -359,6 +359,7 @@ function CurrentRequestsTemplate({
             <Fade {...TransitionProps} timeout={350}>
               <Box
                 sx={{
+                  boxShadow: 3,
                   bgcolor: "background.paper",
                 }}
               >
