@@ -557,6 +557,8 @@ const EnhancedTable = ({
         setDisplayGroupData(filterSortData(getData()));
       } else {
         setDisplayData(filterSortData(getData()));
+        setPageRecords(getData().length > 5);
+        setDisplayDataLength(getData().length);
       }
     }
   }, [data]);
