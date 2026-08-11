@@ -697,12 +697,18 @@ function UserIndex({
             field: "local_roles.name",
             label: "Local Roles",
             template: localRolesTemplate,
+            isString: true,
+            sortable: true,
+            filterable: true,
           },
           {
             id: "upstream_roles",
             field: "upstream_roles.name",
             label: "Upstream Roles",
             template: upstreamRolesTemplate,
+            isString: true,
+            sortable: true,
+            filterable: true,
           },
           {
             id: "alias_garden_accounts",

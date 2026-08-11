@@ -64,7 +64,7 @@ const EnhancedTable = ({
 
   const [displayDataLength, setDisplayDataLength] = useState(0);
   const [displayGroupData, setDisplayGroupData] = useState<
-    { group: string; data: any[] }[] | undefined
+    { group?: string; data: any[] }[] | undefined
   >(undefined);
 
   const [order, setOrder] = useState<"asc" | "desc">(defaultOrder ?? "asc");
@@ -104,12 +104,28 @@ const EnhancedTable = ({
       }
     };
 
-  const findValue = (path: string, obj: any) => {
-    return path
+  const findValue = (path: string, obj: any): any => {
+    const keys = path
       .replace(/\[(\d+)\]/g, ".$1") // convert [0] to .0
       .split(".")
-      .filter(Boolean)
-      .reduce((acc, key) => (acc == null ? undefined : acc[key]), obj);
+      .filter(Boolean);
+    const resolve = (current: any, keyIndex: number): any => {
+      if (current == null || keyIndex >= keys.length) {
+        return current;
+      }
+      const key = keys[keyIndex];
+      // 1. If the current object is an array AND the key is NOT a numeric index,
+      // we branch and search all elements for that key.
+      if (Array.isArray(current) && !/^\d+$/.test(key)) {
+        return current
+          .map((item) => resolve(item, keyIndex))
+          .filter((val) => val !== undefined);
+      }
+      // 2. Otherwise (it's an object, or it's an array and we have a specific index),
+      // we move deeper using the key.
+      return resolve(current[key], keyIndex + 1);
+    };
+    return resolve(obj, 0);
   };
 
   const columnData = (column: ColumnField, row: any) => {
@@ -118,6 +134,17 @@ const EnhancedTable = ({
     }
     if (column.field) {
       const columnValue = findValue(column.field, row);
+
+      if (Array.isArray(columnValue)) {
+        return columnValue
+          .map((value) => {
+            if (column.isDate) {
+              return formatDate(value);
+            }
+            return value;
+          })
+          .join(", ");
+      }
 
       if (columnValue !== undefined && columnValue !== null) {
         if (column.isDate) {
@@ -165,108 +192,131 @@ const EnhancedTable = ({
         }
 
         // Grab Compare Value
-        let compare = findValue(filter.column, record);
+        let compareValues = findValue(filter.column, record);
 
-        if (compare === undefined) {
+        if (compareValues === undefined) {
           return false;
         }
 
-        if (filter.isNumeric) {
-          if (typeof compare === "string") {
-            compare = Number(compare);
-          }
-        } else if (filter.isDate) {
-          if (typeof compare === "string") {
-            compare = dayjs(new Date(compare));
-          }
-        } else if (filter.isBoolean) {
-          if (typeof compare === "string") {
-            compare = compare.toLocaleLowerCase() === "true";
-          }
+        if (!Array.isArray(compareValues)) {
+          compareValues = [compareValues];
         }
 
-        if (filter.modifier === "eq") {
-          if (filter.isBoolean) {
-            if (typeof filter.value === "string") {
-              return (filter.value.toLocaleLowerCase() === "true") === compare;
-            }
-          }
-          return filter.value === compare;
-        } else if (filter.modifier === "neq") {
-          return filter.value !== compare;
-        } else if (filter.modifier === "startswith") {
-          if (typeof compare === "string" && typeof filter.value === "string") {
-            return compare.startsWith(filter.value);
-          }
-        } else if (filter.modifier === "endswith") {
-          if (typeof compare === "string" && typeof filter.value === "string") {
-            return compare.endsWith(filter.value);
-          }
-        } else if (filter.modifier === "contains") {
-          if (typeof compare === "string" && typeof filter.value === "string") {
-            return compare.includes(filter.value);
-          }
-        } else if (filter.modifier === "not__contains") {
-          if (typeof compare === "string" && typeof filter.value === "string") {
-            return !compare.includes(filter.value);
-          }
-        } else if (filter.modifier === "gt") {
-          return compare > filter.value;
-        } else if (filter.modifier === "gte") {
-          return compare >= filter.value;
-        } else if (filter.modifier === "lt") {
-          return compare < filter.value;
-        } else if (filter.modifier === "lte") {
-          return compare <= filter.value;
-        } else if (filter.modifier === "in") {
-          if (
-            typeof compare === "string" &&
-            typeof filter.value === "object" &&
-            Array.isArray(filter.value)
-          ) {
-            return filter.value.some((field) => field === compare);
-          }
-        } else if (filter.modifier === "nin") {
-          if (
-            typeof compare === "string" &&
-            typeof filter.value === "object" &&
-            Array.isArray(filter.value)
-          ) {
-            return !filter.value.some((field) => field === compare);
-          }
-        } else if (filter.modifier === "exists") {
-          if (filter.value === "true") {
-            // Value Present
-            if (compare === undefined) {
-              return false;
-            }
-
-            if (
-              typeof compare === "string" &&
-              (compare === "" || compare.trim().length === 0)
-            ) {
-              return false;
-            }
-
+        return compareValues.some((compare: any) => {
+          if (filter.value === undefined) {
             return true;
-          } else {
-            // Value is empty
-            if (compare === undefined) {
-              return true;
+          }
+          if (filter.isNumeric) {
+            if (typeof compare === "string") {
+              compare = Number(compare);
             }
+          } else if (filter.isDate) {
+            if (typeof compare === "string") {
+              compare = dayjs(new Date(compare));
+            }
+          } else if (filter.isBoolean) {
+            if (typeof compare === "string") {
+              compare = compare.toLocaleLowerCase() === "true";
+            }
+          }
+
+          if (filter.modifier === "eq") {
+            if (filter.isBoolean) {
+              if (typeof filter.value === "string") {
+                return (
+                  (filter.value.toLocaleLowerCase() === "true") === compare
+                );
+              }
+            }
+            return filter.value === compare;
+          } else if (filter.modifier === "neq") {
+            return filter.value !== compare;
+          } else if (filter.modifier === "startswith") {
             if (
               typeof compare === "string" &&
-              (compare === "" || compare.trim().length === 0)
+              typeof filter.value === "string"
             ) {
-              return true;
+              return compare.startsWith(filter.value);
             }
+          } else if (filter.modifier === "endswith") {
+            if (
+              typeof compare === "string" &&
+              typeof filter.value === "string"
+            ) {
+              return compare.endsWith(filter.value);
+            }
+          } else if (filter.modifier === "contains") {
+            if (
+              typeof compare === "string" &&
+              typeof filter.value === "string"
+            ) {
+              return compare.includes(filter.value);
+            }
+          } else if (filter.modifier === "not__contains") {
+            if (
+              typeof compare === "string" &&
+              typeof filter.value === "string"
+            ) {
+              return !compare.includes(filter.value);
+            }
+          } else if (filter.modifier === "gt") {
+            return compare > filter.value;
+          } else if (filter.modifier === "gte") {
+            return compare >= filter.value;
+          } else if (filter.modifier === "lt") {
+            return compare < filter.value;
+          } else if (filter.modifier === "lte") {
+            return compare <= filter.value;
+          } else if (filter.modifier === "in") {
+            if (
+              typeof compare === "string" &&
+              typeof filter.value === "object" &&
+              Array.isArray(filter.value)
+            ) {
+              return filter.value.some((field) => field === compare);
+            }
+          } else if (filter.modifier === "nin") {
+            if (
+              typeof compare === "string" &&
+              typeof filter.value === "object" &&
+              Array.isArray(filter.value)
+            ) {
+              return !filter.value.some((field) => field === compare);
+            }
+          } else if (filter.modifier === "exists") {
+            if (filter.value === "true") {
+              // Value Present
+              if (compare === undefined) {
+                return false;
+              }
 
-            return false;
+              if (
+                typeof compare === "string" &&
+                (compare === "" || compare.trim().length === 0)
+              ) {
+                return false;
+              }
+
+              return true;
+            } else {
+              // Value is empty
+              if (compare === undefined) {
+                return true;
+              }
+              if (
+                typeof compare === "string" &&
+                (compare === "" || compare.trim().length === 0)
+              ) {
+                return true;
+              }
+
+              return false;
+            }
           }
-        }
 
-        // Default response if field is populated
-        return false;
+          // Default response if field is populated
+          return false;
+        });
       });
     });
 
@@ -280,185 +330,36 @@ const EnhancedTable = ({
       const groupedData = groupByData(filteredData);
       setDisplayFiltered(groupedData.length);
 
-      // Sort Data Fields
-      const sortedGroupData =
-        orderByField === groupBy
-          ? groupedData
-          : groupedData.map((group) => {
-              return {
-                group: group.group,
-                data: group.data.sort((a, b) => {
-                  if (orderByField) {
-                    const field_a = findValue(orderByField, a);
-                    const field_b = findValue(orderByField, b);
-
-                    if (field_a === undefined && field_b === undefined) {
-                      return 0;
-                    }
-                    if (field_a === undefined) {
-                      return order === "asc" ? 1 : -1;
-                    }
-                    if (field_b === undefined) {
-                      return order === "asc" ? -1 : 1;
-                    }
-
-                    if (
-                      columns.some(
-                        (column) =>
-                          column.field === orderBy && column.isNumeric,
-                      )
-                    ) {
-                      return order === "asc"
-                        ? Number(field_a) - Number(field_b)
-                        : Number(field_b) - Number(field_a);
-                    }
-                    if (
-                      columns.some(
-                        (column) => column.field === orderBy && column.isDate,
-                      )
-                    ) {
-                      return order === "asc"
-                        ? new Date(field_a).getTime() -
-                            new Date(field_b).getTime()
-                        : new Date(field_b).getTime() -
-                            new Date(field_a).getTime();
-                    }
-                    if (
-                      columns.some(
-                        (column) =>
-                          column.field === orderBy && column.isBoolean,
-                      )
-                    ) {
-                      if (field_a && field_b) {
-                        return 0;
-                      }
-                      if (field_a) {
-                        return order === "asc" ? 1 : -1;
-                      }
-                      return order === "asc" ? -1 : 1;
-                    }
-                    if (
-                      columns.some(
-                        (column) => column.field === orderBy && column.isString,
-                      )
-                    ) {
-                      return order === "asc"
-                        ? (field_a as string).localeCompare(field_b as string)
-                        : (field_b as string).localeCompare(field_a as string);
-                    }
-                    return order === "asc"
-                      ? field_a - field_b
-                      : field_b - field_a;
-                  }
-                  return 0;
-                }),
-              };
-            });
-
-      const sortedGroups = sortedGroupData.sort((a, b) => {
-        if (orderByField) {
-          const field_a = findValue(orderByField, a.data[0]);
-          const field_b = findValue(orderByField, b.data[0]);
-          if (
-            columns.some(
-              (column) => column.field === orderBy && column.isNumeric,
-            )
-          ) {
-            return order === "asc"
-              ? Number(field_a) - Number(field_b)
-              : Number(field_b) - Number(field_a);
-          }
-          if (
-            columns.some((column) => column.field === orderBy && column.isDate)
-          ) {
-            return order === "asc"
-              ? new Date(field_a).getTime() - new Date(field_b).getTime()
-              : new Date(field_b).getTime() - new Date(field_a).getTime();
-          }
-          if (
-            columns.some(
-              (column) => column.field === orderBy && column.isBoolean,
-            )
-          ) {
-            if (field_a && field_b) {
+      let sortedGroupData = [...groupedData];
+      if (orderByField) {
+        if (orderByField === groupBy) {
+          sortedGroupData = groupedData.sort((a, b) => {
+            if (orderByField === undefined) {
               return 0;
             }
-            if (field_a) {
-              return order === "asc" ? 1 : -1;
+            return sortValues(a, b, "group");
+          });
+        } else {
+          sortedGroupData = groupedData.sort((a, b) => {
+            if (orderByField === undefined) {
+              return 0;
             }
-            return order === "asc" ? -1 : 1;
-          }
-          if (
-            columns.some(
-              (column) => column.field === orderBy && column.isString,
-            )
-          ) {
-            return order === "asc"
-              ? (field_a as string).localeCompare(field_b as string)
-              : (field_b as string).localeCompare(field_a as string);
-          }
-          return order === "asc" ? field_a - field_b : field_b - field_a;
+            return sortValues(a, b, `data.${orderByField}`);
+          });
         }
-        return 0;
-      });
-
-      if (displayAll === true) {
-        return sortedGroups;
       }
-
-      return sortedGroups.slice(startIndex, startIndex + rowsPerPage);
+      if (displayAll === true) {
+        return sortedGroupData;
+      }
+      return sortedGroupData.slice(startIndex, startIndex + rowsPerPage);
     }
     setDisplayFiltered(filteredData.length);
 
     const sortedData = [...filteredData].sort((a, b) => {
-      if (orderByField) {
-        const field_a = findValue(orderByField, a);
-        const field_b = findValue(orderByField, b);
-
-        if (field_a === undefined && field_b === undefined) {
-          return 0;
-        }
-        if (field_a === undefined) {
-          return order === "asc" ? 1 : -1;
-        }
-        if (field_b === undefined) {
-          return order === "asc" ? -1 : 1;
-        }
-        if (
-          columns.some((column) => column.field === orderBy && column.isNumeric)
-        ) {
-          return order === "asc"
-            ? Number(field_a) - Number(field_b)
-            : Number(field_b) - Number(field_a);
-        }
-        if (
-          columns.some((column) => column.field === orderBy && column.isDate)
-        ) {
-          return order === "asc"
-            ? new Date(field_a).getTime() - new Date(field_b).getTime()
-            : new Date(field_b).getTime() - new Date(field_a).getTime();
-        }
-        if (
-          columns.some((column) => column.field === orderBy && column.isBoolean)
-        ) {
-          if (field_a && field_b) {
-            return 0;
-          }
-          if (field_a) {
-            return order === "asc" ? 1 : -1;
-          }
-          return order === "asc" ? -1 : 1;
-        }
-        if (
-          columns.some((column) => column.field === orderBy && column.isString)
-        ) {
-          return order === "asc"
-            ? (field_a as string).localeCompare(field_b as string)
-            : (field_b as string).localeCompare(field_a as string);
-        }
-        return order === "asc" ? field_a - field_b : field_b - field_a;
+      if (orderByField === undefined) {
+        return 0;
       }
-      return 0;
+      return sortValues(a, b, orderByField);
     });
 
     if (displayAll === true) {
@@ -493,24 +394,98 @@ const EnhancedTable = ({
   };
 
   const groupByData = (groupByData: any[]) => {
-    const groupedData = [] as { group: string; data: any[] }[];
+    const groupedData = [] as { group?: string; data: any[] }[];
     if (groupBy) {
       for (const record of groupByData) {
-        if (Object.hasOwn(record, groupBy)) {
-          if (groupedData.some((group) => group.group === record?.[groupBy])) {
+        if (Object.hasOwn(record, groupBy) && record?.[groupBy] !== undefined) {
+          for (const groupKey of Array.isArray(record[groupBy])
+            ? record[groupBy]
+            : [record[groupBy]]) {
+            if (groupedData.some((group) => group.group === groupKey)) {
+              groupedData.map((group) => {
+                if (group.group === groupKey) {
+                  group.data.push(record);
+                }
+                return group;
+              });
+            } else {
+              groupedData.push({ group: groupKey, data: [record] });
+            }
+          }
+        } else {
+          if (groupedData.some((group) => group.group === undefined)) {
             groupedData.map((group) => {
-              if (group.group === record?.[groupBy]) {
+              if (group.group === undefined) {
                 group.data.push(record);
               }
               return group;
             });
           } else {
-            groupedData.push({ group: record?.[groupBy], data: [record] });
+            groupedData.push({ group: undefined, data: [record] });
           }
         }
       }
     }
     return groupedData;
+  };
+
+  const sortValues = (a: any, b: any, orderField?: string) => {
+    if (orderField) {
+      return sortValues(findValue(orderField, a), findValue(orderField, b));
+    }
+    if (order) {
+      if (a === undefined && b === undefined) {
+        return 0;
+      }
+      if (a === undefined) {
+        return order === "asc" ? 1 : -1;
+      }
+      if (b === undefined) {
+        return order === "asc" ? -1 : 1;
+      }
+
+      if (Array.isArray(a) && Array.isArray(b)) {
+        if (a.length === 0) {
+          return order === "asc" ? 1 : -1;
+        }
+        if (b.length === 0) {
+          return order === "asc" ? -1 : 1;
+        }
+
+        return sortValues(a.sort(sortValues)[0], b.sort(sortValues)[0]);
+      }
+
+      if (
+        columns.some((column) => column.field === orderBy && column.isNumeric)
+      ) {
+        return order === "asc" ? Number(a) - Number(b) : Number(b) - Number(a);
+      }
+      if (columns.some((column) => column.field === orderBy && column.isDate)) {
+        return order === "asc"
+          ? new Date(a).getTime() - new Date(b).getTime()
+          : new Date(b).getTime() - new Date(a).getTime();
+      }
+      if (
+        columns.some((column) => column.field === orderBy && column.isBoolean)
+      ) {
+        if (a && b) {
+          return 0;
+        }
+        if (a) {
+          return order === "asc" ? 1 : -1;
+        }
+        return order === "asc" ? -1 : 1;
+      }
+      if (
+        columns.some((column) => column.field === orderBy && column.isString)
+      ) {
+        return order === "asc"
+          ? (a as string).localeCompare(b as string)
+          : (b as string).localeCompare(a as string);
+      }
+      return order === "asc" ? a - b : b - a;
+    }
+    return 0;
   };
 
   const handleChangePage = (
