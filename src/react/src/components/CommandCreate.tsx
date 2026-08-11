@@ -1,5 +1,4 @@
-import { ScrollPanel } from "primereact/scrollpanel";
-import { Skeleton } from "primereact/skeleton";
+import { Skeleton, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 
 import CommandForm from "../components/CommandForm";
@@ -188,7 +187,7 @@ function CommandCreate({
   ]);
 
   return (
-    <div>
+    <Stack spacing={2}>
       {systems && systems.length > 0 && (
         <CommandSelect
           systems={systems}
@@ -200,22 +199,20 @@ function CommandCreate({
         />
       )}
       {showCommand && (
-        <ScrollPanel style={{ width: "100%", height: "80%" }}>
-          <CommandForm
-            command={command}
-            disabled={false}
-            request={request}
-            setRequest={setRequest}
-            resetForm={resetForm}
-            setResetForm={setResetForm}
-            setIsFormValid={setIsFormValid}
-          />
-        </ScrollPanel>
+        <CommandForm
+          command={command}
+          disabled={false}
+          request={request}
+          setRequest={setRequest}
+          resetForm={resetForm}
+          setResetForm={setResetForm}
+          setIsFormValid={setIsFormValid}
+        />
       )}
       {(!systems || systems.length === 0 || !showCommand) && (
         <Skeleton width="100%" height="150px"></Skeleton>
       )}
-    </div>
+    </Stack>
   );
 }
 
