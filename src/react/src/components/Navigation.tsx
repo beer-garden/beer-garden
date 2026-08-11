@@ -637,9 +637,8 @@ function NavigationMenu({
           )}
           <Box sx={{ display: "flex", alignItems: "center", gap: 0 }}>
             <AccessButton
-              sx={{ height: "36px", color: "white" }}
+              sx={{ height: "36px", color: "white", mr: 2 }}
               text
-              className="mr-2"
               onClick={toggleRunTour}
               tooltip="Start Tour"
               data-testid="start-tour"
