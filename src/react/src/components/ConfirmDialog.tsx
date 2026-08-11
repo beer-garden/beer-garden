@@ -1,6 +1,7 @@
 import { Box, DialogActions, DialogContent, Grid } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
+import { ReactElement } from "react";
 
 import AccessButton from "../components/AccessButton";
 import { FAIcon } from "../services/util_service";
@@ -12,16 +13,28 @@ function ConfirmDialog({
   message,
   setOpen,
   open,
+  closeDialog,
 }: {
   accept: () => void;
-  reject: () => void;
-  setOpen: (open: boolean) => void;
-  header: string;
-  message: string;
+  reject?: () => void;
+  setOpen?: (open: boolean) => void;
+  closeDialog?: () => void;
+  header: string | ReactElement;
+  message: string | ReactElement;
   open: boolean;
 }) {
   return (
-    <Dialog onClose={() => setOpen(false)} open={open}>
+    <Dialog
+      onClose={() => {
+        if (setOpen) {
+          setOpen(false);
+          if (closeDialog) {
+            closeDialog();
+          }
+        }
+      }}
+      open={open}
+    >
       <DialogTitle>
         <Grid container>
           <Grid size="grow">
@@ -32,7 +45,12 @@ function ConfirmDialog({
           <Grid>
             <AccessButton
               onClick={() => {
-                setOpen(false);
+                if (setOpen) {
+                  setOpen(false);
+                }
+                if (closeDialog) {
+                  closeDialog();
+                }
               }}
               tooltip="Close"
             >
@@ -48,7 +66,12 @@ function ConfirmDialog({
         <AccessButton
           onClick={() => {
             accept();
-            setOpen(false);
+            if (setOpen) {
+              setOpen(false);
+            }
+            if (closeDialog) {
+              closeDialog();
+            }
           }}
           startIcon={<FAIcon icon="check" />}
           sx={{ m: 1 }}
@@ -58,8 +81,16 @@ function ConfirmDialog({
         </AccessButton>
         <AccessButton
           onClick={() => {
-            reject();
-            setOpen(false);
+            if (reject) {
+              reject();
+            }
+
+            if (setOpen) {
+              setOpen(false);
+            }
+            if (closeDialog) {
+              closeDialog();
+            }
           }}
           startIcon={<FAIcon icon="xmark" />}
           sx={{ m: 1 }}
