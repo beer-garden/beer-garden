@@ -240,9 +240,9 @@ function RequestOptions({
               >
                 <Box sx={{ display: "flex" }}>
                   {isCard ? (
-                    <FAIcon icon="up-right-from-square" className="mr-2" />
+                    <FAIcon icon="up-right-from-square" sx={{ mr: 2 }} />
                   ) : (
-                    <FAIcon icon="plus" className="mr-2" />
+                    <FAIcon icon="plus" sx={{ mr: 2 }} />
                   )}
                   {isCard ? "Open Request" : "Pour Again"}
                 </Box>
@@ -258,12 +258,11 @@ function RequestOptions({
               </AccessButton>
             </ButtonGroup>
             <Popper
-              sx={{ zIndex: 1 }}
+              sx={{ zIndex: 1300 }}
               open={openSplitMenu}
               anchorEl={splitButtonAnchorRef.current}
               role={undefined}
               transition
-              disablePortal
             >
               {({ TransitionProps, placement }) => (
                 <Grow
