@@ -5,13 +5,11 @@ import {
   Select,
   SelectChangeEvent,
 } from "@mui/material";
-import { FilterMatchMode } from "primereact/api";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Command, System } from "../models/brewtils-types";
 import AccessButton from "./AccessButton";
+import EnhancedTable from "./EnhancedTable/components/EnhancedTable";
 
 function CommandList({
   selectedSystem,
@@ -39,13 +37,6 @@ function CommandList({
       ? false
       : true,
   );
-  const [filters, setFilters] = useState({
-    name: {
-      value: null,
-      matchMode: FilterMatchMode.CONTAINS,
-    },
-    description: { value: null, matchMode: FilterMatchMode.CONTAINS },
-  });
 
   useEffect(() => {
     if (
@@ -123,19 +114,33 @@ function CommandList({
           ))}
         </Select>
       </FormControl>
-      <DataTable
+      <EnhancedTable
         key={buttonsDisabled.current}
-        value={commands}
-        paginator
-        rows={10}
-        filterDisplay="row"
-        filters={filters}
-        onFilter={(e) => setFilters(e.filters as typeof filters)}
-      >
-        <Column field="name" header="Command" filter />
-        <Column field="description" header="Description" filter />
-        <Column header="Actions" body={actionTemplate} />
-      </DataTable>
+        data={commands}
+        columns={[
+          {
+            id: "name",
+            label: "Command",
+            field: "name",
+            sortable: true,
+            filterable: true,
+            isString: true,
+          },
+          {
+            id: "description",
+            label: "Description",
+            field: "description",
+            sortable: true,
+            filterable: true,
+            isString: true,
+          },
+          {
+            id: "actions",
+            label: "Actions",
+            template: actionTemplate,
+          },
+        ]}
+      />
     </>
   );
 }
