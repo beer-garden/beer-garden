@@ -242,7 +242,7 @@ function InstanceShowLogsDialog({
           {displayLogs !== undefined && (
             <Box>
               <br />
-              <>
+              <Stack spacing={2}>
                 <Box
                   component="a"
                   sx={{ display: "flex", justifyContent: "flex-end" }}
@@ -253,8 +253,10 @@ function InstanceShowLogsDialog({
                   Download
                   <FAIcon icon="download" sx={{ ml: 1 }} />
                 </Box>
-                <pre id="rawOutput">{displayLogs}</pre>
-              </>
+                <Box component="pre" id="rawOutput">
+                  {displayLogs}
+                </Box>
+              </Stack>
             </Box>
           )}
         </div>
