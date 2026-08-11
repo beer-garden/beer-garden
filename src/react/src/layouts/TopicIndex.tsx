@@ -295,34 +295,42 @@ function TopicIndex({
 
         return;
       }
-      RemoveSubscriber(topic.id!, subscriber)
-        .then(() => {
-          updateTopics(
-            topicsRef.current.map((value) => {
-              if (value.id === topic.id && value.subscribers) {
-                value.subscribers = value.subscribers.filter(
-                  (valueSubscriber) => valueSubscriber !== subscriber,
-                );
-              }
-              return value;
-            }),
-          );
+      const accept = () => {
+        RemoveSubscriber(topic.id!, subscriber)
+          .then(() => {
+            updateTopics(
+              topicsRef.current.map((value) => {
+                if (value.id === topic.id && value.subscribers) {
+                  value.subscribers = value.subscribers.filter(
+                    (valueSubscriber) => valueSubscriber !== subscriber,
+                  );
+                }
+                return value;
+              }),
+            );
 
-          showSnackbar({
-            severity: "info",
-            summary: "Removed Subscriber",
-            detail: `Topic updated: ${topic.name}`,
-            life: 3000,
+            showSnackbar({
+              severity: "info",
+              summary: "Removed Subscriber",
+              detail: `Topic updated: ${topic.name}`,
+              life: 3000,
+            });
+          })
+          .catch((error) => {
+            showSnackbar({
+              severity: "error",
+              summary: "Error",
+              detail: `Error removing subscriber from topic ${topic.name}: ${error}`,
+              life: 3000,
+            });
           });
-        })
-        .catch((error) => {
-          showSnackbar({
-            severity: "error",
-            summary: "Error",
-            detail: `Error removing subscriber from topic ${topic.name}: ${error}`,
-            life: 3000,
-          });
-        });
+      };
+
+      showConfirmDialog({
+        accept: accept,
+        header: `Confirm Remove subscriber from ${topic.name}`,
+        message: `Are you sure you want to removing subscriber from topic ${topic.name}?`,
+      });
     }
 
     function publisherCountTemplate(topicSubscriber: TopicFlatten) {
