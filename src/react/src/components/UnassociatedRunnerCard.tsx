@@ -1,8 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { ButtonGroup } from "primereact/buttongroup";
-import { Divider } from "primereact/divider";
-import { Panel } from "primereact/panel";
-import { Tag } from "primereact/tag";
+import { Box, ButtonGroup, Chip, Divider } from "@mui/material";
+import { grey } from "@mui/material/colors";
 
 import { Runner } from "../models/brewtils-types";
 import { Config, RunnerGroup } from "../models/models";
@@ -24,25 +22,11 @@ function UnassociatedRunnerCard({
 }) {
   const showSnackbar = useSnackbar();
 
-  const headerTemplate = (options: any) => {
-    const className = `${options.className} justify-content-space-between`;
-
-    return (
-      <div
-        className={`${className} flex align-items-center gap-2 unassociated-runner-header`}
-      >
-        <label className="max-w-20rem font-semibold">
-          Unassociated Runners: {runnerGroup.path}
-        </label>
-      </div>
-    );
-  };
-
   function statusTemplate(runner: Runner) {
     return (
-      <Tag
-        value={runner.dead ? "DEAD" : "UNRESPONSIVE"}
-        severity={runner.dead ? "danger" : "warning"}
+      <Chip
+        label={runner.dead ? "DEAD" : "UNRESPONSIVE"}
+        color={runner.dead ? "error" : "warning"}
       />
     );
   }
@@ -127,10 +111,9 @@ function UnassociatedRunnerCard({
 
   const runnerActions = (runner: Runner) => {
     return (
-      <div className="flex">
+      <Box sx={{ display: "flex" }}>
         <ButtonGroup>
           <AccessButton
-            severity="success"
             size="small"
             title={`Start Runner ${runner.id}`}
             onClick={() => {
@@ -143,7 +126,6 @@ function UnassociatedRunnerCard({
             <FontAwesomeIcon icon="play" />
           </AccessButton>
           <AccessButton
-            severity="warning"
             size="small"
             title={`Stop Runner ${runner.id}`}
             onClick={() => {
@@ -156,7 +138,6 @@ function UnassociatedRunnerCard({
             <FontAwesomeIcon icon="stop" />
           </AccessButton>
           <AccessButton
-            severity="danger"
             size="small"
             title={`Delete Runner ${runner.id}`}
             onClick={() => deleteRunner(runner)}
@@ -167,18 +148,32 @@ function UnassociatedRunnerCard({
             <FontAwesomeIcon icon="trash" />
           </AccessButton>
         </ButtonGroup>
-      </div>
+      </Box>
     );
   };
 
   return (
     <>
-      <Panel headerTemplate={headerTemplate}>
-        <div className="mb-3">
-          <div style={{ float: "right", marginLeft: "2px" }}>
+      <Box
+        sx={{
+          border: "1px solid",
+          borderColor: grey[300],
+          m: 0,
+          borderRadius: 2,
+        }}
+      >
+        <Box sx={{ bgcolor: "error.main" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 2 }}>
+            <Box component="span" sx={{ maxWidth: "20rem", fontWeight: 600 }}>
+              Unassociated Runners: {runnerGroup.path}
+            </Box>
+          </Box>
+        </Box>
+        <Divider />
+        <Box sx={{ p: 2 }}>
+          <Box sx={{ minHeight: "40px", float: "right", marginLeft: "2px" }}>
             <ButtonGroup>
               <AccessButton
-                severity="success"
                 size="small"
                 title={`Start runners in ../${runnerGroup.path}`}
                 onClick={() => startRunnerGroup()}
@@ -189,7 +184,6 @@ function UnassociatedRunnerCard({
                 <FontAwesomeIcon icon="play" />
               </AccessButton>
               <AccessButton
-                severity="warning"
                 size="small"
                 title={`Stop runners in ../${runnerGroup.path}`}
                 onClick={() => stopRunnerGroup()}
@@ -200,11 +194,10 @@ function UnassociatedRunnerCard({
                 <FontAwesomeIcon icon="stop" />
               </AccessButton>
               <AccessButton
-                severity="info"
                 size="small"
                 title={`Reload runners in ../${runnerGroup.path}`}
                 onClick={() => reloadPath()}
-                className="mr-2"
+                sx={{ mr: 2 }}
                 data-testid="RELOAD_GROUP"
                 config={config}
                 permission="PLUGIN_ADMIN"
@@ -213,7 +206,6 @@ function UnassociatedRunnerCard({
               </AccessButton>
             </ButtonGroup>
             <AccessButton
-              severity="danger"
               size="small"
               title={`Delete runners in ../${runnerGroup.path}`}
               onClick={() => deleteRunnerGroup()}
@@ -223,23 +215,30 @@ function UnassociatedRunnerCard({
             >
               <FontAwesomeIcon icon="trash" />
             </AccessButton>
-          </div>
-          <div style={{ minHeight: "40px" }}>../{runnerGroup.path}</div>
-          <Divider className="my-2" style={{ clear: "right" }} />
-        </div>
-        {runnerGroup.runners?.map((runner: Runner, index: number) => (
-          <div key={JSON.stringify(runner)}>
-            <div className="flex flex-wrap justify-content-between align-items-center">
-              <div>{statusTemplate(runner)}</div>
-              <div>{runner.id}</div>
-              <div>{runnerActions(runner)}</div>
+          </Box>
+          <Box component="span">../{runnerGroup.path}</Box>
+          <Divider sx={{ my: 2, clear: "right" }} />
+          {runnerGroup.runners?.map((runner: Runner, index: number) => (
+            <div key={JSON.stringify(runner)}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: 1,
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <div>{statusTemplate(runner)}</div>
+                <div>{runner.id}</div>
+                <div>{runnerActions(runner)}</div>
+              </Box>
+              {index < runnerGroup.runners.length - 1 && (
+                <Divider sx={{ my: 1 }} />
+              )}
             </div>
-            {index < runnerGroup.runners.length - 1 && (
-              <Divider className="my-2" />
-            )}
-          </div>
-        ))}
-      </Panel>
+          ))}
+        </Box>
+      </Box>
     </>
   );
 }
