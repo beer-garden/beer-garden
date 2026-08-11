@@ -154,6 +154,12 @@ function InstanceShowLogsDialog({
     ).then((response) => successTailLogs(response), addErrorAlert);
   }
 
+  const dismissAlert = (index: number) => {
+    setAlerts((prevAlerts) =>
+      prevAlerts.filter((_, idx: number) => index != idx),
+    );
+  };
+
   return (
     <Dialog
       data-testid="instance-show-logs-dialog"
