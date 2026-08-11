@@ -56,9 +56,6 @@ function RequestViewMain({
   const [requestProjections, setRequestProjections] = useState<
     RequestCommand[] | undefined
   >(undefined);
-  const [requestProjectionSelected, setRequestProjectionSelected] = useState<
-    RequestCommand | undefined
-  >(undefined);
   const requestProjectionSelectedRef = useRef<RequestCommand | undefined>(
     undefined,
   );
@@ -166,8 +163,6 @@ function RequestViewMain({
               config={config}
               addRequestItem={addRequestItem}
               requestProjections={requestProjections}
-              requestProjectionSelected={requestProjectionSelected}
-              setRequestProjectionSelected={setRequestProjectionSelected}
               requestProjectionSelectedRef={requestProjectionSelectedRef}
               isCard={isCard}
               openRequest={openRequest}
@@ -187,7 +182,6 @@ function RequestViewMain({
         GetRequestProjections(request)
           .then((projections) => {
             setRequestProjections(projections);
-            setRequestProjectionSelected(projections[0]);
             requestProjectionSelectedRef.current = projections[0];
           })
           .catch((error) => {
@@ -289,8 +283,6 @@ function RequestViewMain({
                   config={config}
                   addRequestItem={addRequestItem}
                   requestProjections={requestProjections}
-                  requestProjectionSelected={requestProjectionSelected}
-                  setRequestProjectionSelected={setRequestProjectionSelected}
                   requestProjectionSelectedRef={requestProjectionSelectedRef}
                   isCard={isCard}
                   openRequest={openRequest}
