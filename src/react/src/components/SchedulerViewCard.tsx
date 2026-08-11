@@ -422,7 +422,7 @@ function SchedulerViewCard({
                 }
               }}
               title={"Run Now " + job?.name}
-              className="mr-2"
+              sx={{ mr: 2 }}
               {...permissions}
               permission="OPERATOR"
             >
@@ -436,7 +436,7 @@ function SchedulerViewCard({
                 editJob();
               }}
               title={"Update Job " + job?.name}
-              className="mr-2"
+              sx={{ mr: 2 }}
               {...permissions}
               permission="OPERATOR"
             >
@@ -462,7 +462,7 @@ function SchedulerViewCard({
                     });
                 }}
                 title={"Pause Job " + job?.name}
-                className="mr-2"
+                sx={{ mr: 2 }}
                 {...permissions}
                 permission="OPERATOR"
               >
@@ -489,7 +489,7 @@ function SchedulerViewCard({
                     });
                 }}
                 title={"Resume Job " + job?.name}
-                className="mr-2"
+                sx={{ mr: 2 }}
                 {...permissions}
                 permission="OPERATOR"
               >
@@ -501,7 +501,7 @@ function SchedulerViewCard({
               raised
               onClick={() => setShowDelete(true)}
               title={"Delete Job " + job?.name}
-              className="mr-2"
+              sx={{ mr: 2 }}
               {...permissions}
               permission="OPERATOR"
             >

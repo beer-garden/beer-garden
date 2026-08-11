@@ -1,4 +1,3 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Box, Chip, Typography } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
@@ -133,7 +132,7 @@ function RequestTreeMenu({
           <>
             <Tooltip title={node.data?.topic}>
               <span>
-                <FontAwesomeIcon icon="envelope" className="mr-2" />
+                <FAIcon icon="envelope" sx={{ mr: 2 }} />
               </span>
             </Tooltip>
           </>
@@ -143,13 +142,13 @@ function RequestTreeMenu({
             {(node.data?.command_type === undefined ||
               node.data?.command_type.length === 0 ||
               node.data?.command_type === "ACTION") && (
-              <FontAwesomeIcon icon="a" className="mr-2" />
+              <FAIcon icon="a" sx={{ mr: 2 }} />
             )}
             {node.data?.command_type === "INFO" && (
-              <FontAwesomeIcon icon="i" className="mr-2" />
+              <FAIcon icon="i" sx={{ mr: 2 }} />
             )}
             {node.data?.command_type === "TEMP" && (
-              <FontAwesomeIcon icon="hourglass" className="mr-2" />
+              <FAIcon icon="hourglass" sx={{ mr: 2 }} />
             )}
           </span>
         </Tooltip>
