@@ -9,6 +9,7 @@ import {
   MenuItem,
   Tooltip,
 } from "@mui/material";
+import { grey } from "@mui/material/colors";
 import React, { RefObject, useEffect, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
@@ -302,12 +303,12 @@ function SystemCard({
 
   function instanceNameTemplate(instance: Instance) {
     return (
-      <div
-        style={{ overflowWrap: "break-word", width: "100%" }}
+      <Box
+        sx={{ overflowWrap: "break-word", width: "100%" }}
         {...GenerateTourProps(nameInstanceTourStep)}
       >
         {instance.name}
-      </div>
+      </Box>
     );
   }
 
@@ -508,25 +509,32 @@ function SystemCard({
   };
   return (
     <>
-      <Box sx={{ border: "1px solid grey", m: 0, borderRadius: 2 }}>
+      <Box
+        sx={{
+          border: "1px solid",
+          borderColor: grey[300],
+          m: 0,
+          borderRadius: 2,
+        }}
+      >
         <Box sx={{ bgcolor: "primary.main" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 2 }}>
             <FontAwesomeIcon
               icon={system.icon_name ? system.icon_name : "gears"}
               aria-label={system.name}
             />
-            <span className="max-w-20rem font-semibold">
+            <Box component="span" sx={{ maxWidth: "20rem", fontWeight: 600 }}>
               {selectedGarden === system.namespace
                 ? ""
                 : `${system.namespace} / `}
               {system.name} ({system.version})
-            </span>
+            </Box>
           </Box>
         </Box>
         <Divider />
         <Box sx={{ p: 2 }}>
-          <div className="mb-3">
-            <div style={{ float: "right", marginLeft: "2px" }}>
+          <Box sx={{ mb: 2 }}>
+            <Box sx={{ minHeight: "40px", float: "right", marginLeft: "2px" }}>
               <ButtonGroup>
                 <AccessButton
                   size="small"
@@ -544,7 +552,7 @@ function SystemCard({
                   size="small"
                   title={`Stop System ${system.namespace}.${system.name}.${system.version}`}
                   onClick={() => stopSystem(system)}
-                  className="mr-2"
+                  sx={{ mr: 2 }}
                   {...GenerateTourProps(stopInstancesTourStep)}
                   {...permissions}
                   permission="PLUGIN_ADMIN"
@@ -581,21 +589,28 @@ function SystemCard({
                   <FontAwesomeIcon icon="trash" />
                 </AccessButton>
               </ButtonGroup>
-            </div>
+            </Box>
 
-            <div style={{ minHeight: "40px" }}>{system.description}</div>
-            <Divider className="my-2" style={{ clear: "right" }} />
-          </div>
+            <Box component="span">{system.description}</Box>
+            <Divider sx={{ my: 2, clear: "right" }} />
+          </Box>
           {system.instances?.map((instance: Instance, index: number) => (
             <div key={JSON.stringify(instance)}>
-              <div className="flex flex-wrap justify-content-between align-items-center">
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: 1,
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
                 <div>{instanceIconTemplate(instance)}</div>
                 <div>{statusTemplate(instance)}</div>
                 <div>{instanceNameTemplate(instance)}</div>
                 <div>{instanceActions(instance)}</div>
-              </div>
+              </Box>
               {index < system.instances!.length - 1 && (
-                <Divider className="my-2" />
+                <Divider sx={{ my: 2 }} />
               )}
             </div>
           ))}
