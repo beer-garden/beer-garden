@@ -1,5 +1,7 @@
 import {
   Alert,
+  Box,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -228,30 +230,32 @@ function InstanceShowLogsDialog({
             </a>
           </div>
           {loadingLogs && (
-            <div id="loading" className="col-md-12 text-center">
+            <Box id="loading" sx={{ textAlign: "center" }}>
               <h1>
-                <div>Loading...</div>
-                <div>
-                  <i className="fa fa-spinner fa-pulse fa-2x"></i>
-                </div>
+                <Box component="span" sx={{ mr: 1 }}>
+                  Loading...
+                </Box>
+                <CircularProgress />
               </h1>
-            </div>
+            </Box>
           )}
           {displayLogs !== undefined && (
-            <div className="container-fluid animate-if">
+            <Box>
               <br />
               <>
-                <a
-                  className="fa fa-download pull-right"
+                <Box
+                  component="a"
+                  sx={{ display: "flex", justifyContent: "flex-end" }}
                   href={downloadHref.current}
                   download={filename}
                   aria-label="Download Current Logs Displayed"
                 >
                   Download
-                </a>
+                  <FAIcon icon="download" sx={{ ml: 1 }} />
+                </Box>
                 <pre id="rawOutput">{displayLogs}</pre>
               </>
-            </div>
+            </Box>
           )}
         </div>
       </DialogContent>
