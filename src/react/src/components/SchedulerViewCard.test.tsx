@@ -1,6 +1,5 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ConfirmDialog } from "primereact/confirmdialog";
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
 
 import {
@@ -636,7 +635,6 @@ describe("SchedulerViewCard", () => {
     // Simulate ConfirmDialog in parent (i.e. App.tsx)
     render(
       <>
-        <ConfirmDialog />
         <SnackbarProvider>
           <SchedulerViewCard
             listeners={{}}
