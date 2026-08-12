@@ -350,49 +350,49 @@ function RoleIndex({
               id: "scope_gardens",
               field: "scope_gardens",
               label: "Garden Scope",
-              template: (role: Role) => {
-                return <span>{role.scope_gardens?.join(", ")}</span>;
-              },
+              sortable: true,
+              filterable: true,
+              isString: true,
             },
             {
               id: "scope_namespaces",
               field: "scope_namespaces",
               label: "Namespace Scope",
-              template: (role: Role) => {
-                return <span>{role.scope_namespaces?.join(", ")}</span>;
-              },
+              sortable: true,
+              filterable: true,
+              isString: true,
             },
             {
               id: "scope_systems",
               field: "scope_systems",
               label: "System Scope",
-              template: (role: Role) => {
-                return <span>{role.scope_systems?.join(", ")}</span>;
-              },
+              sortable: true,
+              filterable: true,
+              isString: true,
             },
             {
               id: "scope_versions",
               field: "scope_versions",
               label: "Version Scope",
-              template: (role: Role) => {
-                return <span>{role.scope_versions?.join(", ")}</span>;
-              },
+              sortable: true,
+              filterable: true,
+              isString: true,
             },
             {
               id: "scope_instances",
               field: "scope_instances",
               label: "Instance Scope",
-              template: (role: Role) => {
-                return <span>{role.scope_instances?.join(", ")}</span>;
-              },
+              sortable: true,
+              filterable: true,
+              isString: true,
             },
             {
               id: "scope_commands",
               field: "scope_commands",
               label: "Command Scope",
-              template: (role: Role) => {
-                return <span>{role.scope_commands?.join(", ")}</span>;
-              },
+              sortable: true,
+              filterable: true,
+              isString: true,
             },
             {
               id: "action",
