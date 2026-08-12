@@ -515,6 +515,7 @@ function SystemCard({
           border: "1px solid",
           borderColor: grey[300],
           m: 0,
+          overflow: "hidden",
           borderRadius: 2,
         }}
       >
