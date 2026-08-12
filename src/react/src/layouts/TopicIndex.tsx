@@ -329,7 +329,7 @@ function TopicIndex({
       showConfirmDialog({
         accept: accept,
         header: `Confirm Remove subscriber from ${topic.name}`,
-        message: `Are you sure you want to removing subscriber from topic ${topic.name}?`,
+        message: `Are you sure you want to remove subscriber from topic ${topic.name}?`,
       });
     }
 
