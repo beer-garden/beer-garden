@@ -1,8 +1,17 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { confirmDialog } from "primereact/confirmdialog";
-import { Dropdown } from "primereact/dropdown";
-import { MenuItem } from "primereact/menuitem";
-import { SplitButton } from "primereact/splitbutton";
+import {
+  Box,
+  ButtonGroup,
+  ClickAwayListener,
+  Grow,
+  ListItemIcon,
+  ListItemText,
+  MenuItem,
+  MenuList,
+  Paper,
+  Popper,
+  Select,
+} from "@mui/material";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import AccessButton from "../components/AccessButton";
@@ -16,14 +25,13 @@ import {
 import { useSnackbar } from "../providers/SnackbarProvider";
 import { checkPermission } from "../services/permission_service";
 import { CancelRequest, DeleteRequest } from "../services/request_service";
-import { GetBaseURL } from "../services/util_service";
+import { FAIcon, GetBaseURL } from "../services/util_service";
+import ConfirmDialog from "./ConfirmDialog";
 
 function RequestOptions({
   request,
   setRequest,
   requestProjections,
-  requestProjectionSelected,
-  setRequestProjectionSelected,
   requestProjectionSelectedRef,
   addRequestItem,
   config,
@@ -34,8 +42,6 @@ function RequestOptions({
   request: Request;
   setRequest: (request: Request | undefined) => void;
   requestProjections?: RequestCommand[];
-  requestProjectionSelected?: RequestCommand;
-  setRequestProjectionSelected: (value: RequestCommand | undefined) => void;
   requestProjectionSelectedRef: React.RefObject<RequestCommand | undefined>;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
   config: Config;
@@ -44,8 +50,30 @@ function RequestOptions({
   closeRequest?: () => void;
 }) {
   const navigate = useNavigate();
-  const items: MenuItem[] = [];
+  const items: any[] = [];
   const showSnackbar = useSnackbar();
+
+  const [requestProjectionSelectedIndex, setRequestProjectionSelectedIndex] =
+    useState(0);
+
+  const splitButtonAnchorRef = useRef<HTMLDivElement>(null);
+  const [openSplitMenu, setOpenSplitMenu] = useState(false);
+
+  const [showDeletRequest, setShowDeletRequest] = useState(false);
+
+  const handleToggle = () => {
+    setOpenSplitMenu((prevOpen) => !prevOpen);
+  };
+  const handleClose = (event: Event) => {
+    if (
+      splitButtonAnchorRef.current &&
+      splitButtonAnchorRef.current.contains(event.target as HTMLElement)
+    ) {
+      return;
+    }
+
+    setOpenSplitMenu(false);
+  };
 
   const handleDownload = (request: Request) => {
     // Example: fetch a file from a URL
@@ -92,7 +120,7 @@ function RequestOptions({
     ) {
       items.push({
         label: "Cancel Request",
-        icon: <FontAwesomeIcon icon="xmark" />,
+        icon: "xmark",
         command: () => {
           CancelRequest(request).catch((error) => {
             console.error("Error canceling request:", error);
@@ -109,7 +137,7 @@ function RequestOptions({
       if (isCard) {
         items.push({
           label: "Pour Again",
-          icon: <FontAwesomeIcon icon="plus" />,
+          icon: "plus",
           command: () => {
             pourAgain(request);
           },
@@ -117,7 +145,7 @@ function RequestOptions({
       }
       items.push({
         label: "Download Output",
-        icon: <FontAwesomeIcon icon="download" />,
+        icon: "download",
         command: () => {
           handleDownload(request);
         },
@@ -130,46 +158,14 @@ function RequestOptions({
       ) {
         items.push({
           label: "Delete Request",
-          icon: <FontAwesomeIcon icon="xmark" />,
-          command: () => {
-            const accept = () => {
-              DeleteRequest(request)
-                .then(() => {
-                  if (closeRequest) {
-                    closeRequest();
-                  } else {
-                    void navigate(`/requests`);
-                  }
-                })
-                .catch((error) => {
-                  console.error("Error deleting request:", error);
-                  showSnackbar({
-                    severity: "error",
-                    summary: "Error",
-                    detail: `Error deleting request: ${error}`,
-                    life: 3000,
-                  });
-                });
-            };
-            const reject = () => {};
-            const confirm = () => {
-              confirmDialog({
-                message: "Are you sure you want to delete this request?",
-                header: `Confirm Delete ${request.id}`,
-                icon: "pi pi-exclamation-triangle",
-                defaultFocus: "accept",
-                accept,
-                reject,
-              });
-            };
-            confirm();
-          },
+          icon: "xmark",
+          command: () => setShowDeletRequest(true),
         });
       }
     }
     items.push({
       label: "Reload Request",
-      icon: <FontAwesomeIcon icon="arrows-rotate" />,
+      icon: "arrows-rotate",
       command: () => {
         setRequest(undefined);
       },
@@ -193,24 +189,141 @@ function RequestOptions({
   };
 
   return (
-    <div className="card justify-content-end">
-      <div className="flex flex-end">
+    <Box sx={{ alignItems: "center" }}>
+      <ConfirmDialog
+        open={showDeletRequest}
+        setOpen={() => setShowDeletRequest(false)}
+        accept={() => {
+          DeleteRequest(request)
+            .then(() => {
+              if (closeRequest) {
+                closeRequest();
+              } else {
+                void navigate(`/requests`);
+              }
+            })
+            .catch((error) => {
+              console.error("Error deleting request:", error);
+              showSnackbar({
+                severity: "error",
+                summary: "Error",
+                detail: `Error deleting request: ${error}`,
+                life: 3000,
+              });
+            });
+        }}
+        reject={() => {}}
+        message={"Are you sure you want to delete this request?"}
+        header={`Confirm Delete ${request.id}`}
+      />
+      <Box sx={{ textAlign: "right" }}>
+        {execute_authority && (
+          <>
+            <ButtonGroup
+              color="success"
+              variant="contained"
+              ref={splitButtonAnchorRef}
+              aria-label="Button group with a nested menu"
+              sx={{ ml: 2, mb: 2 }}
+            >
+              <AccessButton
+                color="success"
+                onClick={() => {
+                  if (isCard) {
+                    if (openRequest) {
+                      openRequest();
+                    }
+                  } else {
+                    pourAgain(request);
+                  }
+                }}
+              >
+                <Box sx={{ display: "flex" }}>
+                  {isCard ? (
+                    <FAIcon icon="up-right-from-square" sx={{ mr: 2 }} />
+                  ) : (
+                    <FAIcon icon="plus" sx={{ mr: 2 }} />
+                  )}
+                  {isCard ? "Open Request" : "Pour Again"}
+                </Box>
+              </AccessButton>
+              <AccessButton
+                aria-controls={openSplitMenu ? "split-button-menu" : undefined}
+                aria-expanded={openSplitMenu ? "true" : undefined}
+                aria-haspopup="menu"
+                onClick={handleToggle}
+                sx={{ bgcolor: "success.dark" }}
+              >
+                <FAIcon icon="caret-down" />
+              </AccessButton>
+            </ButtonGroup>
+            <Popper
+              sx={{ zIndex: 1300 }}
+              open={openSplitMenu}
+              anchorEl={splitButtonAnchorRef.current}
+              role={undefined}
+              transition
+            >
+              {({ TransitionProps, placement }) => (
+                <Grow
+                  {...TransitionProps}
+                  style={{
+                    transformOrigin:
+                      placement === "bottom" ? "center top" : "center bottom",
+                  }}
+                >
+                  <Paper>
+                    <ClickAwayListener onClickAway={handleClose}>
+                      <MenuList id="split-button-menu" autoFocusItem>
+                        {items.map((option) => (
+                          <MenuItem key={option.label} onClick={option.command}>
+                            <ListItemIcon sx={{ minWidth: "auto", mr: 1 }}>
+                              <FAIcon icon={option.icon} />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={option.label}
+                              sx={{ textAlign: "right" }}
+                            />
+                          </MenuItem>
+                        ))}
+                      </MenuList>
+                    </ClickAwayListener>
+                  </Paper>
+                </Grow>
+              )}
+            </Popper>
+          </>
+        )}
+        {!execute_authority && (
+          <AccessButton
+            label="Download Output"
+            onClick={() => handleDownload(request)}
+          >
+            <Box sx={{ display: "flex" }}>
+              <FAIcon icon="download" sx={{ mx: 2 }} />
+              Download Output
+            </Box>
+          </AccessButton>
+        )}
+      </Box>
+      <Box sx={{ textAlign: "right" }}>
         {execute_authority &&
           requestProjections &&
           requestProjections.length > 0 && (
-            <div className="card mb-2 mr-2">
-              <Dropdown
-                value={requestProjectionSelected}
-                options={requestProjections}
-                valueTemplate={commandTemplate}
-                itemTemplate={commandTemplate}
-                onChange={(e) => {
-                  requestProjectionSelectedRef.current = e.value;
-                  setRequestProjectionSelected(e.value);
-                }}
-                placeholder="Select a command to run next"
-                className="mr-1"
-              />
+            <Box sx={{ mb: 2, ml: 2 }}>
+              <Select value={requestProjectionSelectedIndex} sx={{ mr: 1 }}>
+                {requestProjections.map((requestProjection, index) => (
+                  <MenuItem
+                    value={index}
+                    onClick={() => {
+                      requestProjectionSelectedRef.current = requestProjection;
+                      setRequestProjectionSelectedIndex(index);
+                    }}
+                  >
+                    {commandTemplate(requestProjection)}
+                  </MenuItem>
+                ))}
+              </Select>
               <AccessButton
                 label="Run Next"
                 basic
@@ -222,54 +335,13 @@ function RequestOptions({
                     });
                   }
                 }}
-              />
-            </div>
+              >
+                Run Next
+              </AccessButton>
+            </Box>
           )}
-        <div>
-          {execute_authority && (
-            <SplitButton
-              label={isCard ? "Open Request" : "Pour Again"}
-              icon={
-                isCard ? (
-                  <FontAwesomeIcon
-                    icon="up-right-from-square"
-                    className="mr-2"
-                  />
-                ) : (
-                  <FontAwesomeIcon icon="plus" className="mr-2" />
-                )
-              }
-              model={items}
-              className="p-button-secondary"
-              onClick={() => {
-                if (isCard) {
-                  if (openRequest) {
-                    openRequest();
-                  }
-                } else {
-                  pourAgain(request);
-                }
-              }}
-              severity="success"
-              style={{ marginLeft: "auto" }}
-              pt={{
-                icon: {
-                  role: "img",
-                  "aria-label": `Split Button Options for Request ${request.id}`,
-                },
-              }}
-            />
-          )}
-          {!execute_authority && (
-            <AccessButton
-              icon={<FontAwesomeIcon icon="download" />}
-              label="Download Output"
-              onClick={() => handleDownload(request)}
-            />
-          )}
-        </div>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }
 

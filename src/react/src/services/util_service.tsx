@@ -3,9 +3,6 @@ import {
   FontAwesomeIconProps,
 } from "@fortawesome/react-fontawesome";
 import { Box, BoxProps } from "@mui/material";
-import { Dropdown } from "primereact/dropdown";
-import { ChevronDownIcon } from "primereact/icons/chevrondown";
-import { ChevronRightIcon } from "primereact/icons/chevronright";
 import { RefObject } from "react";
 
 import { Garden, Instance, Runner, System } from "../models/brewtils-types";
@@ -291,55 +288,6 @@ export const getErrorCode = (errorMsg: string) => {
       }
     }
   }
-};
-
-export const PaginatorTemplate = {
-  layout:
-    "FirstPageLink PrevPageLink NextPageLink PageLinks LastPageLink RowsPerPageDropdown CurrentPageReport",
-  RowsPerPageDropdown: (options: any) => {
-    return (
-      <>
-        <datalist id="rowsPerPageDropdownOptions" aria-hidden="true">
-          {options?.options?.map((status: any) => (
-            <option key={status.label} value={status.value} />
-          ))}
-        </datalist>
-        <Dropdown
-          dropdownIcon={(opts) => {
-            const iconProps = opts?.iconProps as any;
-            return iconProps["data-pr-overlay-visible"] ? (
-              <ChevronRightIcon
-                {...iconProps}
-                role="img"
-                aria-label="Collapse page length selection"
-              />
-            ) : (
-              <ChevronDownIcon
-                {...iconProps}
-                role="img"
-                aria-label="Expand page length selection"
-              />
-            );
-          }}
-          value={options.value}
-          options={options.options}
-          onChange={options.onChange}
-          pt={{
-            input: {
-              autoComplete: "off",
-              "aria-label": "Dropdown page length",
-            },
-            select: {
-              autoComplete: "off",
-              "aria-controls": "rowsPerPageDropdownOptions",
-              "aria-label": "Select page length",
-            },
-            trigger: { "aria-label": "Open Dropdown for page length" },
-          }}
-        />
-      </>
-    );
-  },
 };
 
 export const FAIcon = ({

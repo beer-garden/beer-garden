@@ -8,6 +8,7 @@ import {
   StepButton,
   Stepper,
   Switch,
+  Typography,
 } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { useEffect, useState } from "react";
@@ -649,7 +650,9 @@ function RequestWizard({
             </Breadcrumbs>
           </Box>
           <Box sx={{ display: "flex", ml: 4 }}>
-            <span className="mr-2 align-self-center">Scheduled</span>
+            <Typography sx={{ mr: 2, alignSelf: "center" }}>
+              Scheduled
+            </Typography>
             <Switch
               aria-label="Toggle for creating Scheduled Job"
               checked={showScheduleJob}

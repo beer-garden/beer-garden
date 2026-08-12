@@ -1,11 +1,27 @@
-import { Dialog } from "primereact/dialog";
-import { Messages } from "primereact/messages";
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  Stack,
+  TextField,
+} from "@mui/material";
 import { useRef, useState } from "react";
 
 import { Instance } from "../models/brewtils-types";
 import { InstanceDialogProps } from "../models/models";
 import { GetInstanceLogs } from "../services/instance_service";
+import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
+
+interface AlertDetail {
+  severity: "error" | "info" | "success" | "warning";
+  detail: string;
+}
 
 function InstanceShowLogsDialog({
   instance,
@@ -13,7 +29,13 @@ function InstanceShowLogsDialog({
   isVisible,
   onClose,
 }: InstanceDialogProps) {
-  const msgs = useRef<Messages>(null);
+  const [alerts, setAlerts] = useState<Array<AlertDetail>>([
+    {
+      severity: "info",
+      detail:
+        "Plugin must be listening to the Admin Queue and logging to File for logs to be returned. This will only return information from the log file being actively written to.",
+    },
+  ]);
 
   const tailLineStart = useRef<number>(20);
   const tailStart = useRef<number>(-20);
@@ -88,12 +110,14 @@ function InstanceShowLogsDialog({
 
   function addErrorAlert() {
     setLoadingLogs(false);
-    msgs.current?.show({
-      severity: "error",
-      detail:
-        "Something went wrong on the backend: Error attempting to retrieve logs - unable to determine log filename. Please verify that the plugin is writing to a log file.",
-      sticky: true,
-    });
+    setAlerts((prevAlerts) => [
+      ...prevAlerts,
+      {
+        severity: "error",
+        detail:
+          "Something went wrong on the backend: Error attempting to retrieve logs - unable to determine log filename. Please verify that the plugin is writing to a log file.",
+      },
+    ]);
   }
 
   function getLogsTail(instance: Instance) {
@@ -132,10 +156,112 @@ function InstanceShowLogsDialog({
     ).then((response) => successTailLogs(response), addErrorAlert);
   }
 
+  const dismissAlert = (index: number) => {
+    setAlerts((prevAlerts) =>
+      prevAlerts.filter((_, idx: number) => index != idx),
+    );
+  };
+
   return (
     <Dialog
-      header={`Log File: ${system.name}[${system.version}]-${instance.name}`}
-      footer={
+      data-testid="instance-show-logs-dialog"
+      open={isVisible}
+      onClose={onClose}
+    >
+      <DialogTitle>
+        <Grid container>
+          <Grid size="grow">{`Log File: ${system.name}[${system.version}]-${instance.name}`}</Grid>
+          <Grid>
+            <AccessButton sx={{ ml: 2 }} onClick={onClose}>
+              <FAIcon icon="xmark" />
+            </AccessButton>
+          </Grid>
+        </Grid>
+      </DialogTitle>
+      <DialogContent>
+        {alerts.map((alert: AlertDetail, index: number) => (
+          <Alert severity={alert.severity} onClose={() => dismissAlert(index)}>
+            {alert.detail}
+          </Alert>
+        ))}
+        <div>
+          <Stack direction="row" spacing={1}>
+            <AccessButton
+              name="start"
+              value="Get Tail Logs"
+              tooltip="Get Tail logs"
+              onClick={() => getLogsTail(instance)}
+              label="Get Tail Logs"
+            >
+              Get Tail Logs
+            </AccessButton>
+            <AccessButton
+              name="stop"
+              value="Stop Tail Logs"
+              tooltip="Stop Tail Logs"
+              onClick={() => stopLogsTail()}
+              label="Stop Tail Logs"
+            >
+              Stop Tail Logs
+            </AccessButton>
+            <label htmlFor="tail_line_start">Tail Lines</label>
+            <TextField
+              type="number"
+              id="tail_line_start"
+              slotProps={{
+                htmlInput: { min: 0 },
+              }}
+              defaultValue={20}
+              name="tail_line_start"
+              onChange={updateTailLineStart}
+            />
+          </Stack>
+          <div>
+            <a
+              href={`api/v1/instances/${instance.id}/logs/?logs_only=true`}
+              download={filename}
+            >
+              <AccessButton
+                tooltip="Download Full Logs File"
+                label="Get Full Logs"
+              >
+                Get Full Logs
+              </AccessButton>
+            </a>
+          </div>
+          {loadingLogs && (
+            <Box id="loading" sx={{ textAlign: "center" }}>
+              <h1>
+                <Box component="span" sx={{ mr: 1 }}>
+                  Loading...
+                </Box>
+                <CircularProgress />
+              </h1>
+            </Box>
+          )}
+          {displayLogs !== undefined && (
+            <Box>
+              <br />
+              <Stack spacing={2}>
+                <Box
+                  component="a"
+                  sx={{ display: "flex", justifyContent: "flex-end" }}
+                  href={downloadHref.current}
+                  download={filename}
+                  aria-label="Download Current Logs Displayed"
+                >
+                  Download
+                  <FAIcon icon="download" sx={{ ml: 1 }} />
+                </Box>
+                <Box component="pre" id="rawOutput">
+                  {displayLogs}
+                </Box>
+              </Stack>
+            </Box>
+          )}
+        </div>
+      </DialogContent>
+      <DialogActions>
         <AccessButton
           onClick={onClose}
           tooltip="Close Instance Show Logs Dialog"
@@ -143,92 +269,7 @@ function InstanceShowLogsDialog({
         >
           Close Logs
         </AccessButton>
-      }
-      visible={isVisible}
-      style={{ width: "50vw" }}
-      onShow={() => {
-        msgs.current?.show({
-          severity: "info",
-          detail:
-            "Plugin must be listening to the Admin Queue and logging to File for logs to be returned. This will only return information from the log file being actively written to.",
-          sticky: true,
-        });
-      }}
-      // Framework adds hidden focusable spans. Unable to edit these
-      pt={{}}
-      onHide={onClose}
-    >
-      <Messages ref={msgs} />
-      <div>
-        <div>
-          <AccessButton
-            name="start"
-            value="Get Tail Logs"
-            tooltip="Get Tail logs"
-            onClick={() => getLogsTail(instance)}
-            label="Get Tail Logs"
-          >
-            Get Tail Logs
-          </AccessButton>
-          <AccessButton
-            name="stop"
-            value="Stop Tail Logs"
-            tooltip="Stop Tail Logs"
-            onClick={() => stopLogsTail()}
-            label="Stop Tail Logs"
-          >
-            Stop Tail Logs
-          </AccessButton>
-          <label htmlFor="tail_line_start">Tail Lines</label>
-          <input
-            type="number"
-            id="tail_line_start"
-            min="0"
-            defaultValue={20}
-            name="tail_line_start"
-            onChange={updateTailLineStart}
-          />
-        </div>
-        <div>
-          <a
-            href={`api/v1/instances/${instance.id}/logs/?logs_only=true`}
-            download={filename}
-          >
-            <AccessButton
-              tooltip="Download Full Logs File"
-              label="Get Full Logs"
-            >
-              Get Full Logs
-            </AccessButton>
-          </a>
-        </div>
-        {loadingLogs && (
-          <div id="loading" className="col-md-12 text-center">
-            <h1>
-              <div>Loading...</div>
-              <div>
-                <i className="fa fa-spinner fa-pulse fa-2x"></i>
-              </div>
-            </h1>
-          </div>
-        )}
-        {displayLogs !== undefined && (
-          <div className="container-fluid animate-if">
-            <br />
-            <>
-              <a
-                className="fa fa-download pull-right"
-                href={downloadHref.current}
-                download={filename}
-                aria-label="Download Current Logs Displayed"
-              >
-                Download
-              </a>
-              <pre id="rawOutput">{displayLogs}</pre>
-            </>
-          </div>
-        )}
-      </div>
+      </DialogActions>
     </Dialog>
   );
 }

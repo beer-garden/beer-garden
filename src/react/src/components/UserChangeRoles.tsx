@@ -1,4 +1,3 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Box,
   Checkbox,
@@ -13,6 +12,7 @@ import { Role, User } from "../models/brewtils-types";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRoles } from "../services/role_service";
 import { UpdateUserRoles } from "../services/user_service";
+import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import EnhancedTable from "./EnhancedTable/components/EnhancedTable";
 
@@ -70,33 +70,21 @@ function UserChangeRoles({
     if (role.protected) {
       return (
         <Box sx={{ display: "flex" }}>
-          <FontAwesomeIcon
-            icon="user-shield"
-            title="Protected Role"
-            className="mr-1"
-          />
+          <FAIcon icon="user-shield" title="Protected Role" sx={{ mr: 1 }} />
           {role.name}
         </Box>
       );
     } else if (role.file_generated) {
       return (
         <Box sx={{ display: "flex" }}>
-          <FontAwesomeIcon
-            icon="user-tag"
-            title="File Generated Role"
-            className="mr-1"
-          />
+          <FAIcon icon="user-tag" title="File Generated Role" sx={{ mr: 1 }} />
           {role.name}
         </Box>
       );
     } else {
       return (
         <Box sx={{ display: "flex" }}>
-          <FontAwesomeIcon
-            icon="user-gear"
-            title="Unprotected Role"
-            className="mr-1"
-          />
+          <FAIcon icon="user-gear" title="Unprotected Role" sx={{ mr: 1 }} />
           {role.name}
         </Box>
       );

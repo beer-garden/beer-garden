@@ -3,7 +3,6 @@ import { Dayjs } from "dayjs";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import ConfirmDialog from "../components/ConfirmDialog";
 import { FilterColumn } from "../components/EnhancedTable//models/EnhancedTableModels";
 import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import {
@@ -15,6 +14,7 @@ import {
   Request,
 } from "../models/brewtils-types";
 import { Config } from "../models/models";
+import { useConfirmDialog } from "../providers/ConfirmDialogProvider";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import {
   GetJob,
@@ -49,7 +49,7 @@ function SchedulerViewCard({
   const [reloadRequestsTrigger, setReloadRequestsTrigger] = useState(0);
   const [recordsUpdated, setRecordsUpdated] = useState(false);
 
-  const [showDelete, setShowDelete] = useState(false);
+  const showConfirmDialog = useConfirmDialog();
 
   const navigate = useNavigate();
   const showSnackbar = useSnackbar();
@@ -377,14 +377,6 @@ function SchedulerViewCard({
 
   return (
     <>
-      <ConfirmDialog
-        open={showDelete}
-        setOpen={setShowDelete}
-        accept={deleteJob}
-        reject={() => {}}
-        header={`Confirm Delete ${job?.name}`}
-        message="Are you sure you want to delete this job?"
-      />
       <DialogContent dividers>
         <Grid container>
           <Grid
@@ -422,7 +414,7 @@ function SchedulerViewCard({
                 }
               }}
               title={"Run Now " + job?.name}
-              className="mr-2"
+              sx={{ mr: 2 }}
               {...permissions}
               permission="OPERATOR"
             >
@@ -436,7 +428,7 @@ function SchedulerViewCard({
                 editJob();
               }}
               title={"Update Job " + job?.name}
-              className="mr-2"
+              sx={{ mr: 2 }}
               {...permissions}
               permission="OPERATOR"
             >
@@ -462,7 +454,7 @@ function SchedulerViewCard({
                     });
                 }}
                 title={"Pause Job " + job?.name}
-                className="mr-2"
+                sx={{ mr: 2 }}
                 {...permissions}
                 permission="OPERATOR"
               >
@@ -489,7 +481,7 @@ function SchedulerViewCard({
                     });
                 }}
                 title={"Resume Job " + job?.name}
-                className="mr-2"
+                sx={{ mr: 2 }}
                 {...permissions}
                 permission="OPERATOR"
               >
@@ -499,9 +491,15 @@ function SchedulerViewCard({
             <AccessButton
               rounded
               raised
-              onClick={() => setShowDelete(true)}
+              onClick={() => {
+                showConfirmDialog({
+                  accept: deleteJob,
+                  header: `Confirm Delete ${job?.name}`,
+                  message: "Are you sure you want to delete this job?",
+                });
+              }}
               title={"Delete Job " + job?.name}
-              className="mr-2"
+              sx={{ mr: 2 }}
               {...permissions}
               permission="OPERATOR"
             >
