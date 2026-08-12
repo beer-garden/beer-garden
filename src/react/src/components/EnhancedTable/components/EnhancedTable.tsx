@@ -33,6 +33,7 @@ const EnhancedTable = ({
   reloadTable,
   isLoading,
   displayAll,
+  keyField,
   ...props
 }: {
   data?: any[];
@@ -56,6 +57,7 @@ const EnhancedTable = ({
   reloadTable?: number;
   isLoading?: boolean;
   displayAll?: boolean;
+  keyField?: string;
 }) => {
   const [displayData, setDisplayData] = useState<any[] | undefined>(undefined);
   const [displayFiltered, setDisplayFiltered] = useState<number | undefined>(
@@ -660,9 +662,15 @@ const EnhancedTable = ({
           <TableBody>
             {displayData &&
               displayData.map((row) => (
-                <TableRow key={row.id ?? undefined}>
+                <TableRow
+                  key={keyField ? row?.[keyField] : (row.id ?? undefined)}
+                >
                   {columns.map((column) => (
-                    <TableCell>{columnData(column, row)}</TableCell>
+                    <TableCell
+                      key={`${column.id}-${keyField ? row?.[keyField] : (row.id ?? undefined)}`}
+                    >
+                      {columnData(column, row)}
+                    </TableCell>
                   ))}
                 </TableRow>
               ))}
@@ -709,8 +717,8 @@ const EnhancedTable = ({
         </Table>
         {(displayAll === undefined || displayAll === false) && (
           <TablePagination
+            component="div"
             rowsPerPageOptions={pageRecords ? [5, 10, 25] : []}
-            colSpan={3}
             count={dataLength ?? displayDataLength}
             rowsPerPage={rowsPerPage}
             page={page}
@@ -728,10 +736,17 @@ const EnhancedTable = ({
               pageRecords ? EnhancedTablePaginationActions : () => <></>
             }
             labelDisplayedRows={defaultLabelDisplayedRows}
+            sx={{
+              "& .MuiTablePagination-spacer": { display: "none" },
+              "& .MuiTablePagination-toolbar": {
+                justifyContent: "flex-start",
+                paddingLeft: 2,
+              },
+            }}
           />
         )}
-        {footer}
       </TableContainer>
+      {footer}
       {isLoading && (
         <Box
           sx={{
