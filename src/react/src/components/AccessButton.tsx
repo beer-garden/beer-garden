@@ -120,7 +120,7 @@ const AccessButton = ({
           isLoading ?? (
             <Tooltip title={tooltip} placement="bottom" arrow>
               <Box component="span" aria-label={undefined}>
-                <Button {...{ ...props, ...{ disabled: true} }} >
+                <Button {...{ ...props, ...{ disabled: true } }}>
                   {children}
                 </Button>
               </Box>

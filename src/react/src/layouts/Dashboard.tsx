@@ -338,7 +338,12 @@ function GardenDashboard({
       return (
         <>
           <Tooltip title="Upstream Routing Error">
-            <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
+            <Box
+              component="span"
+              aria-label={undefined}
+              className="fa-layers"
+              id={`GARDEN_MENU_${garden.id}`}
+            >
               <FontAwesomeIcon
                 icon="play"
                 style={{ color: "var(--warning-color)" }}
@@ -348,7 +353,7 @@ function GardenDashboard({
                 icon="triangle-exclamation"
                 style={{ color: "var(--warning-background-color)" }}
               />
-            </span>
+            </Box>
           </Tooltip>
         </>
       );
@@ -364,7 +369,12 @@ function GardenDashboard({
       return (
         <>
           <Tooltip title={`Routing Error for ${garden.name}`}>
-            <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
+            <Box
+              component="span"
+              aria-label={undefined}
+              className="fa-layers"
+              id={`GARDEN_MENU_${garden.id}`}
+            >
               <FontAwesomeIcon
                 icon="circle"
                 style={{ color: "var(--danger-color)" }}
@@ -373,7 +383,7 @@ function GardenDashboard({
                 icon="circle-exclamation"
                 style={{ color: "var(--danger-background-color)" }}
               />
-            </span>
+            </Box>
           </Tooltip>
         </>
       );
@@ -381,7 +391,12 @@ function GardenDashboard({
       return (
         <>
           <Tooltip title={`Publishing Connection Error for ${garden.name}`}>
-            <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
+            <Box
+              component="span"
+              aria-label={undefined}
+              className="fa-layers"
+              id={`GARDEN_MENU_${garden.id}`}
+            >
               <FontAwesomeIcon
                 icon="circle"
                 style={{ color: "var(--danger-color)" }}
@@ -390,7 +405,7 @@ function GardenDashboard({
                 icon="circle-exclamation"
                 style={{ color: "var(--danger-background-color)" }}
               />
-            </span>
+            </Box>
           </Tooltip>
         </>
       );
@@ -398,7 +413,12 @@ function GardenDashboard({
       return (
         <>
           <Tooltip title={`Receiving Connection Error for ${garden.name}`}>
-            <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
+            <Box
+              component="span"
+              aria-label={undefined}
+              className="fa-layers"
+              id={`GARDEN_MENU_${garden.id}`}
+            >
               <FontAwesomeIcon
                 icon="circle"
                 style={{ color: "var(--danger-color)" }}
@@ -407,7 +427,7 @@ function GardenDashboard({
                 icon="circle-exclamation"
                 style={{ color: "var(--danger-background-color)" }}
               />
-            </span>
+            </Box>
           </Tooltip>
         </>
       );
@@ -431,12 +451,14 @@ function GardenDashboard({
         return (
           <div key={`${status}_${garden?.name}_count`}>
             <Tooltip title={`${status} Count ${count} for ${garden?.name}`}>
-              <Chip
-                label={count}
-                id={`${status}_${garden?.id}_menu_severity_system_summary`}
-                color={statusSeverity}
-                key={`${status}_${garden?.name}`}
-              />
+              <Box component="span" aria-label={undefined}>
+                <Chip
+                  label={count}
+                  id={`${status}_${garden?.id}_menu_severity_system_summary`}
+                  color={statusSeverity}
+                  key={`${status}_${garden?.name}`}
+                />
+              </Box>
             </Tooltip>
           </div>
         );
@@ -607,11 +629,6 @@ function GardenDashboard({
             associatedRunners={associatedRunnersRef}
             selectedSystems={selectedSystems}
           />
-          <datalist id="instance_status_multiselect_input" aria-hidden="true">
-            {instanceStatuses?.map((status: string) => (
-              <option key={status} value={status} />
-            ))}
-          </datalist>
 
           {loading ? (
             <Skeleton width="100%" height="350px"></Skeleton>
@@ -626,9 +643,18 @@ function GardenDashboard({
                   labelId="instance-select-label"
                   value={filteredStatuses}
                   multiple
-                  input={<OutlinedInput label="Filter By Input Status" />}
+                  label={<OutlinedInput label="Filter By Input Status" />}
+                  slotProps={{
+                    root: {
+                      "aria-controls": "instance-select-menu",
+                      "aria-haspopup": "listbox",
+                    },
+                  }}
                   inputProps={{
-                    autoComplete: 'off',
+                    autoComplete: "off",
+                  }}
+                  MenuProps={{
+                    id: "instance-select-menu",
                   }}
                   onChange={(
                     event: SelectChangeEvent<typeof instanceStatuses | null>,
