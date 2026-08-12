@@ -95,13 +95,15 @@ function UserCreate({
       onClose={() => {
         handleUserCreateDialogClose();
       }}
+      aria-labelledby="create-user-dialog-title"
     >
-      <DialogTitle>
+      <DialogTitle id="create-user-dialog-title">
         <Grid container>
           <Grid size="grow">Create User</Grid>
           <Grid>
             <AccessButton
               sx={{ mr: 2 }}
+              aria-label="Close create user dialog"
               onClick={() => {
                 handleUserCreateDialogClose();
               }}

@@ -506,6 +506,7 @@ function App() {
                       setRequestItem(undefined);
                       setFullScreenDialog(false);
                     }}
+                    aria-labelledby="customized-dialog-title"
                     sx={{
                       "& .MuiPaper-root": {
                         minWidth: "50%",
@@ -530,6 +531,7 @@ function App() {
                           {fullScreenDialog === false && (
                             <AccessButton
                               sx={{ mr: 2 }}
+                              aria-label="Enter full screen"
                               onClick={() => setFullScreenDialog(true)}
                             >
                               <FontAwesomeIcon icon="maximize" />
@@ -538,6 +540,7 @@ function App() {
                           {fullScreenDialog === true && (
                             <AccessButton
                               sx={{ mr: 2 }}
+                              aria-label="Exit full screen"
                               onClick={() => setFullScreenDialog(false)}
                             >
                               <FontAwesomeIcon icon="minimize" />
@@ -545,6 +548,7 @@ function App() {
                           )}
                           <AccessButton
                             sx={{ mr: 2 }}
+                            aria-label="Close request dialog"
                             onClick={() => {
                               setRequestItem(undefined);
                               setFullScreenDialog(false);

@@ -637,8 +637,18 @@ function TopicIndex({
           id={`hide-generated`}
           checked={hideGenerated}
           onChange={handleChange}
+          slotProps={{
+            input: { "aria-label": "Hide Generated topics" },
+          }}
         />
-        <Typography variant="button">Hide Generated</Typography>
+        <Typography
+          variant="button"
+          component="label"
+          htmlFor="hide-generated"
+          sx={{ cursor: "pointer" }}
+        >
+          Hide Generated
+        </Typography>
       </Box>
     );
 
@@ -826,8 +836,9 @@ function TopicIndex({
         onClose={() => {
           handleDialogClose();
         }}
+        aria-labelledby="topic-dialog-title"
       >
-        <DialogTitle>
+        <DialogTitle id="topic-dialog-title">
           {isEdit.current ? "Add Subscriber" : "Create Topic"}
         </DialogTitle>
         <DialogContent>
@@ -837,6 +848,7 @@ function TopicIndex({
             <TextField
               variant="outlined"
               placeholder="Topic Name"
+              aria-label="Topic Name"
               value={topicName}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setTopicName(e.target.value)

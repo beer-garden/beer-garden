@@ -161,8 +161,9 @@ function UserChangeRoles({
         handleUserRolesDialogClose();
       }}
       maxWidth={false}
+      aria-labelledby="change-roles-dialog-title"
     >
-      <DialogTitle>{`Add/Remove Roles for ${user.username}`}</DialogTitle>
+      <DialogTitle id="change-roles-dialog-title">{`Add/Remove Roles for ${user.username}`}</DialogTitle>
       <DialogContent>
         <EnhancedTable
           data={roles ?? []}

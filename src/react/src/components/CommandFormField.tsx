@@ -193,6 +193,9 @@ function CommandFormField({
                     parameter.value === null ||
                     parameter.value === "")
                 }
+                inputProps={{
+                  "aria-label": inputAreaAriaLabel,
+                }}
                 onChange={(event) => {
                   const {
                     target: { value },
@@ -260,6 +263,9 @@ function CommandFormField({
                   parameter.value === null ||
                   parameter.value === "")
               }
+              inputProps={{
+                "aria-label": inputAreaAriaLabel,
+              }}
               onChange={(event) => {
                 handleChange(parameter.key, event.target.value);
               }}
@@ -386,6 +392,7 @@ function CommandFormField({
                   <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
+                    aria-label={removeInputAriaLabel}
                   >
                     <FAIcon icon="xmark" />
                   </IconButton>
@@ -486,6 +493,7 @@ function CommandFormField({
                   <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
+                    aria-label={removeInputAriaLabel}
                   >
                     <FAIcon icon="xmark" />
                   </IconButton>
@@ -582,6 +590,7 @@ function CommandFormField({
                   <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
+                    aria-label={removeInputAriaLabel}
                   >
                     <FAIcon icon="xmark" />
                   </IconButton>
@@ -680,6 +689,7 @@ function CommandFormField({
                   <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
+                    aria-label={removeInputAriaLabel}
                   >
                     <FAIcon icon="xmark" />
                   </IconButton>
@@ -752,6 +762,7 @@ function CommandFormField({
                       id={`${parameter.key}-${index}`}
                       checked={item}
                       aria-describedby={`${parameter.key}-${index}-helper-text`}
+                      aria-label={`Parameter ${parameter.display_name ?? parameter.key} option ${index}`}
                       indeterminate={
                         item === undefined
                           ? parameter.nullable || parameter.optional
@@ -777,6 +788,7 @@ function CommandFormField({
                   <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
+                    aria-label={removeInputAriaLabel}
                   >
                     <FAIcon icon="xmark" />
                   </IconButton>
@@ -806,6 +818,7 @@ function CommandFormField({
                 id={parameter.key}
                 checked={parameter.value}
                 aria-describedby={`${parameter.key}-helper-text`}
+                aria-label={`Parameter ${parameter.display_name ?? parameter.key}`}
                 indeterminate={
                   parameter.value === undefined
                     ? parameter.nullable || parameter.optional
@@ -875,6 +888,7 @@ function CommandFormField({
                   <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
+                    aria-label={removeInputAriaLabel}
                   >
                     <FAIcon icon="xmark" />
                   </IconButton>
@@ -989,6 +1003,7 @@ function CommandFormField({
                   <IconButton
                     onClick={() => removeMultiItem(parameter.key, index)}
                     disabled={disabled}
+                    aria-label={removeInputAriaLabel}
                   >
                     <FAIcon icon="xmark" />
                   </IconButton>
@@ -1071,7 +1086,10 @@ function CommandFormField({
       return (
         <Box key={parameter.key} sx={inputDisplayStyling}>
           {parameter?.value?.name && (
-            <IconButton onClick={() => handleChange(parameter.key, undefined)}>
+            <IconButton
+              onClick={() => handleChange(parameter.key, undefined)}
+              aria-label={`Clear selected file for ${parameter.display_name ?? parameter.key}`}
+            >
               <Typography variant="caption">
                 {parameter?.value?.name}
               </Typography>
@@ -1139,7 +1157,10 @@ function CommandFormField({
       return (
         <Box key={parameter.key} sx={inputDisplayStyling}>
           {uploadPercentage === 100 && (
-            <IconButton onClick={removeFile}>
+            <IconButton
+              onClick={removeFile}
+              aria-label={`Clear uploaded file for ${parameter.display_name ?? parameter.key}`}
+            >
               <Typography variant="caption">
                 {parameter?.value?.details?.file_name}
               </Typography>

@@ -34,8 +34,9 @@ function ConfirmDialog({
         }
       }}
       open={open}
+      aria-labelledby="confirm-dialog-title"
     >
-      <DialogTitle>
+      <DialogTitle id="confirm-dialog-title">
         <Grid container>
           <Grid size="grow">
             <Box sx={{ display: "flex" }}>

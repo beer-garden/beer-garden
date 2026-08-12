@@ -431,7 +431,10 @@ export const EnhancedTableFilterOptions = ({
           }}
         >
           <Grid size={1}>
-            <IconButton onClick={() => removeFilter(id)}>
+            <IconButton
+              onClick={() => removeFilter(id)}
+              aria-label="Remove filter"
+            >
               <FontAwesomeIcon icon="x" />
             </IconButton>
           </Grid>

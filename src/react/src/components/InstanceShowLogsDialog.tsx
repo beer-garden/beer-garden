@@ -167,12 +167,17 @@ function InstanceShowLogsDialog({
       data-testid="instance-show-logs-dialog"
       open={isVisible}
       onClose={onClose}
+      aria-labelledby="instance-show-logs-dialog-title"
     >
-      <DialogTitle>
+      <DialogTitle id="instance-show-logs-dialog-title">
         <Grid container>
           <Grid size="grow">{`Log File: ${system.name}[${system.version}]-${instance.name}`}</Grid>
           <Grid>
-            <AccessButton sx={{ ml: 2 }} onClick={onClose}>
+            <AccessButton
+              sx={{ ml: 2 }}
+              aria-label="Close instance show logs dialog"
+              onClick={onClose}
+            >
               <FAIcon icon="xmark" />
             </AccessButton>
           </Grid>
