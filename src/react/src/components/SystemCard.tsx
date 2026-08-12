@@ -354,7 +354,12 @@ function SystemCard({
     return (
       <>
         <Tooltip title={label}>
-          <FontAwesomeIcon id={`ICON_${instance.id}`} icon={icon as IconProp} />
+          <FontAwesomeIcon
+            id={`ICON_${instance.id}`}
+            icon={icon as IconProp}
+            role="img"
+            aria-label={label}
+          />
         </Tooltip>
       </>
     );

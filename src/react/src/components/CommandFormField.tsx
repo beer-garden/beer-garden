@@ -175,7 +175,11 @@ function CommandFormField({
               <Select
                 id={parameter.key}
                 value={parameter.value}
-                aria-describedby={`${parameter.key}-helper-text`}
+                aria-describedby={
+                  parameter.error
+                    ? `${parameter.key}-helper-text ${parameter.key}-error-text`
+                    : `${parameter.key}-helper-text`
+                }
                 multiple
                 disabled={
                   disabled ||
@@ -234,6 +238,9 @@ function CommandFormField({
             <FontAwesomeIcon
               icon="triangle-exclamation"
               title={parameter.errorMsg ?? "ERROR"}
+              aria-label={parameter.errorMsg ?? "ERROR"}
+              role="img"
+              id={`${parameter.key}-error-text`}
             />
           )}
         </Box>
@@ -246,7 +253,11 @@ function CommandFormField({
             <Select
               id={parameter.key}
               value={parameter.value}
-              aria-describedby={`${parameter.key}-helper-text`}
+              aria-describedby={
+                parameter.error
+                  ? `${parameter.key}-helper-text ${parameter.key}-error-text`
+                  : `${parameter.key}-helper-text`
+              }
               disabled={
                 disabled ||
                 parameter.options === undefined ||
@@ -293,6 +304,9 @@ function CommandFormField({
           <FontAwesomeIcon
             icon="triangle-exclamation"
             title={parameter.errorMsg ?? "ERROR"}
+            aria-label={parameter.errorMsg ?? "ERROR"}
+            role="img"
+            id={`${parameter.key}-error-text`}
           />
         )}
       </Box>
@@ -303,7 +317,11 @@ function CommandFormField({
         <Autocomplete
           sx={{ width: "100%" }}
           id={parameter.key}
-          aria-describedby={`${parameter.key}-helper-text`}
+          aria-describedby={
+            parameter.error
+              ? `${parameter.key}-helper-text ${parameter.key}-error-text`
+              : `${parameter.key}-helper-text`
+          }
           value={
             parameter?.multi == true
               ? (parameter.value as string[])
@@ -324,6 +342,8 @@ function CommandFormField({
               {...params}
               variant="outlined"
               placeholder={parameter.display_name}
+              label={parameter.display_name ?? parameter.key}
+              aria-label={inputAreaAriaLabel}
               error={
                 !disabled &&
                 !parameter.optional &&
@@ -339,12 +359,18 @@ function CommandFormField({
         </FormHelperText>
         {loadingChoices &&
           loadingChoices.some((loading) => loading.key === parameter.key) && (
-            <CircularProgress style={{ width: "34px", height: "34px" }} />
+            <CircularProgress
+              aria-label="Loading…"
+              style={{ width: "34px", height: "34px" }}
+            />
           )}
         {parameter.error && (
           <FontAwesomeIcon
             icon="triangle-exclamation"
             title={parameter.errorMsg ?? "ERROR"}
+            aria-label={parameter.errorMsg ?? "ERROR"}
+            role="img"
+            id={`${parameter.key}-error-text`}
           />
         )}
       </Box>

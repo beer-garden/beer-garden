@@ -245,7 +245,13 @@ function RoleIndex({
       if (role.protected) {
         return (
           <Box sx={{ display: "flex" }}>
-            <FAIcon icon="user-shield" title="Protected Role" sx={{ mr: 1 }} />
+            <FAIcon
+              icon="user-shield"
+              title="Protected Role"
+              role="img"
+              aria-label="Protected Role"
+              sx={{ mr: 1 }}
+            />
             {role.name}
           </Box>
         );
@@ -255,6 +261,8 @@ function RoleIndex({
             <FAIcon
               icon="user-tag"
               title="File Generated Role"
+              role="img"
+              aria-label="File Generated Role"
               sx={{ mr: 1 }}
             />
             {role.name}
@@ -263,7 +271,13 @@ function RoleIndex({
       } else {
         return (
           <Box sx={{ display: "flex" }}>
-            <FAIcon icon="user-gear" title="Unprotected Role" sx={{ mr: 1 }} />
+            <FAIcon
+              icon="user-gear"
+              title="Unprotected Role"
+              role="img"
+              aria-label="Unprotected Role"
+              sx={{ mr: 1 }}
+            />
             {role.name}
           </Box>
         );
