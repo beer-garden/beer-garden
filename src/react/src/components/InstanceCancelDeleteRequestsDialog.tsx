@@ -420,12 +420,17 @@ function InstanceCancelDeleteRequestsDialog({
       data-testid="instance-cancel-delete-requests-dialog"
       open={isVisible}
       onClose={onClose}
+      aria-labelledby="instance-cancel-delete-requests-dialog-title"
     >
-      <DialogTitle>
+      <DialogTitle id="instance-cancel-delete-requests-dialog-title">
         <Grid container>
           <Grid size="grow">{`Cancel/Delete Requests: ${system.name}[${system.version}]-${instance.name}`}</Grid>
           <Grid>
-            <AccessButton sx={{ ml: 2 }} onClick={onClose}>
+            <AccessButton
+              sx={{ ml: 2 }}
+              aria-label="Close cancel/delete requests dialog"
+              onClick={onClose}
+            >
               <FAIcon icon="xmark" />
             </AccessButton>
           </Grid>

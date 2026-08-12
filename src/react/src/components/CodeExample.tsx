@@ -175,6 +175,7 @@ function CodeExample({
       }}
       maxWidth="md"
       fullWidth
+      aria-labelledby="customized-dialog-title"
     >
       <DialogTitle sx={{ m: 0, p: 2 }} id="customized-dialog-title">
         <Grid container>
@@ -182,6 +183,7 @@ function CodeExample({
           <Grid>
             <AccessButton
               sx={{ mr: 2 }}
+              aria-label="Close code examples dialog"
               onClick={() => {
                 setVisibleCodeExample(false);
               }}

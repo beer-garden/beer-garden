@@ -132,7 +132,13 @@ function RequestTreeMenu({
           <>
             <Tooltip title={node.data?.topic}>
               <span>
-                <FAIcon icon="envelope" sx={{ mr: 2 }} />
+                <FAIcon
+                  icon="envelope"
+                  sx={{ mr: 2 }}
+                  role="img"
+                  aria-label={`Topic: ${node.data?.topic}`}
+                  aria-hidden={undefined}
+                />
               </span>
             </Tooltip>
           </>
@@ -142,13 +148,28 @@ function RequestTreeMenu({
             {(node.data?.command_type === undefined ||
               node.data?.command_type.length === 0 ||
               node.data?.command_type === "ACTION") && (
-              <FAIcon icon="a" sx={{ mr: 2 }} />
+              <FAIcon
+                icon="a"
+                sx={{ mr: 2 }}
+                role="img"
+                aria-label="Action Command"
+              />
             )}
             {node.data?.command_type === "INFO" && (
-              <FAIcon icon="i" sx={{ mr: 2 }} />
+              <FAIcon
+                icon="i"
+                sx={{ mr: 2 }}
+                role="img"
+                aria-label="Info Command"
+              />
             )}
             {node.data?.command_type === "TEMP" && (
-              <FAIcon icon="hourglass" sx={{ mr: 2 }} />
+              <FAIcon
+                icon="hourglass"
+                sx={{ mr: 2 }}
+                role="img"
+                aria-label="Template Command"
+              />
             )}
           </span>
         </Tooltip>
@@ -212,6 +233,8 @@ function RequestTreeMenu({
               <FAIcon
                 icon="clock"
                 sx={{ ml: 1 }}
+                role="img"
+                aria-label="Request timing information"
                 id={`request_duration_${node.data?.id}`}
               />
             </Tooltip>

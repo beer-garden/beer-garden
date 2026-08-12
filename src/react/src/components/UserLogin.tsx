@@ -43,8 +43,12 @@ const LoginDialog = ({
   };
 
   return (
-    <Dialog open={visible} onClose={() => setVisible(false)}>
-      <DialogTitle>Login</DialogTitle>
+    <Dialog
+      open={visible}
+      onClose={() => setVisible(false)}
+      aria-labelledby="login-dialog-title"
+    >
+      <DialogTitle id="login-dialog-title">Login</DialogTitle>
       <DialogContent>
         <Stack spacing={2}>
           {showFailedLogin && (

@@ -109,12 +109,17 @@ function InstanceManageQueueDialog({
       data-testid="instance-manage-queue-dialog"
       open={isVisible}
       onClose={onClose}
+      aria-labelledby="instance-manage-queue-dialog-title"
     >
-      <DialogTitle>
+      <DialogTitle id="instance-manage-queue-dialog-title">
         <Grid container>
           <Grid size="grow">{`Queue Manager: ${system.name}[${system.version}]-${instance.name}`}</Grid>
           <Grid>
-            <AccessButton sx={{ ml: 2 }} onClick={onClose}>
+            <AccessButton
+              sx={{ ml: 2 }}
+              aria-label="Close manage queue dialog"
+              onClick={onClose}
+            >
               <FAIcon icon="xmark" />
             </AccessButton>
           </Grid>

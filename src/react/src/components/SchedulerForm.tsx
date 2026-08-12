@@ -980,7 +980,7 @@ function SchedulerForm({
   return (
     <Box>
       <Box sx={{ justifyContent: "center", mb: 4, display: "flex" }}>
-        <ToggleButtonGroup aria-label="" value={jobState}>
+        <ToggleButtonGroup aria-label="Job Type Selection" value={jobState}>
           {jobOptions.map((option) => (
             <ToggleButton
               key={option}

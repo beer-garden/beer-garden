@@ -223,13 +223,15 @@ function UserChangeAccountMapping({
       onClose={() => {
         handleAccountMappingDialogClose();
       }}
+      aria-labelledby="change-account-mapping-dialog-title"
     >
-      <DialogTitle>
+      <DialogTitle id="change-account-mapping-dialog-title">
         <Grid container>
           <Grid size="grow">{`Update Account Mapping for ${user.username}`}</Grid>
           <Grid>
             <AccessButton
               sx={{ ml: 2 }}
+              aria-label="Close account mapping dialog"
               onClick={handleAccountMappingDialogClose}
             >
               <FAIcon icon="xmark" />
