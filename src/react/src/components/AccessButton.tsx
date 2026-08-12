@@ -119,8 +119,8 @@ const AccessButton = ({
         isLoading={
           isLoading ?? (
             <Tooltip title={tooltip} placement="bottom" arrow>
-              <Box component="span">
-                <Button {...{ ...props, ...{ disabled: true } }}>
+              <Box component="span" aria-label={undefined}>
+                <Button {...{ ...props, ...{ disabled: true} }} >
                   {children}
                 </Button>
               </Box>
@@ -130,7 +130,7 @@ const AccessButton = ({
         renderAuthFailed={
           renderAuthFailed ?? (
             <Tooltip title={tooltip} placement="bottom" arrow>
-              <Box component="span">
+              <Box component="span" aria-label={undefined}>
                 <Button {...{ ...props, ...{ disabled: true } }}>
                   {children}
                 </Button>
@@ -140,7 +140,7 @@ const AccessButton = ({
         }
       >
         <Tooltip title={tooltip} placement="bottom" arrow>
-          <Box component="span">
+          <Box component="span" aria-label={undefined}>
             <Button {...props}>{children}</Button>
           </Box>
         </Tooltip>
@@ -149,7 +149,7 @@ const AccessButton = ({
   } else {
     return (
       <Tooltip title={tooltip} placement="bottom" arrow>
-        <Box component="span">
+        <Box component="span" aria-label={undefined}>
           <Button {...props}>{children}</Button>
         </Box>
       </Tooltip>
