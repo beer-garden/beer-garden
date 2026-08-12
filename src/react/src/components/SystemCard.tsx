@@ -7,6 +7,7 @@ import {
   Divider,
   Menu,
   MenuItem,
+  Stack,
   Tooltip,
 } from "@mui/material";
 import { grey } from "@mui/material/colors";
@@ -594,26 +595,25 @@ function SystemCard({
             <Box component="span">{system.description}</Box>
             <Divider sx={{ my: 2, clear: "right" }} />
           </Box>
-          {system.instances?.map((instance: Instance, index: number) => (
-            <div key={JSON.stringify(instance)}>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexWrap: 1,
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div>{instanceIconTemplate(instance)}</div>
-                <div>{statusTemplate(instance)}</div>
-                <div>{instanceNameTemplate(instance)}</div>
-                <div>{instanceActions(instance)}</div>
-              </Box>
-              {index < system.instances!.length - 1 && (
-                <Divider sx={{ my: 2 }} />
-              )}
-            </div>
-          ))}
+          <Stack divider={<Divider />} spacing={2}>
+            {system.instances?.map((instance: Instance) => (
+              <div key={JSON.stringify(instance)}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: 1,
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <div>{instanceIconTemplate(instance)}</div>
+                  <div>{statusTemplate(instance)}</div>
+                  <div>{instanceNameTemplate(instance)}</div>
+                  <div>{instanceActions(instance)}</div>
+                </Box>
+              </div>
+            ))}
+          </Stack>
         </Box>
       </Box>
     </>
