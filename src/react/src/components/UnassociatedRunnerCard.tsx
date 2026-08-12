@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Box, ButtonGroup, Chip, Divider } from "@mui/material";
+import { Box, ButtonGroup, Chip, Divider, Stack } from "@mui/material";
 import { grey } from "@mui/material/colors";
 
 import { Runner } from "../models/brewtils-types";
@@ -171,72 +171,73 @@ function UnassociatedRunnerCard({
         </Box>
         <Divider />
         <Box sx={{ p: 2 }}>
-          <Box sx={{ minHeight: "40px", float: "right", marginLeft: "2px" }}>
-            <ButtonGroup>
+          <Box sx={{ mb: 2 }}>
+            <Box sx={{ minHeight: "40px", float: "right", marginLeft: "2px" }}>
+              <ButtonGroup>
+                <AccessButton
+                  size="small"
+                  title={`Start runners in ../${runnerGroup.path}`}
+                  onClick={() => startRunnerGroup()}
+                  data-testid="START_GROUP"
+                  config={config}
+                  permission="PLUGIN_ADMIN"
+                >
+                  <FontAwesomeIcon icon="play" />
+                </AccessButton>
+                <AccessButton
+                  size="small"
+                  title={`Stop runners in ../${runnerGroup.path}`}
+                  onClick={() => stopRunnerGroup()}
+                  data-testid="STOP_GROUP"
+                  config={config}
+                  permission="PLUGIN_ADMIN"
+                >
+                  <FontAwesomeIcon icon="stop" />
+                </AccessButton>
+                <AccessButton
+                  size="small"
+                  title={`Reload runners in ../${runnerGroup.path}`}
+                  onClick={() => reloadPath()}
+                  sx={{ mr: 2 }}
+                  data-testid="RELOAD_GROUP"
+                  config={config}
+                  permission="PLUGIN_ADMIN"
+                >
+                  <FontAwesomeIcon icon="refresh" />
+                </AccessButton>
+              </ButtonGroup>
               <AccessButton
                 size="small"
-                title={`Start runners in ../${runnerGroup.path}`}
-                onClick={() => startRunnerGroup()}
-                data-testid="START_GROUP"
+                title={`Delete runners in ../${runnerGroup.path}`}
+                onClick={() => deleteRunnerGroup()}
+                data-testid="DELETE_GROUP"
                 config={config}
                 permission="PLUGIN_ADMIN"
               >
-                <FontAwesomeIcon icon="play" />
+                <FontAwesomeIcon icon="trash" />
               </AccessButton>
-              <AccessButton
-                size="small"
-                title={`Stop runners in ../${runnerGroup.path}`}
-                onClick={() => stopRunnerGroup()}
-                data-testid="STOP_GROUP"
-                config={config}
-                permission="PLUGIN_ADMIN"
-              >
-                <FontAwesomeIcon icon="stop" />
-              </AccessButton>
-              <AccessButton
-                size="small"
-                title={`Reload runners in ../${runnerGroup.path}`}
-                onClick={() => reloadPath()}
-                sx={{ mr: 2 }}
-                data-testid="RELOAD_GROUP"
-                config={config}
-                permission="PLUGIN_ADMIN"
-              >
-                <FontAwesomeIcon icon="refresh" />
-              </AccessButton>
-            </ButtonGroup>
-            <AccessButton
-              size="small"
-              title={`Delete runners in ../${runnerGroup.path}`}
-              onClick={() => deleteRunnerGroup()}
-              data-testid="DELETE_GROUP"
-              config={config}
-              permission="PLUGIN_ADMIN"
-            >
-              <FontAwesomeIcon icon="trash" />
-            </AccessButton>
+            </Box>
+            <Box component="span">../{runnerGroup.path}</Box>
+            <Divider sx={{ my: 2, clear: "right" }} />
           </Box>
-          <Box component="span">../{runnerGroup.path}</Box>
-          <Divider sx={{ my: 2, clear: "right" }} />
-          {runnerGroup.runners?.map((runner: Runner, index: number) => (
-            <div key={JSON.stringify(runner)}>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexWrap: 1,
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div>{statusTemplate(runner)}</div>
-                <div>{runner.id}</div>
-                <div>{runnerActions(runner)}</div>
-              </Box>
-              {index < runnerGroup.runners.length - 1 && (
-                <Divider sx={{ my: 1 }} />
-              )}
-            </div>
-          ))}
+          <Stack divider={<Divider />} spacing={2}>
+            {runnerGroup.runners?.map((runner: Runner) => (
+              <div key={JSON.stringify(runner)}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: 1,
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <div>{statusTemplate(runner)}</div>
+                  <div>{runner.id}</div>
+                  <div>{runnerActions(runner)}</div>
+                </Box>
+              </div>
+            ))}
+          </Stack>
         </Box>
       </Box>
     </>
