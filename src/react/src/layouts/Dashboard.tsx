@@ -573,11 +573,8 @@ function GardenDashboard({
   return (
     <div>
       {/* LEFT NAV TREE */}
-      <div className="flex flex-wrap">
-        <div
-          style={{ width: "16%", minWidth: "250px" }}
-          className="surface-border p-3"
-        >
+      <Box sx={{ display: "flex", flexWrap: 1 }}>
+        <Box sx={{ width: "16%", minWidth: "250px", p: 2 }}>
           <TreeMenu
             sx={{
               border: "1px solid",
@@ -597,10 +594,10 @@ function GardenDashboard({
               }
             }}
           />
-        </div>
+        </Box>
 
         {/* MAIN WORKSPACE */}
-        <div style={{ width: "84%", minWidth: "250px" }}>
+        <Box sx={{ width: "84%", minWidth: "250px" }}>
           {/* Garden Summary */}
           <GardenSummary
             gardenRef={gardenRef}
@@ -684,8 +681,8 @@ function GardenDashboard({
               </Box>
             </>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
     </div>
   );
 }
