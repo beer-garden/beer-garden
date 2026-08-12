@@ -810,45 +810,47 @@ function CommandForm({
         ))}
       </Box>
       <Stack divider={<Divider flexItem />} spacing={1}>
-        <Grid
-          container
-          key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMAND_TYPE`}
-        >
-          <Grid size="grow">
-            <FormLabel
-              id="command-type-label"
-              htmlFor="COMMAND_TYPE"
-              sx={{ fontWeight: "bold" }}
-            >
-              Command Type
-            </FormLabel>
-          </Grid>
-
-          <Grid size="grow">
-            <FormControl fullWidth>
-              <InputLabel id="command-type-label-select">
-                Command Type
-              </InputLabel>
-              <Select
-                labelId="command-type-label-select"
-                id="COMMAND_TYPE"
-                label="Command Type"
-                value={request?.command_type}
-                onChange={(e) =>
-                  setRequest({ ...request, command_type: e.target.value })
-                }
-                disabled={disabled}
-                size="small"
+        {request && request.command_type && (
+          <Grid
+            container
+            key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMAND_TYPE`}
+          >
+            <Grid size="grow">
+              <FormLabel
+                id="command-type-label"
+                htmlFor="COMMAND_TYPE"
+                sx={{ fontWeight: "bold" }}
               >
-                {["ACTION", "INFO", "TEMP"].map((status: any) => (
-                  <MenuItem key={status} value={status}>
-                    {status}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                Command Type
+              </FormLabel>
+            </Grid>
+
+            <Grid size="grow">
+              <FormControl fullWidth>
+                <InputLabel id="command-type-label-select">
+                  Command Type
+                </InputLabel>
+                <Select
+                  labelId="command-type-label-select"
+                  id="COMMAND_TYPE"
+                  label="Command Type"
+                  value={request?.command_type}
+                  onChange={(e) =>
+                    setRequest({ ...request, command_type: e.target.value })
+                  }
+                  disabled={disabled}
+                  size="small"
+                >
+                  {["ACTION", "INFO", "TEMP"].map((status: any) => (
+                    <MenuItem key={status} value={status}>
+                      {status}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
           </Grid>
-        </Grid>
+        )}
 
         {parametersFields &&
           parametersFields?.map((parameter: InputParam) => (
