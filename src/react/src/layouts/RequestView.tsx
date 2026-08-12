@@ -23,6 +23,7 @@ function RequestView({
   const showSnackbar = useSnackbar();
   const [error, setError] = useState<Error>();
   const { requestId } = useParams<{ requestId: string }>();
+  const urlRequestId = useRef<string | undefined>(undefined);
   const [request, setRequest] = useState<Request | undefined>(undefined);
 
   const [rootRequest, setRootRequest] = useState<Request | undefined>(
@@ -113,7 +114,12 @@ function RequestView({
   };
 
   useEffect(() => {
-    if (!request || request.id === undefined) {
+    if (urlRequestId.current != requestId && request !== undefined) {
+      // New Page Load
+      setRequest(undefined);
+      setRootRequest(undefined);
+      urlRequestId.current = requestId;
+    } else if (!request || request.id === undefined) {
       if (requestId !== undefined) {
         GetRequest(requestId, {})
           .then((data: Request) => {
