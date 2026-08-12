@@ -200,6 +200,10 @@ const EnhancedTable = ({
           return false;
         }
 
+        if (Array.isArray(compareValues) && compareValues.length === 0) {
+          compareValues = [undefined];
+        }
+
         if (!Array.isArray(compareValues)) {
           compareValues = [compareValues];
         }
@@ -231,7 +235,7 @@ const EnhancedTable = ({
               }
             }
             return filter.value === compare;
-          } else if (filter.modifier === "neq") {
+          } else if (filter.modifier === "ne") {
             return filter.value !== compare;
           } else if (filter.modifier === "startswith") {
             if (
@@ -248,6 +252,10 @@ const EnhancedTable = ({
               return compare.endsWith(filter.value);
             }
           } else if (filter.modifier === "contains") {
+            if (compare === undefined) {
+              return false;
+            }
+
             if (
               typeof compare === "string" &&
               typeof filter.value === "string"
@@ -255,6 +263,10 @@ const EnhancedTable = ({
               return compare.includes(filter.value);
             }
           } else if (filter.modifier === "not__contains") {
+            if (compare === undefined) {
+              return true;
+            }
+
             if (
               typeof compare === "string" &&
               typeof filter.value === "string"
