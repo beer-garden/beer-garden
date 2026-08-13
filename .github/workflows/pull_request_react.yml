@@ -87,3 +87,24 @@ jobs:
         name: playwright-report
         path: ./src/react/playwright-report/
         retention-days: 7
+  a11y-test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: ["ubuntu-latest"]
+        node: ["20"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ./src/react
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+        working-directory: ./src/react
+      - name: Run Accessibility Tests
+        run: npx jest a11y.test.js
+        working-directory: ./src/react
