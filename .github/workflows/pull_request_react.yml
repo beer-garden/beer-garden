@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'src/react/**'
+      - '.github/workflows/pull_request_react.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
