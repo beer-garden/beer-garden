@@ -782,11 +782,7 @@ function RequestWizard({
             <Stepper nonLinear activeStep={activeIndex} sx={{ mb: 2 }}>
               {steps.map((label, index) => (
                 <Step key={label} disabled={activeIndex < index}>
-                  <StepButton
-                    aria-controls="stepper-content"
-                    color="inherit"
-                    onClick={handleStep(index)}
-                  >
+                  <StepButton color="inherit" onClick={handleStep(index)}>
                     {label}
                   </StepButton>
                 </Step>

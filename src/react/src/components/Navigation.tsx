@@ -575,6 +575,7 @@ function NavigationMenu({
 
           <IconButton
             onClick={handleHamburgerMenuOpen}
+            aria-label="Open navigation menu"
             sx={{
               display: { xs: "flex", md: "none" },
               color: "white",

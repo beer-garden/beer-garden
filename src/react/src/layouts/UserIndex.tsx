@@ -212,7 +212,13 @@ function UserIndex({
     if (rowData.protected) {
       return (
         <span {...GenerateTourProps(protectedUserTourStep)}>
-          <FAIcon icon="user-shield" title="Protected User" sx={{ mr: 1 }} />
+          <FAIcon
+            icon="user-shield"
+            title="Protected User"
+            role="img"
+            aria-label="Protected User"
+            sx={{ mr: 1 }}
+          />
           {rowData.username}
         </span>
       );
@@ -220,14 +226,26 @@ function UserIndex({
     if (rowData.file_generated) {
       return (
         <span {...GenerateTourProps(fileGeneratedUserTourStep)}>
-          <FAIcon icon="user-tag" title="File Generated User" sx={{ mr: 1 }} />
+          <FAIcon
+            icon="user-tag"
+            title="File Generated User"
+            role="img"
+            aria-label="File Generated User"
+            sx={{ mr: 1 }}
+          />
           {rowData.username}
         </span>
       );
     }
     return (
       <span {...GenerateTourProps(userUserTourStep)}>
-        <FAIcon icon="user" title="Regular User" sx={{ mr: 1 }} />
+        <FAIcon
+          icon="user"
+          title="Regular User"
+          role="img"
+          aria-label="Regular User"
+          sx={{ mr: 1 }}
+        />
         {rowData.username}
       </span>
     );

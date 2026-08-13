@@ -119,13 +119,15 @@ function UserChangePassword({
       onClose={() => {
         handleUserPasswordDialogClose();
       }}
+      aria-labelledby="change-password-dialog-title"
     >
-      <DialogTitle>
+      <DialogTitle id="change-password-dialog-title">
         <Grid container>
           <Grid size="grow">{`Change Password for ${username}`}</Grid>
           <Grid>
             <AccessButton
               sx={{ ml: 2 }}
+              aria-label="Close change password dialog"
               onClick={handleUserPasswordDialogClose}
             >
               <FAIcon icon="xmark" />

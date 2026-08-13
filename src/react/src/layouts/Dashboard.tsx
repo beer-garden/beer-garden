@@ -623,7 +623,7 @@ function GardenDashboard({
                 </InputLabel>
                 <Select
                   id="instanceStatuses"
-                  labelId="instance-select-lable"
+                  labelId="instance-select-label"
                   value={filteredStatuses}
                   multiple
                   input={<OutlinedInput label="Filter By Input Status" />}

@@ -223,8 +223,9 @@ function RoleCard({
       onClose={onClose}
       fullWidth={true}
       maxWidth="md"
+      aria-labelledby="role-dialog-title"
     >
-      <DialogTitle>
+      <DialogTitle id="role-dialog-title">
         <Grid container>
           <Grid size="grow">
             {!disabled
@@ -234,7 +235,11 @@ function RoleCard({
               : "View Role"}
           </Grid>
           <Grid>
-            <AccessButton sx={{ mr: 2 }} onClick={onClose}>
+            <AccessButton
+              sx={{ mr: 2 }}
+              onClick={onClose}
+              aria-label="Close role dialog"
+            >
               <FontAwesomeIcon icon="xmark" />
             </AccessButton>
           </Grid>
