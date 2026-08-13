@@ -31,6 +31,7 @@ const AccessButton = ({
       text?: boolean | undefined;
       raised?: boolean | undefined;
       rounded?: boolean | undefined;
+      htmlFor?: string | undefined;
     }
 >) => {
   if (!tooltip) {
@@ -120,7 +121,7 @@ const AccessButton = ({
           isLoading ?? (
             <Tooltip title={tooltip} placement="bottom" arrow>
               <Box component="span" aria-label={undefined}>
-                <Button {...{ ...props, ...{ disabled: true} }} >
+                <Button {...{ ...props, ...{ disabled: true } }}>
                   {children}
                 </Button>
               </Box>
