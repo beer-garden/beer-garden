@@ -7,7 +7,6 @@ import {
   Grid,
   InputLabel,
   MenuItem,
-  OutlinedInput,
   Select,
   SelectChangeEvent,
   Skeleton,
@@ -643,18 +642,18 @@ function GardenDashboard({
                   labelId="instance-select-label"
                   value={filteredStatuses}
                   multiple
-                  label={<OutlinedInput label="Filter By Input Status" />}
+                  label="Filter By Input Status"
                   slotProps={{
                     root: {
-                      "aria-controls": "instance-select-menu",
                       "aria-haspopup": "listbox",
+                      id: "instance-select-menu",
                     },
                   }}
                   inputProps={{
                     autoComplete: "off",
                   }}
-                  MenuProps={{
-                    id: "instance-select-menu",
+                  SelectDisplayProps={{
+                    "aria-controls": "instance-select-menu",
                   }}
                   onChange={(
                     event: SelectChangeEvent<typeof instanceStatuses | null>,
