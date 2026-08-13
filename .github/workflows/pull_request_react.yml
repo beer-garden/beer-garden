@@ -91,8 +91,7 @@ jobs:
       working-directory: ./src/react
     - uses: actions/upload-artifact@v4   
       if: ${{ !cancelled() }}
-      working-directory: ./src/react
       with:
         name: playwright-report
-        path: playwright-report/
+        path: ./src/react/playwright-report/
         retention-days: 7
