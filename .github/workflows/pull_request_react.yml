@@ -57,7 +57,9 @@ jobs:
 
   a11y-test:
     runs-on: ubuntu-latest
-    working-directory: ./src/react
+    defaults:
+      run:
+        working-directory: ./src/react
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -73,7 +75,9 @@ jobs:
   Playwright:
     timeout-minutes: 60
     runs-on: ubuntu-latest
-    working-directory: ./src/react
+    defaults:
+      run:
+        working-directory: ./src/react
     steps:
     - uses: actions/checkout@v6
     - uses: actions/setup-node@v6
