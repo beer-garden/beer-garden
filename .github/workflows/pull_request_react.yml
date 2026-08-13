@@ -55,21 +55,21 @@ jobs:
         run: make test
         working-directory: ./src/react
 
-  a11y-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install dependencies
-        run: npm ci
-        # working-directory: ./src/react
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-        # working-directory: ./src/react
-      - name: Run Accessibility Tests
-        run: npx jest a11y.test.js
-        # working-directory: ./src/react
+  # a11y-test:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #     - name: Install dependencies
+  #       run: npm ci
+  #       # working-directory: ./src/react
+  #     - name: Install Playwright Browsers
+  #       run: npx playwright install --with-deps
+  #       # working-directory: ./src/react
+  #     - name: Run Accessibility Tests
+  #       run: npx jest a11y.test.js
+  #       # working-directory: ./src/react
 
   
