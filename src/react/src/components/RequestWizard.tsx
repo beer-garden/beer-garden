@@ -67,6 +67,11 @@ function RequestWizard({
       (requestItem?.jobId === undefined || requestItem?.jobId === null),
   );
 
+  const [showScheduleJob, setShowScheduleJob] = useState<boolean>(
+    (requestItem?.jobId === undefined || requestItem?.jobId === null) &&
+      requestItem?.job === undefined,
+  );
+
   const [showStepper, setShowStepper] = useState<boolean>(false);
 
   // Input Request
@@ -207,11 +212,12 @@ function RequestWizard({
     }
   };
 
-  const [showScheduleJob, setShowScheduleJob] = useState(
+  const [toggleScheduleJob, setToggleScheduleJob] = useState(
     requestItem?.showSchedule ||
       (requestItem?.jobId !== undefined && requestItem?.jobId !== null),
   );
-  const updateShowScheduleJob = (showSchedule: boolean) => {
+  const updateToggleScheduleJob = (showSchedule: boolean) => {
+    setToggleScheduleJob(showSchedule);
     setShowScheduleJob(showSchedule);
     setJob(showSchedule ? {} : undefined);
     updateRequestItem({
@@ -420,6 +426,7 @@ function RequestWizard({
             instance: responseJob?.request_template?.instance_name ?? undefined,
             command: responseJob?.request_template?.command ?? undefined,
           });
+          setShowScheduleJob(true);
         })
         .catch((error) => {
           console.error("Error fetching job:", error);
@@ -655,11 +662,11 @@ function RequestWizard({
             </Typography>
             <Switch
               aria-label="Toggle for creating Scheduled Job"
-              checked={showScheduleJob}
-              onChange={(e) => updateShowScheduleJob(e.target.checked)}
+              checked={toggleScheduleJob}
+              onChange={(e) => updateToggleScheduleJob(e.target.checked)}
             />
           </Box>
-          {showScheduleJob && job && (
+          {showScheduleJob && (
             <SchedulerForm
               scheduledJob={job}
               setScheduledJob={updateJobValue}
