@@ -64,12 +64,12 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm ci
-        working-directory: ./src/react
+        # working-directory: ./src/react
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
-        working-directory: ./src/react
+        # working-directory: ./src/react
       - name: Run Accessibility Tests
         run: npx jest a11y.test.js
-        working-directory: ./src/react
+        # working-directory: ./src/react
 
   
