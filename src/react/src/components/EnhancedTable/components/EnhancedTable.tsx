@@ -614,6 +614,7 @@ const EnhancedTable = ({
                         active={orderBy === column.field}
                         direction={orderBy === column.field ? order : "asc"}
                         onClick={createSortHandler(column.field)}
+                        aria-label={`Toggle Sort ${orderBy === column.field ? order : "asc"} Column ${typeof column?.label === "string" ? column.label : column.field}`}
                       >
                         {orderBy === column.field ? (
                           <Box component="span" sx={visuallyHidden}>
@@ -713,6 +714,7 @@ const EnhancedTable = ({
               select: {
                 inputProps: {
                   "aria-label": "rows per page",
+                  autoComplete: "off",
                 },
                 native: true,
               },
