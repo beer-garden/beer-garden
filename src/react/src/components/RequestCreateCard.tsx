@@ -78,6 +78,7 @@ function RequestCreateCard({
   );
   const updateToggleScheduleJob = (showSchedule: boolean) => {
     setToggleScheduleJob(showSchedule);
+    setShowScheduleJob(showSchedule);
     setJob(showSchedule ? {} : undefined);
     updateRequestItem({
       ...requestItem,
@@ -326,7 +327,7 @@ function RequestCreateCard({
                 setIsJobValid={setIsJobValid}
               />
             )}
-            {!showScheduleJob && (
+            {toggleScheduleJob && !showScheduleJob && (
               <Skeleton width="100%" height="150px"></Skeleton>
             )}
             {showCreateRequest && (
