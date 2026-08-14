@@ -223,6 +223,7 @@ function UserIndex({
           <FAIcon
             icon="user-shield"
             title="Protected User"
+            role="img"
             aria-label="Protected User"
             sx={{ mr: 1 }}
           />
@@ -235,7 +236,8 @@ function UserIndex({
         <span {...GenerateTourProps(fileGeneratedUserTourStep)}>
           <FAIcon
             icon="user-tag"
-            title="File Generated User"
+            title="Generated User"
+            role="img"
             aria-label="File Generated User"
             sx={{ mr: 1 }}
           />
@@ -248,6 +250,7 @@ function UserIndex({
         <FAIcon
           icon="user"
           title="Regular User"
+          role="img"
           aria-label="Regular User"
           sx={{ mr: 1 }}
         />
