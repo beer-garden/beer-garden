@@ -1,7 +1,7 @@
 # Beer Garden Changelog
 
 # 3.34.2
-TBD
+8/14/2026
 
 - Fixed bug where "latest" system version provided with "target_garden" provided in URI where system
   version was not calculated. (#2354) 
