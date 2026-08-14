@@ -219,7 +219,7 @@ function CurrentRequestsTemplate({
 
   const SeverityCheck = (status?: string) => {
     if (!status) {
-      return "danger";
+      return "error";
     }
     if (["CREATED"].includes(status)) {
       return "info";
@@ -230,7 +230,7 @@ function CurrentRequestsTemplate({
     if (["COMPLETED"].includes(status)) {
       return "success";
     }
-    return "danger";
+    return "error";
   };
 
   const statusTemplate = (request: Request) => {

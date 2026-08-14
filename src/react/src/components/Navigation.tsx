@@ -87,7 +87,6 @@ function NavigationMenu({
     sessionStorage.clear();
     ClearThemes();
     runReloadUI();
-    op.current?.hide();
   };
 
   const [hamburgerMenuAnchor, setHamburgerMenuAnchor] = useState<
