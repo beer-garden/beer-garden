@@ -72,11 +72,12 @@ function RequestCreateCard({
     });
   };
 
-  const [showScheduleJob, setShowScheduleJob] = useState(
+  const [toggleScheduleJob, setToggleScheduleJob] = useState(
     requestItem?.showSchedule ||
       (requestItem?.jobId !== undefined && requestItem?.jobId !== null),
   );
-  const updateShowScheduleJob = (showSchedule: boolean) => {
+  const updateToggleScheduleJob = (showSchedule: boolean) => {
+    setToggleScheduleJob(showSchedule);
     setShowScheduleJob(showSchedule);
     setJob(showSchedule ? {} : undefined);
     updateRequestItem({
@@ -94,6 +95,10 @@ function RequestCreateCard({
   const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
     (requestItem?.requestId === undefined || requestItem?.requestId === null) &&
       (requestItem?.jobId === undefined || requestItem?.jobId === null),
+  );
+  const [showScheduleJob, setShowScheduleJob] = useState<boolean>(
+    (requestItem?.jobId === undefined || requestItem?.jobId === null) &&
+      requestItem?.job === undefined,
   );
 
   const submitRequest = () => {
@@ -218,6 +223,7 @@ function RequestCreateCard({
             command: responseRequest?.command ?? undefined,
           });
           setShowCreateRequest(true);
+          setShowScheduleJob(true);
         })
         .catch((error) => {
           console.error("Error fetching request:", error);
@@ -265,6 +271,7 @@ function RequestCreateCard({
             command: responseJob?.request_template?.command ?? undefined,
           });
           setShowCreateRequest(true);
+          setShowScheduleJob(true);
         })
         .catch((error) => {
           console.error("Error fetching job:", error);
@@ -277,6 +284,7 @@ function RequestCreateCard({
         });
     } else {
       setShowCreateRequest(true);
+      setShowScheduleJob(true);
     }
   }, []);
 
@@ -302,8 +310,8 @@ function RequestCreateCard({
               Scheduled
             </Typography>
             <Switch
-              checked={showScheduleJob}
-              onChange={(e) => updateShowScheduleJob(e.target.checked)}
+              checked={toggleScheduleJob}
+              onChange={(e) => updateToggleScheduleJob(e.target.checked)}
               className="align-self-center"
               slotProps={{
                 input: { "aria-label": "Toggle for creating Scheduled Job" },
@@ -312,12 +320,15 @@ function RequestCreateCard({
           </Box>
 
           <Box sx={{ pt: 4, width: "100%" }}>
-            {showScheduleJob && job && (
+            {showScheduleJob && (
               <SchedulerForm
                 scheduledJob={job}
                 setScheduledJob={updateJobValue}
                 setIsJobValid={setIsJobValid}
               />
+            )}
+            {toggleScheduleJob && !showScheduleJob && (
+              <Skeleton width="100%" height="150px"></Skeleton>
             )}
             {showCreateRequest && (
               <CommandCreate
