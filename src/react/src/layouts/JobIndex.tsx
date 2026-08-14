@@ -463,6 +463,7 @@ function JobIndex({
 
         <AccessButton
           component="label"
+          htmlFor="import_job_input"
           role={undefined}
           variant="contained"
           tabIndex={-1}
@@ -472,6 +473,7 @@ function JobIndex({
         >
           Import Jobs
           <VisuallyHiddenInput
+            id="import_job_input"
             type="file"
             accept=".json,application/json"
             onChange={customJobImporter}
