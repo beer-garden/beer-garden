@@ -522,7 +522,7 @@ function SystemCard({
         <Box sx={{ bgcolor: "primary.main" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 2 }}>
             <FontAwesomeIcon
-              icon={system.icon_name ? system.icon_name : "gears"}
+              icon={system.icon_name ? (system.icon_name as IconProp) : "gears"}
               aria-label={system.name}
             />
             <Box component="span" sx={{ maxWidth: "20rem", fontWeight: 600 }}>
