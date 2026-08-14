@@ -108,6 +108,6 @@ jobs:
       uses: treosh/lighthouse-ci-action@v12
       with:
         urls: |
-          http://localhost:3002/
-          http://localhost:3002/about
+          http://localhost:3000/
+          http://localhost:3000/about
         uploadTargets: ./src/react/temporary-public-storage
