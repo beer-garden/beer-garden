@@ -637,9 +637,6 @@ function TopicIndex({
           id={`hide-generated`}
           checked={hideGenerated}
           onChange={handleChange}
-          slotProps={{
-            input: { "aria-label": "Hide Generated topics" },
-          }}
         />
         <Typography
           variant="button"
