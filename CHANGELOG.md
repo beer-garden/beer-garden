@@ -4,7 +4,7 @@
 TBD
 
 - Fixed bug where "latest" system version provided with "target_garden" provided in URI where system
-  version was not calculated. (#) 
+  version was not calculated. (#2354) 
 
 # 3.34.1
 7/8/2026
