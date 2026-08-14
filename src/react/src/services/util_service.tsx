@@ -295,7 +295,13 @@ export const FAIcon = ({
   ...props
 }: BoxProps & FontAwesomeIconProps) => {
   return (
-    <Box component={component} {...props} aria-label={undefined} title={undefined} role={undefined}>
+    <Box
+      component={component}
+      {...props}
+      aria-label={undefined}
+      title={undefined}
+      role={undefined}
+    >
       <FontAwesomeIcon {...props} />
     </Box>
   );
