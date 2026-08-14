@@ -90,25 +90,24 @@ jobs:
   lighthouseci:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
 
-      - name: Install dependencies and build
-        run: |
-          npm install
-          npm run build
-        working-directory: ./src/react
+    - name: Install dependencies and build
+      run: |
+        npm install
+        npm run build
+      working-directory: ./src/react
 
-      - name: Run Lighthouse CI
-        uses: treosh/lighthouse-ci-action@v12
-        working-directory: ./src/react
-        with:
-          urls: |
-            http://localhost:3002/
-            http://localhost:3002/about
-          uploadTargets: temporary-public-storage
+    - name: Run Lighthouse CI
+      uses: treosh/lighthouse-ci-action@v12
+      with:
+        urls: |
+          http://localhost:3002/
+          http://localhost:3002/about
+        uploadTargets: ./src/react/temporary-public-storage
