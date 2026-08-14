@@ -320,7 +320,9 @@ function GardenSummary({
     return (
       <>
         <Tooltip title={url ?? ""}>
-          <span id={targetId}>{connection.api}</span>
+          <Box component="span" aria-label={undefined} id={targetId}>
+            {connection.api}
+          </Box>
         </Tooltip>
       </>
     );
@@ -737,13 +739,15 @@ function GardenSummary({
                     return (
                       <div key={`${status}_Summary`}>
                         <Tooltip title={`${status} Count ${count}`}>
-                          <Chip
-                            data-testid={`${status}_severity_system_summary`}
-                            id={`${status}_${selectedGarden?.id}_severity_system_summary`}
-                            label={count}
-                            color={statusSeverity}
-                            key={status}
-                          />
+                          <Box component="span" aria-label={undefined}>
+                            <Chip
+                              data-testid={`${status}_severity_system_summary`}
+                              id={`${status}_${selectedGarden?.id}_severity_system_summary`}
+                              label={count}
+                              color={statusSeverity}
+                              key={status}
+                            />
+                          </Box>
                         </Tooltip>
                       </div>
                     );

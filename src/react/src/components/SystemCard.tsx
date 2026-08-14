@@ -291,12 +291,14 @@ function SystemCard({
         <Tooltip
           title={`Status ${instance.status} for instance ${instance.name} in system ${system.namespace}.${system.name}.${system.version}`}
         >
-          <Chip
-            label={instance.status}
-            color={statusSeverity}
-            {...GenerateTourProps(statusInstanceTourStep)}
-            id={`status_${instance.id}`}
-          />
+          <Box component="span" aria-label={undefined}>
+            <Chip
+              label={instance.status}
+              color={statusSeverity}
+              {...GenerateTourProps(statusInstanceTourStep)}
+              id={`status_${instance.id}`}
+            />
+          </Box>
         </Tooltip>
       </>
     );
@@ -354,12 +356,14 @@ function SystemCard({
     return (
       <>
         <Tooltip title={label}>
-          <FontAwesomeIcon
-            id={`ICON_${instance.id}`}
-            icon={icon as IconProp}
-            role="img"
-            aria-label={label}
-          />
+          <Box component="span" aria-label={undefined}>
+            <FontAwesomeIcon
+              id={`ICON_${instance.id}`}
+              icon={icon as IconProp}
+              role="img"
+              aria-label={label}
+            />
+          </Box>
         </Tooltip>
       </>
     );

@@ -96,11 +96,18 @@ function TreeMenu<T extends ExtendedTreeItemProps, M extends boolean = false>({
       status,
     } = useTreeItem({ id, itemId, children, label, disabled, rootRef: ref });
 
-    const item = useTreeItemModel<ExtendedTreeItemProps>(itemId)!;
+    const hasChildren = Array.isArray(children) && children.length > 0;
 
+    const item = useTreeItemModel<ExtendedTreeItemProps>(itemId)!;
     return (
       <TreeItemProvider {...getContextProviderProps()}>
-        <TreeItemRoot {...getRootProps(other)}>
+        <TreeItemRoot
+          {...getRootProps(other)}
+          tabIndex={0}
+          role={hasChildren ? "group" : "treeitem"}
+          aria-checked={undefined}
+          {...(disableToggle !== true ? {} : { "aria-expanded": undefined })}
+        >
           <TreeItemContent {...getContentProps()}>
             {disableToggle !== true && (
               <TreeItemIconContainer {...getIconContainerProps()}>
