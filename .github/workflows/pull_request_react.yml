@@ -110,4 +110,4 @@ jobs:
         urls: |
           http://localhost:3000/
           http://localhost:3000/about
-        uploadTargets: ./src/react/temporary-public-storage
+        uploadTargets: temporary-public-storage
