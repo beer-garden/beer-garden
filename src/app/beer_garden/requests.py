@@ -779,6 +779,9 @@ def process_request(
             "brewtils.models.Request or brewtils.models.RequestTemplate,"
         )
 
+    # Check if Latest system version is utilized
+    request = determine_latest_system_version(request)
+
     # Validation is only required for non Admin commands because Admin commands
     # are hard coded to map Plugin functions
     if not is_admin:
