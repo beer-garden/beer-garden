@@ -306,8 +306,8 @@ function RequestViewMain({
             onChange={(_, number) => setActiveIndex(number)}
             sx={{ my: 2 }}
           >
-            <Tab label="Request Parameters"></Tab>
-            <Tab label="Request Output"></Tab>
+            <Tab label="Request Parameters" id="simple-tab-0"></Tab>
+            <Tab label="Request Output" id="simple-tab-1"></Tab>
           </Tabs>
           <CustomTabPanel value={activeIndex} index={0}>
             <>
