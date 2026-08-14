@@ -87,24 +87,28 @@ jobs:
         name: playwright-report
         path: ./src/react/playwright-report/
         retention-days: 7
-  a11y-test:
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        os: ["ubuntu-latest"]
-        node: ["20"]
+  lighthouseci:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
-      - name: Install dependencies
-        run: npm ci
+          node-version: 20
+
+      - name: Install dependencies and build
+        run: |
+          npm install
+          npm run build
         working-directory: ./src/react
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v12
         working-directory: ./src/react
-      - name: Run Accessibility Tests
-        run: npx jest a11y.test.js
-        working-directory: ./src/react
+        with:
+          urls: |
+            http://localhost:3002/
+            http://localhost:3002/about
+          uploadTargets: temporary-public-storage
