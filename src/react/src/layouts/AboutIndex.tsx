@@ -126,7 +126,12 @@ function AboutIndex({ config }: { config: Config }) {
     <div>
       <AboutHeader config={config} />
       <Box
-        sx={{ display: "flex", alignItems: "flex-start", flexDirection: "row", ml: 2 }}
+        sx={{
+          display: "flex",
+          alignItems: "flex-start",
+          flexDirection: "row",
+          ml: 2,
+        }}
       >
         <Card variant="outlined" sx={{ mr: 2 }}>
           <CardHeader
