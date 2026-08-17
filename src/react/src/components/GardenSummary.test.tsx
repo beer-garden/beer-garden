@@ -1,6 +1,6 @@
-import axe from "axe-core";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import axe from "axe-core";
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
 
 import { Connection, Garden, Instance, System } from "../models/brewtils-types";
