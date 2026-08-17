@@ -1,3 +1,4 @@
+import axe from "axe-core";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, test, vi } from "vitest";
@@ -621,5 +622,36 @@ describe("GardenSummary", () => {
     const summary = screen.queryByTestId(`${status}_severity_system_summary`);
     expect(summary).toBeInTheDocument();
     expect(summary).toHaveTextContent(`1`);
+  });
+
+  test("has no accessibility violations", async () => {
+    const mockGarden = getRootGarden();
+    const refGarden = getRootGarden();
+
+    const { container } = render(
+      <SnackbarProvider>
+        <GardenSummary
+          gardenRef={{ current: refGarden }}
+          selectedGarden={mockGarden}
+          config={{}}
+          tourStepsRef={mockTourSteps()}
+          selectedSystems={[]}
+          associatedRunners={{ current: [] }}
+        />
+      </SnackbarProvider>,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(`Garden Summary: ${mockGarden?.name}`),
+      ).toBeVisible();
+    });
+
+    const results = await axe.run(container);
+
+    expect(results.violations).toBe([]);
+
+    expect(results.violations).toHaveLength(0);
+    expect(results.incomplete).toHaveLength(0);
   });
 });
