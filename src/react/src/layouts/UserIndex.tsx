@@ -1,4 +1,12 @@
-import { Alert, Box, Chip, Grid, Typography } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Chip,
+  Divider,
+  Grid,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { RefObject, useCallback, useEffect, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
@@ -8,7 +16,7 @@ import UserChangeAccountMapping from "../components/UserChangeAccountMapping";
 import UserChangePassword from "../components/UserChangePassword";
 import UserChangeRoles from "../components/UserChangeRoles";
 import UserCreate from "../components/UserCreate";
-import { Role, User } from "../models/brewtils-types";
+import { AliasUserMap, Role, User } from "../models/brewtils-types";
 import { Config, TourStepProps } from "../models/models";
 import { useConfirmDialog } from "../providers/ConfirmDialogProvider";
 import { useSnackbar } from "../providers/SnackbarProvider";
@@ -228,7 +236,7 @@ function UserIndex({
         <span {...GenerateTourProps(fileGeneratedUserTourStep)}>
           <FAIcon
             icon="user-tag"
-            title="File Generated User"
+            title="Generated User"
             role="img"
             aria-label="File Generated User"
             sx={{ mr: 1 }}
@@ -345,25 +353,28 @@ function UserIndex({
         </span>
       );
     }
+
     return (
-      <EnhancedTable
-        data={rowData.user_alias_mapping}
-        columns={[
-          {
-            id: "target_garden",
-            field: "target_garden",
-            label: "Garden Name",
-            isString: true,
-          },
-          {
-            id: "username",
-            field: "username",
-            label: "Account Name",
-            isString: true,
-          },
-        ]}
+      <Stack
+        spacing={1}
         {...GenerateTourProps(aliasGardenAccountsUserTourStep)}
-      />
+        divider={<Divider />}
+      >
+        <Grid container>
+          <Grid size="grow">
+            <Typography sx={{ fontWeight: "bold" }}>Garden Name</Typography>
+          </Grid>
+          <Grid>
+            <Typography sx={{ fontWeight: "bold" }}>Account Name</Typography>
+          </Grid>
+        </Grid>
+        {rowData.user_alias_mapping?.map((userMap: AliasUserMap) => (
+          <Grid container>
+            <Grid size="grow">{userMap.target_garden}</Grid>
+            <Grid>{userMap.username}</Grid>
+          </Grid>
+        ))}
+      </Stack>
     );
   }
 
