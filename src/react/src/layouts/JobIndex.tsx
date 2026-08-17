@@ -1,4 +1,4 @@
-import { Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { RefObject, useEffect, useState } from "react";
 
@@ -443,12 +443,20 @@ function JobIndex({
   });
 
   const header = (
-    <div className="flex flex-wrap align-items-center justify-content-between gap-2">
+    <Box
+      sx={{
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 1,
+      }}
+    >
       <Typography variant="h2" component="h1">
         Requests Scheduler
       </Typography>
 
-      <div className="flex">
+      <Box sx={{ display: "flex" }}>
         <AccessButton
           sx={buttonStyle}
           raised
@@ -500,8 +508,8 @@ function JobIndex({
         >
           Export Jobs
         </AccessButton>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 
   return (

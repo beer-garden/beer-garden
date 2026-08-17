@@ -29,7 +29,11 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { GenerateStatusCounts, GetSeverity } from "../services/util_service";
+import {
+  FAIcon,
+  GenerateStatusCounts,
+  GetSeverity,
+} from "../services/util_service";
 
 function GardenDashboard({
   gardenRef,
@@ -343,14 +347,16 @@ function GardenDashboard({
               className="fa-layers"
               id={`GARDEN_MENU_${garden.id}`}
             >
-              <FontAwesomeIcon
+              <FAIcon
                 icon="play"
-                style={{ color: "var(--warning-color)" }}
+                sx={{ color: "warning.constrast" }}
                 rotation={270}
               />
-              <FontAwesomeIcon
+              <FAIcon
                 icon="triangle-exclamation"
-                style={{ color: "var(--warning-background-color)" }}
+                sx={{
+                  color: "warning.main",
+                }}
               />
             </Box>
           </Tooltip>
@@ -374,13 +380,12 @@ function GardenDashboard({
               className="fa-layers"
               id={`GARDEN_MENU_${garden.id}`}
             >
-              <FontAwesomeIcon
-                icon="circle"
-                style={{ color: "var(--danger-color)" }}
-              />
-              <FontAwesomeIcon
+              <FAIcon icon="circle" sx={{ color: "error.constrast" }} />
+              <FAIcon
                 icon="circle-exclamation"
-                style={{ color: "var(--danger-background-color)" }}
+                sx={{
+                  color: "error.main",
+                }}
               />
             </Box>
           </Tooltip>
@@ -396,13 +401,12 @@ function GardenDashboard({
               className="fa-layers"
               id={`GARDEN_MENU_${garden.id}`}
             >
-              <FontAwesomeIcon
-                icon="circle"
-                style={{ color: "var(--danger-color)" }}
-              />
-              <FontAwesomeIcon
+              <FAIcon icon="circle" sx={{ color: "error.constrast" }} />
+              <FAIcon
                 icon="circle-exclamation"
-                style={{ color: "var(--danger-background-color)" }}
+                sx={{
+                  color: "error.main",
+                }}
               />
             </Box>
           </Tooltip>
@@ -418,13 +422,12 @@ function GardenDashboard({
               className="fa-layers"
               id={`GARDEN_MENU_${garden.id}`}
             >
-              <FontAwesomeIcon
-                icon="circle"
-                style={{ color: "var(--danger-color)" }}
-              />
-              <FontAwesomeIcon
+              <FAIcon icon="circle" sx={{ color: "error.constrast" }} />
+              <FAIcon
                 icon="circle-exclamation"
-                style={{ color: "var(--danger-background-color)" }}
+                sx={{
+                  color: "error.main",
+                }}
               />
             </Box>
           </Tooltip>

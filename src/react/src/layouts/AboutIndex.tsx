@@ -34,9 +34,9 @@ function AboutIndex({ config }: { config: Config }) {
 
   function AboutHeader({ config }: { config: Config | null }) {
     return (
-      <Box sx={{ display: "flex", ml: 2 }}>
-        <h1 className="al">About {config ? config.application_name : ""}</h1>
-      </Box>
+      <Typography variant="h2" component="h1" sx={{ ml: 2 }}>
+        About {config ? config.application_name : ""}
+      </Typography>
     );
   }
 
