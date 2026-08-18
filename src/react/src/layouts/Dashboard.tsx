@@ -349,7 +349,7 @@ function GardenDashboard({
             >
               <FAIcon
                 icon="play"
-                sx={{ color: "warning.constrast" }}
+                sx={{ color: "warning.contrast" }}
                 rotation={270}
               />
               <FAIcon
@@ -380,7 +380,7 @@ function GardenDashboard({
               className="fa-layers"
               id={`GARDEN_MENU_${garden.id}`}
             >
-              <FAIcon icon="circle" sx={{ color: "error.constrast" }} />
+              <FAIcon icon="circle" sx={{ color: "error.contrast" }} />
               <FAIcon
                 icon="circle-exclamation"
                 sx={{
@@ -401,7 +401,7 @@ function GardenDashboard({
               className="fa-layers"
               id={`GARDEN_MENU_${garden.id}`}
             >
-              <FAIcon icon="circle" sx={{ color: "error.constrast" }} />
+              <FAIcon icon="circle" sx={{ color: "error.contrast" }} />
               <FAIcon
                 icon="circle-exclamation"
                 sx={{
@@ -422,7 +422,7 @@ function GardenDashboard({
               className="fa-layers"
               id={`GARDEN_MENU_${garden.id}`}
             >
-              <FAIcon icon="circle" sx={{ color: "error.constrast" }} />
+              <FAIcon icon="circle" sx={{ color: "error.contrast" }} />
               <FAIcon
                 icon="circle-exclamation"
                 sx={{
