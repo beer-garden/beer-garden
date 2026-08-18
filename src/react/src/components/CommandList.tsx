@@ -108,6 +108,18 @@ function CommandList({
           label="instance"
           disabled={sortedInstances.length == 1}
           onChange={handleChangeInstance}
+          slotProps={{
+            root: {
+              "aria-haspopup": "listbox",
+              id: "instance-label-menu",
+            },
+          }}
+          inputProps={{
+            autoComplete: "off",
+          }}
+          SelectDisplayProps={{
+            "aria-controls": "instance-label-menu",
+          }}
         >
           {sortedInstances.map((i) => (
             <MenuItem value={i.name}>{i.label}</MenuItem>

@@ -663,9 +663,11 @@ function RequestWizard({
               Scheduled
             </Typography>
             <Switch
-              aria-label="Toggle for creating Scheduled Job"
               checked={toggleScheduleJob}
               onChange={(e) => updateToggleScheduleJob(e.target.checked)}
+              slotProps={{
+                input: { "aria-label": "Toggle for creating Scheduled Job" },
+              }}
             />
           </Box>
           {toggleScheduleJob && showScheduleJob && (
