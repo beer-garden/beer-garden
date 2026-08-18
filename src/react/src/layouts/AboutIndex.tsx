@@ -131,7 +131,11 @@ function AboutIndex({ config }: { config: Config }) {
         <Card variant="outlined" sx={{ mr: 2 }}>
           <CardHeader
             title={
-              <Typography variant="h6" component="h2" sx={{ fontWeight: "bold" }}>
+              <Typography
+                variant="h6"
+                component="h2"
+                sx={{ fontWeight: "bold" }}
+              >
                 Helpful Links
               </Typography>
             }
@@ -147,7 +151,11 @@ function AboutIndex({ config }: { config: Config }) {
         <Card variant="outlined" sx={{ mr: 2, flexGrow: 1 }}>
           <CardHeader
             title={
-              <Typography variant="h6" component="h2" sx={{ fontWeight: "bold" }}>
+              <Typography
+                variant="h6"
+                component="h2"
+                sx={{ fontWeight: "bold" }}
+              >
                 Version Information
               </Typography>
             }
