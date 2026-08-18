@@ -170,8 +170,8 @@ function RequestTreeMenu({
                 icon="hourglass"
                 sx={{ mr: 2 }}
                 role="img"
-                title="Template Command"
-                aria-label="Template Command"
+                title="Temp Command"
+                aria-label="Temp Command"
               />
             )}
           </Box>
