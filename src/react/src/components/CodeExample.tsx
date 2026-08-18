@@ -144,24 +144,28 @@ function CodeExample({
       <Box sx={{ position: "relative", mb: 2 }}>
         <Typography variant="h6">{codeType}</Typography>
         <AccessButton
-          className="p-button-rounded p-button-text"
           onClick={copyToClipboard}
-          style={{ position: "absolute", top: "0.5rem", right: "0.5rem" }}
+          sx={{
+            position: "absolute",
+            top: "0.5rem",
+            right: "0.5rem",
+            borderRadius: "50px",
+          }}
+          text
           tooltip={`Copy ${codeType} to clipboard`}
         >
           <FontAwesomeIcon icon="copy" />
         </AccessButton>
-        <pre>
-          <code
-            style={{
-              whiteSpace: "pre-wrap",
-              overflowWrap: "break-word",
-              overflowX: "auto",
-            }}
-          >
-            {code()}
-          </code>
-        </pre>
+        <Box
+          component="pre"
+          sx={{
+            whiteSpace: "pre-wrap",
+            overflowWrap: "break-word",
+            overflowX: "auto",
+          }}
+        >
+          {code()}
+        </Box>
       </Box>
     );
   };

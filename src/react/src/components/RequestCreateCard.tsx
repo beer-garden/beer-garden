@@ -96,10 +96,8 @@ function RequestCreateCard({
     (requestItem?.requestId === undefined || requestItem?.requestId === null) &&
       (requestItem?.jobId === undefined || requestItem?.jobId === null),
   );
-  const [showScheduleJob, setShowScheduleJob] = useState<boolean>(
-    (requestItem?.jobId === undefined || requestItem?.jobId === null) &&
-      requestItem?.job === undefined,
-  );
+
+  const [showScheduleJob, setShowScheduleJob] = useState<boolean>(false);
 
   const submitRequest = () => {
     if (request) {
@@ -312,7 +310,7 @@ function RequestCreateCard({
             <Switch
               checked={toggleScheduleJob}
               onChange={(e) => updateToggleScheduleJob(e.target.checked)}
-              className="align-self-center"
+              sx={{ alignSelf: "center" }}
               slotProps={{
                 input: { "aria-label": "Toggle for creating Scheduled Job" },
               }}
@@ -320,7 +318,7 @@ function RequestCreateCard({
           </Box>
 
           <Box sx={{ pt: 4, width: "100%" }}>
-            {showScheduleJob && (
+            {toggleScheduleJob && showScheduleJob && (
               <SchedulerForm
                 scheduledJob={job}
                 setScheduledJob={updateJobValue}

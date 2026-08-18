@@ -251,6 +251,7 @@ function RequestOptions({
                 aria-controls={openSplitMenu ? "split-button-menu" : undefined}
                 aria-expanded={openSplitMenu ? "true" : undefined}
                 aria-haspopup="menu"
+                aria-label="Open Request Options"
                 onClick={handleToggle}
                 sx={{ bgcolor: "success.dark" }}
               >
@@ -311,7 +312,21 @@ function RequestOptions({
           requestProjections &&
           requestProjections.length > 0 && (
             <Box sx={{ mb: 2, ml: 2 }}>
-              <Select value={requestProjectionSelectedIndex} sx={{ mr: 1 }}>
+              <Select
+                value={requestProjectionSelectedIndex}
+                sx={{ mr: 1 }}
+                aria-label="Select next command to run"
+                autoComplete="off"
+                SelectDisplayProps={{
+                  "aria-controls": "request-select-menu",
+                }}
+                slotProps={{
+                  root: {
+                    "aria-haspopup": "listbox",
+                    id: "request-select-menu",
+                  },
+                }}
+              >
                 {requestProjections.map((requestProjection, index) => (
                   <MenuItem
                     value={index}

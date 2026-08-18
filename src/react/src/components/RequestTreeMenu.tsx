@@ -144,7 +144,7 @@ function RequestTreeMenu({
           </>
         )}
         <Tooltip title={`${node?.data?.command_type} Command`}>
-          <span>
+          <Box component="span" aria-label={undefined}>
             {(node.data?.command_type === undefined ||
               node.data?.command_type.length === 0 ||
               node.data?.command_type === "ACTION") && (
@@ -152,6 +152,7 @@ function RequestTreeMenu({
                 icon="a"
                 sx={{ mr: 2 }}
                 role="img"
+                title="Action Command"
                 aria-label="Action Command"
               />
             )}
@@ -160,6 +161,7 @@ function RequestTreeMenu({
                 icon="i"
                 sx={{ mr: 2 }}
                 role="img"
+                title="Info Command"
                 aria-label="Info Command"
               />
             )}
@@ -168,10 +170,11 @@ function RequestTreeMenu({
                 icon="hourglass"
                 sx={{ mr: 2 }}
                 role="img"
-                aria-label="Template Command"
+                title="Temp Command"
+                aria-label="Temp Command"
               />
             )}
-          </span>
+          </Box>
         </Tooltip>
       </div>
     );

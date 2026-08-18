@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Box, Chip, ClickAwayListener, Typography } from "@mui/material";
+import { Badge, Box, Chip, ClickAwayListener, Typography } from "@mui/material";
 import Fade from "@mui/material/Fade";
 import Popper from "@mui/material/Popper";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -246,13 +246,13 @@ function CurrentRequestsTemplate({
           to={`/request/${request.id}`}
           tabIndex={-1}
           aria-label={`Open Request ${request.id}`}
-          style={{ textDecoration: "none" }}
+          sx={{ textDecoration: "none" }}
         >
           <AccessButton
             rounded
             raised
             tooltip={`Open Request ${request.id}`}
-            className="mr-2"
+            sx={{ mr: 2 }}
           >
             <FontAwesomeIcon icon="arrow-up-right-from-square" />
           </AccessButton>
@@ -326,15 +326,19 @@ function CurrentRequestsTemplate({
             request.status &&
             ["CREATED", "IN_PROGRESS"].includes(request.status),
         ).length > 0 && (
-          <span className="fa-layers-counter" style={{ fontSize: "3em" }}>
-            {
+          <Badge
+            color="error"
+            badgeContent={
               currentRequests.filter(
                 (request) =>
                   request.status &&
                   ["CREATED", "IN_PROGRESS"].includes(request.status),
               ).length
             }
-          </span>
+            sx={{ ml: 1, fontSize: "1rem" }}
+          >
+            <Box component="span" sx={{ display: "inline-block" }} />
+          </Badge>
         )}
       </AccessButton>
       <Popper
