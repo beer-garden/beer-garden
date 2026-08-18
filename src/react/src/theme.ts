@@ -1,31 +1,12 @@
 import { createTheme } from "@mui/material";
-
-import { red, blue, green, lightGreen, orange, grey, deepOrange } from '@mui/material/colors';
-
-// Light mode uses a stark white canvas with a single punchy accent.
-const lightPalette2 = {
-  mode: "light" as const,
-  primary: { main: "#0066CC", contrastText: "#FFFFFF" },
-  secondary: { main: "#FF2D55", contrastText: "#FFFFFF" },
-  error: { main: "#FF2D55", contrastText: "#FFFFFF" },
-  info: { main: "#00C9FF", contrastText: "#00141E" },
-  success: { main: "#00CC66", contrastText: "#001A00" },
-  warning: { main: "#FF9500", contrastText: "#221400" },
-  background: {
-    default: "#FFFFFF",
-    paper: "#FFFFFF",
-  },
-  text: {
-    primary: "#000000",
-    secondary: "#333333",
-  },
-  action: {
-    active: "#333333",
-    hover: "rgba(0,0,0,0.06)",
-    selected: "rgba(0,0,0,0.08)",
-  },
-  divider: "#000000",
-};
+import {
+  blue,
+  deepOrange,
+  green,
+  grey,
+  lightGreen,
+  red,
+} from "@mui/material/colors";
 
 const lightPalette = {
   mode: "light" as const,
@@ -50,7 +31,6 @@ const lightPalette = {
   },
   divider: grey[700],
 };
-
 
 const darkPalette = {
   mode: "dark" as const,

@@ -49,6 +49,7 @@ export function EnhancedTablePaginationActions(
         onClick={handleFirstPageButtonClick}
         disabled={page === 0}
         aria-label="first page"
+        sx={{ color: "action.selected" }}
       >
         {theme.direction === "rtl" ? (
           <FontAwesomeIcon icon="angles-right" />
@@ -60,6 +61,7 @@ export function EnhancedTablePaginationActions(
         onClick={handleBackButtonClick}
         disabled={page === 0}
         aria-label="previous page"
+        sx={{ color: "action.hover" }}
       >
         {theme.direction === "rtl" ? (
           <FontAwesomeIcon icon="angle-right" />
@@ -71,6 +73,7 @@ export function EnhancedTablePaginationActions(
         onClick={handleNextButtonClick}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
         aria-label="next page"
+        sx={{ color: "action.hover" }}
       >
         {theme.direction === "rtl" ? (
           <FontAwesomeIcon icon="angle-left" />
@@ -82,6 +85,7 @@ export function EnhancedTablePaginationActions(
         onClick={handleLastPageButtonClick}
         disabled={page >= Math.ceil(count / rowsPerPage) - 1}
         aria-label="last page"
+        sx={{ color: "action.selected" }}
       >
         {theme.direction === "rtl" ? (
           <FontAwesomeIcon icon="angles-left" />
