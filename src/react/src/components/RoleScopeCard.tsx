@@ -139,32 +139,27 @@ function RoleScopeCard({
       </FormLabel>
       <div id={`${scopeName}Scopes`}>
         {scopeList.map((item, index) => (
-            <Card
-              key={index}
-              variant="outlined"
-              sx={{ borderColor: grey[600] }}
-            >
-              <CardHeader>{header(index)}</CardHeader>
-              <CardContent>
-                <Autocomplete
-                  sx={{ m: 2 }}
-                  id={`${scopeName}Scope-${index}`}
-                  options={filteredItems}
-                  value={item ?? null}
-                  onChange={(_event: any, newValue: string | null) => {
-                    handleUpdateScope(
-                      newValue === null ? undefined : newValue,
-                      index,
-                    );
-                  }}
-                  disabled={disabled}
-                  renderInput={(params) => (
-                    <TextField {...params} label="Scope" />
-                  )}
-                />
-              </CardContent>
-            </Card>
-          
+          <Card key={index} variant="outlined" sx={{ borderColor: grey[600] }}>
+            <CardHeader>{header(index)}</CardHeader>
+            <CardContent>
+              <Autocomplete
+                sx={{ m: 2 }}
+                id={`${scopeName}Scope-${index}`}
+                options={filteredItems}
+                value={item ?? null}
+                onChange={(_event: any, newValue: string | null) => {
+                  handleUpdateScope(
+                    newValue === null ? undefined : newValue,
+                    index,
+                  );
+                }}
+                disabled={disabled}
+                renderInput={(params) => (
+                  <TextField {...params} label="Scope" />
+                )}
+              />
+            </CardContent>
+          </Card>
         ))}
         {!disabled && (
           <Box sx={{ display: "flex" }}>
