@@ -116,12 +116,6 @@ function RequestViewMain({
       isString: true,
       template: statusTemplate,
     });
-    requestColumns.push({
-      id: "system_version",
-      field: "system_version",
-      label: "Version",
-      isString: true,
-    });
 
     if (!isCard) {
       requestColumns.push({
