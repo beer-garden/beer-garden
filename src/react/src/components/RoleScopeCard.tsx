@@ -139,7 +139,6 @@ function RoleScopeCard({
       </FormLabel>
       <div id={`${scopeName}Scopes`}>
         {scopeList.map((item, index) => (
-          <>
             <Card
               key={index}
               variant="outlined"
@@ -165,7 +164,7 @@ function RoleScopeCard({
                 />
               </CardContent>
             </Card>
-          </>
+          
         ))}
         {!disabled && (
           <Box sx={{ display: "flex" }}>
