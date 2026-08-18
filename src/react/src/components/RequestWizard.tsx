@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import {
   Command,
@@ -45,6 +46,8 @@ function RequestWizard({
 }) {
   const showSnackbar = useSnackbar();
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const [_searchParams, setSearchParams] = useSearchParams();
 
   const [selectedSystem, setSelectedSystem] = useState<System | undefined>(
     undefined,
@@ -259,27 +262,29 @@ function RequestWizard({
           target_garden: chosenSystem?.garden_name,
           source_garden: config.garden_name,
         });
-        if (instance_name) {
-          if (chosenSystem?.instances?.find((i) => i.name == instance_name)) {
-            setSelectedInstance({
-              name: instance_name,
-              label: instance_name,
-            });
-          }
+        if (chosenSystem) {
+          setActiveIndex(1);
+          console.log(instance_name);
+          if (instance_name) {
+            if (chosenSystem?.instances?.find((i) => i.name == instance_name)) {
+              setSelectedInstance({
+                name: instance_name,
+                label: instance_name,
+              });
+            }
 
-          if (command || command_display_name) {
-            setSelectedCommand(
-              chosenSystem?.commands?.find(
-                (c) =>
-                  (command && c.name == command) ||
-                  (command_display_name &&
-                    c.display_name == command_display_name),
-              ),
-            );
-            setActiveIndex(2);
-            setShowCreateRequest(true);
-          } else {
-            setActiveIndex(1);
+            if (command || command_display_name) {
+              setSelectedCommand(
+                chosenSystem?.commands?.find(
+                  (c) =>
+                    (command && c.name == command) ||
+                    (command_display_name &&
+                      c.display_name == command_display_name),
+                ),
+              );
+              setActiveIndex(2);
+              setShowCreateRequest(true);
+            }
           }
         } else {
           setActiveIndex(0);
@@ -516,6 +521,11 @@ function RequestWizard({
 
   const systemListButtonClick = (system: System) => {
     setSelectedSystem(system);
+    setSearchParams({
+      namespace: system.namespace!,
+      system: system.name!,
+      system_version: system.version!,
+    });
     updateRequestValue({
       ...request,
       target_garden: selectedSystem?.garden_name,

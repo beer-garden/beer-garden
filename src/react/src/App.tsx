@@ -10,6 +10,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
 import AccessButton from "./components/AccessButton";
+import AppParams from "./components/AppParams";
 import ErrorPage from "./components/ErrorPage";
 import HasAccess from "./components/HasAccess";
 import NavigationMenu from "./components/Navigation";
@@ -478,6 +479,7 @@ function App() {
           {config && Object.keys(config).length > 0 && (
             <div key={reloadUI}>
               <BrowserRouter basename={baseURL}>
+                <AppParams addRequestItem={addRequestItem} />
                 {runTour && (
                   <Joyride
                     onEvent={handleJoyrideEvent}
