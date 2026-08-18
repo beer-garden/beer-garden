@@ -299,6 +299,7 @@ export const FAIcon = ({
       component={component}
       {...props}
       aria-label={undefined}
+      id={undefined}
       title={undefined}
       role={undefined}
     >
