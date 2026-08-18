@@ -24,7 +24,10 @@ import {
 import { CommandFormProps, InputParam } from "../models/models";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import { PostRequest } from "../services/request_service";
-import { GetSystemList } from "../services/system_service";
+import {
+  DetermineLatestSystemVersion,
+  GetSystemList,
+} from "../services/system_service";
 import { CompareObjects } from "../services/util_service";
 import CommandFormField from "./CommandFormField";
 
@@ -608,7 +611,15 @@ function CommandForm({
           (system) =>
             system.name === request?.system &&
             system.namespace === request?.namespace &&
-            system.version === request?.system_version &&
+            system.version ===
+              (request?.system_version === "latest"
+                ? DetermineLatestSystemVersion(
+                    systems,
+                    request?.system,
+                    request?.namespace,
+                    request?.system_version,
+                  ).version
+                : request?.system_version) &&
             system.instances &&
             system.instances.some(
               (instance) => instance.name === request?.instance_name,
