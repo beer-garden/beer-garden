@@ -171,7 +171,7 @@ function CommandFormField({
       return (
         <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: Multi Select`}>
-            <span>
+            <Box component="span" aria-label={undefined}>
               <Select
                 id={parameter.key}
                 value={parameter.value}
@@ -225,7 +225,7 @@ function CommandFormField({
               <FormHelperText id={`${parameter.key}-helper-text`}>
                 {parameter.description}
               </FormHelperText>
-            </span>
+            </Box>
           </Tooltip>
           {loadingChoices &&
             loadingChoices.some((loading) => loading.key === parameter.key) && (
@@ -249,7 +249,7 @@ function CommandFormField({
     return (
       <Box key={parameter.key} sx={inputDisplayStyling}>
         <Tooltip title={`${inputAreaAriaLabel}: Dropdown Select`}>
-          <span>
+          <Box component="span" aria-label={undefined}>
             <Select
               id={parameter.key}
               value={parameter.value}
@@ -290,7 +290,7 @@ function CommandFormField({
             <FormHelperText id={`${parameter.key}-helper-text`}>
               {parameter.description}
             </FormHelperText>
-          </span>
+          </Box>
         </Tooltip>
 
         {loadingChoices &&
@@ -351,6 +351,7 @@ function CommandFormField({
                   parameter.value === null ||
                   parameter.value === "")
               }
+              autoComplete="off"
             />
           )}
         />
@@ -412,6 +413,7 @@ function CommandFormField({
                       !parameter.optional &&
                       (item === undefined || item === null || item === "")
                     }
+                    autoComplete="off"
                   />
                 </Tooltip>
                 <Tooltip title={removeInputAriaLabel}>
@@ -431,6 +433,7 @@ function CommandFormField({
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
+                aria-label={addInputAriaLabel}
               >
                 <Typography variant="button">
                   Add {parameter.display_name ?? parameter.key}
@@ -460,6 +463,7 @@ function CommandFormField({
                   parameter.value === null ||
                   parameter.value === "")
               }
+              autoComplete="off"
             />
           </Tooltip>
         </Box>
@@ -513,6 +517,7 @@ function CommandFormField({
                         item === "null" ||
                         !canParseJSON(item))
                     }
+                    autoComplete="off"
                   />
                 </Tooltip>
                 <Tooltip title={removeInputAriaLabel}>
@@ -532,6 +537,7 @@ function CommandFormField({
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
+                aria-label={addInputAriaLabel}
               >
                 <Typography variant="button">
                   Add {parameter.display_name ?? parameter.key}
@@ -564,6 +570,7 @@ function CommandFormField({
                   parameter.value === "null" ||
                   !canParseJSON(parameter.value))
               }
+              autoComplete="off"
             />
           </Tooltip>
         </Box>
@@ -629,6 +636,7 @@ function CommandFormField({
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
+                aria-label={addInputAriaLabel}
               >
                 <Typography variant="button">
                   Add {parameter.display_name ?? parameter.key}
@@ -728,6 +736,7 @@ function CommandFormField({
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
+                aria-label={addInputAriaLabel}
               >
                 <Typography variant="button">
                   Add {parameter.display_name ?? parameter.key}
@@ -783,12 +792,16 @@ function CommandFormField({
                 <Tooltip
                   title={`${inputAreaAriaLabel} Boolean ${index}: String`}
                 >
-                  <span>
+                  <Box component="span" aria-label={undefined}>
                     <Checkbox
                       id={`${parameter.key}-${index}`}
                       checked={item}
-                      aria-describedby={`${parameter.key}-${index}-helper-text`}
-                      aria-label={`Parameter ${parameter.display_name ?? parameter.key} option ${index}`}
+                      slotProps={{
+                        input: {
+                          "aria-label": `Parameter ${parameter.display_name ?? parameter.key} option ${index}`,
+                          "aria-describedby": `${parameter.key}-${index}-helper-text`,
+                        },
+                      }}
                       indeterminate={
                         item === undefined
                           ? parameter.nullable || parameter.optional
@@ -808,7 +821,7 @@ function CommandFormField({
                     >
                       {parameter.description}
                     </FormHelperText>
-                  </span>
+                  </Box>
                 </Tooltip>
                 <Tooltip title={removeInputAriaLabel}>
                   <IconButton
@@ -827,6 +840,7 @@ function CommandFormField({
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
+                aria-label={addInputAriaLabel}
               >
                 <Typography variant="button">
                   Add {parameter.display_name ?? parameter.key}
@@ -839,12 +853,16 @@ function CommandFormField({
       return (
         <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: Boolean`}>
-            <span>
+            <Box component="span" aria-label={undefined}>
               <Checkbox
                 id={parameter.key}
                 checked={parameter.value}
-                aria-describedby={`${parameter.key}-helper-text`}
-                aria-label={`Parameter ${parameter.display_name ?? parameter.key}`}
+                slotProps={{
+                  input: {
+                    "aria-label": `Parameter ${parameter.display_name ?? parameter.key}`,
+                    "aria-describedby": `${parameter.key}-helper-text`,
+                  },
+                }}
                 indeterminate={
                   parameter.value === undefined
                     ? parameter.nullable || parameter.optional
@@ -856,7 +874,7 @@ function CommandFormField({
               <FormHelperText id={`${parameter.key}-helper-text`}>
                 {parameter.description}
               </FormHelperText>
-            </span>
+            </Box>
           </Tooltip>
         </Box>
       );
@@ -875,7 +893,7 @@ function CommandFormField({
                 sx={inputDisplayItemStyling}
               >
                 <Tooltip title={`${inputAreaAriaLabel} Index ${index}: Date`}>
-                  <span>
+                  <Box component="span" aria-label={undefined}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
                         disabled={disabled}
@@ -908,7 +926,7 @@ function CommandFormField({
                     <FormHelperText id={`${parameter.key}-helper-text`}>
                       {parameter.description}
                     </FormHelperText>
-                  </span>
+                  </Box>
                 </Tooltip>
                 <Tooltip title={removeInputAriaLabel}>
                   <IconButton
@@ -927,6 +945,7 @@ function CommandFormField({
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
+                aria-label={addInputAriaLabel}
               >
                 <Typography variant="button">
                   Add {parameter.display_name ?? parameter.key}
@@ -939,7 +958,7 @@ function CommandFormField({
       return (
         <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: Date`}>
-            <span>
+            <Box component="span" aria-label={undefined}>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
                   disabled={disabled}
@@ -968,7 +987,7 @@ function CommandFormField({
               <FormHelperText id={`${parameter.key}-helper-text`}>
                 {parameter.description}
               </FormHelperText>
-            </span>
+            </Box>
           </Tooltip>
         </Box>
       );
@@ -989,7 +1008,7 @@ function CommandFormField({
                 <Tooltip
                   title={`${inputAreaAriaLabel} Index ${index}: DateTime`}
                 >
-                  <span>
+                  <Box component="span" aria-label={undefined}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DateTimePicker
                         disabled={disabled}
@@ -1008,8 +1027,7 @@ function CommandFormField({
                         }}
                         slotProps={{
                           textField: {
-                            id: parameter.key,
-
+                            id: `${parameter.key}_${index}_input`,
                             error:
                               !disabled &&
                               !parameter.optional &&
@@ -1023,7 +1041,7 @@ function CommandFormField({
                     <FormHelperText id={`${parameter.key}-helper-text`}>
                       {parameter.description}
                     </FormHelperText>
-                  </span>
+                  </Box>
                 </Tooltip>
                 <Tooltip title={removeInputAriaLabel}>
                   <IconButton
@@ -1042,6 +1060,7 @@ function CommandFormField({
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
+                aria-label={addInputAriaLabel}
               >
                 <Typography variant="button">
                   Add {parameter.display_name ?? parameter.key}
@@ -1054,7 +1073,7 @@ function CommandFormField({
       return (
         <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: DateTime`}>
-            <span>
+            <Box component="span" aria-label={undefined}>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DateTimePicker
                   disabled={disabled}
@@ -1069,7 +1088,7 @@ function CommandFormField({
                   }}
                   slotProps={{
                     textField: {
-                      id: parameter.key,
+                      id: `${parameter.key}_input`,
                       error:
                         !disabled &&
                         !parameter.optional &&
@@ -1083,7 +1102,7 @@ function CommandFormField({
               <FormHelperText id={`${parameter.key}-helper-text`}>
                 {parameter.description}
               </FormHelperText>
-            </span>
+            </Box>
           </Tooltip>
         </Box>
       );
@@ -1123,7 +1142,7 @@ function CommandFormField({
             </IconButton>
           )}
           <Tooltip title={`${inputAreaAriaLabel}: Bytes`}>
-            <span>
+            <Box component="span" aria-label={undefined}>
               <Button
                 component="label"
                 role={undefined}
@@ -1142,7 +1161,7 @@ function CommandFormField({
               <FormHelperText id={`${parameter.key}-helper-text`}>
                 {parameter.description}
               </FormHelperText>
-            </span>
+            </Box>
           </Tooltip>
         </Box>
       );
@@ -1194,7 +1213,7 @@ function CommandFormField({
             </IconButton>
           )}
           <Tooltip title={`${inputAreaAriaLabel}: Base64`}>
-            <span>
+            <Box component="span" aria-label={undefined}>
               <Button
                 component="label"
                 role={undefined}
@@ -1227,7 +1246,7 @@ function CommandFormField({
               <FormHelperText id={`${parameter.key}-helper-text`}>
                 {parameter.description}
               </FormHelperText>
-            </span>
+            </Box>
           </Tooltip>
         </Box>
       );

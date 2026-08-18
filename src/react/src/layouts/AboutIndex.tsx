@@ -34,9 +34,9 @@ function AboutIndex({ config }: { config: Config }) {
 
   function AboutHeader({ config }: { config: Config | null }) {
     return (
-      <Box sx={{ display: "flex", ml: 2 }}>
-        <h1 className="al">About {config ? config.application_name : ""}</h1>
-      </Box>
+      <Typography variant="h2" component="h1" sx={{ ml: 2 }}>
+        About {config ? config.application_name : ""}
+      </Typography>
     );
   }
 
@@ -131,7 +131,11 @@ function AboutIndex({ config }: { config: Config }) {
         <Card variant="outlined" sx={{ mr: 2 }}>
           <CardHeader
             title={
-              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+              <Typography
+                variant="h6"
+                component="h2"
+                sx={{ fontWeight: "bold" }}
+              >
                 Helpful Links
               </Typography>
             }
@@ -147,7 +151,11 @@ function AboutIndex({ config }: { config: Config }) {
         <Card variant="outlined" sx={{ mr: 2, flexGrow: 1 }}>
           <CardHeader
             title={
-              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+              <Typography
+                variant="h6"
+                component="h2"
+                sx={{ fontWeight: "bold" }}
+              >
                 Version Information
               </Typography>
             }

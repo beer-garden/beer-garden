@@ -884,7 +884,6 @@ function CommandForm({
                   id={`${commentId}-value`}
                   value={request?.comment}
                   helperText="Add Comment"
-                  placeholder="Comment..."
                   variant="outlined"
                   onChange={(event: ChangeEvent<HTMLInputElement>) => {
                     setRequest({ ...request, comment: event.target.value });
@@ -892,6 +891,7 @@ function CommandForm({
                   fullWidth
                   multiline
                   disabled={disabled}
+                  autoComplete="off"
                 />
               </Tooltip>
             </Box>

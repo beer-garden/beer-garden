@@ -79,8 +79,8 @@ const LoginDialog = ({
         <AccessButton
           label="Cancel"
           onClick={() => setVisible(false)}
-          className="p-button-text"
           sx={{ mr: 1 }}
+          text
         >
           <FAIcon icon="xmark" sx={{ mr: 1 }} />
           Cancel

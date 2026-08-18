@@ -67,10 +67,7 @@ function RequestWizard({
       (requestItem?.jobId === undefined || requestItem?.jobId === null),
   );
 
-  const [showScheduleJob, setShowScheduleJob] = useState<boolean>(
-    (requestItem?.jobId === undefined || requestItem?.jobId === null) &&
-      requestItem?.job === undefined,
-  );
+  const [showScheduleJob, setShowScheduleJob] = useState<boolean>(false);
 
   const [showStepper, setShowStepper] = useState<boolean>(false);
 
@@ -381,6 +378,7 @@ function RequestWizard({
             instance: responseRequest?.instance_name ?? undefined,
             command: responseRequest?.command ?? undefined,
           });
+          setShowScheduleJob(true);
         })
         .catch((error) => {
           console.error("Error fetching request:", error);
@@ -469,6 +467,7 @@ function RequestWizard({
         instance: job.request_template?.instance_name ?? undefined,
         command: job.request_template?.command ?? undefined,
       });
+      setShowScheduleJob(true);
     } else if (requestItem?.requestCommandInput !== undefined) {
       findSelectedSystem(
         requestItem.requestCommandInput.namespace,
@@ -477,6 +476,7 @@ function RequestWizard({
         requestItem.requestCommandInput.instance,
         requestItem.requestCommandInput.command,
       );
+      setShowScheduleJob(true);
     } else if (requestItem?.request !== undefined) {
       findSelectedSystem(
         requestItem.request.namespace,
@@ -492,9 +492,11 @@ function RequestWizard({
         instance: requestItem.request?.instance_name ?? undefined,
         command: requestItem.request?.command ?? undefined,
       });
+      setShowScheduleJob(true);
     } else {
       setActiveIndex(0);
       setShowStepper(true);
+      setShowScheduleJob(true);
     }
   }, []);
 
@@ -666,7 +668,7 @@ function RequestWizard({
               onChange={(e) => updateToggleScheduleJob(e.target.checked)}
             />
           </Box>
-          {showScheduleJob && (
+          {toggleScheduleJob && showScheduleJob && (
             <SchedulerForm
               scheduledJob={job}
               setScheduledJob={updateJobValue}

@@ -260,7 +260,7 @@ function RoleIndex({
           <Box sx={{ display: "flex" }}>
             <FAIcon
               icon="user-tag"
-              title="File Generated Role"
+              title="Generated Role"
               role="img"
               aria-label="File Generated Role"
               sx={{ mr: 1 }}

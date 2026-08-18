@@ -351,7 +351,7 @@ function CommandSelect({
       />
       <Autocomplete
         sx={{ width: "100%", m: 2 }}
-        id={`select-version`}
+        id={`select-instance`}
         options={instances}
         value={selectedInstance ?? null}
         onChange={(_event: any, newValue: string | null) => {
