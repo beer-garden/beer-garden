@@ -2,15 +2,15 @@ import { createTheme } from "@mui/material";
 import {
   blue,
   deepOrange,
-  green,
   grey,
   lightGreen,
   red,
+  teal,
 } from "@mui/material/colors";
 
 const lightPalette = {
   mode: "light" as const,
-  primary: { main: green[400], contrastText: grey[900] },
+  primary: { main: teal[400], contrastText: grey[900] },
   secondary: { main: red[400], contrastText: grey[900] },
   error: { main: red[400], contrastText: grey[900] },
   info: { main: blue[400], contrastText: grey[900] },
@@ -34,7 +34,7 @@ const lightPalette = {
 
 const darkPalette = {
   mode: "dark" as const,
-  primary: { main: green[900], contrastText: grey[50] },
+  primary: { main: teal[900], contrastText: grey[50] },
   secondary: { main: red[900], contrastText: grey[50] },
   error: { main: red[900], contrastText: grey[50] },
   info: { main: blue[900], contrastText: grey[50] },
@@ -42,7 +42,7 @@ const darkPalette = {
   warning: { main: deepOrange[900], contrastText: grey[50] },
   background: {
     default: grey[900],
-    paper: grey[800],
+    paper: grey[700],
   },
   text: {
     primary: grey[50],
