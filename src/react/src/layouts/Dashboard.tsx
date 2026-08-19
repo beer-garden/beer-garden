@@ -697,7 +697,7 @@ function GardenDashboard({
                     </Grid>
                   ))}
                   {filteredSystems?.map((system: System) => (
-                    <Grid size={4} sx={{ minWidth: "250px" }}>
+                    <Grid key={system.id} size={4} sx={{ minWidth: "250px" }}>
                       <SystemCard
                         system={system}
                         tourStepsRef={tourStepsRef}

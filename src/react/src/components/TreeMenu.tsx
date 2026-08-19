@@ -107,6 +107,7 @@ function TreeMenu<T extends ExtendedTreeItemProps, M extends boolean = false>({
           role={hasChildren ? "group" : "treeitem"}
           aria-checked={undefined}
           {...(disableToggle !== true ? {} : { "aria-expanded": undefined })}
+          id={itemId}
         >
           <TreeItemContent {...getContentProps()}>
             {disableToggle !== true && (
@@ -119,7 +120,7 @@ function TreeMenu<T extends ExtendedTreeItemProps, M extends boolean = false>({
             {itemTemplate === undefined && item.label}
             <TreeItemDragAndDropOverlay {...getDragAndDropOverlayProps()} />
           </TreeItemContent>
-          {(status.expanded || disableToggle === true) && children}
+          {(status.expanded || disableToggle === true) && <ul>{children}</ul>}
         </TreeItemRoot>
       </TreeItemProvider>
     );
