@@ -720,7 +720,7 @@ function RequestWizard({
                 Code Examples
               </AccessButton>
             </Box>
-            {showCreateRequest && !showScheduleJob && (
+            {showCreateRequest && !toggleScheduleJob && (
               <AccessButton
                 label="Submit"
                 disabled={!isFormValid}
@@ -742,7 +742,7 @@ function RequestWizard({
                 <FAIcon icon="arrow-right" sx={{ ml: 2 }} />
               </AccessButton>
             )}
-            {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
+            {showCreateRequest && toggleScheduleJob && !requestItem?.jobId && (
               <AccessButton
                 label="Submit Job"
                 color="success"
@@ -760,7 +760,7 @@ function RequestWizard({
                 <FAIcon icon="arrow-right" sx={{ ml: 2 }} />
               </AccessButton>
             )}
-            {showCreateRequest && showScheduleJob && requestItem?.jobId && (
+            {showCreateRequest && toggleScheduleJob && requestItem?.jobId && (
               <AccessButton
                 label="Update Job"
                 color="success"
