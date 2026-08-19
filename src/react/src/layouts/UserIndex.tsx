@@ -305,6 +305,7 @@ function UserIndex({
           <AccessButton
             id={role.id}
             label={role.name}
+            key={`${role.id}-view_local_role`}
             onClick={() => {
               setShowRole(role);
               setShowViewRolesDialog(true);
@@ -369,7 +370,7 @@ function UserIndex({
           </Grid>
         </Grid>
         {rowData.user_alias_mapping?.map((userMap: AliasUserMap) => (
-          <Grid container>
+          <Grid container key={`user_alias-${userMap.target_garden}`}>
             <Grid size="grow">{userMap.target_garden}</Grid>
             <Grid>{userMap.username}</Grid>
           </Grid>
