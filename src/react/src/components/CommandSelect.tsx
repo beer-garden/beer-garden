@@ -3,6 +3,7 @@ import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import { validate as validateVersion } from "compare-versions";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import { Command, Instance, System } from "../models/brewtils-types";
 import { RequestCommand } from "../models/models";
@@ -47,6 +48,8 @@ function CommandSelect({
   const [selectedCommand, setSelectedCommand] = useState<string | undefined>(
     requestCommand?.command ?? undefined,
   );
+
+  const [_searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     const namespaceList: Array<string> = [];
@@ -158,6 +161,10 @@ function CommandSelect({
 
     if (namespaceList.length === 1 && selectedNamespace !== namespaceList[0]) {
       setSelectedNamespace(namespaceList[0]);
+      setSearchParams((params) => {
+        params.set("namespace", namespaceList[0]);
+        return params;
+      });
     } else if (
       namespaceList.length > 0 &&
       selectedNamespace !== undefined &&
@@ -171,6 +178,13 @@ function CommandSelect({
       selectedSystemName !== systemNameList[0]
     ) {
       setSelectedSystemName(systemNameList[0]);
+      setSearchParams((params) => {
+        if (selectedNamespace) {
+          params.set("namespace", selectedNamespace);
+        }
+        params.set("system", systemNameList[0]);
+        return params;
+      });
     } else if (
       systemNameList.length > 0 &&
       selectedSystemName !== undefined &&
@@ -187,6 +201,16 @@ function CommandSelect({
         systemVersionList.length === 1)
     ) {
       setSelectedVersion(systemVersionList[0]);
+      setSearchParams((params) => {
+        if (selectedNamespace) {
+          params.set("namespace", selectedNamespace);
+        }
+        if (selectedSystemName) {
+          params.set("system", selectedSystemName);
+        }
+        params.set("version", systemVersionList[0]);
+        return params;
+      });
     } else if (
       selectedVersion !== undefined &&
       selectedVersion !== "latest" &&
@@ -197,6 +221,19 @@ function CommandSelect({
 
     if (instanceList.length === 1 && selectedInstance !== instanceList[0]) {
       setSelectedInstance(instanceList[0]);
+      setSearchParams((params) => {
+        if (selectedNamespace) {
+          params.set("namespace", selectedNamespace);
+        }
+        if (selectedSystemName) {
+          params.set("system", selectedSystemName);
+        }
+        if (selectedVersion) {
+          params.set("version", selectedVersion);
+        }
+        params.set("instance", instanceList[0]);
+        return params;
+      });
     } else if (
       instanceList.length > 0 &&
       selectedInstance !== undefined &&
@@ -207,6 +244,22 @@ function CommandSelect({
 
     if (commandList.length === 1 && selectedCommand !== commandList[0]) {
       setSelectedCommand(commandList[0]);
+      setSearchParams((params) => {
+        if (selectedNamespace) {
+          params.set("namespace", selectedNamespace);
+        }
+        if (selectedSystemName) {
+          params.set("system", selectedSystemName);
+        }
+        if (selectedVersion) {
+          params.set("version", selectedVersion);
+        }
+        if (selectedInstance) {
+          params.set("instance", selectedInstance);
+        }
+        params.set("command", commandList[0]);
+        return params;
+      });
     } else if (
       commandList.length > 0 &&
       selectedCommand !== undefined &&
@@ -324,6 +377,17 @@ function CommandSelect({
         value={selectedNamespace ?? null}
         onChange={(_event: any, newValue: string | null) => {
           setSelectedNamespace(newValue === null ? undefined : newValue);
+          if (newValue) {
+            setSearchParams((params) => {
+              params.set("namespace", newValue);
+              return params;
+            });
+          } else {
+            setSearchParams((params) => {
+              params.delete("namespace");
+              return params;
+            });
+          }
         }}
         renderInput={(params) => <TextField {...params} label="Namespace" />}
       />
@@ -335,6 +399,17 @@ function CommandSelect({
         value={selectedSystemName ?? null}
         onChange={(_event: any, newValue: string | null) => {
           setSelectedSystemName(newValue === null ? undefined : newValue);
+          if (newValue) {
+            setSearchParams((params) => {
+              params.set("system", newValue);
+              return params;
+            });
+          } else {
+            setSearchParams((params) => {
+              params.delete("system");
+              return params;
+            });
+          }
         }}
         renderInput={(params) => <TextField {...params} label="System" />}
       />
@@ -345,6 +420,17 @@ function CommandSelect({
         value={selectedVersion ?? null}
         onChange={(_event: any, newValue: string | null) => {
           setSelectedVersion(newValue === null ? undefined : newValue);
+          if (newValue) {
+            setSearchParams((params) => {
+              params.set("version", newValue);
+              return params;
+            });
+          } else {
+            setSearchParams((params) => {
+              params.delete("version");
+              return params;
+            });
+          }
         }}
         disabled={versions && versions.length === 0}
         renderInput={(params) => <TextField {...params} label="Version" />}
@@ -356,6 +442,17 @@ function CommandSelect({
         value={selectedInstance ?? null}
         onChange={(_event: any, newValue: string | null) => {
           setSelectedInstance(newValue === null ? undefined : newValue);
+          if (newValue) {
+            setSearchParams((params) => {
+              params.set("instance", newValue);
+              return params;
+            });
+          } else {
+            setSearchParams((params) => {
+              params.delete("instance");
+              return params;
+            });
+          }
         }}
         disabled={instances && instances.length === 0}
         renderInput={(params) => <TextField {...params} label="Instance" />}
@@ -367,6 +464,17 @@ function CommandSelect({
         value={selectedCommand ?? null}
         onChange={(_event: any, newValue: string | null) => {
           setSelectedCommand(newValue === null ? undefined : newValue);
+          if (newValue) {
+            setSearchParams((params) => {
+              params.set("command", newValue);
+              return params;
+            });
+          } else {
+            setSearchParams((params) => {
+              params.delete("command");
+              return params;
+            });
+          }
         }}
         disabled={commands && commands.length === 0}
         renderInput={(params) => <TextField {...params} label="Command" />}

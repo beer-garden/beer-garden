@@ -143,8 +143,8 @@ function App() {
 
   const clearSearchParams = () => {
     const cleanUrl = window.location.pathname;
-    window.history.replaceState({}, "", cleanUrl)
-  }
+    window.history.replaceState({}, "", cleanUrl);
+  };
 
   useEffect(() => {
     // might take a second to load in all of the data, so pushed it off to to allow for the page to load
