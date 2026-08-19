@@ -3,7 +3,7 @@
 # 3.34.3
 TBD
 
-- Fixed bug where local systems could not be deleted if the Garden Name was changed. (#)
+- Fixed bug where local systems could not be deleted if the Garden Name was changed. (#2377)
 
 # 3.34.2
 8/14/2026
