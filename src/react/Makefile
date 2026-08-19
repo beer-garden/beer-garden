@@ -87,12 +87,12 @@ test: test_docker_image
 
 # Docker
 docker-build: package ## build docker image
-	docker build -t $(DOCKER_NAME):latest .
+	docker build -t $(DOCKER_NAME):latest . --build-arg VERSION=$(VERSION)
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)
 
 docker-build-unstable: package ## build nightly docker image
-	docker build -t $(DOCKER_NAME):unstable .
+	docker build -t $(DOCKER_NAME):unstable . --build-arg VERSION="unstable"
 
 # Publishing
 publish-docker: docker-build ## push the docker image
