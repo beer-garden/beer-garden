@@ -77,6 +77,7 @@ test_docker_image:
 	docker build -f Dockerfile.vitest -t test_server .
 
 package: deps
+	rm -rf build
 	npm run build
 	chmod -R 755 build/
 
