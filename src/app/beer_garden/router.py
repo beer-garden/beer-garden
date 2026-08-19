@@ -530,9 +530,14 @@ def forward(operation: Operation):
     target_garden = gardens.get(operation.target_garden_name)
 
     if not target_garden:
-        target_garden = get_garden(
-            operation.target_garden_name, include_fields=["name"]
-        )
+        try:
+            target_garden = get_garden(
+                operation.target_garden_name, include_fields=["name"]
+            )
+        except DoesNotExist:
+            raise UnknownGardenException(
+                f"Unknown child garden {operation.target_garden_name}"
+            )
 
     route_garden = determine_route_garden(operation.target_garden_name)
     try:
@@ -920,7 +925,15 @@ def _determine_target(operation: Operation) -> str:
     """Determine the garden the operation is targeting"""
 
     if operation.target_garden_name:
-        return operation.target_garden_name
+        # Validate that Target Garden is legit
+        if operation.target_garden_name in gardens.keys():
+            return operation.target_garden_name
+
+        try:
+            if get_garden(operation.target_garden_name, include_fields=["name"]):
+                return operation.target_garden_name
+        except DoesNotExist:
+            pass
 
     target_garden = _target_from_type(operation)
 

@@ -1,5 +1,10 @@
 # Beer Garden Changelog
 
+# 3.34.3
+TBD
+
+- Fixed bug where local systems could not be deleted if the Garden Name was changed. (#)
+
 # 3.34.2
 8/14/2026
 
