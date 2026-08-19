@@ -45,7 +45,7 @@ function RequestWizard({
   config: Config;
 }) {
   const showSnackbar = useSnackbar();
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
 
   const [_searchParams, setSearchParams] = useSearchParams();
 
@@ -264,7 +264,6 @@ function RequestWizard({
         });
         if (chosenSystem) {
           setActiveIndex(1);
-          console.log(instance_name);
           if (instance_name) {
             if (chosenSystem?.instances?.find((i) => i.name == instance_name)) {
               setSelectedInstance({
@@ -536,6 +535,15 @@ function RequestWizard({
 
   const commandListButtonClick = (command: Command) => {
     setSelectedCommand(command);
+    if (request) {
+      setSearchParams({
+        namespace: request.namespace!,
+        system: request.system!,
+        system_version: request.system_version!,
+        instance: request.instance_name!,
+        command: command.name!,
+      });
+    }
     updateRequestValue({
       ...request,
       command: command?.name,
@@ -646,6 +654,7 @@ function RequestWizard({
               onClick={() => {
                 setSelectedInstance(undefined);
                 setActiveIndex((index) => index - 1);
+                setSearchParams();
               }}
             >
               Back
@@ -703,6 +712,13 @@ function RequestWizard({
               onClick={() => {
                 cleanForm();
                 setActiveIndex((index) => index - 1);
+                if (request) {
+                  setSearchParams({
+                    namespace: request.namespace!,
+                    system: request.system!,
+                    system_version: request.system_version!,
+                  });
+                }
               }}
             >
               Back
