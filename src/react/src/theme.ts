@@ -63,4 +63,18 @@ export const theme = createTheme({
     dark: { palette: darkPalette },
   },
   defaultColorScheme: "light",
+  components: {
+    MuiStepIcon: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          "&.Mui-active": {
+            color: theme.palette.info.main,
+          },
+          "&.Mui-completed": {
+            color: theme.palette.info.main,
+          },
+        }),
+      },
+    },
+  },
 });
