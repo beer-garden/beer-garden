@@ -589,7 +589,7 @@ function GardenDashboard({
             {node.label}
           </Box>
         </div>
-        <div>{node.statusCounts}</div>
+        <Box sx={{ display: "flex" }}>{node.statusCounts}</Box>
       </div>
     );
   };
