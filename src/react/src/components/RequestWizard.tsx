@@ -270,22 +270,43 @@ function RequestWizard({
                 name: instance_name,
                 label: instance_name,
               });
-            }
 
-            if (command || command_display_name) {
-              setSelectedCommand(
-                chosenSystem?.commands?.find(
+              if (command || command_display_name) {
+                const chosenCommand = chosenSystem?.commands?.find(
                   (c) =>
                     (command && c.name == command) ||
                     (command_display_name &&
                       c.display_name == command_display_name),
-                ),
-              );
-              setActiveIndex(2);
-              setShowCreateRequest(true);
+                );
+                if (chosenCommand) {
+                  setSelectedCommand(chosenCommand);
+                  setActiveIndex(2);
+                  setShowCreateRequest(true);
+                } else {
+                  showSnackbar({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Invalid commmand: ${command_display_name ?? command}`,
+                    life: 3000,
+                  });
+                }
+              }
+            } else {
+              showSnackbar({
+                severity: "error",
+                summary: "Error",
+                detail: `Invalid instance name: ${instance_name}`,
+                life: 3000,
+              });
             }
           }
         } else {
+          showSnackbar({
+            severity: "error",
+            summary: "Error",
+            detail: `Unable to find system: ${namespace ?? ""} ${system ?? ""} ${system_version ?? ""}`,
+            life: 3000,
+          });
           setActiveIndex(0);
         }
         setShowStepper(true);
@@ -306,6 +327,10 @@ function RequestWizard({
     updateRequestValue({
       ...request,
       instance_name: instance?.name,
+    });
+    setSearchParams((params) => {
+      params.set("instance", instance.name);
+      return params;
     });
   };
 
