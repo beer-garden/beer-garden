@@ -1,10 +1,20 @@
 # Beer Garden Changelog
 
 # Auth
-
 TBD
 
 - Changes from 3.32.0rc0
+
+# 3.34.3
+8/19/2026
+
+- Fixed bug where local systems could not be deleted if the Garden Name was changed. (#2377)
+
+# 3.34.2
+8/14/2026
+
+- Fixed bug where "latest" system version provided with "target_garden" provided in URI where system
+  version was not calculated. (#2354) 
 
 # 3.34.1
 7/8/2026
