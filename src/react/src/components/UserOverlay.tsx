@@ -71,6 +71,7 @@ function UserOverlay({
         <Stack direction="row" sx={{ alignItems: "center" }}>
           <Switch
             checked={mode === "dark"}
+            color="default"
             onChange={(e) => {
               setDark(e.target.checked);
               setMode(e.target.checked ? "dark" : "light");
@@ -93,6 +94,7 @@ function UserOverlay({
         <Stack direction="row" sx={{ alignItems: "center" }}>
           <Switch
             checked={showAdvancedOption}
+            color="default"
             onChange={(e) => {
               setShowAdvancedOption(e.target.checked);
             }}

@@ -549,7 +549,7 @@ function NavigationMenu({
   }, []);
 
   return (
-    <AppBar position="static">
+    <AppBar position="static" sx={{ bgcolor: "primary.main" }}>
       <Container maxWidth={false}>
         <Toolbar
           disableGutters
@@ -637,7 +637,7 @@ function NavigationMenu({
           )}
           <Box sx={{ display: "flex", alignItems: "center", gap: 0 }}>
             <AccessButton
-              sx={{ height: "36px", color: "white", mr: 2 }}
+              sx={{ height: "36px", color: "primary.contrastText", mr: 2 }}
               text
               onClick={toggleRunTour}
               tooltip="Start Tour"
@@ -648,7 +648,7 @@ function NavigationMenu({
             </AccessButton>
             <CurrentRequestsTemplate listeners={listeners} config={config} />
             <AccessButton
-              sx={{ height: "36px", color: "white" }}
+              sx={{ height: "36px", color: "primary.contrastText" }}
               tooltip="User Preferences Menu"
               basic
               onClick={handleUserPopperOpen}

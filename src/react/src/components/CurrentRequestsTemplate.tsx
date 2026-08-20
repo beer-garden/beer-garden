@@ -314,7 +314,7 @@ function CurrentRequestsTemplate({
   return (
     <>
       <AccessButton
-        sx={{ height: "36px", color: "white" }}
+        sx={{ height: "36px", color: "primary.contrastText" }}
         label="Current Requests"
         onClick={handleCurrentRequestsOpen}
         text

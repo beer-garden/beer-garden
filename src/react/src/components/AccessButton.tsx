@@ -105,6 +105,10 @@ const AccessButton = ({
     props.variant = "text";
   }
 
+  if (!Object.hasOwn(props, "color")) {
+    props.color = "info";
+  }
+
   if (permission && config && config?.auth_enabled === true) {
     return (
       <HasAccess
