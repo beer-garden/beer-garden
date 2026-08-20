@@ -723,44 +723,59 @@ function RequestWizard({
                 }}
               >
                 <Grid container spacing={2}>
-                  <Grid size={2.5}>
+                  <Grid size={2}>
                     <Typography variant="body1" sx={{ fontWeight: "bold" }}>
                       Namespace
                     </Typography>
-                    <Typography variant="subtitle2">
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ overflowWrap: "break-word" }}
+                    >
                       {selectedSystem?.namespace}
                     </Typography>
                   </Grid>
-                  <Grid size={2.5}>
+                  <Grid size={2}>
                     <Typography variant="body1" sx={{ fontWeight: "bold" }}>
                       System
                     </Typography>
-                    <Typography variant="subtitle2">
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ overflowWrap: "break-word" }}
+                    >
                       {selectedSystem?.name}
                     </Typography>
                   </Grid>
-                  <Grid size={2.5}>
+                  <Grid size={2}>
                     <Typography variant="body1" sx={{ fontWeight: "bold" }}>
                       Version
                     </Typography>
-                    <Typography variant="subtitle2">
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ overflowWrap: "break-word" }}
+                    >
                       {selectedSystem?.version}
                     </Typography>
                   </Grid>
-                  <Grid size={2.5}>
+                  <Grid size={2}>
                     <Typography variant="body1" sx={{ fontWeight: "bold" }}>
                       Instance
                     </Typography>
-                    <Typography variant="subtitle2">
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ overflowWrap: "break-word" }}
+                    >
                       {selectedInstance?.name}
                     </Typography>
                   </Grid>
                   {activeIndex > 1 && (
-                    <Grid size={2}>
+                    <Grid size={4}>
                       <Typography variant="body1" sx={{ fontWeight: "bold" }}>
                         Command
                       </Typography>
-                      <Typography variant="subtitle2">
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ overflowWrap: "break-word" }}
+                      >
                         {selectedCommand?.name}
                       </Typography>
                     </Grid>
