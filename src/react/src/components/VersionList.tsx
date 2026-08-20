@@ -42,10 +42,11 @@ function VersionList({
     <Autocomplete
       sx={{ width: "200px" }}
       id={`${system.name}-version`}
+      disableClearable
       options={versionOptions}
       disabled={!versionOptions}
-      value={selectedVersion ?? null}
-      onChange={(_event: any, newValue: string | null | undefined) => {
+      value={selectedVersion}
+      onChange={(_event: any, newValue: string | null) => {
         const chosenVersion = newValue === null ? undefined : newValue;
         setSelectedVersion(chosenVersion);
         if (chosenVersion) {
