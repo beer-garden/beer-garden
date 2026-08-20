@@ -328,7 +328,7 @@ export interface Request {
   id?: string;
   is_event?: boolean;
   parent?: any;
-  children?: any;
+  children?: Request[];
   output?: string;
   hidden?: boolean;
   status?: string;

@@ -259,6 +259,7 @@ function RequestTreeMenu({
         items={[node]}
         itemTemplate={nodeTemplate}
         expandAll={true}
+        disableToggle={true}
         changeSelected={(id: string) => findRequest(id, rootRequest)}
         selectedItems={request && request.id ? request.id : undefined}
         sx={{ mt: 2 }}
