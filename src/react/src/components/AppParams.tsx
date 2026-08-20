@@ -10,14 +10,14 @@ function AppParams({ addRequestItem }: { addRequestItem: any }) {
     const paramsNamespace = searchParams.get("namespace") ?? undefined;
     const paramsSystem = searchParams.get("system") ?? undefined;
     const paramsSystemVersion = searchParams.get("system_version") ?? undefined;
-    const paramsInstanceName = searchParams.get("instance_name") ?? undefined;
+    const paramsInstance = searchParams.get("instance") ?? undefined;
     const paramsCommand = searchParams.get("command") ?? undefined;
 
     if (
       paramsNamespace ||
       paramsSystem ||
       paramsSystemVersion ||
-      paramsInstanceName ||
+      paramsInstance ||
       paramsCommand
     ) {
       addRequestItem({
@@ -26,7 +26,7 @@ function AppParams({ addRequestItem }: { addRequestItem: any }) {
           namespace: paramsNamespace,
           systemName: paramsSystem,
           version: paramsSystemVersion,
-          instance: paramsInstanceName,
+          instance: paramsInstance,
           command: paramsCommand,
         } as RequestCommand,
       });
