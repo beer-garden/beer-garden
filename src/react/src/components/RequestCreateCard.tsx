@@ -381,7 +381,7 @@ function RequestCreateCard({
             </Grid>
 
             <Grid>
-              {showCreateRequest && !showScheduleJob && (
+              {showCreateRequest && !toggleScheduleJob && (
                 <AccessButton
                   label="Submit"
                   disabled={!isFormValid}
@@ -400,22 +400,24 @@ function RequestCreateCard({
                   <FAIcon icon="arrow-right-to-bracket" sx={{ ml: 2 }} />
                 </AccessButton>
               )}
-              {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
-                <AccessButton
-                  label="Submit Job"
-                  color="success"
-                  disabled={!(isJobValid && isFormValid)}
-                  onClick={submitJob}
-                  {...permissions}
-                  permission="OPERATOR"
-                >
-                  <Typography variant="button" sx={{ display: "block" }}>
-                    Submit Job
-                  </Typography>
-                  <FAIcon icon="arrow-right-to-bracket" sx={{ ml: 2 }} />
-                </AccessButton>
-              )}
-              {showCreateRequest && showScheduleJob && requestItem?.jobId && (
+              {showCreateRequest &&
+                toggleScheduleJob &&
+                !requestItem?.jobId && (
+                  <AccessButton
+                    label="Submit Job"
+                    color="success"
+                    disabled={!(isJobValid && isFormValid)}
+                    onClick={submitJob}
+                    {...permissions}
+                    permission="OPERATOR"
+                  >
+                    <Typography variant="button" sx={{ display: "block" }}>
+                      Submit Job
+                    </Typography>
+                    <FAIcon icon="arrow-right-to-bracket" sx={{ ml: 2 }} />
+                  </AccessButton>
+                )}
+              {showCreateRequest && toggleScheduleJob && requestItem?.jobId && (
                 <AccessButton
                   label="Update Job"
                   color="success"

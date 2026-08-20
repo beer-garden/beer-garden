@@ -666,9 +666,11 @@ const EnhancedTable = ({
               displayGroupData.map((group) => {
                 if (group.data.length === 1) {
                   return (
-                    <TableRow>
+                    <TableRow key={`row-${group.group}`}>
                       {columns.map((column) => (
-                        <TableCell>
+                        <TableCell
+                          key={`${column.id}-${keyField ? group.data[0]?.[keyField] : (group.group ?? undefined)}`}
+                        >
                           {columnData(column, group.data[0])}
                         </TableCell>
                       ))}
@@ -677,12 +679,15 @@ const EnhancedTable = ({
                 }
                 if (group.data.length > 1) {
                   return group.data.map((groupData, index) => (
-                    <TableRow>
+                    <TableRow key={`row-${group.group}-${index}`}>
                       {columns.map((column) => {
                         if (column.field === groupBy) {
                           if (index === 0) {
                             return (
-                              <TableCell rowSpan={group.data.length}>
+                              <TableCell
+                                rowSpan={group.data.length}
+                                key={`${group.group}-${index}`}
+                              >
                                 {columnData(column, groupData)}
                               </TableCell>
                             );
@@ -691,7 +696,9 @@ const EnhancedTable = ({
                           }
                         } else {
                           return (
-                            <TableCell>
+                            <TableCell
+                              key={`${column.id}-${index}-${keyField ? group.data[index]?.[keyField] : (group.group ?? undefined)}`}
+                            >
                               {columnData(column, groupData)}
                             </TableCell>
                           );

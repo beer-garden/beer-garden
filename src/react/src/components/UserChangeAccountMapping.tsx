@@ -244,6 +244,7 @@ function UserChangeAccountMapping({
         <EnhancedTable
           data={gardenAccounts}
           displayAll
+          keyField="garden_name"
           columns={[
             {
               id: "garden_name",
