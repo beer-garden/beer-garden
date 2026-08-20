@@ -278,8 +278,8 @@ function RequestOptions({
                       <MenuList id="split-button-menu" autoFocusItem>
                         {items.map((option) => (
                           <MenuItem key={option.label} onClick={option.command}>
-                            <ListItemIcon sx={{ minWidth: "auto", mr: 1 }}>
-                              <FAIcon icon={option.icon} />
+                            <ListItemIcon sx={{ minWidth: "auto", mr: 1}}>
+                              <FAIcon icon={option.icon} sx={{ color: "text.primary" }}/>
                             </ListItemIcon>
                             <ListItemText
                               primary={option.label}
