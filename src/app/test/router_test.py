@@ -34,6 +34,9 @@ class TestDetermineTarget:
         monkeypatch.setattr(
             beer_garden.router, "_target_from_type", Mock(return_value=None)
         )
+        monkeypatch.setattr(
+            beer_garden.router, "get_garden", Mock(return_value=Garden(name="parent"))
+        )
         op.target_garden_name = "parent"
 
         assert _determine_target(op) == "parent"
@@ -56,6 +59,9 @@ class TestDetermineTarget:
     def test_provided(self, monkeypatch, op):
         monkeypatch.setattr(
             beer_garden.router, "_target_from_type", Mock(return_value="child")
+        )
+        monkeypatch.setattr(
+            beer_garden.router, "get_garden", Mock(return_value=Garden(name="parent"))
         )
         op.target_garden_name = "parent"
 
