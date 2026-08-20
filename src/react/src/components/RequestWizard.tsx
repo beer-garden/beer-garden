@@ -88,27 +88,6 @@ function RequestWizard({
         : undefined),
   );
 
-  if (requestItem) {
-    setSearchParams((params) => {
-      if (requestItem.requestCommandInput?.namespace) {
-        params.set("namespace", requestItem.requestCommandInput.namespace);
-      }
-      if (requestItem.requestCommandInput?.systemName) {
-        params.set("system", requestItem.requestCommandInput.systemName);
-      }
-      if (requestItem.requestCommandInput?.version) {
-        params.set("version", requestItem.requestCommandInput.version);
-      }
-      if (requestItem.requestCommandInput?.instance) {
-        params.set("instance", requestItem.requestCommandInput.instance);
-      }
-      if (requestItem.requestCommandInput?.command) {
-        params.set("command", requestItem.requestCommandInput.command);
-      }
-      return params;
-    });
-  }
-
   const updateRequestValue = (requestValue: Request | undefined) => {
     setRequest(requestValue);
     updateRequestItem({
@@ -355,29 +334,6 @@ function RequestWizard({
     });
   };
 
-  if (request && !searchParams) {
-    setSearchParams((params) => {
-      if (request.namespace) {
-        params.set("namespace", request.namespace);
-      }
-      if (request.system) {
-        params.set("system", request.system);
-      }
-      if (request.system_version) {
-        params.set("version", request.system_version);
-      }
-      if (request.instance_name) {
-        params.set("instance", request.instance_name);
-      }
-      if (request.command_display_name) {
-        params.set("command", request.command_display_name);
-      } else if (request.command) {
-        params.set("command", request.command);
-      }
-      return params;
-    });
-  }
-
   useEffect(() => {
     if (selectedSystem) {
       updateRequestValue({
@@ -413,6 +369,27 @@ function RequestWizard({
   }, [selectedInstance, setSelectedInstance]);
 
   useEffect(() => {
+    if (requestItem) {
+      setSearchParams((params) => {
+        if (requestItem.requestCommandInput?.namespace) {
+          params.set("namespace", requestItem.requestCommandInput.namespace);
+        }
+        if (requestItem.requestCommandInput?.systemName) {
+          params.set("system", requestItem.requestCommandInput.systemName);
+        }
+        if (requestItem.requestCommandInput?.version) {
+          params.set("version", requestItem.requestCommandInput.version);
+        }
+        if (requestItem.requestCommandInput?.instance) {
+          params.set("instance", requestItem.requestCommandInput.instance);
+        }
+        if (requestItem.requestCommandInput?.command) {
+          params.set("command", requestItem.requestCommandInput.command);
+        }
+        return params;
+      });
+    }
+
     if (
       requestItem?.requestId !== null &&
       requestItem?.requestId !== undefined &&
