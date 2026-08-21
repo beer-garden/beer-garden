@@ -1,8 +1,8 @@
 import {
   Box,
-  Breadcrumbs,
   Card,
   CardContent,
+  Grid,
   Skeleton,
   Step,
   StepButton,
@@ -500,14 +500,6 @@ function RequestWizard({
     }
   }, []);
 
-  const breadcrumbStyles = {
-    p: 2,
-    border: "1px solid",
-    borderColor: grey[300],
-    borderRadius: 2,
-    mb: 2,
-  };
-
   const steps = ["Pick System", "Pick command", "Form"];
 
   const handleStep = (step: number) => () => {
@@ -533,63 +525,6 @@ function RequestWizard({
     setActiveIndex((index) => index + 1);
   };
 
-  const iconItemTemplate = (item: any) => {
-    if (item.icon) {
-      return (
-        <span>
-          <FAIcon icon={item.icon} />
-        </span>
-      );
-    }
-    return <span>{item.label}</span>;
-  };
-
-  const breadcrumbs = [
-    {
-      icon: "file-lines",
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedSystem?.namespace,
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedSystem?.name,
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedSystem?.version,
-      template: iconItemTemplate,
-    },
-  ];
-
-  const commandBreadcrumbs = [
-    {
-      icon: "file-lines",
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedSystem?.namespace,
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedSystem?.name,
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedSystem?.version,
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedInstance?.name,
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedCommand?.name,
-      template: iconItemTemplate,
-    },
-  ];
-
   const cleanForm = () => {
     const newRequest = { ...request, command_type: "" };
     delete newRequest.parameters;
@@ -604,17 +539,6 @@ function RequestWizard({
     if (activeIndex == 1) {
       return (
         <>
-          <Box sx={breadcrumbStyles}>
-            <Breadcrumbs
-              separator={<FAIcon icon="angle-right" />}
-              aria-label="breadcrumb"
-              aria-description="Breadcrumb navigation for system and instance selection steps of request creation."
-            >
-              {breadcrumbs.map((item) => (
-                <span>{item.template(item)}</span>
-              ))}
-            </Breadcrumbs>
-          </Box>
           <CommandList
             selectedSystem={selectedSystem}
             commandListButtonClick={commandListButtonClick}
@@ -647,17 +571,6 @@ function RequestWizard({
     if (activeIndex == 2) {
       return (
         <>
-          <Box sx={breadcrumbStyles}>
-            <Breadcrumbs
-              separator={<FAIcon icon="angle-right" />}
-              aria-label="breadcrumb"
-              aria-description="Breadcrumb navigation for command selection step of request creation."
-            >
-              {commandBreadcrumbs.map((item) => (
-                <span>{item.template(item)}</span>
-              ))}
-            </Breadcrumbs>
-          </Box>
           <Box sx={{ display: "flex", ml: 4 }}>
             <Typography sx={{ mr: 2, alignSelf: "center" }}>
               Scheduled
@@ -799,6 +712,77 @@ function RequestWizard({
                 </Step>
               ))}
             </Stepper>
+            {activeIndex > 0 && (
+              <Box
+                sx={{
+                  p: 2,
+                  border: "1px solid",
+                  borderColor: grey[300],
+                  borderRadius: 2,
+                  mb: 2,
+                }}
+              >
+                <Grid container spacing={2}>
+                  <Grid size={2}>
+                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                      Namespace
+                    </Typography>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ overflowWrap: "break-word" }}
+                    >
+                      {selectedSystem?.namespace}
+                    </Typography>
+                  </Grid>
+                  <Grid size={2}>
+                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                      System
+                    </Typography>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ overflowWrap: "break-word" }}
+                    >
+                      {selectedSystem?.name}
+                    </Typography>
+                  </Grid>
+                  <Grid size={2}>
+                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                      Version
+                    </Typography>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ overflowWrap: "break-word" }}
+                    >
+                      {selectedSystem?.version}
+                    </Typography>
+                  </Grid>
+                  <Grid size={2}>
+                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                      Instance
+                    </Typography>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ overflowWrap: "break-word" }}
+                    >
+                      {selectedInstance?.name}
+                    </Typography>
+                  </Grid>
+                  {activeIndex > 1 && (
+                    <Grid size={4}>
+                      <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                        Command
+                      </Typography>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ overflowWrap: "break-word" }}
+                      >
+                        {selectedCommand?.name}
+                      </Typography>
+                    </Grid>
+                  )}
+                </Grid>
+              </Box>
+            )}
             <Box>{getStepperPanel()}</Box>
           </>
         )}
