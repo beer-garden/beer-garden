@@ -76,6 +76,13 @@ export interface InputParam extends Parameter {
   errorMsg?: string;
 }
 
+export interface SystemForceDeleteDialogProps {
+  system: System;
+  error: string;
+  isVisible: boolean;
+  onClose: any;
+}
+
 export interface InstanceDialogProps {
   instance: Instance;
   system: System;
