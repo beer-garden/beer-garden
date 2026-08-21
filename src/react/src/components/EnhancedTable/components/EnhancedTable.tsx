@@ -732,13 +732,6 @@ const EnhancedTable = ({
               pageRecords ? EnhancedTablePaginationActions : () => <></>
             }
             labelDisplayedRows={defaultLabelDisplayedRows}
-            sx={{
-              "& .MuiTablePagination-spacer": { display: "none" },
-              "& .MuiTablePagination-toolbar": {
-                justifyContent: "flex-start",
-                paddingLeft: 2,
-              },
-            }}
           />
         )}
       </TableContainer>

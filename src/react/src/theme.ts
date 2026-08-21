@@ -76,5 +76,19 @@ export const theme = createTheme({
         }),
       },
     },
+    MuiTablePagination: {
+      styleOverrides: {
+        selectIcon: ({ theme }) => ({
+          color: theme.palette.text.primary,
+        }),
+        root: {
+          "& .MuiTablePagination-spacer": { display: "none" },
+          "& .MuiTablePagination-toolbar": {
+            justifyContent: "flex-start",
+            paddingLeft: 2,
+          },
+        },
+      },
+    },
   },
 });
