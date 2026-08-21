@@ -80,7 +80,7 @@ function SystemForceDeleteDialog({
     >
       <DialogTitle id="system-force-delete-dialog-title">
         <Grid container>
-          <Grid size="grow">{`Error deleting ${system.name}`}</Grid>
+          <Grid size="grow">{`Force Deleting ${system.name}`}</Grid>
           <Grid>
             <AccessButton
               sx={{ ml: 2 }}
