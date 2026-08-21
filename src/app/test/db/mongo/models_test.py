@@ -187,12 +187,20 @@ class TestRequest(object):
                 req.clean()
 
         @pytest.mark.parametrize(
-            "parent_id, has_parent",
-            [(None, False), (ObjectId(), True)],
+            "has_parent",
+            [(False), (True)],
         )
-        def test_set_has_parent(self, parent_id, has_parent):
-            if parent_id is not None:
-                Request(id=parent_id).save()
+        def test_set_has_parent(self, has_parent):
+            parent_id = None
+            if has_parent:
+                parent = Request(
+                    system="system",
+                    instance_name="instance",
+                    system_version="1",
+                    namespace="namespace",
+                    command="say",
+                ).save()
+                parent_id = str(parent.id)
             req = Request(command="bar", parent_id=parent_id)
             req.clean()
             assert req.has_parent is has_parent
