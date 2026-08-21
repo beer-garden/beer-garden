@@ -53,7 +53,7 @@ export const EnhancedTableColumnHeaderFilter = ({
         <IconButton
           onClick={handleFilterMenuOpen}
           size="small"
-          sx={{ ml: 2 }}
+          sx={{ ml: 2, color: "text.primary" }}
           aria-label={`Filter ${typeof column.label === "string" ? column.label : column.id}`}
           aria-controls={
             filterMenuOpen ? `filter-menu-${column.field}` : undefined
