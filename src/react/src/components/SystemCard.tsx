@@ -11,7 +11,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { grey } from "@mui/material/colors";
-import React, { RefObject, useEffect, useState } from "react";
+import React, { RefObject, useEffect, useRef, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
 import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteRequestsDialog";
@@ -31,6 +31,7 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { GetSeverity } from "../services/util_service";
+import SystemForceDeleteDialog from "./SystemForceDeleteDialog";
 
 interface SystemCardProps {
   system: System;
@@ -51,6 +52,11 @@ function SystemCard({
 }: SystemCardProps) {
   const showSnackbar = useSnackbar();
   const showConfirmDialog = useConfirmDialog();
+
+  const [forceDeleteVisible, setForceDeleteVisible] = useState<boolean>(false);
+  const closeForceDeleteDialog = () => setForceDeleteVisible(false);
+  const forceDeleteError = useRef<string>("");
+
   const [instanceMenuAnchor, setInstanceMenuAnchor] = useState<
     HTMLElement | undefined
   >(undefined);
@@ -205,7 +211,12 @@ function SystemCard({
       StartInstance(instance, system)
         .then(() => {})
         .catch((error) => {
-          console.error("Error starting system:", error);
+          showSnackbar({
+            severity: "error",
+            summary: "Error",
+            detail: `Error starting system: ${error}`,
+            life: 3000,
+          });
         });
     });
   }
@@ -215,7 +226,12 @@ function SystemCard({
       StopInstance(instance, system)
         .then(() => {})
         .catch((error) => {
-          console.error("Error stopping system:", error);
+          showSnackbar({
+            severity: "error",
+            summary: "Error",
+            detail: `Error stopping system: ${error}`,
+            life: 3000,
+          });
         });
     });
   }
@@ -224,7 +240,12 @@ function SystemCard({
     ReloadSystem(system)
       .then(() => {})
       .catch((error) => {
-        console.error("Error reloading system:", error);
+        showSnackbar({
+          severity: "error",
+          summary: "Error",
+          detail: `Error reloading system: ${error}`,
+          life: 3000,
+        });
       });
   }
 
@@ -246,7 +267,8 @@ function SystemCard({
           });
         })
         .catch((error) => {
-          console.error("Error deleting system:", error);
+          forceDeleteError.current = error.toString();
+          setForceDeleteVisible(true);
         });
     };
     const reject = () => {};
@@ -271,7 +293,12 @@ function SystemCard({
     StartInstance(instance, system)
       .then(() => {})
       .catch((error) => {
-        console.error("Error starting instance:", error);
+        showSnackbar({
+          severity: "error",
+          summary: "Error",
+          detail: `Error starting instance: ${error}`,
+          life: 3000,
+        });
       });
   }
 
@@ -279,7 +306,12 @@ function SystemCard({
     StopInstance(instance, system)
       .then(() => {})
       .catch((error) => {
-        console.error("Error deleting stopping instance:", error);
+        showSnackbar({
+          severity: "error",
+          summary: "Error",
+          detail: `Error stopping instance: ${error}`,
+          life: 3000,
+        });
       });
   }
 
@@ -519,6 +551,12 @@ function SystemCard({
   };
   return (
     <>
+      <SystemForceDeleteDialog
+        system={system}
+        error={forceDeleteError.current}
+        isVisible={forceDeleteVisible}
+        onClose={closeForceDeleteDialog}
+      />
       <Box
         sx={{
           border: "1px solid",
