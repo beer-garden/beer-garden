@@ -569,7 +569,7 @@ function RequestWizard({
     setSearchParams({
       namespace: system.namespace!,
       system: system.name!,
-      system_version: system.version!,
+      version: system.version!,
     });
     updateRequestValue({
       ...request,
@@ -585,7 +585,7 @@ function RequestWizard({
       setSearchParams({
         namespace: request.namespace!,
         system: request.system!,
-        system_version: request.system_version!,
+        version: request.system_version!,
         instance: request.instance_name!,
         command: command.name!,
       });
@@ -762,7 +762,7 @@ function RequestWizard({
                   setSearchParams({
                     namespace: request.namespace!,
                     system: request.system!,
-                    system_version: request.system_version!,
+                    version: request.system_version!,
                   });
                 }
               }}
