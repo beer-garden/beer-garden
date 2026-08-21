@@ -789,4 +789,5 @@ def ensure_model_migration():
             ensure_v3_29_model_migration()
             ensure_v3_30_model_migration()
 
+    # TODO: Move this over before release
     ensure_v3_35_model_migration()
