@@ -138,7 +138,7 @@ def prune_request_cursor(
 
             # Get children
             if request:
-                child_cursor = Request.objects(parent=request).only(
+                child_cursor = Request.objects(parent_id=request.id).only(
                     "id", "output_gridfs", "parameters_gridfs", "parameters"
                 )
                 prune_request_cursor(
@@ -370,12 +370,14 @@ def prune_missed_temp_command():
     if batch_size > 0:
 
         temp_requests = (
-            Request.objects.only("parent", "id").filter(**filter).batch_size(batch_size)
+            Request.objects.only("parent_id", "id")
+            .filter(**filter)
+            .batch_size(batch_size)
         )
         prune_missed_temp_requests(temp_requests)
 
     else:
-        temp_requests = Request.objects.only("parent", "id").filter(**filter)
+        temp_requests = Request.objects.only("parent_id", "id").filter(**filter)
         prune_missed_temp_requests(temp_requests)
 
 
@@ -386,7 +388,7 @@ def prune_missed_temp_requests(temp_requests):
         for request in temp_requests:
             try:
                 Request.objects.get(
-                    id=request.parent.id,
+                    id=request.parent_id,
                     status__in=[
                         "CREATED",
                         "RECEIVED",
@@ -544,12 +546,14 @@ def prune_orphan_command_type(command_type):
     if batch_size > 0:
 
         orphaned_requests = (
-            Request.objects.only("parent", "id").filter(**filter).batch_size(batch_size)
+            Request.objects.only("parent_id", "id")
+            .filter(**filter)
+            .batch_size(batch_size)
         )
         prune_orphan_requests(orphaned_requests, command_type, batch_size=batch_size)
 
     else:
-        orphaned_requests = Request.objects.only("parent", "id").filter(**filter)
+        orphaned_requests = Request.objects.only("parent_id", "id").filter(**filter)
         prune_orphan_requests(orphaned_requests, command_type)
 
 
@@ -558,7 +562,7 @@ def prune_orphan_requests(orphaned_requests, command_type, batch_size=None):
     try:
         for request in orphaned_requests:
             try:
-                Request.objects.get(id=request.parent.id)
+                Request.objects.get(id=request.parent_id)
             except DoesNotExist:
                 request.delete()
                 counter = counter + 1

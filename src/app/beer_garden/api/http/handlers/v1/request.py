@@ -31,6 +31,18 @@ class RequestAPI(AuthorizationHandler):
             required: true
             description: The ID of the Request
             type: string
+          - name: children_depth
+            in: query
+            required: false
+            description: Max depth of children to return
+            type: integer
+            default: 1
+          - name: include
+            in: query
+            required: false
+            description: Fields to include in response objects
+            type: string
+            collectionFormat: multi
         responses:
           200:
             description: Request with the given ID
@@ -58,8 +70,15 @@ class RequestAPI(AuthorizationHandler):
 
         _ = self.get_or_raise(Request, id=request_id)
 
+        query_args = {}
+        if len(self.get_arguments("include")) > 0:
+            query_args["include_fields"] = self.get_arguments("include")
+        query_args["children_depth"] = int(self.get_argument("children_depth", "1"))
+
         response = await self.process_operation(
-            Operation(operation_type="REQUEST_READ", args=[request_id])
+            Operation(
+                operation_type="REQUEST_READ", args=[request_id], kwargs=query_args
+            )
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")

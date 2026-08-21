@@ -111,10 +111,10 @@ class RequestValidator(object):
         if request.metadata is not None and "_topic" in request.metadata:
             return
 
-        if request.parent is not None:
+        if request.parent_id is not None:
             if (
                 db.count(
-                    Request, id=request.parent.id, status__in=Request.COMPLETED_STATUSES
+                    Request, id=request.parent_id, status__in=Request.COMPLETED_STATUSES
                 )
                 > 0
             ):
@@ -615,7 +615,35 @@ class RequestValidator(object):
             )
 
 
-def get_request(request_id: str = None, request: Request = None) -> Request:
+def get_request_children(request, max_depth=1, **kwargs):
+
+    request.children = db.query(
+        Request, filter_params={"parent_id": request.id}, **kwargs
+    )
+
+    if max_depth != 0:
+        if request.children:
+            for child in request.children:
+                child = get_request_children(child, max_depth=(max_depth - 1), **kwargs)
+    return request
+
+
+def get_request_parent(request, max_depth=1, **kwargs):
+
+    if request.parent_id:
+        request.parent = db.query_unique(Request, id=request.parent_id, **kwargs)
+
+    if max_depth != 0 and request.parent:
+        request.parent = get_request_parent(
+            request.parent, max_depth=(max_depth - 1), **kwargs
+        )
+
+    return request
+
+
+def get_request(
+    request_id: str = None, request: Request = None, children_depth=1, **kwargs
+) -> Request:
     """Retrieve an individual Request
 
     Args:
@@ -626,8 +654,14 @@ def get_request(request_id: str = None, request: Request = None) -> Request:
         The Request
 
     """
-    request = request or db.query_unique(Request, id=request_id, raise_missing=True)
-    request.children = db.query(Request, filter_params={"parent": request})
+    request = request or db.query_unique(
+        Request, id=request_id, raise_missing=True, **kwargs
+    )
+
+    if children_depth != 0:
+        get_request_children(request, max_depth=(children_depth - 1), **kwargs)
+
+    get_request_parent(request, **kwargs)
 
     return request
 
@@ -724,8 +758,9 @@ def _validate_request(
     request: Request, choice_validation_enabled: bool = None
 ) -> Request:
     """Validates a Request"""
+    migrate_parent_id(request)
     if choice_validation_enabled is None:
-        choice_validation_enabled = request.parent is None
+        choice_validation_enabled = request.parent_id is None
     return RequestValidator.instance().validate_request(
         request, choice_validation_enabled=choice_validation_enabled
     )
@@ -769,6 +804,7 @@ def process_request(
         The processed Request
 
     """
+
     if isinstance(new_request, Request):
         request = new_request
     elif isinstance(new_request, RequestTemplate):
@@ -795,6 +831,7 @@ def process_request(
         logger.debug(f"Publishing {request!r}")
     else:
         # Save after validation since validate can modify the request
+
         request = create_request(request)
 
         logger.debug(f"Publishing {request!r}")
@@ -857,14 +894,15 @@ def create_request(request: Request) -> Request:
     if request.target_garden is None:
         request.target_garden = config.get("garden.name")
 
-    if request.has_parent or request.parent is not None:
-        if request.parent is None:
+    migrate_parent_id(request)
+    if request.has_parent or request.parent_id is not None:
+        if request.parent_id is None:
             request.has_parent = False
         else:
             try:
                 parent = db.query_unique(
                     Request,
-                    id=request.parent.id,
+                    id=request.parent_id,
                     include_fields=["command_type"],
                     raise_missing=True,
                 )
@@ -873,6 +911,7 @@ def create_request(request: Request) -> Request:
             except DoesNotExist:
                 request.has_parent = False
                 request.parent = None
+                request.parent_id = None
 
     if hasattr(request.metadata, "_topic") and request.source_garden == config.get(
         "garden.name"
@@ -1059,6 +1098,7 @@ def update_request(request: Request):
                 f"Failed to update request {request.id}. Creating new request instead."
             )
 
+    migrate_parent_id(request)
     return db.create(request)
 
 
@@ -1195,14 +1235,15 @@ def handle_event_rebroadcast(event_name, request):
 
     # If no parent are set, we only want to publish to the UI events handler
     if not config.get("parent.stomp.enabled") and not config.get("parent.http.enabled"):
+        migrate_parent_id(request)
         publish(
             Event(
                 name=event_name,
                 payload=Request(
                     id=request.id,
                     parent=(
-                        Request(id=request.parent.id)
-                        if request.parent is not None
+                        Request(id=request.parent_id)
+                        if request.parent_id is not None
                         else None
                     ),
                 ),
@@ -1228,14 +1269,17 @@ def handle_event_create(event):
 
         # Check if parent request exists and load only fields required for
         # auth features
-        if event.payload.has_parent and event.payload.parent is not None:
+        event.payload = migrate_parent_id(event.payload)
+        if event.payload.has_parent and event.payload.parent_id is not None:
+
             parent_request = db.query_unique(
-                Request, id=event.payload.parent.id, include_fields=["requester"]
+                Request, id=event.payload.parent_id, include_fields=["requester"]
             )
 
             # Missing Parent Request in the database
             if parent_request is None:
                 event.payload.parent = None
+                event.payload.parent_id = None
                 event.payload.has_parent = False
 
         # Set source and target gardens if not already set
@@ -1398,17 +1442,27 @@ def handle_event(event):
                 handle_event_rebroadcast(event.name, existing_request)
 
 
+def migrate_parent_id(request: Request):
+    # This handles any requests generated prior to 3.35.0
+
+    if request.parent is not None and request.parent_id is None:
+        request.parent_id = request.parent.id
+
+    return request
+
+
 def clean_command_type_temp(request: Request, is_remote: bool):
     try:
         # Only delete TEMP requests if it is the root request or
         # if its parent has already completed
+        migrate_parent_id(request)
         if request.command_type == "TEMP" and (
             not request.has_parent
             or (
-                request.parent is not None
+                request.parent_id is not None
                 and db.count(
                     Request,
-                    id=request.parent.id,
+                    id=request.parent_id,
                     status__in=[
                         "INVALID",
                         "CANCELED",
