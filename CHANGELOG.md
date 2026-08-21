@@ -6,7 +6,8 @@ TBD
 - Migrating Request mongo model to not utilize DBRef for linking Parent requests. Instead link 
   in follow on queries with a model value of `parent_id` (#2386)
 - Database Migration to convert Request models for Parent assocaition (#2386)
-- Updated Request GET API for Request to support include fields and parent/children depth  (#2386)
+- Updated Request GET API for Request to support include fields and parent/children depth (#2386)
+
   Example: Returns back only status and outpout for Request ID
   ```
     /api/v1/requests/<REQUEST ID>?parent_depth=0&children_depth=0&include=status&include=output
