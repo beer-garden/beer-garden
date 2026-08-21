@@ -1485,7 +1485,7 @@ def clean_command_type_temp(request: Request, is_remote: bool):
         request.children = db.query(
             Request,
             filter_params={
-                "parent": request,
+                "parent_id": request.id,
                 "command_type": "TEMP",
                 "status__in": [
                     "INVALID",
@@ -1517,7 +1517,7 @@ def cancel_request_children(request: Request):
     Args:
         request (Request): Parent Request
     """
-    request.children = db.query(Request, filter_params={"parent": request.id})
+    request.children = db.query(Request, filter_params={"parent_id": request.id})
 
     for child in request.children:
         if child.status in [

@@ -138,7 +138,7 @@ def prune_request_cursor(
 
             # Get children
             if request:
-                child_cursor = Request.objects(parent_id=request.id).only(
+                child_cursor = Request.objects(parent_id=str(request.id)).only(
                     "id", "output_gridfs", "parameters_gridfs", "parameters"
                 )
                 prune_request_cursor(

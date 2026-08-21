@@ -191,7 +191,7 @@ class TestRequest(object):
             [(None, False), ("something", True)],
         )
         def test_set_has_parent(self, parent, has_parent):
-            req = Request(command="bar", parent=parent)
+            req = Request(command="bar", parent_id=str(parent.id))
             req.clean()
             assert req.has_parent is has_parent
 
@@ -200,7 +200,9 @@ class TestRequest(object):
             [(None, True), (Request(command="say"), False)],
         )
         def test_parent_mismatch(self, parent, has_parent):
-            req = Request(command="bar", parent=parent, has_parent=has_parent)
+            req = Request(
+                command="bar", parent_id=str(parent.id), has_parent=has_parent
+            )
             with pytest.raises(ModelValidationError):
                 req.clean()
 
@@ -224,7 +226,7 @@ class TestRequest(object):
                 system_version="1",
                 namespace="namespace",
                 command="bar",
-                parent=parent,
+                parent_id=str(parent.id),
                 has_parent=True,
             ).save()
             req2 = Request.objects.get(id=req.id)
@@ -287,7 +289,7 @@ class TestRequest(object):
                 namespace="namespace",
                 command="bar",
                 has_parent=True,
-                parent=parent,
+                parent_id=str(parent.id),
                 status="SUCCESS",
             )
 
@@ -315,7 +317,7 @@ class TestRequest(object):
                 namespace="namespace",
                 command="bar",
                 has_parent=True,
-                parent=parent,
+                parent_id=str(parent.id),
                 status="CREATED",
             )
 
@@ -325,7 +327,7 @@ class TestRequest(object):
             assert len(Request.objects.filter(id=parent.id)) == 0
             assert len(Request.objects.filter(id=child.id)) == 1
 
-            assert Request.objects.get(id=child.id).parent is None
+            assert Request.objects.get(id=child.id).parent_id is None
             assert not Request.objects.get(id=child.id).has_parent
 
     # TODO - Make these integration tests

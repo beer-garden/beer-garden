@@ -173,7 +173,7 @@ def request_permitted_child(remote_system, request_permitted):
         command="mycommand",
         instance_name="default",
         parameters={"im": "thechild"},
-        parent=request_permitted,
+        parent_id=str(request_permitted.id),
     )
     request.save()
 
