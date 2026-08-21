@@ -187,21 +187,21 @@ class TestRequest(object):
                 req.clean()
 
         @pytest.mark.parametrize(
-            "parent, has_parent",
+            "parent_id, has_parent",
             [(None, False), ("something", True)],
         )
-        def test_set_has_parent(self, parent, has_parent):
-            req = Request(command="bar", parent_id=str(parent.id))
+        def test_set_has_parent(self, parent_id, has_parent):
+            req = Request(command="bar", parent_id=parent_id)
             req.clean()
             assert req.has_parent is has_parent
 
         @pytest.mark.parametrize(
-            "parent, has_parent",
-            [(None, True), (Request(command="say"), False)],
+            "parent_id, has_parent",
+            [(None, True), ("something", False)],
         )
-        def test_parent_mismatch(self, parent, has_parent):
+        def test_parent_mismatch(self, parent_id, has_parent):
             req = Request(
-                command="bar", parent_id=str(parent.id), has_parent=has_parent
+                command="bar", parent_id=parent_id, has_parent=has_parent
             )
             with pytest.raises(ModelValidationError):
                 req.clean()
