@@ -37,6 +37,12 @@ class RequestAPI(AuthorizationHandler):
             description: Max depth of children to return
             type: integer
             default: 1
+          - name: parent_depth
+            in: query
+            required: false
+            description: Max depth of parent to return
+            type: integer
+            default: 1
           - name: include
             in: query
             required: false
@@ -74,6 +80,7 @@ class RequestAPI(AuthorizationHandler):
         if len(self.get_arguments("include")) > 0:
             query_args["include_fields"] = self.get_arguments("include")
         query_args["children_depth"] = int(self.get_argument("children_depth", "1"))
+        query_args["parent_depth"] = int(self.get_argument("parent_depth", "1"))
 
         response = await self.process_operation(
             Operation(

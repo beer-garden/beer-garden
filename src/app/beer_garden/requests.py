@@ -642,13 +642,19 @@ def get_request_parent(request, max_depth=1, **kwargs):
 
 
 def get_request(
-    request_id: str = None, request: Request = None, children_depth=1, **kwargs
+    request_id: str = None,
+    request: Request = None,
+    parent_depth=1,
+    children_depth=1,
+    **kwargs,
 ) -> Request:
     """Retrieve an individual Request
 
     Args:
         request_id: The Request ID
         request: The Request
+        parent_depth: Recursive depth of query parent Requests, -1 is all
+        children_depth: Recursive depth of query children Requests, -1 is all
 
     Returns:
         The Request
@@ -661,7 +667,8 @@ def get_request(
     if children_depth != 0:
         get_request_children(request, max_depth=(children_depth - 1), **kwargs)
 
-    get_request_parent(request, **kwargs)
+    if parent_depth != 0:
+        get_request_parent(request, parent_depth=(parent_depth - 1), **kwargs)
 
     return request
 
