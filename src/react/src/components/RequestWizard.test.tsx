@@ -1,4 +1,5 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { BrowserRouter } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -9,6 +10,11 @@ import * as systemService from "../services/system_service";
 import RequestWizard from "./RequestWizard";
 
 vi.mock("../services/system_service");
+
+const baseURL =
+  import.meta.env.VITE_BASE_URL === "/"
+    ? undefined
+    : import.meta.env.VITE_BASE_URL || undefined;
 
 describe("RequestWizard", () => {
   beforeEach(() => {
@@ -27,11 +33,13 @@ describe("RequestWizard", () => {
 
     render(
       <SnackbarProvider>
-        <RequestWizard
-          requestItem={newItem}
-          updateRequestItem={() => {}}
-          config={{}}
-        />
+        <BrowserRouter basename={baseURL}>
+          <RequestWizard
+            requestItem={newItem}
+            updateRequestItem={() => {}}
+            config={{}}
+          />
+        </BrowserRouter>
       </SnackbarProvider>,
     );
 

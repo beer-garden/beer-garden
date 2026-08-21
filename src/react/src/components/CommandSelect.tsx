@@ -3,6 +3,7 @@ import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import { validate as validateVersion } from "compare-versions";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import { Command, Instance, System } from "../models/brewtils-types";
 import { RequestCommand } from "../models/models";
@@ -47,6 +48,8 @@ function CommandSelect({
   const [selectedCommand, setSelectedCommand] = useState<string | undefined>(
     requestCommand?.command ?? undefined,
   );
+
+  const [_searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     const namespaceList: Array<string> = [];
@@ -158,6 +161,10 @@ function CommandSelect({
 
     if (namespaceList.length === 1 && selectedNamespace !== namespaceList[0]) {
       setSelectedNamespace(namespaceList[0]);
+      setSearchParams((params) => {
+        params.set("namespace", namespaceList[0]);
+        return params;
+      });
     } else if (
       namespaceList.length > 0 &&
       selectedNamespace !== undefined &&
@@ -171,6 +178,13 @@ function CommandSelect({
       selectedSystemName !== systemNameList[0]
     ) {
       setSelectedSystemName(systemNameList[0]);
+      setSearchParams((params) => {
+        if (selectedNamespace) {
+          params.set("namespace", selectedNamespace);
+        }
+        params.set("system", systemNameList[0]);
+        return params;
+      });
     } else if (
       systemNameList.length > 0 &&
       selectedSystemName !== undefined &&
@@ -187,6 +201,16 @@ function CommandSelect({
         systemVersionList.length === 1)
     ) {
       setSelectedVersion(systemVersionList[0]);
+      setSearchParams((params) => {
+        if (selectedNamespace) {
+          params.set("namespace", selectedNamespace);
+        }
+        if (selectedSystemName) {
+          params.set("system", selectedSystemName);
+        }
+        params.set("version", systemVersionList[0]);
+        return params;
+      });
     } else if (
       selectedVersion !== undefined &&
       selectedVersion !== "latest" &&
@@ -207,6 +231,22 @@ function CommandSelect({
 
     if (commandList.length === 1 && selectedCommand !== commandList[0]) {
       setSelectedCommand(commandList[0]);
+      setSearchParams((params) => {
+        if (selectedNamespace) {
+          params.set("namespace", selectedNamespace);
+        }
+        if (selectedSystemName) {
+          params.set("system", selectedSystemName);
+        }
+        if (selectedVersion) {
+          params.set("version", selectedVersion);
+        }
+        if (selectedInstance) {
+          params.set("instance", selectedInstance);
+        }
+        params.set("command", commandList[0]);
+        return params;
+      });
     } else if (
       commandList.length > 0 &&
       selectedCommand !== undefined &&
@@ -214,6 +254,35 @@ function CommandSelect({
     ) {
       setSelectedCommand(undefined);
     }
+
+    setSearchParams((params) => {
+      if (selectedNamespace) {
+        params.set("namespace", selectedNamespace);
+      } else {
+        params.delete("namespace");
+      }
+      if (selectedSystemName) {
+        params.set("system", selectedSystemName);
+      } else {
+        params.delete("system");
+      }
+      if (selectedVersion) {
+        params.set("version", selectedVersion);
+      } else {
+        params.delete("version");
+      }
+      if (selectedInstance) {
+        params.set("instance", selectedInstance);
+      } else {
+        params.delete("instance");
+      }
+      if (selectedCommand) {
+        params.set("command", selectedCommand);
+      } else {
+        params.delete("command");
+      }
+      return params;
+    });
 
     if (
       requestCommand?.namespace !== selectedNamespace ||

@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import {
   Command,
@@ -44,7 +45,9 @@ function RequestWizard({
   config: Config;
 }) {
   const showSnackbar = useSnackbar();
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+
+  const [_searchParams, setSearchParams] = useSearchParams();
 
   const [selectedSystem, setSelectedSystem] = useState<System | undefined>(
     undefined,
@@ -259,29 +262,51 @@ function RequestWizard({
           target_garden: chosenSystem?.garden_name,
           source_garden: config.garden_name,
         });
-        if (instance_name) {
-          if (chosenSystem?.instances?.find((i) => i.name == instance_name)) {
-            setSelectedInstance({
-              name: instance_name,
-              label: instance_name,
-            });
-          }
+        if (chosenSystem) {
+          setActiveIndex(1);
+          if (instance_name) {
+            if (chosenSystem?.instances?.find((i) => i.name == instance_name)) {
+              setSelectedInstance({
+                name: instance_name,
+                label: instance_name,
+              });
 
-          if (command || command_display_name) {
-            setSelectedCommand(
-              chosenSystem?.commands?.find(
-                (c) =>
-                  (command && c.name == command) ||
-                  (command_display_name &&
-                    c.display_name == command_display_name),
-              ),
-            );
-            setActiveIndex(2);
-            setShowCreateRequest(true);
-          } else {
-            setActiveIndex(1);
+              if (command || command_display_name) {
+                const chosenCommand = chosenSystem?.commands?.find(
+                  (c) =>
+                    (command && c.name == command) ||
+                    (command_display_name &&
+                      c.display_name == command_display_name),
+                );
+                if (chosenCommand) {
+                  setSelectedCommand(chosenCommand);
+                  setActiveIndex(2);
+                  setShowCreateRequest(true);
+                } else {
+                  showSnackbar({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Invalid commmand: ${command_display_name ?? command}`,
+                    life: 3000,
+                  });
+                }
+              }
+            } else {
+              showSnackbar({
+                severity: "error",
+                summary: "Error",
+                detail: `Invalid instance name: ${instance_name}`,
+                life: 3000,
+              });
+            }
           }
         } else {
+          showSnackbar({
+            severity: "error",
+            summary: "Error",
+            detail: `Unable to find system: ${namespace ?? ""} ${system ?? ""} ${system_version ?? ""}`,
+            life: 3000,
+          });
           setActiveIndex(0);
         }
         setShowStepper(true);
@@ -302,6 +327,10 @@ function RequestWizard({
     updateRequestValue({
       ...request,
       instance_name: instance?.name,
+    });
+    setSearchParams((params) => {
+      params.set("instance", instance.name);
+      return params;
     });
   };
 
@@ -340,6 +369,27 @@ function RequestWizard({
   }, [selectedInstance, setSelectedInstance]);
 
   useEffect(() => {
+    if (requestItem) {
+      setSearchParams((params) => {
+        if (requestItem.requestCommandInput?.namespace) {
+          params.set("namespace", requestItem.requestCommandInput.namespace);
+        }
+        if (requestItem.requestCommandInput?.systemName) {
+          params.set("system", requestItem.requestCommandInput.systemName);
+        }
+        if (requestItem.requestCommandInput?.version) {
+          params.set("version", requestItem.requestCommandInput.version);
+        }
+        if (requestItem.requestCommandInput?.instance) {
+          params.set("instance", requestItem.requestCommandInput.instance);
+        }
+        if (requestItem.requestCommandInput?.command) {
+          params.set("command", requestItem.requestCommandInput.command);
+        }
+        return params;
+      });
+    }
+
     if (
       requestItem?.requestId !== null &&
       requestItem?.requestId !== undefined &&
@@ -508,6 +558,11 @@ function RequestWizard({
 
   const systemListButtonClick = (system: System) => {
     setSelectedSystem(system);
+    setSearchParams({
+      namespace: system.namespace!,
+      system: system.name!,
+      version: system.version!,
+    });
     updateRequestValue({
       ...request,
       target_garden: selectedSystem?.garden_name,
@@ -518,6 +573,15 @@ function RequestWizard({
 
   const commandListButtonClick = (command: Command) => {
     setSelectedCommand(command);
+    if (request) {
+      setSearchParams({
+        namespace: request.namespace!,
+        system: request.system!,
+        version: request.system_version!,
+        instance: request.instance_name!,
+        command: command.name!,
+      });
+    }
     updateRequestValue({
       ...request,
       command: command?.name,
@@ -560,6 +624,7 @@ function RequestWizard({
               onClick={() => {
                 setSelectedInstance(undefined);
                 setActiveIndex((index) => index - 1);
+                setSearchParams();
               }}
             >
               Back
@@ -606,6 +671,13 @@ function RequestWizard({
               onClick={() => {
                 cleanForm();
                 setActiveIndex((index) => index - 1);
+                if (request) {
+                  setSearchParams({
+                    namespace: request.namespace!,
+                    system: request.system!,
+                    version: request.system_version!,
+                  });
+                }
               }}
             >
               Back
