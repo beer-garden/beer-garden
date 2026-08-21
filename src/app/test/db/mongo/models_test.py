@@ -191,6 +191,8 @@ class TestRequest(object):
             [(None, False), (ObjectId(), True)],
         )
         def test_set_has_parent(self, parent_id, has_parent):
+            if parent_id is not None:
+                Request(id=parent_id).save()
             req = Request(command="bar", parent_id=parent_id)
             req.clean()
             assert req.has_parent is has_parent
