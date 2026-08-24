@@ -418,6 +418,17 @@ function RequestIndex({
     const queryHeaders: Record<string, any> = {
       length: rowsPerPage,
       start: (rowsPerPage ?? 0) * (page ?? 0),
+      include: [
+        "id",
+        "command",
+        "namespace",
+        "system",
+        "system_version",
+        "instance_name",
+        "status",
+        "created_at",
+        "comment",
+      ],
     };
 
     if (columnFilters) {
