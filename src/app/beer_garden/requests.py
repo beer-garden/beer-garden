@@ -668,7 +668,7 @@ def get_request(
         get_request_children(request, max_depth=(children_depth - 1), **kwargs)
 
     if parent_depth != 0:
-        get_request_parent(request, parent_depth=(parent_depth - 1), **kwargs)
+        get_request_parent(request, max_depth=(parent_depth - 1), **kwargs)
 
     return request
 
