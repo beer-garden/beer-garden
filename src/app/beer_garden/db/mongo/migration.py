@@ -256,7 +256,7 @@ def ensure_v3_35_model_migration():
                         UpdateOne(
                             {"_id": legacy_request["_id"]},
                             {
-                                "$set": {"parent_id": legacy_request["parent"].id},
+                                "$set": {"parent_id": str(legacy_request["parent"].id)},
                                 "$unset": {"parent": ""},
                             },
                         )
