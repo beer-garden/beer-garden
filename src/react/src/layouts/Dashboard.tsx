@@ -1,10 +1,10 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import Masonry from "@mui/lab/Masonry";
 import {
   Box,
   Chip,
   FormControl,
-  Grid,
   InputLabel,
   MenuItem,
   Select,
@@ -687,28 +687,24 @@ function GardenDashboard({
               </FormControl>
 
               <Box sx={{ display: "flex", justifyContent: "left" }}>
-                <Grid container spacing={1}>
+                <Masonry columns={4} spacing={2} sequential>
                   {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
-                    <Grid size={4} sx={{ minWidth: "250px" }}>
-                      <UnassociatedRunnerCard
-                        runnerGroup={runnerGroup}
-                        config={config}
-                      />
-                    </Grid>
+                    <UnassociatedRunnerCard
+                      runnerGroup={runnerGroup}
+                      config={config}
+                    />
                   ))}
                   {filteredSystems?.map((system: System) => (
-                    <Grid key={system.id} size={4} sx={{ minWidth: "250px" }}>
-                      <SystemCard
-                        system={system}
-                        tourStepsRef={tourStepsRef}
-                        selectedGarden={selectedGarden?.name}
-                        addRequestItem={addRequestItem}
-                        config={config}
-                        associatedRunners={associatedRunners}
-                      />
-                    </Grid>
+                    <SystemCard
+                      system={system}
+                      tourStepsRef={tourStepsRef}
+                      selectedGarden={selectedGarden?.name}
+                      addRequestItem={addRequestItem}
+                      config={config}
+                      associatedRunners={associatedRunners}
+                    />
                   ))}
-                </Grid>
+                </Masonry>
               </Box>
             </>
           )}
