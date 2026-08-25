@@ -14,7 +14,6 @@
     "@mui/x-tree-view": "^9.10.1",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
-    "@types/react-router-dom": "^5.3.3",
     "@types/swagger-ui-react": "^5.18.0",
     "compare-versions": "^6.1.1",
     "dayjs": "^1.11.21",

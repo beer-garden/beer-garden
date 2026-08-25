@@ -1858,11 +1858,6 @@
   dependencies:
     "@types/unist" "*"
 
-"@types/history@^4.7.11":
-  version "4.7.11"
-  resolved "https://registry.npmjs.org/@types/history/-/history-4.7.11.tgz"
-  integrity sha512-qjDJRrmvBMiTx+jyLxvLfJU7UznFuokDv4f3WRuriHKERccVpFU+8XMQUAbDzoiJCsmexxRExQeMwwCdamSKDA==
-
 "@types/http-proxy@^1.17.15":
   version "1.17.17"
   resolved "https://registry.npmjs.org/@types/http-proxy/-/http-proxy-1.17.17.tgz"
@@ -1922,23 +1917,6 @@
   version "19.2.3"
   resolved "https://registry.npmjs.org/@types/react-dom/-/react-dom-19.2.3.tgz"
   integrity sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==
-
-"@types/react-router-dom@^5.3.3":
-  version "5.3.3"
-  resolved "https://registry.npmjs.org/@types/react-router-dom/-/react-router-dom-5.3.3.tgz"
-  integrity sha512-kpqnYK4wcdm5UaWI3fLcELopqLrHgLqNsdpHauzlQktfkHL3npOSwtj1Uz9oKBAzs7lFtVkV8j83voAz2D8fhw==
-  dependencies:
-    "@types/history" "^4.7.11"
-    "@types/react" "*"
-    "@types/react-router" "*"
-
-"@types/react-router@*":
-  version "5.1.18"
-  resolved "https://registry.npmjs.org/@types/react-router/-/react-router-5.1.18.tgz"
-  integrity sha512-YYknwy0D0iOwKQgz9v8nOzt2J6l4gouBmDnWqUUznltOTaon+r8US8ky8HvN0tXvc38U9m6z/t2RsVsnd1zM0g==
-  dependencies:
-    "@types/history" "^4.7.11"
-    "@types/react" "*"
 
 "@types/react-transition-group@^4.4.12", "@types/react-transition-group@^4.4.6":
   version "4.4.12"
