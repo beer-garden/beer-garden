@@ -660,6 +660,14 @@ def get_request(
         The Request
 
     """
+
+    if (
+        parent_depth != 0
+        and "include_fields" in kwargs
+        and "parent_id" not in kwargs["include_fields"]
+    ):
+        kwargs["include_fields"].append("parent_id")
+
     request = request or db.query_unique(
         Request, id=request_id, raise_missing=True, **kwargs
     )
