@@ -687,7 +687,7 @@ function GardenDashboard({
               </FormControl>
 
               <Box sx={{ display: "flex", justifyContent: "left" }}>
-                <Masonry columns={4} spacing={2} sequential>
+                <Masonry columns={3} spacing={2} sequential>
                   {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
                     <UnassociatedRunnerCard
                       runnerGroup={runnerGroup}
