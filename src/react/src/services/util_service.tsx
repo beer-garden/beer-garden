@@ -70,12 +70,18 @@ export const GetVersion = async (): Promise<Version> => {
 export const GetBaseURL = (): string => {
   const splitPath = window.location.pathname.split("/");
 
+  // Manually mapping until we figure a better way, empty string is base url path for dashboard
+  const oneHopRoutes = ["dashboard","requests","jobs","about","roles","topics","users","swagger",""]
+  const twoHopRoutes = ["request"]
+  
   let prefix = undefined;
   // Request is the other path that has nested routing logic
-  if (splitPath[-2] === "request") {
+  if (splitPath[-1] in oneHopRoutes) {
+    prefix = splitPath.slice(0, -1).join("/") + "/";
+  } if (splitPath[-2] in twoHopRoutes) {
     prefix = splitPath.slice(0, -2).join("/") + "/";
   } else {
-    prefix = splitPath.slice(0, -1).join("/") + "/";
+    prefix = splitPath.join("/") + "/";
   }
 
   return prefix === "/" ? "" : prefix || "";
