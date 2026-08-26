@@ -3,7 +3,8 @@ ARG VERSION=latest
 
 # Defaults for the application proxy info
 ENV BEERGARDEN_HOST=localhost \
-    BEERGARDEN_PORT=2337
+    BEERGARDEN_PORT=2337 \
+    BEERGARDEN_BASE_URL=""
 
 # Remove default config template
 RUN rm /etc/nginx/conf.d/default.conf

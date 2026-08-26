@@ -7,7 +7,7 @@ server {
 
     client_max_body_size 100m;
 
-    location / {
+    location ${BEERGARDEN_BASE_URL}/ {
         try_files $uri $uri/ @beergarden;
     }
 
