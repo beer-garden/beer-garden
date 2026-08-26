@@ -673,6 +673,17 @@ class PluginManager(StoppableThread):
 
         if plugin_entry is not None:
             process_args += plugin_entry.split(" ")
+        elif  plugin_config.get("SWAGGER_PATH") is not None:
+            plugin_swagger_path = plugin_config.get("SWAGGER_PATH")
+            process_args += [
+                "-m",
+                "beer_garden.local_plugins.swagger",
+                plugin_swagger_path,                         
+            ]
+
+            if plugin_config.get("SWAGGER_BASE_URL") is not None:
+                process_args.append(plugin_config.get("SWAGGER_BASE_URL"))
+                
         else:
             plugin_name = plugin_config.get("NAME")
             plugin_auto_module = plugin_config.get("AUTO_BREW_MODULE")
@@ -877,6 +888,9 @@ class ConfigKeys(Enum):
 
     CLIENT_STARTUP_FUNCTION = 27
     CLIENT_STARTUP_FUNCTIONS = 28
+
+    SWAGGER_PATH = 29
+    SWAGGER_BASE_URL=30
 
 
 class ConfigLoader(object):
