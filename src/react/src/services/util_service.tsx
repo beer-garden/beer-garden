@@ -68,9 +68,17 @@ export const GetVersion = async (): Promise<Version> => {
 };
 
 export const GetBaseURL = (): string => {
-  return import.meta.env.VITE_BASE_URL === "/"
-    ? ""
-    : import.meta.env.VITE_BASE_URL || "";
+  const splitPath = window.location.pathname.split("/");
+
+  let prefix = undefined;
+  // Request is the other path that has nested routing logic
+  if (splitPath[-2] === "request") {
+    prefix = splitPath.slice(0, -2).join("/") + "/";
+  } else {
+    prefix = splitPath.slice(0, -1).join("/") + "/";
+  }
+
+  return prefix === "/" ? "" : prefix || "";
 };
 
 export const GetSeverity = (

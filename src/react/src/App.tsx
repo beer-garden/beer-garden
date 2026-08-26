@@ -33,7 +33,11 @@ import { GetRootGarden } from "./services/garden_service";
 import { preemptiveRefresh } from "./services/token_service";
 import { GetToken } from "./services/token_service";
 import { ConvertToTourStepProps } from "./services/tour_service";
-import { ChangePowerUser, ChangeTheme } from "./services/util_service";
+import {
+  ChangePowerUser,
+  ChangeTheme,
+  GetBaseURL,
+} from "./services/util_service";
 import { theme } from "./theme";
 
 function App() {
@@ -439,10 +443,8 @@ function App() {
     };
   }, []);
 
-  const baseURL =
-    import.meta.env.VITE_BASE_URL === "/"
-      ? undefined
-      : import.meta.env.VITE_BASE_URL || undefined;
+  const windowBaseUrl = GetBaseURL();
+  const baseURL = windowBaseUrl === "" ? undefined : windowBaseUrl || undefined;
 
   const handleJoyrideEvent = (data: EventData) => {
     const { action, status } = data;
