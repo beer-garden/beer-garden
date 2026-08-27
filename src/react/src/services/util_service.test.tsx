@@ -1,7 +1,11 @@
 import { expect, it, test } from "vitest";
 
 import { Garden, Instance, System } from "../models/brewtils-types.js";
-import { CompareObjects, GenerateStatusCounts, GetBaseURL } from "./util_service.js";
+import {
+  CompareObjects,
+  GenerateStatusCounts,
+  GetBaseURL,
+} from "./util_service.js";
 
 test("Compare Equal Objects", () => {
   expect(CompareObjects({ a: 1, b: 2 }, { a: 1, b: 2 })).toBe(true);
@@ -83,8 +87,8 @@ it.each([
   { pathname: "/double/pre/swagger", prefix: "/double/pre" },
   { pathname: "/double/pre/request/id", prefix: "/double/pre" },
 ])(`URL $pathname to Pre $prefix`, ({ pathname, prefix }) => {
-  window.history.pushState({}, 'Test Page', pathname);
-  expect (window.location.pathname).toBe(pathname);
+  window.history.pushState({}, "Test Page", pathname);
+  expect(window.location.pathname).toBe(pathname);
 
   expect(GetBaseURL()).toBe(prefix);
 });
