@@ -407,7 +407,8 @@ function App() {
 
   useEffect(() => {
     // Create WebSocket connection when component mounts
-    socketRef.current = new WebSocket("/api/v1/socket/events/");
+    // Get Prefix
+    socketRef.current = new WebSocket(GetBaseURL() + "/api/v1/socket/events/");
     const handleMessage = (event: any) => {
       // Update React state with new message
 
