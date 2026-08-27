@@ -67,24 +67,32 @@ export const GetVersion = async (): Promise<Version> => {
   }
 };
 
-export const GetBaseURL = (): string => {
-  const splitPath = window.location.pathname.split("/");
+export const GetBaseURL = (): string | string[]=> {
+  const splitPath = window.location.pathname.split("/").filter(path => path !== "");
 
   // Manually mapping until we figure a better way, empty string is base url path for dashboard
   const oneHopRoutes = ["dashboard","requests","jobs","about","roles","topics","users","swagger",""]
   const twoHopRoutes = ["request"]
   
-  let prefix = undefined;
-  // Request is the other path that has nested routing logic
-  if (splitPath[-1] in oneHopRoutes) {
-    prefix = splitPath.slice(0, -1).join("/") + "/";
-  } if (splitPath[-2] in twoHopRoutes) {
-    prefix = splitPath.slice(0, -2).join("/") + "/";
-  } else {
-    prefix = splitPath.join("/") + "/";
+  if (splitPath.length === 0){
+    return "";
   }
 
-  return prefix === "/" ? "" : prefix || "";
+  let prefixPath = splitPath;
+
+  // Request is the other path that has nested routing logic
+  if (splitPath.length > 0 && oneHopRoutes.includes(splitPath[splitPath.length - 1])) {
+    prefixPath = splitPath.slice(0, splitPath.length - 1);
+  } else if (splitPath.length > 1 && twoHopRoutes.includes(splitPath[splitPath.length - 2])) {
+    prefixPath = splitPath.slice(0, splitPath.length - 2);
+  } 
+
+  if (prefixPath.length === 0){
+    return "";
+  }
+
+  return "/" + prefixPath.join("/")
+
 };
 
 export const GetSeverity = (
