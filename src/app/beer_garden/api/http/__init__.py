@@ -360,7 +360,9 @@ def _load_swagger(url_specs, title=None):
         security=[{"Bearer": []}],
         servers=[
             {
-                "url": f'{"https" if config.get("entry.http.ssl.enabled") == True else "http"}://{config.get("entry.http.host")}:{config.get("entry.http.port")}{config.get("entry.http.url_prefix")}'
+                "url": f'{"https" if config.get("entry.http.ssl.enabled") else "http"}:// '
+                f'{config.get("entry.http.host")}:{config.get("entry.http.port")}'
+                f'{config.get("entry.http.url_prefix")}'
             }
         ],
     )
