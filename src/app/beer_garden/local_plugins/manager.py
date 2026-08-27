@@ -673,50 +673,48 @@ class PluginManager(StoppableThread):
 
         if plugin_entry is not None:
             process_args += plugin_entry.split(" ")
-        elif  plugin_config.get("SWAGGER_PATH") is not None:
+        elif plugin_config.get("SWAGGER_PATH") is not None:
             plugin_swagger_path = plugin_config.get("SWAGGER_PATH")
             process_args += [
                 "-m",
                 "beer_garden.local_plugins.swagger_file",
-                plugin_swagger_path,                         
+                plugin_swagger_path,
             ]
 
             if plugin_config.get("SWAGGER_BASE_URL") is not None:
-                process_args.append(plugin_config.get("SWAGGER_BASE_URL"))
+                process_args += ["BASEURL=" + plugin_config.get("SWAGGER_BASE_URL")]
 
             plugin_name = plugin_config.get("NAME")
             if plugin_name is not None:
                 process_args += ["NAME=" + plugin_name]
-            
+
             plugin_version = plugin_config.get("VERSION")
 
             if plugin_version is not None:
                 process_args += ["VERSION=" + plugin_version]
-                
-        elif  plugin_config.get("SWAGGER_URL") is not None:
+
+        elif plugin_config.get("SWAGGER_URL") is not None:
 
             plugin_swagger_url = plugin_config.get("SWAGGER_URL")
-            plugin_version = plugin_config.get("VERSION")
 
-            
             process_args += [
                 "-m",
                 "beer_garden.local_plugins.swagger_url",
-                plugin_swagger_url,                         
+                plugin_swagger_url,
             ]
 
             if plugin_config.get("SWAGGER_BASE_URL") is not None:
-                process_args.append(plugin_config.get("SWAGGER_BASE_URL"))
+                process_args += ["BASEURL=" + plugin_config.get("SWAGGER_BASE_URL")]
 
             plugin_name = plugin_config.get("NAME")
             if plugin_name is not None:
                 process_args += ["NAME=" + plugin_name]
-            
+
             plugin_version = plugin_config.get("VERSION")
 
             if plugin_version is not None:
                 process_args += ["VERSION=" + plugin_version]
-                
+
         else:
             plugin_name = plugin_config.get("NAME")
             plugin_auto_module = plugin_config.get("AUTO_BREW_MODULE")
@@ -924,8 +922,7 @@ class ConfigKeys(Enum):
 
     SWAGGER_PATH = 29
     SWAGGER_URL = 30
-    SWAGGER_BASE_URL=31
-    
+    SWAGGER_BASE_URL = 31
 
 
 class ConfigLoader(object):
