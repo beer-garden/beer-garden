@@ -12,6 +12,21 @@
             "justMyCode": true,
             "args": ["-c", "${workspaceFolder}/src/app/example_configs/config.yaml"],
             "cwd":"${workspaceFolder}/src/app"
+        },
+        {
+            "name": "Beer Garden SSL",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "beer_garden",
+            "justMyCode": true,
+            "args": ["-c", "${workspaceFolder}/src/app/example_configs/config.yaml", "--entry-http-ssl-enabled"],
+            "cwd":"${workspaceFolder}/src/app",
+            "env":{
+                "BG_ENTRY_HTTP_SSL_CA_CERT": "${workspaceFolder}/docker/docker-compose/data/certs/ca_certificate.pem",
+                "BG_ENTRY_HTTP_SSL_CLIENT_CERT_VERIFY": "NONE",
+                "BG_ENTRY_HTTP_SSL_PRIVATE_KEY": "${workspaceFolder}/docker/docker-compose/data/certs/combined_server.pem",
+                "BG_ENTRY_HTTP_SSL_PUBLIC_KEY": "${workspaceFolder}/docker/docker-compose/data/certs/combined_server.pem"
+            }
         }
     ]
 }
