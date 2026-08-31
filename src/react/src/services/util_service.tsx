@@ -7,6 +7,7 @@ import { RefObject } from "react";
 
 import { Garden, Instance, Runner, System } from "../models/brewtils-types";
 import { Version } from "../models/models";
+import { externalRoutesList } from "./routes_service";
 import {
   UpdatePowerUserMode,
   UpdateUserDarkMode,
@@ -72,19 +73,17 @@ export const GetBaseURL = (): string => {
     .split("/")
     .filter((path) => path !== "");
 
-  // Manually mapping until we figure a better way, empty string is base url path for dashboard
-  const oneHopRoutes = [
-    "dashboard",
-    "requests",
-    "jobs",
-    "about",
-    "roles",
-    "topics",
-    "users",
-    "swagger",
-    "",
-  ];
-  const twoHopRoutes = ["request"];
+  const hopRoutes = [{ pathKey: "", position: 1 }];
+
+  for (const route of externalRoutesList) {
+    if (route.path.length > 1 && route.path.includes("/")) {
+      const routerPath = route.path.split("/").filter((path) => path !== "");
+
+      if (routerPath.length > 0) {
+        hopRoutes.push({ pathKey: routerPath[0], position: routerPath.length });
+      }
+    }
+  }
 
   if (splitPath.length === 0) {
     return "";
@@ -92,17 +91,15 @@ export const GetBaseURL = (): string => {
 
   let prefixPath = splitPath;
 
-  // Request is the other path that has nested routing logic
-  if (
-    splitPath.length > 0 &&
-    oneHopRoutes.includes(splitPath[splitPath.length - 1])
-  ) {
-    prefixPath = splitPath.slice(0, splitPath.length - 1);
-  } else if (
-    splitPath.length > 1 &&
-    twoHopRoutes.includes(splitPath[splitPath.length - 2])
-  ) {
-    prefixPath = splitPath.slice(0, splitPath.length - 2);
+  for (const hopRoute of hopRoutes) {
+    if (splitPath.length > hopRoute.position - 1) {
+      if (
+        hopRoute.pathKey === splitPath[splitPath.length - hopRoute.position]
+      ) {
+        prefixPath = splitPath.slice(0, splitPath.length - hopRoute.position);
+        break;
+      }
+    }
   }
 
   if (prefixPath.length === 0) {
