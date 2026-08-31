@@ -9,5 +9,4 @@ export const externalRoutesList = [
   { path: "/topics", componentName: "Topics" },
   { path: "/users", componentName: "Users" },
   { path: "/swagger", componentName: "Swagger" },
-  { path: "*", componentName: "Error" },
 ] as Record<"path" | "componentName", string>[];

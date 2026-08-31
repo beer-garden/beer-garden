@@ -45,6 +45,7 @@ function App() {
   const socketRef = useRef(null as null | any);
   const listeners = useRef<Record<string, Listener>>({});
   const [config, setConfig] = useState<Config>({});
+  const [invalidUrl, setInvalidUrl] = useState(false);
 
   const [reloadUI, setReloadUI] = useState(0);
   const [requestItem, setRequestItem] = useState<RequestItem | undefined>(
@@ -175,9 +176,11 @@ function App() {
           preemptiveRefresh();
         }
         loadRootGarden(config);
+        setInvalidUrl(false);
       })
       .catch((error) => {
         console.log("Unable to retrieve configuration", error);
+        setInvalidUrl(true);
       });
 
     const interval = setInterval(preemptiveRefresh, 30000);
@@ -540,7 +543,6 @@ function App() {
     <UserIndex config={config} tourStepsRef={tourStepsRef} />,
   );
   componentMap.set("Swagger", <Swagger />);
-  componentMap.set("Error", <ErrorPage errorCode={404} />);
 
   return (
     <ThemeProvider
@@ -551,11 +553,17 @@ function App() {
       <CssBaseline />
       <ConfirmDialogProvider>
         <SnackbarProvider>
-          {config && Object.keys(config).length === 0 && (
+          {config && !invalidUrl && Object.keys(config).length === 0 && (
             <Box sx={{ m: 1 }}>
               <Skeleton variant="rounded" height={50} sx={{ mb: 2 }} />
               <Skeleton variant="rounded" height={400} />
             </Box>
+          )}
+          {invalidUrl && (
+            <ErrorPage
+              errorCode={404}
+              errorMsg="Unable to load configuration with current URL. Please verify the backend services are operational and the current URL is valid"
+            />
           )}
           {config && Object.keys(config).length > 0 && (
             <div key={reloadUI}>
