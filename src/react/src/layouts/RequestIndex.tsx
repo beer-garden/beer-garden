@@ -556,6 +556,8 @@ function RequestIndex({
         defaultOrderBy="created_at"
         defaultOrder="desc"
         isLoading={loading}
+        rowsPerPageOptions={[10, 25, 50, 100]}
+        defaultRowsPerPageOptions={25}
       />
     </div>
   );
