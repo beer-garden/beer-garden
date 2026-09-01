@@ -971,7 +971,9 @@ def _target_from_type(operation: Operation) -> str:
         return _system_name_lookup(target_system)
 
     if operation.operation_type == "REQUEST_REBROADCAST":
-        request = beer_garden.requests.get_request(request_id=operation.args[0])
+        request = beer_garden.requests.get_request(
+            request_id=operation.args[0], parent_depth=0, children_depth=0
+        )
         return request.target_garden
 
     if operation.operation_type == "SYSTEM_DELETE":

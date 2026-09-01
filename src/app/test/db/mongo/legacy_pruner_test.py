@@ -220,7 +220,7 @@ class TestMongoPruner(object):
             status="SUCCESS",
             command_type="INFO",
             has_parent=True,
-            parent=grandparent,
+            parent_id=str(grandparent.id),
         )
         parent.save()
 
@@ -234,7 +234,7 @@ class TestMongoPruner(object):
             status="SUCCESS",
             command_type="INFO",
             has_parent=True,
-            parent=parent,
+            parent_id=str(parent.id),
         )
         child.save()
 
@@ -439,7 +439,7 @@ class TestMissedTempPruner(object):
             status="SUCCESS",
             command_type="TEMP",
             has_parent=True,
-            parent=parent,
+            parent_id=str(parent.id),
         )
 
         # parent.delete()
@@ -473,7 +473,7 @@ class TestMissedTempPruner(object):
             status="SUCCESS",
             command_type="TEMP",
             has_parent=True,
-            parent=parent,
+            parent_id=str(parent.id),
         )
 
         # parent.delete()

@@ -2,6 +2,7 @@
 import logging
 from datetime import datetime, timezone
 
+from bson.dbref import DBRef
 from mongoengine.connection import get_db
 from mongoengine.errors import FieldDoesNotExist, InvalidDocumentError
 from packaging.version import Version
@@ -228,6 +229,38 @@ def ensure_v3_29_model_migration():
                 request_updates.append(
                     UpdateOne({"_id": legacy_request["_id"]}, {"$set": legacy_request})
                 )
+            if batch_size > 0 and len(request_updates) > batch_size:
+                request_collection.bulk_write(request_updates, ordered=False)
+                request_updates = []
+        if len(request_updates) > 0:
+            request_collection.bulk_write(request_updates, ordered=False)
+
+
+def ensure_v3_35_model_migration():
+    db = get_db()
+    batch_size = config.get("db.prune.batch_size", default=-1)
+    if contains_field("request", "parent"):
+        logger.warning(
+            "Request Parent DBRef was found in Requests and will be migrated to parent_id."
+            " This is most likely because the database is using the old (v3.35) style of"
+            " storing in the database."
+        )
+        request_updates = []
+        request_collection = db.get_collection("request")
+        for legacy_request in request_collection.find({"parent": {"$exists": True}}):
+            if legacy_request:
+                if "parent" in legacy_request and isinstance(
+                    legacy_request["parent"], DBRef
+                ):
+                    request_updates.append(
+                        UpdateOne(
+                            {"_id": legacy_request["_id"]},
+                            {
+                                "$set": {"parent_id": str(legacy_request["parent"].id)},
+                                "$unset": {"parent": ""},
+                            },
+                        )
+                    )
             if batch_size > 0 and len(request_updates) > batch_size:
                 request_collection.bulk_write(request_updates, ordered=False)
                 request_updates = []
@@ -755,3 +788,6 @@ def ensure_model_migration():
             ensure_v3_27_model_migration()
             ensure_v3_29_model_migration()
             ensure_v3_30_model_migration()
+
+    # TODO: Move this over before release
+    ensure_v3_35_model_migration()

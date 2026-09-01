@@ -187,20 +187,30 @@ class TestRequest(object):
                 req.clean()
 
         @pytest.mark.parametrize(
-            "parent, has_parent",
-            [(None, False), ("something", True)],
+            "has_parent",
+            [(False), (True)],
         )
-        def test_set_has_parent(self, parent, has_parent):
-            req = Request(command="bar", parent=parent)
+        def test_set_has_parent(self, has_parent):
+            parent_id = None
+            if has_parent:
+                parent = Request(
+                    system="system",
+                    instance_name="instance",
+                    system_version="1",
+                    namespace="namespace",
+                    command="say",
+                ).save()
+                parent_id = str(parent.id)
+            req = Request(command="bar", parent_id=parent_id)
             req.clean()
             assert req.has_parent is has_parent
 
         @pytest.mark.parametrize(
-            "parent, has_parent",
-            [(None, True), (Request(command="say"), False)],
+            "parent_id, has_parent",
+            [(None, True), ("something", False)],
         )
-        def test_parent_mismatch(self, parent, has_parent):
-            req = Request(command="bar", parent=parent, has_parent=has_parent)
+        def test_parent_mismatch(self, parent_id, has_parent):
+            req = Request(command="bar", parent_id=parent_id, has_parent=has_parent)
             with pytest.raises(ModelValidationError):
                 req.clean()
 
@@ -224,7 +234,7 @@ class TestRequest(object):
                 system_version="1",
                 namespace="namespace",
                 command="bar",
-                parent=parent,
+                parent_id=str(parent.id),
                 has_parent=True,
             ).save()
             req2 = Request.objects.get(id=req.id)
@@ -287,7 +297,7 @@ class TestRequest(object):
                 namespace="namespace",
                 command="bar",
                 has_parent=True,
-                parent=parent,
+                parent_id=str(parent.id),
                 status="SUCCESS",
             )
 
@@ -315,7 +325,7 @@ class TestRequest(object):
                 namespace="namespace",
                 command="bar",
                 has_parent=True,
-                parent=parent,
+                parent_id=str(parent.id),
                 status="CREATED",
             )
 
@@ -325,7 +335,7 @@ class TestRequest(object):
             assert len(Request.objects.filter(id=parent.id)) == 0
             assert len(Request.objects.filter(id=child.id)) == 1
 
-            assert Request.objects.get(id=child.id).parent is None
+            assert Request.objects.get(id=child.id).parent_id is None
             assert not Request.objects.get(id=child.id).has_parent
 
     # TODO - Make these integration tests

@@ -197,13 +197,7 @@ class TestCheckIndexes(object):
         }
 
         # Mock out request model update methods
-        update_parent_field_type_mock = Mock()
         update_has_parent_mock = Mock()
-        monkeypatch.setattr(
-            beer_garden.db.mongo.indexes,
-            "_update_request_parent_field_type",
-            update_parent_field_type_mock,
-        )
         monkeypatch.setattr(
             beer_garden.db.mongo.indexes,
             "_update_request_has_parent_model",
@@ -219,5 +213,4 @@ class TestCheckIndexes(object):
         ]
         assert model_mocks["request"]._get_collection().drop_indexes.call_count == 1
         assert model_mocks["request"].ensure_indexes.called is True
-        assert update_parent_field_type_mock.called is True
         assert update_has_parent_mock.called is True
