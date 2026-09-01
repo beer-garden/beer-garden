@@ -389,7 +389,7 @@ export default function requestViewController(
   function eventCallback(event) {
     if (event.name.startsWith('REQUEST') && event.payload.id !== undefined && event.payload.id !== null) {
       if (event.metadata !== undefined && "UI_RELOAD" in event.metadata) {
-        if (event.payload.id == $stateParams.requestId || _.get(event, 'payload.parent.id') == $stateParams.requestId) {
+        if (event.payload.id == $stateParams.requestId || _.get(event, 'payload.parent_id') == $stateParams.requestId) {
           // This does not contain full payload, so we need to reload the request
           $scope.loadRequest();
         }
@@ -397,7 +397,7 @@ export default function requestViewController(
       }
       if (event.payload.id == $stateParams.requestId) {       
         $scope.successCallback(event.payload);        
-      } else if (_.get(event, 'payload.parent.id') == $stateParams.requestId) {       
+      } else if (_.get(event, 'payload.parent_id') == $stateParams.requestId) {       
         const child = _.find($scope.children, {id: event.payload.id});
 
         if (!child) {
