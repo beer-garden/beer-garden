@@ -1,5 +1,10 @@
 # Beer Garden Changelog
 
+# TBD
+TBD
+
+- Updated `asyncio.get_event_loop()` to `asyncio.get_running_loop()` (#2395)
+
 # 3.34.3
 8/19/2026
 
