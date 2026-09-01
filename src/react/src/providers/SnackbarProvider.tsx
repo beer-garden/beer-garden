@@ -1,4 +1,4 @@
-import { Box, Divider, Typography } from "@mui/material";
+import { AlertTitle, Typography } from "@mui/material";
 import Alert, { AlertColor } from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import React, {
@@ -64,11 +64,8 @@ export const SnackbarProvider = ({ children }: { children: ReactNode }) => {
           variant="filled"
           sx={{ width: "100%" }}
         >
-          <Box>
-            <Typography variant="h6">{summary}</Typography>
-          </Box>
-          <Divider sx={{ my: 1 }} />
-          <Box>{detail}</Box>
+          <AlertTitle>{summary}</AlertTitle>
+          <Typography variant="body1">{detail}</Typography>
         </Alert>
       </Snackbar>
     </SnackbarContext.Provider>
