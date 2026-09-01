@@ -89,7 +89,7 @@ const EnhancedTable = ({
     defaultRowsPerPageOptions ??
       (rowsPerPageOptions !== undefined && rowsPerPageOptions.length > 0
         ? rowsPerPageOptions[0]
-        : 5),
+        : 10),
   );
 
   const [pageRecords, setPageRecords] = useState(false);
@@ -723,7 +723,7 @@ const EnhancedTable = ({
           <TablePagination
             component="div"
             rowsPerPageOptions={
-              rowsPerPageOptions ?? (pageRecords ? [5, 10, 25] : [])
+              rowsPerPageOptions ?? (pageRecords ? [10, 25, 50, 100] : [])
             }
             count={dataLength ?? displayDataLength}
             rowsPerPage={rowsPerPage}
