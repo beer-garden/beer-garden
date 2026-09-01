@@ -124,13 +124,6 @@ export const ChangeTheme = (dark?: boolean) => {
     localStorage.setItem("user_theme", dark ? "dark" : "light");
   }
 
-  const appCSSLink = document.getElementById(
-    "app-css-link",
-  ) as HTMLAnchorElement;
-  if (appCSSLink) {
-    appCSSLink.href = `${GetBaseURL()}/src/${dark ? "dark" : "light"}.css`;
-  }
-
   UpdateUserDarkMode(dark).catch((error) => {
     console.error("Error updating user dark mode:", error);
   });
