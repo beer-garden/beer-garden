@@ -14,7 +14,7 @@ appdirs==1.4.4
     # via brewtils
 apscheduler==3.11.2
     # via beer_garden (setup.py)
-brewtils==3.34.0
+brewtils==3.35.0
     # via beer_garden (setup.py)
 certifi==2025.11.12
     # via

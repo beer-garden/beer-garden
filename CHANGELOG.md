@@ -1,7 +1,7 @@
 # Beer Garden Changelog
 
 # 3.35.0
-TBD
+9/1/2026
 
 - Migrating Request mongo model to not utilize DBRef for linking Parent requests. Instead link 
   in follow on queries with a model value of `parent_id` (#2386)
