@@ -12,9 +12,8 @@ TBD
   ```
     /api/v1/requests/<REQUEST ID>?parent_depth=0&children_depth=0&include=status&include=output
   ```
+- Updated `asyncio.get_event_loop()` to `asyncio.get_running_loop()` (#2395)
 
-## TODO: 
-- Update Migration Scripts for 3.35.0
 
 # 3.34.3
 8/19/2026

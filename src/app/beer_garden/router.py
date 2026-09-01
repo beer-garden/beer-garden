@@ -239,7 +239,7 @@ def route(operation: Operation):
     else:
         loop = None
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
         except RuntimeError:
             pass
         if loop:
@@ -289,7 +289,7 @@ def execute_local(operation: Operation):
 
     loop = None
     try:
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
     except RuntimeError:
         pass
 
@@ -299,7 +299,7 @@ def execute_local(operation: Operation):
         check_async = False
 
     if check_async and loop and operation.operation_type in executor_functions:
-        response = asyncio.get_event_loop().run_in_executor(
+        response = asyncio.get_running_loop().run_in_executor(
             t_pool,
             partial(
                 executor_functions[operation.operation_type],
