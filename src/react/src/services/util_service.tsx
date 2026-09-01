@@ -7,11 +7,7 @@ import { RefObject } from "react";
 
 import { Garden, Instance, Runner, System } from "../models/brewtils-types";
 import { Version } from "../models/models";
-import {
-  UpdatePowerUserMode,
-  UpdateUserDarkMode,
-  UpdateUserTheme,
-} from "./user_service";
+import { UpdatePowerUserMode, UpdateUserDarkMode } from "./user_service";
 
 export const CompareObjects = (obj1: any, obj2: any) => {
   if (obj1 === obj2) return true; // Check if they are the same reference
@@ -117,41 +113,15 @@ export const GetSeverity = (
   }
 };
 
-export const ThemeOptions = () => [
-  "amber",
-  "blue",
-  "cyan",
-  "green",
-  "indigo",
-  "pink",
-  "purple",
-];
-
 export const ClearThemes = () => {
-  ChangeTheme("blue", false);
+  ChangeTheme(false);
 };
 
-export const ChangeTheme = (color?: string, dark?: boolean) => {
-  if (color === undefined) {
-    color = localStorage.getItem("theme_color") || "blue";
-  } else {
-    localStorage.setItem("theme_color", color);
-  }
-
-  if (!ThemeOptions().includes(color)) {
-    color = "blue";
-    localStorage.setItem("theme_color", color);
-  }
-
+export const ChangeTheme = (dark?: boolean) => {
   if (dark === undefined) {
-    dark = localStorage.getItem("theme_dark") === "true";
+    dark = localStorage.getItem("user_theme") === "dark";
   } else {
-    localStorage.setItem("theme_dark", dark.toString());
-  }
-
-  const themeLink = document.getElementById("theme-link") as HTMLAnchorElement;
-  if (themeLink) {
-    themeLink.href = `${GetBaseURL()}/themes/lara-${dark ? "dark" : "light"}-${color}/theme.css`;
+    localStorage.setItem("user_theme", dark ? "dark" : "light");
   }
 
   const appCSSLink = document.getElementById(
@@ -161,9 +131,6 @@ export const ChangeTheme = (color?: string, dark?: boolean) => {
     appCSSLink.href = `${GetBaseURL()}/src/${dark ? "dark" : "light"}.css`;
   }
 
-  UpdateUserTheme(color).catch((error) => {
-    console.error("Error updating user theme:", error);
-  });
   UpdateUserDarkMode(dark).catch((error) => {
     console.error("Error updating user dark mode:", error);
   });
