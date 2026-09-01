@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { ColumnField, FilterColumn } from "../models/EnhancedTableModels";
 import { EnhancedTableFilterOptions } from "./EnhancedTableFilterOptions";
+import { FAIcon } from "../../../services/util_service";
 
 export const EnhancedTableFilterSelect = ({
   columns,
@@ -77,13 +78,13 @@ export const EnhancedTableFilterSelect = ({
       <Grid container sx={{}}>
         <Grid size="grow" sx={{ ml: 2 }}>
           <Button variant="outlined" onClick={() => addFilter()}>
-            <FontAwesomeIcon icon="plus" />
+            <FAIcon icon="plus" sx={{mr: 1}} />
             Add Filter
           </Button>
         </Grid>
         <Grid sx={{ mr: 2 }}>
           <Button variant="outlined" onClick={clearFilters}>
-            <FontAwesomeIcon icon="trash" /> Remove All
+            <FAIcon icon="trash" sx={{mr: 1}}/> Remove All
           </Button>
         </Grid>
       </Grid>

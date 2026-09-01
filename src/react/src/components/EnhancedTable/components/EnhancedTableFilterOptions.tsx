@@ -14,6 +14,7 @@ import { ChangeEvent, RefObject, useEffect, useState } from "react";
 
 import { ColumnField, FilterColumn } from "../models/EnhancedTableModels";
 import NumberField from "./NumberField";
+import { FAIcon } from "../../../services/util_service";
 
 // TODO: Provide overrides for filters
 
@@ -435,7 +436,7 @@ export const EnhancedTableFilterOptions = ({
               onClick={() => removeFilter(id)}
               aria-label="Remove filter"
             >
-              <FontAwesomeIcon icon="x" />
+              <FAIcon icon="xmark" sx={{color: "text.primary"}} />
             </IconButton>
           </Grid>
           <Grid size={3}>
