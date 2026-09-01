@@ -92,6 +92,18 @@ def get_token(uuid: str) -> UserToken:
     return db.query_unique(UserToken, uuid=uuid, raise_missing=True)
 
 
+def verify_token(uuid: str) -> bool:
+    """Check if Token Exists
+
+    Args:
+        uuid (str): UUID of Token to check
+    Returns:
+        bool: If Token exists
+    """
+
+    return db.count(UserToken, uuid=uuid) == 1
+
+
 def delete_token(token: UserToken) -> UserToken:
     """Delete UserToken
 
@@ -348,6 +360,7 @@ def update_user(
         )
 
     for key, value in kwargs.items():
+
         if key in ["roles", "local_roles", "remote_roles"]:
             # Roles changed, so cached tokens are no longer valid
             revoke_tokens(user=user)
@@ -358,6 +371,11 @@ def update_user(
         elif key == "local_roles":
             # If local roles are updated, clear roles
             user.roles = []
+        elif key == "preferences" and isinstance(value, dict):
+            # Merge existing preferences with new preferences
+            prefs = user.preferences or {}
+            prefs.update(value)
+            value = prefs
 
         setattr(user, key, value)
 
@@ -653,20 +671,22 @@ def initiate_user_sync() -> None:
             if downstream_user:
                 child_users.append(downstream_user)
 
-        operation = Operation(
-            operation_type="USER_UPSTREAM_SYNC",
-            target_garden_name=child.name,
-            kwargs={
-                "upstream_users": SchemaParser.serialize_user(
-                    child_users, to_string=False, many=True
-                ),
-            },
-        )
+        if len(child_users) > 0:
 
-        try:
-            route(operation)
-        except (ForwardException, RoutingRequestException):
-            logger.error(f"Failed to sync users to {child.name}")
+            operation = Operation(
+                operation_type="USER_UPSTREAM_SYNC",
+                target_garden_name=child.name,
+                kwargs={
+                    "upstream_users": SchemaParser.serialize_user(
+                        child_users, to_string=False, many=True
+                    ),
+                },
+            )
+
+            try:
+                route(operation)
+            except (ForwardException, RoutingRequestException):
+                logger.error(f"Failed to sync users to {child.name}")
 
 
 def upstream_user_sync(upstream_user: User) -> User:

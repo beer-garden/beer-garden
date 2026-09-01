@@ -1,0 +1,148 @@
+@import "primereact/resources/primereact.min.css";
+@import "primeflex/primeflex.css";
+@import "primeicons/primeicons.css";
+
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.page-header {
+  padding-bottom: 9px;
+  margin: 20px 0 20px;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.p-menuitem-text {
+  margin-left: 5px;
+}
+
+/* Start 508 Color Contrast Formatting */
+
+:root {
+  /* Will default to dark mode colors */
+
+  --base-color: #030712;
+
+  --success-background-color: #4ade80;
+  --success-color: #052e16;
+
+  --info-background-color: #38bdf8;
+  --info-color: #082f49;
+
+  --warning-background-color: #fb923c;
+  --warning-color: #431407;
+
+  --danger-background-color: #f87171;
+  --danger-color: #450a0a;
+
+  --help-background-color: #c084fc;
+  --help-color: #1e0533;
+
+  --secondary-background-color: #94a3b8;
+  --secondary-color: #020617;
+
+  --contrast-background-color: #ffffff;
+  --contrast-color: #111827;
+}
+
+.p-badge,
+.p-button,
+.p-splitbutton.p-splitbutton-button,
+.p-tag {
+  color: var(--base-color);
+}
+
+.p-message.p-message-success,
+.p-badge.p-badge-success,
+.p-button.p-button-success,
+.p-splitbutton.p-splitbutton-button.p-splitbutton-button-success,
+.p-tag-success {
+  background-color: var(--success-background-color);
+  color: var(--success-color);
+}
+.p-message.p-message-info,
+.p-badge.p-badge-info,
+.p-button.p-button-info,
+.p-splitbutton.p-splitbutton-button.p-splitbutton-button-info,
+.p-tag-info {
+  background-color: var(--info-background-color);
+  color: var(--info-color);
+}
+.p-message.p-message-warn,
+.p-badge.p-badge-warning,
+.p-button.p-button-warning,
+.p-splitbutton.p-splitbutton-button.p-splitbutton-button-warning,
+.p-tag-warning {
+  background-color: var(--warning-background-color);
+  color: var(--warning-color);
+}
+.p-message.p-message-error,
+.p-badge.p-badge-danger,
+.p-button.p-button-danger,
+.p-splitbutton.p-splitbutton-button.p-splitbutton-button-danger,
+.p-tag-danger,
+.react-js-cron-clear-button {
+  background-color: var(--danger-background-color);
+  color: var(--danger-color);
+}
+
+.p-button.p-button-help,
+.p-splitbutton.p-splitbutton-button.p-splitbutton-button-help {
+  background-color: var(--help-background-color);
+  color: var(--help-color);
+}
+
+.p-button.p-button-secondary,
+.p-splitbutton.p-splitbutton-button.p-splitbutton-button-secondary,
+.p-tag-secondary {
+  background-color: var(--secondary-background-color);
+  color: var(--secondary-color);
+}
+
+.p-button.p-button-contrast,
+.p-splitbutton.p-splitbutton-button.p-splitbutton-button-contrast,
+.p-tag-contrast {
+  background-color: var(--contrast-background-color);
+  color: var(--contrast-color);
+}
+
+.p-tabview-selected .p-tabview-title {
+  color: black;
+}
+
+/* End 508 Color Contrast Formatting */

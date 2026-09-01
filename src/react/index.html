@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <link name="theme-link" id="theme-link" rel="stylesheet" href="/themes/lara-light-blue/theme.css">
+    <link name="app-css-link" id="app-css-link" rel="stylesheet" href="/src/light.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Beer Garden UI"
+    />
+    <link rel="apple-touch-icon" href="/logo192.png" />
+    <link rel="manifest" href="/manifest.json" />
+    <title>Beer Garden</title>
+    <style>
+      /* Hide the link off-screen by default */
+      .skip-link {
+        position: absolute;
+        top: -100px;
+        left: 0;
+        background: #000;
+        color: #fff;
+        padding: 10px;
+        z-index: 100;
+      }
+
+      /* Show the link when it gains keyboard focus */
+      .skip-link:focus {
+        top: 0;
+      }
+    </style>
+  </head>
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <script type="module" src="src/index.tsx"></script>
+  </body>
+</html>

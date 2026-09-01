@@ -117,6 +117,13 @@ class UserAPI(AuthorizationHandler):
             required: true
             description: The username of the User
             type: string
+          - name: patch
+            in: body
+            required: true
+            description: |
+              A subset of User attributes to update, most commonly the password.
+            schema:
+              $ref: '#/definitions/Patch'
         responses:
           200:
             description: User with the given username
@@ -148,15 +155,16 @@ class UserAPI(AuthorizationHandler):
         tags:
           - Users
         """
-        self.minimum_permission = Permissions.GARDEN_ADMIN.name
-        self.verify_user_global_permission()
 
+        self.minimum_permission = Permissions.GARDEN_ADMIN.name
         patch = SchemaParser.parse_patch(self.request.decoded_body, from_string=True)
 
         for op in patch:
             operation = op.operation.lower()
 
             if operation == "update_roles":
+                self.verify_user_global_permission()
+
                 response = await self.process_operation(
                     Operation(
                         operation_type="USER_UPDATE",
@@ -168,12 +176,14 @@ class UserAPI(AuthorizationHandler):
                     filter_results=False,
                 )
             elif operation == "update_user_mappings":
+                self.verify_user_global_permission()
+
                 response = await self.process_operation(
                     Operation(
                         operation_type="USER_UPDATE",
                         kwargs={
                             "username": username,
-                            "remote_user_mapping": SchemaParser.parse_alias_user_map(
+                            "user_alias_mapping": SchemaParser.parse_alias_user_map(
                                 op.value["user_alias_mapping"],
                                 from_string=False,
                                 many=True,
@@ -183,6 +193,10 @@ class UserAPI(AuthorizationHandler):
                     filter_results=False,
                 )
             elif operation == "update_user_password":
+
+                if username != self.current_user.username:
+                    self.verify_user_global_permission()
+
                 response = await self.process_operation(
                     Operation(
                         operation_type="USER_UPDATE",
@@ -193,6 +207,62 @@ class UserAPI(AuthorizationHandler):
                     ),
                     filter_results=False,
                 )
+            elif operation == "set":
+                if username != self.current_user.username:
+                    self.verify_user_global_permission()
+
+                if op.path == "/preferences/home":
+                    response = await self.process_operation(
+                        Operation(
+                            operation_type="USER_UPDATE",
+                            kwargs={
+                                "username": username,
+                                "preferences": {
+                                    "home": op.value,
+                                },
+                            },
+                        ),
+                        filter_results=False,
+                    )
+                elif op.path == "/preferences/theme":
+                    response = await self.process_operation(
+                        Operation(
+                            operation_type="USER_UPDATE",
+                            kwargs={
+                                "username": username,
+                                "preferences": {
+                                    "theme": op.value,
+                                },
+                            },
+                        ),
+                        filter_results=False,
+                    )
+                elif op.path == "/preferences/dark_mode":
+                    response = await self.process_operation(
+                        Operation(
+                            operation_type="USER_UPDATE",
+                            kwargs={
+                                "username": username,
+                                "preferences": {
+                                    "dark_mode": op.value,
+                                },
+                            },
+                        ),
+                        filter_results=False,
+                    )
+                elif op.path == "/preferences/power_user":
+                    response = await self.process_operation(
+                        Operation(
+                            operation_type="USER_UPDATE",
+                            kwargs={
+                                "username": username,
+                                "preferences": {
+                                    "power_user": op.value,
+                                },
+                            },
+                        ),
+                        filter_results=False,
+                    )
 
             else:
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
@@ -399,7 +469,7 @@ class UserPasswordChangeAPI(AuthorizationHandler):
                 Operation(
                     operation_type="USER_UPDATE",
                     kwargs={
-                        "user": user,
+                        "username": user.username,
                         "current_password": password_data["current_password"],
                         "new_password": password_data["new_password"],
                     },

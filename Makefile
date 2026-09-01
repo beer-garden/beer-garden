@@ -4,10 +4,11 @@ PYTHON         = python
 MODULE_NAME    = beer_garden
 APP_DIR        = src/app
 UI_DIR         = src/ui
+REACT_DIR      = src/react
 
 VERSION          ?= 0.0.0
-PYTHON_VERSION   ?=3.7
-DIST             ?=centos7
+PYTHON_VERSION   ?=3.11
+DIST             ?=rocky9
 DATE             ?= $(shell date +%Y-%m-%dT%H)
 
 .PHONY: clean clean-build clean-test clean-pyc help test
@@ -56,10 +57,12 @@ docker-login: ## log in to the docker registry
 docker-build: ## build docker images
 	$(MAKE) -C $(APP_DIR) docker-build
 	$(MAKE) -C $(UI_DIR) docker-build
+	$(MAKE) -C $(REACT_DIR) docker-build
 
 docker-build-unstable: ## build unstable docker images
 	$(MAKE) -C $(APP_DIR) docker-build-unstable
 	$(MAKE) -C $(UI_DIR) docker-build-unstable
+	$(MAKE) -C $(REACT_DIR) docker-build-unstable
 
 
 # GitHub
@@ -74,10 +77,12 @@ github-release: ## create a github release
 publish-docker: ## push the docker image
 	$(MAKE) -C $(APP_DIR) publish-docker
 	$(MAKE) -C $(UI_DIR) deps publish-docker
+	$(MAKE) -C $(REACT_DIR) deps publish-docker
 
 publish-docker-unstable: ## push the unstable docker image
 	$(MAKE) -C $(APP_DIR) publish-docker-unstable
 	$(MAKE) -C $(UI_DIR) deps publish-docker-unstable
+	$(MAKE) -C $(REACT_DIR) deps publish-docker-unstable
 
 publish-rpm: ## publish the rpm
 	rpm/bin/upload.sh $(VERSION) py$(PYTHON_VERSION)

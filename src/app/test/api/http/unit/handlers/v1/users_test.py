@@ -164,7 +164,10 @@ class TestUserAPI:
             "Content-Type": "application/json",
         }
         body = json.dumps(
-            {"operation": "update", "value": {"password": "differentpassword"}}
+            {
+                "operation": "update_user_password",
+                "value": {"password": "differentpassword"},
+            }
         )
 
         with pytest.raises(HTTPError) as excinfo:

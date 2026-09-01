@@ -923,6 +923,49 @@ class TestModelFilter:
         else:
             assert not model_filter._get_garden_filter(base_garden, user, ["ADMIN"])
 
+    def test_get_garden_filter_keep_children(
+        self, model_filter, base_system, base_connection
+    ):
+        garden = Garden(
+            name="garden",
+            receiving_connections=[base_connection],
+            systems=[base_system],
+            children=[
+                Garden(
+                    name="downstream",
+                    receiving_connections=[base_connection],
+                    systems=[base_system],
+                )
+            ],
+        )
+
+        user = User(
+            username="nested_user",
+            local_roles=[
+                Role(
+                    permission="ADMIN",
+                    name="role",
+                    scope_gardens=["downstream"],
+                    scope_namespaces=["namespace", "namespace2"],
+                    scope_systems=["system", "system2"],
+                    scope_instances=["instance", "instance2"],
+                    scope_versions=["1", "2"],
+                    scope_commands=["command", "command2"],
+                )
+            ],
+        )
+
+        filtered_model = model_filter._get_garden_filter(
+            garden,
+            user,
+            ["ADMIN"],
+        )
+
+        assert filtered_model
+        assert not filtered_model.systems
+        assert filtered_model.children
+        assert filtered_model.children[0].systems
+
     @pytest.mark.parametrize(
         "user,returned",
         [

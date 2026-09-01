@@ -1,0 +1,813 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Badge } from "primereact/badge";
+import { Card } from "primereact/card";
+import { Column } from "primereact/column";
+import { DataTable } from "primereact/datatable";
+import { Message } from "primereact/message";
+import { Skeleton } from "primereact/skeleton";
+import { Tag } from "primereact/tag";
+import { Tooltip } from "primereact/tooltip";
+import { RefObject, useEffect, useState } from "react";
+
+import { Connection, Garden, Runner, System } from "../models/brewtils-types";
+import { Config } from "../models/models";
+import { TourStepProps } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
+import {
+  DeleteGarden,
+  RescanGarden,
+  SyncGarden,
+  SyncUsersGarden,
+  UpdateApiGarden,
+} from "../services/garden_service";
+import { ClearAllQueues } from "../services/queue_service";
+import { Rescan } from "../services/system_service";
+import {
+  AddTourStep,
+  ClearTourSteps,
+  GenerateTourProps,
+} from "../services/tour_service";
+import { GenerateStatusCounts, GetSeverity } from "../services/util_service";
+import AccessButton from "./AccessButton";
+
+function GardenSummary({
+  gardenRef,
+  selectedGarden,
+  selectedSystems,
+  associatedRunners,
+  tourStepsRef,
+  config,
+}: {
+  gardenRef: RefObject<Garden | undefined>;
+  selectedGarden: Garden | undefined;
+  selectedSystems: System[] | undefined;
+  associatedRunners: RefObject<Runner[] | undefined>;
+  tourStepsRef?: RefObject<Array<TourStepProps>>;
+  config: Config;
+}) {
+  const showToast = useToast();
+  const tourUuid = selectedGarden?.id;
+  const tourPrefix = "garden_summary";
+  const getPublishingConnections = () => {
+    if (selectedGarden?.publishing_connections) {
+      return selectedGarden.publishing_connections.filter(
+        (connection: Connection) => connection.status !== "NOT_CONFIGURED",
+      );
+    } else {
+      return [];
+    }
+  };
+
+  const getReceivingConnections = () => {
+    if (selectedGarden?.receiving_connections) {
+      return selectedGarden.receiving_connections.filter(
+        (connection: Connection) => connection.status !== "NOT_CONFIGURED",
+      );
+    } else {
+      return [];
+    }
+  };
+
+  const getSystemCounts = () => {
+    if (selectedGarden) {
+      return GenerateStatusCounts(
+        gardenRef,
+        associatedRunners,
+        selectedGarden,
+        selectedSystems,
+      );
+    }
+
+    return new Map();
+  };
+
+  const [invalidRouting, setInvalidRouting] = useState(false);
+  const [publishingConnections, setPublishingConnections] = useState<
+    Array<Connection>
+  >(getPublishingConnections());
+  const [receivingConnections, setReceivingonnections] = useState<
+    Array<Connection>
+  >(getReceivingConnections());
+  const [systemCounts, setSystemCounts] =
+    useState<Map<string, number>>(getSystemCounts());
+
+  const rescanPluginTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Rescan Plugins",
+    content: "Rescan the plugins for the selected garden",
+    layer: "COMPONENT",
+    pos: 0,
+  };
+  const rescanDownstreamTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Rescan Downstream",
+    content: "Rescan the downstream connections for the selected garden",
+    layer: "COMPONENT",
+    pos: 1,
+  };
+
+  const clearPluginsQueuesTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Clear Plugin Queues",
+    content: "Clear all plugin queues for the selected garden",
+    layer: "COMPONENT",
+    pos: 2,
+  };
+
+  const syncGardenTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Sync",
+    content: "Sync the selected garden with its upstream gardens",
+    layer: "COMPONENT",
+    pos: 3,
+  };
+
+  const syncAllTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Sync All",
+    content: "Sync all gardens with their upstream gardens",
+    layer: "COMPONENT",
+    pos: 4,
+  };
+
+  const syncUsersTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Sync Users",
+    content: "Sync users in the selected garden with its upstream garden",
+    layer: "COMPONENT",
+    pos: 5,
+  };
+
+  const deleteGardenTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUuid,
+    label: "Delete Garden",
+    content: "Delete the selected garden. This action is irreversible.",
+    layer: "COMPONENT",
+    pos: 6,
+  };
+
+  const parentRoutingCheck = (
+    garden: Garden,
+    targetParent: string,
+    upstreamRouting: boolean,
+  ) => {
+    let isValid = true;
+
+    if (garden.name !== gardenRef.current?.name) {
+      isValid =
+        garden?.receiving_connections.every(
+          (connection: Connection) =>
+            connection.status !== undefined &&
+            ["NOT_CONFIGURED", "PUBLISHING", "RECEIVING"].includes(
+              connection.status,
+            ),
+        ) &&
+        garden?.publishing_connections.every(
+          (connection: Connection) =>
+            connection.status !== undefined &&
+            ["NOT_CONFIGURED", "PUBLISHING", "RECEIVING"].includes(
+              connection.status,
+            ),
+        );
+    }
+    if (garden.name === targetParent) {
+      setInvalidRouting(!(isValid && upstreamRouting));
+      return;
+    }
+    if (garden?.children) {
+      for (const child of garden.children) {
+        parentRoutingCheck(child, targetParent, isValid && upstreamRouting);
+      }
+    }
+  };
+
+  useEffect(() => {
+    setPublishingConnections(getPublishingConnections());
+    setReceivingonnections(getReceivingConnections());
+    setSystemCounts(getSystemCounts());
+
+    if (tourStepsRef !== undefined) {
+      ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+
+      AddTourStep(tourStepsRef, rescanPluginTourStep);
+      AddTourStep(tourStepsRef, rescanDownstreamTourStep);
+      AddTourStep(tourStepsRef, clearPluginsQueuesTourStep);
+
+      if (gardenRef.current) {
+        if (gardenRef.current.name === selectedGarden?.name) {
+          AddTourStep(tourStepsRef, syncAllTourStep);
+        } else {
+          if (selectedGarden?.parent) {
+            parentRoutingCheck(gardenRef.current, selectedGarden?.parent, true);
+          }
+          AddTourStep(tourStepsRef, syncGardenTourStep);
+          AddTourStep(tourStepsRef, syncUsersTourStep);
+          AddTourStep(tourStepsRef, deleteGardenTourStep);
+        }
+      }
+
+      if (selectedGarden?.receiving_connections) {
+        selectedGarden.receiving_connections.forEach(
+          (connection: Connection) => {
+            if (connection.status !== "NOT_CONFIGURED") {
+              AddTourStep(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: `RECEIVING START ${connection.api}`,
+                content: `Start receiving connection for ${connection.api}`,
+                layer: "COMPONENT",
+                pos: 7,
+              });
+              AddTourStep(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: `RECEIVING STOP ${connection.api}`,
+                content: `Stop receiving connection for ${connection.api}`,
+                layer: "COMPONENT",
+                pos: 8,
+              });
+            }
+          },
+        );
+      }
+
+      if (selectedGarden?.publishing_connections) {
+        selectedGarden.publishing_connections.forEach(
+          (connection: Connection) => {
+            if (connection.status !== "NOT_CONFIGURED") {
+              AddTourStep(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: `PUBLISHING START ${connection.api}`,
+                content: `Start publishing connection for ${connection.api}`,
+                layer: "COMPONENT",
+                pos: 9,
+              });
+              AddTourStep(tourStepsRef, {
+                prefix: tourPrefix,
+                uuid: tourUuid,
+                label: `PUBLISHING STOP ${connection.api}`,
+                content: `Stop publishing connection for ${connection.api}`,
+                layer: "COMPONENT",
+                pos: 10,
+              });
+            }
+          },
+        );
+      }
+
+      return () => {
+        ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
+      };
+    }
+  }, [selectedGarden, selectedSystems]);
+
+  const apiTemplate = (connection: Connection, type: string) => {
+    let url = "";
+
+    if (connection.config?.host !== undefined) {
+      url = url + connection.config?.host;
+    }
+    if (connection.config?.port !== undefined) {
+      url = url + ":" + connection.config?.port;
+    }
+
+    if (
+      connection.config?.url_prefix !== undefined &&
+      connection.config?.url_prefix != null &&
+      connection.config?.url_prefix != "" &&
+      connection.config?.url_prefix != "/"
+    ) {
+      url = url + "/" + connection.config?.url_prefix;
+    }
+
+    if (type === "RECEIVING") {
+      if (connection.config?.subscribe_destination !== undefined) {
+        const sub_dest = connection.config?.subscribe_destination.replace(
+          /^\/+/,
+          "",
+        );
+        url = url.replace(/\/+$/, "");
+        url = url.concat("/", sub_dest);
+      }
+    } else {
+      if (connection.config?.send_destination !== undefined) {
+        const send_dest = connection.config?.send_destination.replace(
+          /^\/+/,
+          "",
+        );
+        url = url.replace(/\/+$/, "");
+        url = url.concat("/", send_dest);
+      }
+    }
+
+    const targetId = `Connection_${type}_${connection.api}`;
+
+    return (
+      <>
+        {url.length > 0 && (
+          <Tooltip position="bottom" content={url} target={`#${targetId}`} />
+        )}
+        <span id={targetId}>{connection.api}</span>
+      </>
+    );
+  };
+
+  const statusTemplate = (row: Connection) => {
+    const severity = GetSeverity(row.status);
+
+    return <Tag value={row.status} severity={severity} />;
+  };
+
+  const connectionActions = (node: Connection, type: string) => {
+    if (
+      gardenRef.current?.name === selectedGarden?.name ||
+      (selectedGarden?.has_parent === true &&
+        selectedGarden.parent !== undefined &&
+        selectedGarden.parent !== gardenRef.current?.name)
+    ) {
+      return <></>;
+    }
+    return (
+      <div className="flex gap-2">
+        <AccessButton
+          data-testid={type + "_" + node?.api + "_START"}
+          {...GenerateTourProps({
+            prefix: tourPrefix,
+            uuid: tourUuid,
+            label: `${type} START ${node?.api}`,
+          })}
+          onClick={() => {
+            if (selectedGarden?.name && node?.status && node?.api) {
+              UpdateApiGarden(selectedGarden.name, type, node.api, type)
+                .then(() => {
+                  showToast({
+                    severity: "success",
+                    summary: "Success",
+                    detail: `Stopped Garden API connection ${node.api}`,
+                    life: 3000,
+                  });
+                })
+                .catch((error) => {
+                  console.error("Error Updating Garden API Connection:", error);
+                  showToast({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Error Updating Garden API Connection: ${error}`,
+                    life: 3000,
+                  });
+                });
+            } else if (node?.api === null || node?.api === undefined) {
+              throw Error(`Error missing ${JSON.stringify(node)}`);
+            }
+          }}
+          tooltip={`${type} START ${node?.api}`}
+          config={config}
+          permission="GARDEN_ADMIN"
+          hasGardenName={selectedGarden?.name}
+        >
+          <FontAwesomeIcon icon="play" />
+        </AccessButton>
+        <AccessButton
+          severity="warning"
+          data-testid={type + "_" + node?.api + "_STOP"}
+          {...GenerateTourProps({
+            prefix: tourPrefix,
+            uuid: tourUuid,
+            label: `${type} STOP ${node?.api}`,
+          })}
+          onClick={() => {
+            if (selectedGarden?.name && node?.status && node?.api) {
+              UpdateApiGarden(selectedGarden.name, "DISABLED", node.api, type)
+                .then(() => {
+                  showToast({
+                    severity: "success",
+                    summary: "Success",
+                    detail: `Started Garden API connection ${node.api}`,
+                    life: 3000,
+                  });
+                })
+                .catch((error) => {
+                  console.error("Error Updating Garden API Connection:", error);
+                  showToast({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Error Updating Garden API Connection: ${error}`,
+                    life: 3000,
+                  });
+                });
+            }
+          }}
+          tooltip={`${type} STOP ${node?.api}`}
+          config={config}
+          permission="GARDEN_ADMIN"
+          hasGardenName={selectedGarden?.name}
+        >
+          <FontAwesomeIcon icon="stop" />
+        </AccessButton>
+      </div>
+    );
+  };
+
+  return (
+    <Card
+      className="mb-4"
+      style={{ width: "100%" }}
+      unstyled
+      key={selectedGarden?.name}
+    >
+      <div className="flex ml-2 page-header">
+        <h1 className="flex-1">
+          {selectedGarden?.name
+            ? `Garden Summary: ${selectedGarden?.name}`
+            : "Garden Summary"}
+        </h1>
+        {selectedGarden?.name && (
+          <div>
+            <AccessButton
+              {...GenerateTourProps(rescanPluginTourStep)}
+              label="Rescan Plugins"
+              tooltip={`Rescan Plugins for Garden ${selectedGarden?.name}`}
+              data-testid={"RESCAN_PLUGINS"}
+              className="mr-2"
+              onClick={() => {
+                if (selectedGarden?.name) {
+                  Rescan(selectedGarden.name)
+                    .then(() => {
+                      showToast({
+                        severity: "success",
+                        summary: "Success",
+                        detail: `Rescanned Plugins for Garden ${selectedGarden?.name}`,
+                        life: 3000,
+                      });
+                    })
+                    .catch((error) => {
+                      console.error(
+                        "Error Rescanning Garden Plugin Dir:",
+                        error,
+                      );
+                      showToast({
+                        severity: "error",
+                        summary: "Error",
+                        detail: `Error Rescanning Garden Plugin Dir: ${error}`,
+                        life: 3000,
+                      });
+                    });
+                }
+              }}
+              config={config}
+              permission="GARDEN_ADMIN"
+              hasGardenName={selectedGarden?.name}
+            />
+            <AccessButton
+              label="Rescan Downstream"
+              tooltip={`Rescan Downstream for Garden ${selectedGarden?.name}`}
+              {...GenerateTourProps(rescanDownstreamTourStep)}
+              data-testid={"RESCAN_DOWNSTREAM"}
+              className="mr-2"
+              onClick={() => {
+                if (selectedGarden?.name) {
+                  RescanGarden(selectedGarden.name)
+                    .then(() => {
+                      showToast({
+                        severity: "success",
+                        summary: "Success",
+                        detail: `Rescanned Downstream for Garden ${selectedGarden?.name}`,
+                        life: 3000,
+                      });
+                    })
+                    .catch((error) => {
+                      console.error("Error Rescanning Garden:", error);
+                      showToast({
+                        severity: "error",
+                        summary: "Error",
+                        detail: `Error Rescanning Garden: ${error}`,
+                        life: 3000,
+                      });
+                    });
+                }
+              }}
+              config={config}
+              permission="GARDEN_ADMIN"
+              hasGardenName={selectedGarden?.name}
+            />
+            <AccessButton
+              label="Clear Plugin Queues"
+              tooltip={`Clear Plugin Queues for Garden ${selectedGarden?.name}`}
+              {...GenerateTourProps(clearPluginsQueuesTourStep)}
+              data-testid={"CLEAR_PLUGIN_QUEUES"}
+              className="mr-2"
+              severity="warning"
+              onClick={() => {
+                if (selectedGarden?.name) {
+                  ClearAllQueues(selectedGarden.name)
+                    .then(() => {
+                      showToast({
+                        severity: "success",
+                        summary: "Success",
+                        detail: `Cleared Plugin Queues for Garden ${selectedGarden?.name}`,
+                        life: 3000,
+                      });
+                    })
+                    .catch((error) => {
+                      console.error("Error clearing Plugin Queue:", error);
+                      showToast({
+                        severity: "error",
+                        summary: "Error",
+                        detail: `Error clearing Plugin Queue: ${error}`,
+                        life: 3000,
+                      });
+                    });
+                }
+              }}
+              config={config}
+              permission="GARDEN_ADMIN"
+              hasGardenName={selectedGarden?.name}
+            />
+            {gardenRef.current &&
+              gardenRef.current.name !== selectedGarden?.name && (
+                <AccessButton
+                  label="Sync"
+                  tooltip={`Sync Garden ${selectedGarden?.name}`}
+                  {...GenerateTourProps(syncGardenTourStep)}
+                  data-testid={"SYNC_GARDEN"}
+                  className="mr-2"
+                  onClick={() => {
+                    if (selectedGarden?.name) {
+                      SyncGarden(selectedGarden.name)
+                        .then(() => {
+                          showToast({
+                            severity: "success",
+                            summary: "Success",
+                            detail: `Synced Garden ${selectedGarden?.name}`,
+                            life: 3000,
+                          });
+                        })
+                        .catch((error) => {
+                          console.error("Error Syncing Garden:", error);
+                          showToast({
+                            severity: "error",
+                            summary: "Error",
+                            detail: `Error Syncing Garden: ${error}`,
+                            life: 3000,
+                          });
+                        });
+                    }
+                  }}
+                  config={config}
+                  permission="GARDEN_ADMIN"
+                  hasGardenName={selectedGarden?.name}
+                />
+              )}
+            {gardenRef.current &&
+              gardenRef.current.name === selectedGarden?.name && (
+                <AccessButton
+                  label="Sync All"
+                  {...GenerateTourProps(syncAllTourStep)}
+                  data-testid={"SYNC_ALL"}
+                  className="mr-2"
+                  onClick={() => {
+                    SyncGarden()
+                      .then(() => {
+                        showToast({
+                          severity: "success",
+                          summary: "Success",
+                          detail: `Synced Garden ${selectedGarden?.name}`,
+                          life: 3000,
+                        });
+                      })
+                      .catch((error) => {
+                        console.error("Error Syncing Garden:", error);
+                        showToast({
+                          severity: "error",
+                          summary: "Error",
+                          detail: `Error Syncing Garden: ${error}`,
+                          life: 3000,
+                        });
+                      });
+                  }}
+                  config={config}
+                  permission="GARDEN_ADMIN"
+                  hasGardenName={selectedGarden?.name}
+                />
+              )}
+            {gardenRef.current &&
+              gardenRef.current.name !== selectedGarden?.name && (
+                <AccessButton
+                  label="Sync Users"
+                  tooltip={`Sync Users for Garden ${selectedGarden?.name}`}
+                  {...GenerateTourProps(syncUsersTourStep)}
+                  data-testid={"SYNC_USERS"}
+                  className="mr-2"
+                  onClick={() => {
+                    if (selectedGarden?.name) {
+                      SyncUsersGarden(selectedGarden.name)
+                        .then(() => {
+                          showToast({
+                            severity: "success",
+                            summary: "Success",
+                            detail: `Synced Users for Garden ${selectedGarden?.name}`,
+                            life: 3000,
+                          });
+                        })
+                        .catch((error) => {
+                          console.error(
+                            "Error Syncing Users in Garden:",
+                            error,
+                          );
+                          showToast({
+                            severity: "error",
+                            summary: "Error",
+                            detail: `Error Syncing Users in Garden: ${error}`,
+                            life: 3000,
+                          });
+                        });
+                    }
+                  }}
+                  config={config}
+                  permission="GARDEN_ADMIN"
+                  hasGardenName={selectedGarden?.name}
+                />
+              )}
+            {gardenRef.current &&
+              gardenRef.current.name !== selectedGarden?.name && (
+                <AccessButton
+                  label="Delete Garden"
+                  tooltip={`Delete Garden ${selectedGarden?.name}`}
+                  {...GenerateTourProps(deleteGardenTourStep)}
+                  data-testid={"DELETE_GARDEN"}
+                  severity="danger"
+                  className="mr-2"
+                  onClick={() => {
+                    if (selectedGarden?.name) {
+                      DeleteGarden(selectedGarden.name)
+                        .then(() => {
+                          showToast({
+                            severity: "success",
+                            summary: "Success",
+                            detail: `Deleted Garden ${selectedGarden?.name}`,
+                            life: 3000,
+                          });
+                        })
+                        .catch((error) => {
+                          console.error("Error Deleting Garden:", error);
+                          showToast({
+                            severity: "error",
+                            summary: "Error",
+                            detail: `Error Deleting Garden: ${error}`,
+                            life: 3000,
+                          });
+                        });
+                    }
+                  }}
+                  config={config}
+                  permission="GARDEN_ADMIN"
+                  hasGardenName={selectedGarden?.name}
+                />
+              )}
+          </div>
+        )}
+      </div>
+      {selectedGarden?.name ? (
+        <div>
+          {invalidRouting && (
+            <Message
+              className="mx-2 mb-2"
+              severity="warn"
+              text="Warning - Upstream routing error. Requests or Syncs might be interrupted or missed. Please contact your Garden Admin"
+              pt={{
+                icon: {
+                  role: "img",
+                  "aria-label": "Close Alert Message",
+                  style: { color: "var(--warning-color)" },
+                },
+              }}
+              style={{
+                backgroundColor: "var(--warning-background-color)",
+                color: "var(--warning-color)",
+              }}
+            />
+          )}
+          <div className="grid">
+            <div className="col-3">
+              <h2>Version</h2>
+              <p>{selectedGarden?.version}</p>
+            </div>
+            <div className="col-3">
+              <h2>Systems</h2>
+              <div className="flex">
+                {Array.from(systemCounts, ([status, count]) => {
+                  if (count && count > 0) {
+                    const statusSeverity = GetSeverity(status);
+                    return (
+                      <div key={`${status}_Summary`}>
+                        <Tooltip
+                          content={`${status} Count ${count}`}
+                          target={`#${status}_${selectedGarden?.id}_severity_system_summary`}
+                          position="bottom"
+                        />
+                        <Badge
+                          data-testid={`${status}_severity_system_summary`}
+                          id={`${status}_${selectedGarden?.id}_severity_system_summary`}
+                          value={count}
+                          severity={statusSeverity}
+                          key={status}
+                        />
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })}
+              </div>
+            </div>
+            {selectedGarden?.children &&
+              selectedGarden?.children.length > 0 && (
+                <div className="col-3">
+                  <h2>Downstream</h2>
+
+                  {selectedGarden?.children &&
+                    selectedGarden?.children.length > 0 && (
+                      <ul>
+                        {" "}
+                        {Array.from(
+                          selectedGarden.children ?? [],
+                          (child: Garden) => {
+                            return <li key={child.name}>{child.name}</li>;
+                          },
+                        )}
+                      </ul>
+                    )}
+                </div>
+              )}
+            {selectedGarden?.parent && (
+              <div className="col-3">
+                <h2>Upstream</h2>
+                <ul>
+                  <li>{selectedGarden?.parent}</li>
+                </ul>
+              </div>
+            )}
+          </div>
+          <div className="grid">
+            {receivingConnections && receivingConnections.length > 0 && (
+              <div className="col-4">
+                <h2>Receiving</h2>
+
+                <DataTable value={receivingConnections}>
+                  <Column
+                    field="api"
+                    header="API"
+                    body={(row) => apiTemplate(row, "RECEIVING")}
+                  />
+                  <Column
+                    field="status"
+                    header="Status"
+                    body={statusTemplate}
+                  />
+                  <Column
+                    header="Actions"
+                    body={(node: any) => connectionActions(node, "RECEIVING")}
+                  />
+                </DataTable>
+              </div>
+            )}
+
+            {publishingConnections && publishingConnections.length > 0 && (
+              <div className="col-4">
+                <h2>Publishing</h2>
+                <DataTable value={publishingConnections}>
+                  <Column
+                    field="api"
+                    header="API"
+                    body={(row) => apiTemplate(row, "PUBLISHING")}
+                  />
+                  <Column
+                    field="status"
+                    header="Status"
+                    body={statusTemplate}
+                  />
+                  <Column
+                    header="Actions"
+                    body={(node: any) => connectionActions(node, "PUBLISHING")}
+                  />
+                </DataTable>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <Skeleton width="100%" height="150px"></Skeleton>
+      )}
+    </Card>
+  );
+}
+
+export default GardenSummary;

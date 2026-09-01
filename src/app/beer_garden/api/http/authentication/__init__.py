@@ -18,6 +18,7 @@ from beer_garden.user import (
     get_token,
     get_user,
     revoke_tokens,
+    verify_token,
 )
 
 
@@ -143,24 +144,26 @@ def get_user_from_token(access_token: dict, revoke_expired=True) -> User:
         ExpiredTokenException: The token is valid, but the corresponding User no
             longer exists.
     """
-    try:
-        user = get_user(id=access_token["sub"], include_roles=False)
-    except DoesNotExist:
-        raise InvalidTokenException
 
-    try:
-        _ = get_token(uuid=access_token["jti"])
-    except DoesNotExist:
+    valid_token = verify_token(uuid=access_token["jti"])
+    if not valid_token:
+        try:
+            get_user(id=access_token["sub"], include_roles=False)
+        except DoesNotExist:
+            raise InvalidTokenException
+
         if revoke_expired:
-            revoke_tokens(user=user)
+            revoke_tokens(username=access_token["username"])
 
         raise ExpiredTokenException
 
-    user.roles = []
-    user.local_roles = SchemaParser.parse_role(
-        access_token["roles"], many=True, from_string=False
+    user = User(
+        id=access_token["sub"],
+        username=access_token["username"],
+        local_roles=SchemaParser.parse_role(
+            access_token["roles"], many=True, from_string=False
+        ),
     )
-    user.upstream_roles = []
 
     return user
 
@@ -228,6 +231,7 @@ def _generate_access_token(user: User, identifier: UUID, max_permission: str) ->
         "type": "access",
         "username": user.username,
         "roles": roles,
+        "preferences": user.preferences,
     }
 
     access_token = jwt.encode(jwt_payload, key=secret_key, headers=jwt_headers)

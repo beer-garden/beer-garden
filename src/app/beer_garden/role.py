@@ -115,6 +115,8 @@ def load_roles_config():
 def rescan():
     """Rescan the roles configuration file"""
     roles_config = load_roles_config()
+
+    updated_roles = []
     for role in roles_config:
         kwargs = {
             "name": role.get("name"),
@@ -136,6 +138,13 @@ def rescan():
                 update_role(existing, **kwargs)
         except DoesNotExist:
             create_role(role)
+
+        updated_roles.append(role.name)
+
+    for missing_role in db.query(
+        Role, filter_params={"file_generated": True, "name__nin": updated_roles}
+    ):
+        delete_role(missing_role)
 
 
 def ensure_roles():

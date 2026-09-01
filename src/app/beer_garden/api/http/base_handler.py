@@ -111,12 +111,20 @@ class BaseHandler(RequestHandler):
     def client(self):
         return self.settings["client"]
 
+    def get_header(self, header, default=None):
+        # Headers are case insensitive
+        for key in self.request.headers.keys():
+            if key.lower() == header.lower():
+                return self.request.headers.get(key)
+
+        return default
+
     def prepare(self):
         """Called before each verb handler"""
         # Used for calculating request handling duration
         self.request.created_time = datetime.datetime.now(datetime.timezone.utc)
 
-        content_type = self.request.headers.get("content-type", "")
+        content_type = self.get_header("content-type", "")
         if self.request.method.upper() in ["POST", "PATCH"] and content_type:
             content_type = content_type.split(";")
 
