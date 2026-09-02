@@ -42,7 +42,7 @@ const darkPalette = {
   warning: { main: deepOrange[900], contrastText: grey[50] },
   background: {
     default: grey[900],
-    paper: grey[700],
+    paper: grey[800],
   },
   text: {
     primary: grey[50],
