@@ -1,3 +1,4 @@
+import { AlertTitle, Typography } from "@mui/material";
 import Alert, { AlertColor } from "@mui/material/Alert";
 import Snackbar from "@mui/material/Snackbar";
 import React, {
@@ -7,7 +8,6 @@ import React, {
   useContext,
   useState,
 } from "react";
-import { AlertHeading } from "react-bootstrap";
 
 export interface SnackbarArgs {
   severity: AlertColor; // "success" | "info" | "warning" | "error"
@@ -64,8 +64,8 @@ export const SnackbarProvider = ({ children }: { children: ReactNode }) => {
           variant="filled"
           sx={{ width: "100%" }}
         >
-          <AlertHeading>{summary}</AlertHeading>
-          {detail}
+          <AlertTitle>{summary}</AlertTitle>
+          <Typography variant="body1">{detail}</Typography>
         </Alert>
       </Snackbar>
     </SnackbarContext.Provider>
