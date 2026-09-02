@@ -617,6 +617,7 @@ function GardenDashboard({
                 findSelectedGarden(id);
               }
             }}
+            itemChildrenIndentation={"0px"}
           />
         </Box>
 
