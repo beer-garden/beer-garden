@@ -502,6 +502,7 @@ function App() {
       listeners={listeners.current}
       tourStepsRef={tourStepsRef}
       addRequestItem={addRequestItem}
+      config={config}
     />,
   );
   componentMap.set(

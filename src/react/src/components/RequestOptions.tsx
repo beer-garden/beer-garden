@@ -170,6 +170,28 @@ function RequestOptions({
         setRequest(undefined);
       },
     });
+
+    if (
+      !isCard &&
+      request?.metadata?.bg_job_id !== undefined &&
+      request.source_garden === config.garden_name
+    ) {
+      items.push({
+        label: "View Job",
+        icon: "briefcase",
+        command: () => {
+          if (
+            request?.metadata?.bg_job_id &&
+            typeof request.metadata.bg_job_id === "string"
+          ) {
+            addRequestItem({
+              jobId: request.metadata.bg_job_id,
+              type: "VIEW_JOB",
+            });
+          }
+        },
+      });
+    }
   }
 
   const pourAgain = (request: Request) => {
