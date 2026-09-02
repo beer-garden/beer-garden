@@ -122,7 +122,13 @@ function RequestView({
     };
 
     if (request) {
-      queryHeaders["include"] = ["output", "error_class", "parameters"];
+      queryHeaders["include"] = [
+        "output",
+        "error_class",
+        "parameters",
+        "comment",
+        "metadata",
+      ];
     }
 
     const data = await GetRequest(request_id, {}, queryHeaders);
@@ -133,6 +139,8 @@ function RequestView({
         output: data.output,
         error_class: data.error_class,
         parameters: data.parameters,
+        comment: data.comment,
+        metadata: data.metadata,
       });
     } else {
       setRequest(data);
