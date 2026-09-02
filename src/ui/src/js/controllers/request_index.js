@@ -49,7 +49,7 @@ export default function requestIndexController(
         // Take include_children value from the checkbox
         if ($('#childCheck').is(':checked')) {
           data.include_children = true;
-          data.columns.push({data: 'parent'});
+          data.columns.push({data: 'parent_id'});
         }
         if ($('#hiddenRequestCheck').is(':checked')) {
           data.include_hidden = true;
@@ -106,15 +106,15 @@ export default function requestIndexController(
           let display = '';
           let commandName = data;
 
-          if (full.parent) {
+          if (full.parent_id) {
             display +=
             '<span style="margin-right: 2px;"' +
-            `uib-popover="${full.parent.command}"` +
+            `uib-popover="${full.parent_id}"` +
             'popover-trigger="\'mouseenter\'"' +
             'popover-title="parent request"' +
             'popover-animation="true"' +
             'popover-placement="top-left">' +
-            `<a ui-sref="base.request({requestId: '${full.parent.id}'})" ` +
+            `<a ui-sref="base.request({requestId: '${full.parent_id}'})" ` +
             'class="fa fa-level-up fa-fw">' +
             '</a>' +
             '</span>';

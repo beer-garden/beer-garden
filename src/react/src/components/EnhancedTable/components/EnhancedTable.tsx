@@ -34,6 +34,8 @@ const EnhancedTable = ({
   isLoading,
   displayAll,
   keyField,
+  rowsPerPageOptions,
+  defaultRowsPerPageOptions,
   ...props
 }: {
   data?: any[];
@@ -58,6 +60,8 @@ const EnhancedTable = ({
   isLoading?: boolean;
   displayAll?: boolean;
   keyField?: string;
+  rowsPerPageOptions?: number[];
+  defaultRowsPerPageOptions?: number;
 }) => {
   const [displayData, setDisplayData] = useState<any[] | undefined>(undefined);
   const [displayFiltered, setDisplayFiltered] = useState<number | undefined>(
@@ -81,7 +85,12 @@ const EnhancedTable = ({
   };
 
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(
+    defaultRowsPerPageOptions ??
+      (rowsPerPageOptions !== undefined && rowsPerPageOptions.length > 0
+        ? rowsPerPageOptions[0]
+        : 10),
+  );
 
   const [pageRecords, setPageRecords] = useState(false);
 
@@ -713,7 +722,9 @@ const EnhancedTable = ({
         {(displayAll === undefined || displayAll === false) && (
           <TablePagination
             component="div"
-            rowsPerPageOptions={pageRecords ? [5, 10, 25] : []}
+            rowsPerPageOptions={
+              rowsPerPageOptions ?? (pageRecords ? [10, 25, 50, 100] : [])
+            }
             count={dataLength ?? displayDataLength}
             rowsPerPage={rowsPerPage}
             page={page}

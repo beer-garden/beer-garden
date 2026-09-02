@@ -14,6 +14,7 @@ from mock import Mock, call, patch
 
 import beer_garden.config
 import beer_garden.requests
+from beer_garden.db.mongo.api import to_brewtils
 from beer_garden.db.mongo.models import Garden, Request
 from beer_garden.garden import create_garden
 from beer_garden.requests import (
@@ -1330,7 +1331,8 @@ class TestCancelRequest(object):
             command="somecommand",
             parameters={},
             status="CREATED",
-            parent=parent_request,
+            parent_id=str(parent_request.id),
+            has_parent=True,
         )
         request.save()
 
@@ -1345,7 +1347,8 @@ class TestCancelRequest(object):
             command="somecommand",
             parameters={},
             status="SUCCESS",
-            parent=parent_request,
+            parent_id=str(parent_request.id),
+            has_parent=True,
         )
         request.save()
 
@@ -1366,7 +1369,7 @@ class TestCancelRequest(object):
         self.active_child_request(request)
         self.inactive_child_request(request)
 
-        return request
+        return to_brewtils(request)
 
     def test_cancel_children(self, monkeypatch):
         cancel_mock = Mock()

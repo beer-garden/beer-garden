@@ -15,9 +15,8 @@ function UserOverlay({
   onLogout: any;
   onClearSession: any;
 }) {
-  const color = localStorage.getItem("theme_color") || "blue";
   const [dark, setDark] = useState<boolean>(
-    localStorage.getItem("theme_dark") === "true" || false,
+    localStorage.getItem("user_theme") === "dark" || false,
   );
   const [showAdvancedOption, setShowAdvancedOption] = useState<boolean>(
     localStorage.getItem("user_advanced") === "true" || false,
@@ -34,14 +33,11 @@ function UserOverlay({
     ) {
       ChangePowerUser(showAdvancedOption);
     }
-    if (
-      (localStorage.getItem("theme_dark") === "true") !== dark ||
-      localStorage.getItem("theme_color") !== color
-    ) {
-      ChangeTheme(color, dark);
+    if ((localStorage.getItem("user_theme") === "dark") !== dark) {
+      ChangeTheme(dark);
       window.dispatchEvent(new Event("storage"));
     }
-  }, [color, dark, showAdvancedOption]);
+  }, [dark, showAdvancedOption]);
 
   return (
     <Box sx={{ color: "text.primary" }}>
@@ -78,7 +74,7 @@ function UserOverlay({
             }}
           />
           <Box sx={{ ml: 2 }} id="switchMode">
-            {dark ? (
+            {mode === "dark" ? (
               <>
                 <FAIcon icon="moon" sx={{ mr: 2 }} />
                 <Box component="span">Dark Mode</Box>
@@ -142,7 +138,14 @@ function UserOverlay({
             size="small"
             color="warning"
             sx={{ mr: 2 }}
-            onClick={onClearSession}
+            onClick={() => {
+              onClearSession();
+              setMode(
+                localStorage.getItem("user_theme") === "dark"
+                  ? "dark"
+                  : "light",
+              );
+            }}
             data-testid="clear-session-overlay"
           >
             <FAIcon sx={{ mr: 2 }} icon="eraser" />
