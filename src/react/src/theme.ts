@@ -90,6 +90,16 @@ export const theme = createTheme({
         },
       },
     },
+    MuiButton: {
+      styleOverrides: {
+        root: ({ ownerState, theme }) => ({
+          ...(ownerState.variant === "outlined" && {
+            borderColor: theme.palette.text.primary,
+            color: theme.palette.text.primary,
+          }),
+        }),
+      },
+    },
     MuiToggleButton: {
       styleOverrides: {
         root: ({ theme }) => ({
@@ -98,6 +108,13 @@ export const theme = createTheme({
             color: theme.palette.primary.contrastText, // Sets the selected text color if needed
             backgroundColor: theme.palette.info.main,
           },
+        }),
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          color: theme.palette.text.primary,
         }),
       },
     },

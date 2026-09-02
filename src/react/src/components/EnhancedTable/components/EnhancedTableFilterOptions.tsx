@@ -435,7 +435,7 @@ export const EnhancedTableFilterOptions = ({
               onClick={() => removeFilter(id)}
               aria-label="Remove filter"
             >
-              <FontAwesomeIcon icon="x" />
+              <FontAwesomeIcon icon="xmark" />
             </IconButton>
           </Grid>
           <Grid size={3}>
