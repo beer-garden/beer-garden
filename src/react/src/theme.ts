@@ -133,5 +133,19 @@ export const theme = createTheme({
         }),
       },
     },
+    MuiAutocomplete: {
+      styleOverrides: {
+        popupIndicator: ({ theme }) => ({
+          color: theme.palette.text.primary,
+        }),
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        icon: ({ theme }) => ({
+          color: theme.palette.text.primary,
+        }),
+      },
+    },
   },
 });
