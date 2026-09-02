@@ -2,7 +2,10 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-import { ConfirmDialogProvider, useConfirmDialog } from "./ConfirmDialogProvider";
+import {
+  ConfirmDialogProvider,
+  useConfirmDialog,
+} from "./ConfirmDialogProvider";
 
 const TriggerComponent = ({ onConfirm }: { onConfirm?: () => void }) => {
   const showConfirm = useConfirmDialog();
@@ -40,7 +43,7 @@ describe("ConfirmDialogProvider", () => {
   test("does not render dialog initially", () => {
     render(
       <ConfirmDialogProvider>
-        <button>Trigger</button>
+        <TriggerComponent />
       </ConfirmDialogProvider>,
     );
 

@@ -49,7 +49,9 @@ describe("role_service", () => {
         json: () => ({}),
       });
 
-      await expect(GetRole("missing")).rejects.toThrow("HTTP error: Status 404");
+      await expect(GetRole("missing")).rejects.toThrow(
+        "HTTP error: Status 404",
+      );
     });
   });
 
@@ -80,7 +82,11 @@ describe("role_service", () => {
 
   describe("EditRole", () => {
     it("sends PATCH with role data", async () => {
-      const role: Role = { id: "r1", name: "updated", permission: "OPERATOR" } as Role;
+      const role: Role = {
+        id: "r1",
+        name: "updated",
+        permission: "OPERATOR",
+      } as Role;
       globalThis.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: () => role,
@@ -103,9 +109,9 @@ describe("role_service", () => {
         json: () => ({}),
       });
 
-      await expect(
-        EditRole({ id: "r1" } as Role),
-      ).rejects.toThrow("HTTP error: Status 400");
+      await expect(EditRole({ id: "r1" } as Role)).rejects.toThrow(
+        "HTTP error: Status 400",
+      );
     });
   });
 
@@ -193,9 +199,9 @@ describe("role_service", () => {
         json: () => ({}),
       });
 
-      await expect(
-        CreateRole({ name: "bad" } as Role),
-      ).rejects.toThrow("HTTP error: Status 400");
+      await expect(CreateRole({ name: "bad" } as Role)).rejects.toThrow(
+        "HTTP error: Status 400",
+      );
     });
   });
 });

@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ClearToken, GetAuthHeaders, GetToken, UserLogin } from "./token_service";
+import {
+  ClearToken,
+  GetAuthHeaders,
+  GetToken,
+  UserLogin,
+} from "./token_service";
 
 // Mock jwt-decode to return a valid payload without needing a real JWT token
 vi.mock("jwt-decode", () => ({

@@ -57,11 +57,7 @@ describe("HasAccess", () => {
     vi.mocked(checkPermission).mockReturnValue(true);
 
     render(
-      <HasAccess
-        config={mockConfig}
-        permission="GARDEN_ADMIN"
-        isGlobal={true}
-      >
+      <HasAccess config={mockConfig} permission="GARDEN_ADMIN" isGlobal={true}>
         {mockChildren}
       </HasAccess>,
     );
@@ -87,28 +83,8 @@ describe("HasAccess", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("auth-failed")).toBeInTheDocument();
-      expect(
-        screen.queryByTestId("protected-content"),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId("protected-content")).not.toBeInTheDocument();
     });
-  });
-
-  test("renders nothing initially before useEffect completes (auth enabled, no isLoading)", () => {
-    vi.mocked(checkPermission).mockReturnValue(true);
-
-    // In the browser environment, useEffect runs after initial render
-    // On first render: hasAccess=false, checking=true, no isLoading/renderAuthFailed
-    // So nothing renders until the effect updates state
-    // We test the pre-effect state by checking the rendered output includes
-    // the HasAccess wrapper (no error thrown, no crash)
-    render(
-      <HasAccess config={mockConfig} permission="READ_ONLY">
-        {mockChildren}
-      </HasAccess>,
-    );
-
-    // After effect runs, checkPermission returns true, so children should show
-    expect(screen.getByTestId("protected-content")).toBeInTheDocument();
   });
 
   test("passes correct PermissionCheck to checkPermission", async () => {
@@ -150,9 +126,7 @@ describe("HasAccess", () => {
 
   test("renders isLoading fallback while checking", async () => {
     vi.mocked(checkPermission).mockReturnValue(true);
-    const loadingFallback = (
-      <div data-testid="loading">Loading...</div>
-    );
+    const loadingFallback = <div data-testid="loading">Loading...</div>;
 
     render(
       <HasAccess

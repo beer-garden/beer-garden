@@ -232,9 +232,7 @@ describe("GenerateStatusCounts edge cases", () => {
           garden_name: "child",
         } as System,
         {
-          instances: [
-            { status: "DEAD" },
-          ] as Instance[],
+          instances: [{ status: "DEAD" }] as Instance[],
           local: false,
           garden_name: "child",
         } as System,

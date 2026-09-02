@@ -30,7 +30,9 @@ describe("scratchpad_service", () => {
     });
 
     it("returns parsed items from localStorage", () => {
-      const items = [{ padId: "1", padType: "request", values: { foo: "bar" } }];
+      const items = [
+        { padId: "1", padType: "request", values: { foo: "bar" } },
+      ];
       localStorage.setItem("scratchPadItems", JSON.stringify(items));
 
       const result = GetScratchPadItems();

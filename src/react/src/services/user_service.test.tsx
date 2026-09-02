@@ -201,9 +201,9 @@ describe("user_service", () => {
         json: () => ({}),
       });
 
-      await expect(
-        UserUpdatePassword("new", "current"),
-      ).rejects.toThrow("HTTP error: Status 403");
+      await expect(UserUpdatePassword("new", "current")).rejects.toThrow(
+        "HTTP error: Status 403",
+      );
     });
   });
 });

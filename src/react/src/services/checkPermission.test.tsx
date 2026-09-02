@@ -12,12 +12,14 @@ describe("checkPermission", () => {
   });
 
   const makeConfig = (authEnabled: boolean): Config =>
-    ({ auth_enabled: authEnabled } as Config);
+    ({ auth_enabled: authEnabled }) as Config;
 
   test("returns true when auth is disabled (auth_enabled is false)", () => {
     const config = makeConfig(false);
     expect(
-      checkPermission(config, "GARDEN_ADMIN", { global: true } as PermissionCheck),
+      checkPermission(config, "GARDEN_ADMIN", {
+        global: true,
+      } as PermissionCheck),
     ).toBe(true);
   });
 
@@ -35,7 +37,9 @@ describe("checkPermission", () => {
     ]);
 
     expect(
-      checkPermission(config, "GARDEN_ADMIN", { global: true } as PermissionCheck),
+      checkPermission(config, "GARDEN_ADMIN", {
+        global: true,
+      } as PermissionCheck),
     ).toBe(true);
   });
 
@@ -46,7 +50,9 @@ describe("checkPermission", () => {
     ]);
 
     expect(
-      checkPermission(config, "GARDEN_ADMIN", { global: true } as PermissionCheck),
+      checkPermission(config, "GARDEN_ADMIN", {
+        global: true,
+      } as PermissionCheck),
     ).toBe(false);
   });
 
@@ -91,7 +97,9 @@ describe("GetPermissions", () => {
     ]);
 
     expect(
-      checkPermission(config, "PLUGIN_ADMIN", { global: true } as PermissionCheck),
+      checkPermission(config, "PLUGIN_ADMIN", {
+        global: true,
+      } as PermissionCheck),
     ).toBe(true);
   });
 
@@ -102,7 +110,9 @@ describe("GetPermissions", () => {
     ]);
 
     expect(
-      checkPermission(config, "GARDEN_ADMIN", { global: true } as PermissionCheck),
+      checkPermission(config, "GARDEN_ADMIN", {
+        global: true,
+      } as PermissionCheck),
     ).toBe(false);
   });
 
@@ -113,7 +123,9 @@ describe("GetPermissions", () => {
     ]);
 
     expect(
-      checkPermission(config, "GARDEN_ADMIN", { global: true } as PermissionCheck),
+      checkPermission(config, "GARDEN_ADMIN", {
+        global: true,
+      } as PermissionCheck),
     ).toBe(false);
   });
 
@@ -135,7 +147,11 @@ describe("GetPermissions", () => {
     ]);
 
     expect(
-      checkPermission(config, "SUPER_ADMIN" as any, { global: true } as PermissionCheck),
+      checkPermission(
+        config,
+        "SUPER_ADMIN" as any,
+        { global: true } as PermissionCheck,
+      ),
     ).toBe(false);
   });
 });

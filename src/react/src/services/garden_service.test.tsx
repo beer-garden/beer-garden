@@ -83,9 +83,11 @@ describe("garden_service", () => {
       });
 
       await expect(
-        gardenService.PatchGarden(
-          { operation: "sync", path: "", value: "" } as Patch,
-        ),
+        gardenService.PatchGarden({
+          operation: "sync",
+          path: "",
+          value: "",
+        } as Patch),
       ).rejects.toThrow("HTTP error: Status 500");
     });
   });
@@ -205,7 +207,7 @@ describe("garden_service", () => {
     it("calls PatchGarden with sync operation and garden name", async () => {
       globalThis.fetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: () => ({ id: "1", name: "my_garden" } as Garden),
+        json: () => ({ id: "1", name: "my_garden" }) as Garden,
       });
 
       const result = await gardenService.SyncGarden("my_garden");
@@ -222,7 +224,7 @@ describe("garden_service", () => {
     it("calls PatchGarden without garden name", async () => {
       globalThis.fetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: () => ({ id: "1" } as Garden),
+        json: () => ({ id: "1" }) as Garden,
       });
 
       const result = await gardenService.SyncGarden();
@@ -241,7 +243,7 @@ describe("garden_service", () => {
     it("calls PatchGarden with rescan operation", async () => {
       globalThis.fetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: () => ({ id: "1" } as Garden),
+        json: () => ({ id: "1" }) as Garden,
       });
 
       await gardenService.RescanGarden("my_garden");
@@ -259,7 +261,7 @@ describe("garden_service", () => {
     it("calls PatchGarden with sync_users operation", async () => {
       globalThis.fetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: () => ({ id: "1" } as Garden),
+        json: () => ({ id: "1" }) as Garden,
       });
 
       await gardenService.SyncUsersGarden("my_garden");
@@ -277,10 +279,15 @@ describe("garden_service", () => {
     it("calls PatchGarden with connection operation", async () => {
       globalThis.fetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: () => ({ id: "1" } as Garden),
+        json: () => ({ id: "1" }) as Garden,
       });
 
-      await gardenService.UpdateApiGarden("my_garden", "PUBLISHING", "HTTP", "Remote");
+      await gardenService.UpdateApiGarden(
+        "my_garden",
+        "PUBLISHING",
+        "HTTP",
+        "Remote",
+      );
 
       const [url, options] = (globalThis.fetch as any).mock.calls[0];
       expect(url).toBe("/api/v1/gardens/my_garden");

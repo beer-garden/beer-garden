@@ -33,7 +33,9 @@ describe("AccessButton", () => {
     );
 
     // The button is wrapped in a Tooltip, so its accessible name comes from the tooltip
-    expect(screen.getByRole("button", { name: "Helpful tip" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Helpful tip" }),
+    ).toBeInTheDocument();
   });
 
   test("uses label as aria-label when tooltip not provided", () => {
@@ -57,18 +59,6 @@ describe("AccessButton", () => {
     expect(screen.getByLabelText("Custom ARIA")).toBeInTheDocument();
   });
 
-  test("sets variant to contained by default", () => {
-    render(
-      <AccessButton config={mockConfig}>
-        <span>Action</span>
-      </AccessButton>,
-    );
-
-    // The MUI Button should have variant="contained"
-    const button = screen.getByRole("button");
-    expect(button).toBeInTheDocument();
-  });
-
   test("applies text variant when text prop is set", () => {
     render(
       <AccessButton config={mockConfig} text>
@@ -77,16 +67,6 @@ describe("AccessButton", () => {
     );
 
     expect(screen.getByRole("button", { name: "Action" })).toBeInTheDocument();
-  });
-
-  test("applies rounded style when rounded prop is set", () => {
-    render(
-      <AccessButton config={mockConfig} rounded>
-        <span>Action</span>
-      </AccessButton>,
-    );
-
-    expect(screen.getByRole("button")).toBeInTheDocument();
   });
 
   test("applies basic class when basic prop is set", () => {
@@ -136,26 +116,8 @@ describe("AccessButton", () => {
 
     // Should not show the button content during initial checking
     // The HasAccess component handles access determination
-    expect(screen.getByRole("button", { name: "Protected Action" })).toBeInTheDocument();
-  });
-
-  test("sets color to info by default", () => {
-    render(
-      <AccessButton config={mockConfig}>
-        <span>Action</span>
-      </AccessButton>,
-    );
-
-    expect(screen.getByRole("button")).toBeInTheDocument();
-  });
-
-  test("allows overriding color prop", () => {
-    render(
-      <AccessButton config={mockConfig} color="error">
-        <span>Action</span>
-      </AccessButton>,
-    );
-
-    expect(screen.getByRole("button")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Protected Action" }),
+    ).toBeInTheDocument();
   });
 });

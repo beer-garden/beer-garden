@@ -50,9 +50,7 @@ describe("tour_service", () => {
     it("sets correct target attributes", () => {
       const steps = [makeTourStep({ prefix: "nav", label: "Home" })];
       const result = ConvertToTourStepProps(steps);
-      expect(result[0].target).toBe(
-        '[data-step="nav-test-uuid-Home"]',
-      );
+      expect(result[0].target).toBe('[data-step="nav-test-uuid-Home"]');
     });
 
     it("sets beaconPlacement to top", () => {
@@ -165,9 +163,7 @@ describe("tour_service", () => {
     it("does nothing when ref.current is undefined", () => {
       const ref = { current: undefined };
 
-      expect(() =>
-        RemoveTourStep(ref as any, makeTourStep()),
-      ).not.toThrow();
+      expect(() => RemoveTourStep(ref as any, makeTourStep())).not.toThrow();
     });
   });
 

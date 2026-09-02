@@ -17,9 +17,7 @@ const TriggerComponent = ({
 
   return (
     <button
-      onClick={() =>
-        showSnackbar({ severity, summary, detail, life: 3000 })
-      }
+      onClick={() => showSnackbar({ severity, summary, detail, life: 3000 })}
     >
       Trigger
     </button>
@@ -44,7 +42,7 @@ describe("SnackbarProvider", () => {
   test("does not show snackbar initially", () => {
     render(
       <SnackbarProvider>
-        <button>Trigger</button>
+        <TriggerComponent />
       </SnackbarProvider>,
     );
 

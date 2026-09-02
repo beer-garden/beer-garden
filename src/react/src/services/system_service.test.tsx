@@ -107,7 +107,12 @@ describe("system_service pure functions", () => {
         { id: "3", version: "3.0.0" } as System,
       ];
 
-      const result = DetermineLatestSystemVersion(systems, undefined, undefined, "2.0.0");
+      const result = DetermineLatestSystemVersion(
+        systems,
+        undefined,
+        undefined,
+        "2.0.0",
+      );
       expect(result.id).toBe("2");
     });
 
@@ -117,7 +122,12 @@ describe("system_service pure functions", () => {
         { id: "2", version: "2.0.0" } as System,
       ];
 
-      const result = DetermineLatestSystemVersion(systems, undefined, undefined, "latest");
+      const result = DetermineLatestSystemVersion(
+        systems,
+        undefined,
+        undefined,
+        "latest",
+      );
       expect(result.id).toBe("2");
     });
 
@@ -127,7 +137,12 @@ describe("system_service pure functions", () => {
         { id: "2", version: "2.0.0" } as System,
       ];
 
-      const result = DetermineLatestSystemVersion(systems, undefined, undefined, undefined);
+      const result = DetermineLatestSystemVersion(
+        systems,
+        undefined,
+        undefined,
+        undefined,
+      );
       expect(result.id).toBe("2");
     });
 
@@ -137,7 +152,12 @@ describe("system_service pure functions", () => {
         { id: "2", version: "1.0.0" } as System,
       ];
 
-      const result = DetermineLatestSystemVersion(systems, undefined, undefined, undefined);
+      const result = DetermineLatestSystemVersion(
+        systems,
+        undefined,
+        undefined,
+        undefined,
+      );
       expect(result.id).toBe("1");
     });
   });
