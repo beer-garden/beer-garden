@@ -101,5 +101,20 @@ export const theme = createTheme({
         }),
       },
     },
+    MuiLink: {
+      defaultProps: {
+        underline: "hover",
+      },
+      styleOverrides: {
+        root: ({ theme }) => ({
+          color: theme.palette.primary.contrastText,
+          fontWeight: 600,
+          textDecoration: "none",
+          "&:hover": {
+            color: theme.palette.primary.contrastText,
+          },
+        }),
+      },
+    },
   },
 });
