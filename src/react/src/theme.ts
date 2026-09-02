@@ -42,7 +42,7 @@ const darkPalette = {
   warning: { main: deepOrange[900], contrastText: grey[50] },
   background: {
     default: grey[900],
-    paper: grey[700],
+    paper: grey[800],
   },
   text: {
     primary: grey[50],
@@ -97,6 +97,21 @@ export const theme = createTheme({
           "&.Mui-selected": {
             color: theme.palette.primary.contrastText, // Sets the selected text color if needed
             backgroundColor: theme.palette.info.main,
+          },
+        }),
+      },
+    },
+    MuiLink: {
+      defaultProps: {
+        underline: "hover",
+      },
+      styleOverrides: {
+        root: ({ theme }) => ({
+          color: theme.palette.primary.contrastText,
+          fontWeight: 600,
+          textDecoration: "none",
+          "&:hover": {
+            color: theme.palette.primary.contrastText,
           },
         }),
       },
