@@ -7,6 +7,7 @@ import { RefObject } from "react";
 
 import { Garden, Instance, Runner, System } from "../models/brewtils-types";
 import { Version } from "../models/models";
+import { externalRoutesList } from "./routes_service";
 import { UpdatePowerUserMode, UpdateUserDarkMode } from "./user_service";
 
 export const CompareObjects = (obj1: any, obj2: any) => {
@@ -64,9 +65,44 @@ export const GetVersion = async (): Promise<Version> => {
 };
 
 export const GetBaseURL = (): string => {
-  return import.meta.env.VITE_BASE_URL === "/"
-    ? ""
-    : import.meta.env.VITE_BASE_URL || "";
+  const splitPath = window.location.pathname
+    .split("/")
+    .filter((path) => path !== "");
+
+  const hopRoutes = [{ pathKey: "", position: 1 }];
+
+  for (const route of externalRoutesList) {
+    if (route.path.length > 1 && route.path.includes("/")) {
+      const routerPath = route.path.split("/").filter((path) => path !== "");
+
+      if (routerPath.length > 0) {
+        hopRoutes.push({ pathKey: routerPath[0], position: routerPath.length });
+      }
+    }
+  }
+
+  if (splitPath.length === 0) {
+    return "";
+  }
+
+  let prefixPath = splitPath;
+
+  for (const hopRoute of hopRoutes) {
+    if (splitPath.length > hopRoute.position - 1) {
+      if (
+        hopRoute.pathKey === splitPath[splitPath.length - hopRoute.position]
+      ) {
+        prefixPath = splitPath.slice(0, splitPath.length - hopRoute.position);
+        break;
+      }
+    }
+  }
+
+  if (prefixPath.length === 0) {
+    return "";
+  }
+
+  return "/" + prefixPath.join("/");
 };
 
 export const GetSeverity = (

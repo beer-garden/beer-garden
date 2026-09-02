@@ -30,16 +30,22 @@ import { ConfirmDialogProvider } from "./providers/ConfirmDialogProvider";
 import { SnackbarProvider } from "./providers/SnackbarProvider";
 import { GetConfig } from "./services/config_service";
 import { GetRootGarden } from "./services/garden_service";
+import { externalRoutesList } from "./services/routes_service";
 import { preemptiveRefresh } from "./services/token_service";
 import { GetToken } from "./services/token_service";
 import { ConvertToTourStepProps } from "./services/tour_service";
-import { ChangePowerUser, ChangeTheme } from "./services/util_service";
+import {
+  ChangePowerUser,
+  ChangeTheme,
+  GetBaseURL,
+} from "./services/util_service";
 import { theme } from "./theme";
 
 function App() {
   const socketRef = useRef(null as null | any);
   const listeners = useRef<Record<string, Listener>>({});
-  const [config, setConfig] = useState<Config | undefined>(undefined);
+  const [config, setConfig] = useState<Config>({});
+  const [invalidUrl, setInvalidUrl] = useState(false);
 
   const [reloadUI, setReloadUI] = useState(0);
   const [requestItem, setRequestItem] = useState<RequestItem | undefined>(
@@ -170,9 +176,11 @@ function App() {
           preemptiveRefresh();
         }
         loadRootGarden(config);
+        setInvalidUrl(false);
       })
       .catch((error) => {
         console.log("Unable to retrieve configuration", error);
+        setInvalidUrl(true);
       });
 
     const interval = setInterval(preemptiveRefresh, 30000);
@@ -383,7 +391,7 @@ function App() {
   );
 
   useEffect(() => {
-    if (config && config.auth_enabled === true) {
+    if (Object.keys(config).length > 0 && config.auth_enabled === true) {
       if (
         (systemsRef.current !== undefined ||
           rootGardenRef.current !== undefined) &&
@@ -403,7 +411,8 @@ function App() {
 
   useEffect(() => {
     // Create WebSocket connection when component mounts
-    socketRef.current = new WebSocket("/api/v1/socket/events/");
+    // Get Prefix
+    socketRef.current = new WebSocket(GetBaseURL() + "/api/v1/socket/events/");
     const handleMessage = (event: any) => {
       // Update React state with new message
 
@@ -439,10 +448,8 @@ function App() {
     };
   }, []);
 
-  const baseURL =
-    import.meta.env.VITE_BASE_URL === "/"
-      ? undefined
-      : import.meta.env.VITE_BASE_URL || undefined;
+  const windowBaseUrl = GetBaseURL();
+  const baseURL = windowBaseUrl === "" ? undefined : windowBaseUrl || undefined;
 
   const handleJoyrideEvent = (data: EventData) => {
     const { action, status } = data;
@@ -466,6 +473,77 @@ function App() {
     return <ErrorPage errorMsg={errorMsg} />;
   }
 
+  const componentMap = new Map();
+  componentMap.set(
+    "Dashboard",
+    <GardenDashboard
+      tourStepsRef={tourStepsRef}
+      gardenRef={rootGardenRef}
+      systemsRef={systemsRef}
+      gardenState={gardenState}
+      systemState={systemState}
+      addRequestItem={addRequestItem}
+      config={config}
+      listeners={listeners.current}
+    />,
+  );
+  componentMap.set(
+    "Request_View",
+    <RequestView
+      listeners={listeners.current}
+      config={config}
+      addRequestItem={addRequestItem}
+    />,
+  );
+
+  componentMap.set(
+    "Requests",
+    <RequestIndex
+      listeners={listeners.current}
+      tourStepsRef={tourStepsRef}
+      addRequestItem={addRequestItem}
+    />,
+  );
+  componentMap.set(
+    "Jobs",
+    <JobIndex
+      listeners={listeners.current}
+      tourStepsRef={tourStepsRef}
+      addRequestItem={addRequestItem}
+      config={config}
+    />,
+  );
+  componentMap.set("About", <AboutIndex config={config} />);
+  componentMap.set(
+    "Roles",
+    <HasAccess
+      config={config}
+      permission="GARDEN_ADMIN"
+      isGlobal={true}
+      renderAuthFailed={
+        <ErrorPage
+          errorCode={401}
+          errorMsg="Insufficient Access for Roles Management. Please contact Garden Administrator"
+        />
+      }
+    >
+      <RoleIndex config={config} tourStepsRef={tourStepsRef} />
+    </HasAccess>,
+  );
+  componentMap.set(
+    "Topics",
+    <TopicIndex
+      config={config}
+      listeners={listeners}
+      addRequestItem={addRequestItem}
+    />,
+  );
+  componentMap.set(
+    "Users",
+    <UserIndex config={config} tourStepsRef={tourStepsRef} />,
+  );
+  componentMap.set("Swagger", <Swagger />);
+
   return (
     <ThemeProvider
       theme={theme}
@@ -475,11 +553,17 @@ function App() {
       <CssBaseline />
       <ConfirmDialogProvider>
         <SnackbarProvider>
-          {config && Object.keys(config).length === 0 && (
+          {config && !invalidUrl && Object.keys(config).length === 0 && (
             <Box sx={{ m: 1 }}>
               <Skeleton variant="rounded" height={50} sx={{ mb: 2 }} />
               <Skeleton variant="rounded" height={400} />
             </Box>
+          )}
+          {invalidUrl && (
+            <ErrorPage
+              errorCode={404}
+              errorMsg="Unable to load configuration with current URL. Please verify the backend services are operational and the current URL is valid"
+            />
           )}
           {config && Object.keys(config).length > 0 && (
             <div key={reloadUI}>
@@ -593,116 +677,17 @@ function App() {
                   >
                     <ErrorBoundary FallbackComponent={ErrorFallback}>
                       <Routes>
-                        <Route
-                          path="/dashboard"
-                          element={
-                            <GardenDashboard
-                              tourStepsRef={tourStepsRef}
-                              gardenRef={rootGardenRef}
-                              systemsRef={systemsRef}
-                              gardenState={gardenState}
-                              systemState={systemState}
-                              addRequestItem={addRequestItem}
-                              config={config}
-                              listeners={listeners.current}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/request/:requestId"
-                          element={
-                            <RequestView
-                              listeners={listeners.current}
-                              config={config}
-                              addRequestItem={addRequestItem}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/requests"
-                          element={
-                            <RequestIndex
-                              listeners={listeners.current}
-                              tourStepsRef={tourStepsRef}
-                              addRequestItem={addRequestItem}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/jobs"
-                          element={
-                            <JobIndex
-                              listeners={listeners.current}
-                              tourStepsRef={tourStepsRef}
-                              addRequestItem={addRequestItem}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/about"
-                          element={<AboutIndex config={config} />}
-                        />
-                        <Route
-                          path="/roles"
-                          element={
-                            <HasAccess
-                              config={config}
-                              permission="GARDEN_ADMIN"
-                              isGlobal={true}
-                              renderAuthFailed={
-                                <ErrorPage
-                                  errorCode={401}
-                                  errorMsg="Insufficient Access for Roles Management. Please contact Garden Administrator"
-                                />
-                              }
-                            >
-                              <RoleIndex
-                                config={config}
-                                tourStepsRef={tourStepsRef}
-                              />
-                            </HasAccess>
-                          }
-                        />
-                        <Route
-                          path="/topics"
-                          element={
-                            <TopicIndex
-                              config={config}
-                              listeners={listeners}
-                              addRequestItem={addRequestItem}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/users"
-                          element={
-                            <UserIndex
-                              config={config}
-                              tourStepsRef={tourStepsRef}
-                            />
-                          }
-                        />
-                        <Route path="/swagger" element={<Swagger />} />
-                        <Route
-                          path="/"
-                          element={
-                            <GardenDashboard
-                              tourStepsRef={tourStepsRef}
-                              gardenRef={rootGardenRef}
-                              systemsRef={systemsRef}
-                              gardenState={gardenState}
-                              systemState={systemState}
-                              addRequestItem={addRequestItem}
-                              config={config}
-                              listeners={listeners.current}
-                            />
-                          }
-                        />
-                        <Route
-                          path="*"
-                          element={<ErrorPage errorCode={404} />}
-                        />
+                        {externalRoutesList.map((route, index) => (
+                          <Route
+                            key={index}
+                            path={route.path}
+                            element={
+                              componentMap.get(route.componentName) ?? (
+                                <ErrorPage errorCode={404} />
+                              )
+                            }
+                          />
+                        ))}
                       </Routes>
                     </ErrorBoundary>
                   </HasAccess>

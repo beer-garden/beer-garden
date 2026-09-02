@@ -649,7 +649,7 @@ function SystemCard({
                 <Box
                   sx={{
                     display: "flex",
-                    flexWrap: 1,
+                    flexWrap: "wrap",
                     justifyContent: "space-between",
                     alignItems: "center",
                   }}
