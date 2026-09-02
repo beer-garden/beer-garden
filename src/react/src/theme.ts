@@ -90,5 +90,16 @@ export const theme = createTheme({
         },
       },
     },
+    MuiToggleButton: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          color: theme.palette.primary.contrastText, // Sets the non-selected text color
+          "&.Mui-selected": {
+            color: theme.palette.primary.contrastText, // Sets the selected text color if needed
+            backgroundColor: theme.palette.info.main,
+          },
+        }),
+      },
+    },
   },
 });

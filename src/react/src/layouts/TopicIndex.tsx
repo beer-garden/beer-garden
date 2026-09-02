@@ -752,6 +752,7 @@ function TopicIndex({
         defaultOrderBy="name"
         defaultOrder="desc"
         isLoading={loading}
+        defaultRowsPerPageOptions={25}
       />
     );
   }
