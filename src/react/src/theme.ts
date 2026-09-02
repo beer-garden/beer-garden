@@ -115,6 +115,9 @@ export const theme = createTheme({
       styleOverrides: {
         root: ({ theme }) => ({
           color: theme.palette.text.primary,
+        }),
+      },
+    },
     MuiLink: {
       defaultProps: {
         underline: "hover",
