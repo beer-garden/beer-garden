@@ -344,7 +344,7 @@ export interface Request {
 }
 
 export interface RequestMetadata {
-  _topic?: string;
+  [key: string]: number | string;
 }
 
 export interface RequestTemplate {
