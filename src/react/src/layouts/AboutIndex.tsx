@@ -3,6 +3,7 @@ import {
   Card,
   CardContent,
   CardHeader,
+  Divider,
   Link,
   Typography,
 } from "@mui/material";
@@ -144,11 +145,8 @@ function AboutIndex({ config }: { config: Config }) {
                 Helpful Links
               </Typography>
             }
-            sx={{
-              backgroundColor: "#f9fafb",
-              borderBottom: "1px solid rgba(0, 0, 0, 0.12);",
-            }}
           />
+          <Divider />
           <CardContent>
             <HelpfulLinks config={config} />
           </CardContent>
@@ -164,11 +162,8 @@ function AboutIndex({ config }: { config: Config }) {
                 Version Information
               </Typography>
             }
-            sx={{
-              backgroundColor: "#f9fafb",
-              borderBottom: "1px solid rgba(0, 0, 0, 0.12);",
-            }}
           />
+          <Divider />
           <CardContent>
             <VersionInformation config={config} version={version} />
           </CardContent>

@@ -597,7 +597,7 @@ function GardenDashboard({
   return (
     <div>
       {/* LEFT NAV TREE */}
-      <Box sx={{ display: "flex", flexWrap: 1 }}>
+      <Box sx={{ display: "flex", flexWrap: "wrap" }}>
         <Box sx={{ width: "16%", minWidth: "250px", p: 2 }}>
           <TreeMenu
             sx={{
@@ -617,6 +617,7 @@ function GardenDashboard({
                 findSelectedGarden(id);
               }
             }}
+            itemChildrenIndentation={"0px"}
           />
         </Box>
 
@@ -685,31 +686,28 @@ function GardenDashboard({
                   })}
                 </Select>
               </FormControl>
-
-              <Box sx={{ display: "flex", justifyContent: "left" }}>
-                <Grid container spacing={1}>
-                  {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
-                    <Grid size={4} sx={{ minWidth: "250px" }}>
-                      <UnassociatedRunnerCard
-                        runnerGroup={runnerGroup}
-                        config={config}
-                      />
-                    </Grid>
-                  ))}
-                  {filteredSystems?.map((system: System) => (
-                    <Grid key={system.id} size={4} sx={{ minWidth: "250px" }}>
-                      <SystemCard
-                        system={system}
-                        tourStepsRef={tourStepsRef}
-                        selectedGarden={selectedGarden?.name}
-                        addRequestItem={addRequestItem}
-                        config={config}
-                        associatedRunners={associatedRunners}
-                      />
-                    </Grid>
-                  ))}
-                </Grid>
-              </Box>
+              <Grid container spacing={1}>
+                {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
+                  <Grid size={4} sx={{ minWidth: "250px" }}>
+                    <UnassociatedRunnerCard
+                      runnerGroup={runnerGroup}
+                      config={config}
+                    />
+                  </Grid>
+                ))}
+                {filteredSystems?.map((system: System) => (
+                  <Grid key={system.id} size={4} sx={{ minWidth: "250px" }}>
+                    <SystemCard
+                      system={system}
+                      tourStepsRef={tourStepsRef}
+                      selectedGarden={selectedGarden?.name}
+                      addRequestItem={addRequestItem}
+                      config={config}
+                      associatedRunners={associatedRunners}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
             </>
           )}
         </Box>

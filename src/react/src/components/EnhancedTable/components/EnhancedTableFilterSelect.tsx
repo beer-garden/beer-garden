@@ -78,12 +78,17 @@ export const EnhancedTableFilterSelect = ({
         <Grid size="grow" sx={{ ml: 2 }}>
           <Button variant="outlined" onClick={() => addFilter()}>
             <FontAwesomeIcon icon="plus" />
-            Add Filter
+            <Typography variant="body2" component="span" sx={{ ml: 1 }}>
+              Add Filter
+            </Typography>
           </Button>
         </Grid>
         <Grid sx={{ mr: 2 }}>
           <Button variant="outlined" onClick={clearFilters}>
-            <FontAwesomeIcon icon="trash" /> Remove All
+            <FontAwesomeIcon icon="trash" />
+            <Typography variant="body2" component="span" sx={{ ml: 1 }}>
+              Remove All
+            </Typography>
           </Button>
         </Grid>
       </Grid>

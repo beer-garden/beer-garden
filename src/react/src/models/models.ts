@@ -39,12 +39,6 @@ export interface Listener {
   props: Record<string, any>;
 }
 
-export interface ScratchPadValue {
-  padId: string;
-  padType: string | null;
-  values: any;
-}
-
 export interface RequestCommand {
   namespace?: string;
   systemName?: string;
