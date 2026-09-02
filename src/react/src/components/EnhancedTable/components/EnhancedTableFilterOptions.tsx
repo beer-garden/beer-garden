@@ -1,3 +1,4 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
@@ -11,7 +12,6 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { Dayjs } from "dayjs";
 import { ChangeEvent, RefObject, useEffect, useState } from "react";
 
-import { FAIcon } from "../../../services/util_service";
 import { ColumnField, FilterColumn } from "../models/EnhancedTableModels";
 import NumberField from "./NumberField";
 
@@ -435,7 +435,7 @@ export const EnhancedTableFilterOptions = ({
               onClick={() => removeFilter(id)}
               aria-label="Remove filter"
             >
-              <FAIcon icon="xmark" sx={{ color: "text.primary" }} />
+              <FontAwesomeIcon icon="xmark" />
             </IconButton>
           </Grid>
           <Grid size={3}>

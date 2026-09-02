@@ -101,5 +101,12 @@ export const theme = createTheme({
         }),
       },
     },
+    MuiIconButton: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          color: theme.palette.text.primary,
+        }),
+      },
+    },
   },
 });

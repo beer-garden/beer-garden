@@ -1,4 +1,5 @@
-import { Grid } from "@mui/material";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Box, Grid } from "@mui/material";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import Popover from "@mui/material/Popover";
@@ -6,7 +7,6 @@ import Typography from "@mui/material/Typography";
 import { RefObject, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 
-import { FAIcon } from "../../../services/util_service";
 import { ColumnField, FilterColumn } from "../models/EnhancedTableModels";
 import { EnhancedTableFilterOptions } from "./EnhancedTableFilterOptions";
 
@@ -77,13 +77,18 @@ export const EnhancedTableFilterSelect = ({
       <Grid container sx={{}}>
         <Grid size="grow" sx={{ ml: 2 }}>
           <Button variant="outlined" onClick={() => addFilter()}>
-            <FAIcon icon="plus" sx={{ mr: 1 }} />
-            Add Filter
+            <FontAwesomeIcon icon="plus" />
+            <Box component="span" sx={{ ml: 1 }}>
+              Add Filter
+            </Box>
           </Button>
         </Grid>
         <Grid sx={{ mr: 2 }}>
           <Button variant="outlined" onClick={clearFilters}>
-            <FAIcon icon="trash" sx={{ mr: 1 }} /> Remove All
+            <FontAwesomeIcon icon="trash" />
+            <Box component="span" sx={{ ml: 1 }}>
+              Remove All
+            </Box>
           </Button>
         </Grid>
       </Grid>
