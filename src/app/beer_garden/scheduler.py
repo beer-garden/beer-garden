@@ -592,7 +592,9 @@ def run_job(job_id, request_template, **kwargs):
             logger.warning(f"Execution of job {db_job} timed out.")
             return
 
-        request = get_request(request.id)
+        request = get_request(
+            request.id, parent_depth=0, children_depth=0, include_fields=["status"]
+        )
 
         updates = {}
         if request.status == "ERROR":

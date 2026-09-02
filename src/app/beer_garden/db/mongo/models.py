@@ -19,7 +19,6 @@ from lark import ParseError
 from lark.exceptions import LarkError
 from mongoengine import (
     CASCADE,
-    DO_NOTHING,
     NULLIFY,
     PULL,
     BooleanField,
@@ -337,9 +336,8 @@ class Request(MongoModel, Document):
     # Shared field with RequestTemplate, but it is required when saving Request
     namespace = StringField(required=True)
 
-    parent = ReferenceField(
-        "Request", dbref=True, required=False, reverse_delete_rule=DO_NOTHING
-    )
+    parent = DummyField(required=False)
+    parent_id = StringField()
     children = DummyField(required=False)
     output = StringField()
     output_gridfs = FileField()
@@ -374,7 +372,7 @@ class Request(MongoModel, Document):
             {"name": "created_at_index", "fields": ["created_at"]},
             {"name": "status_updated_at_index", "fields": ["status_updated_at"]},
             {"name": "comment_index", "fields": ["comment"]},
-            {"name": "parent_ref_index", "fields": ["parent"]},
+            {"name": "parent_id_index", "fields": ["parent_id"]},
             {"name": "parent_index", "fields": ["has_parent"]},
             {"name": "hidden_index", "fields": ["hidden"]},
             # Used for Gridfs File Pruning
@@ -475,11 +473,11 @@ class Request(MongoModel, Document):
             self.parameters_gridfs = None
 
         try:
-            if self.parent is not None and self.has_parent:
-                pass
+            if self.parent_id is not None and self.has_parent:
+                self.parent = {id: self.parent_id}
         except DoesNotExist:
             # Unable to find parent, remove object to allow brewtils serializing
-            self.parent = None
+            self.parent_id = None
 
     def _spill_parameters_to_gridfs(self):
 
@@ -506,24 +504,23 @@ class Request(MongoModel, Document):
         if status_key not in self.metadata:
             self.metadata[status_key] = int(get_current_time().timestamp() * 1000)
 
-        if self.has_parent or self.parent is not None:
+        if self.has_parent or self.parent_id is not None:
 
-            try:
-                if self.parent is None:
+            if self.parent_id is None:
+                if self.parent is not None:
+                    self.parent_id = self.parent.id
+                else:
                     self.has_parent = False
-                elif Request.objects(id=self.parent.id).count() == 0:
-                    # Request is an Orphan, removing parent
-                    self.has_parent = False
-                    self.parent = None
-            except DoesNotExist:
+
+            elif Request.objects(id=self.parent_id).count() == 0:
                 # Request is an Orphan, removing parent
                 self.has_parent = False
-                self.parent = None
+                self.parent_id = None
 
         if not hasattr(self, "root_command_type") or self.root_command_type is None:
             if self.command_type == "TEMP":
                 self.root_command_type = "TEMP"
-            elif not self.has_parent or self.parent is None:
+            elif not self.has_parent or self.parent_id is None:
                 self.root_command_type = self.command_type
 
             else:
@@ -531,7 +528,7 @@ class Request(MongoModel, Document):
                 # to the same as the parent request
                 try:
                     parent_request = Request.objects.only("root_command_type").get(
-                        id=self.parent.id
+                        id=self.parent_id
                     )
                     self.root_command_type = parent_request.root_command_type
                 except DoesNotExist:
@@ -744,17 +741,19 @@ class Request(MongoModel, Document):
 
     def force_delete(self, *args, **kwargs):
         """Force Delete the request and all associated requests"""
-        Request.objects.filter(parent=self).delete()
+        Request.objects.filter(parent_id=str(self.id)).delete()
         self._delete_gridfs_files()
         super(Request, self).delete(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         """Delete the request and all associated completed requests"""
         for request in Request.objects(
-            parent=self, status__in=["SUCCESS", "CANCELED", "ERROR"]
+            parent_id=str(self.id), status__in=["SUCCESS", "CANCELED", "ERROR"]
         ).only("id"):
             request.delete()
-        Request.objects(parent=self).update(set__parent=None, set__has_parent=False)
+        Request.objects(parent_id=str(self.id)).update(
+            set__parent_id=None, set__has_parent=False
+        )
 
         self._delete_gridfs_files()
 
@@ -801,20 +800,18 @@ class Request(MongoModel, Document):
 
         # Deal with has_parent
         if self.has_parent is None:
-            self.has_parent = bool(self.parent)
+            self.has_parent = bool(self.parent_id)
 
         if self.has_parent:
-            try:
-                self.parent
-            except DoesNotExist:
+            if Request.objects(id=self.parent_id).count() == 0:
                 raise ModelValidationError(
                     f"Cannot save Request {self}: parent value is not "
                     f"present in database"
                 )
 
-        if self.has_parent != bool(self.parent):
+        if self.has_parent != bool(self.parent_id):
             raise ModelValidationError(
-                f"Cannot save Request {self}: parent value of {self.parent!r} is not "
+                f"Cannot save Request {self}: parent value of {self.parent_id!r} is not "
                 f"consistent with has_parent value of {self.has_parent}"
             )
 

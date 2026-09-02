@@ -2,7 +2,7 @@
 import logging
 
 from mongoengine.errors import FieldDoesNotExist, InvalidDocumentError
-from pymongo import UpdateMany, UpdateOne
+from pymongo import UpdateMany
 from pymongo.errors import OperationFailure
 
 import beer_garden.config as config
@@ -299,9 +299,6 @@ def check_indexes(document_class):
             # bg-utils 2.3.3 -> 2.3.4 create the `has_parent` field
             _update_request_has_parent_model()
 
-            # bg-utils 2.4.6 -> 2.4.7 change parent to ReferenceField
-            _update_request_parent_field_type()
-
             logger.warning("Request definition check/update complete.")
 
         try:
@@ -329,33 +326,15 @@ def check_indexes(document_class):
         raise
 
 
-def _update_request_parent_field_type():
-    """Change GenericReferenceField to ReferenceField"""
-    from .models import Request
-
-    batch_size = config.get("db.prune.batch_size", default=-1)
-    updates = []
-    raw_collection = Request._get_collection()
-    for request in raw_collection.find({"parent._ref": {"$type": "object"}}):
-        updates.append(
-            UpdateOne(
-                {"_id": request["_id"]}, {"$set": {"parent": request["parent"]["_ref"]}}
-            )
-        )
-        if batch_size > 0 and len(updates) > batch_size:
-            raw_collection.bulk_write(updates, ordered=False)
-            updates = []
-    if len(updates) > 0:
-        raw_collection.bulk_write(updates, ordered=False)
-
-
 def _update_request_has_parent_model():
     from .models import Request
 
     updates = []
     raw_collection = Request._get_collection()
-    updates.append(UpdateMany({"parent": None}, {"$set": {"has_parent": False}}))
+    updates.append(UpdateMany({"parent_id": None}, {"$set": {"has_parent": False}}))
     updates.append(
-        UpdateMany({"parent": {"$not": {"$eq": None}}}, {"$set": {"has_parent": True}})
+        UpdateMany(
+            {"parent_id": {"$not": {"$eq": None}}}, {"$set": {"has_parent": True}}
+        )
     )
     raw_collection.bulk_write(updates, ordered=False)

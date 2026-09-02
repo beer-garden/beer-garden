@@ -22,9 +22,11 @@ class TestLoadConfig(object):
         if isinstance(value, dict):
             for k, v in value.items():
                 if isinstance(v, dict):
-                    self.compare_keys(f"{root+'.' if root else ''}{k}", v)
+                    self.compare_keys(f"{root + '.' if root else ''}{k}", v)
                 else:
-                    assert beer_garden.config.get(f"{root+'.' if root else ''}{k}") == v
+                    assert (
+                        beer_garden.config.get(f"{root + '.' if root else ''}{k}") == v
+                    )
 
     def test_no_config_file(self):
         beer_garden.config.load([], force=True)
