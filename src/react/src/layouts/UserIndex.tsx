@@ -363,16 +363,28 @@ function UserIndex({
       >
         <Grid container>
           <Grid size="grow">
-            <Typography sx={{ fontWeight: "bold" }}>Garden Name</Typography>
+            <Typography sx={{ fontWeight: "bold", overflowWrap: "break-word" }}>
+              Garden Name
+            </Typography>
           </Grid>
           <Grid>
-            <Typography sx={{ fontWeight: "bold" }}>Account Name</Typography>
+            <Typography sx={{ fontWeight: "bold", overflowWrap: "break-word" }}>
+              Account Name
+            </Typography>
           </Grid>
         </Grid>
         {rowData.user_alias_mapping?.map((userMap: AliasUserMap) => (
           <Grid container key={`user_alias-${userMap.target_garden}`}>
-            <Grid size="grow">{userMap.target_garden}</Grid>
-            <Grid>{userMap.username}</Grid>
+            <Grid size="grow">
+              <Typography variant="body2" sx={{ overflowWrap: "break-word" }}>
+                {userMap.target_garden}
+              </Typography>
+            </Grid>
+            <Grid>
+              <Typography variant="body2" sx={{ overflowWrap: "break-word" }}>
+                {userMap.username}
+              </Typography>
+            </Grid>
           </Grid>
         ))}
       </Stack>
