@@ -14,6 +14,15 @@ server {
 
     client_max_body_size 100m;
 
+    # Support loading assets from any page
+    location /assets/(.+)$  {
+        alias /usr/share/nginx/html/$1;
+    }
+
+    location ~* /assets/(.+)$  {
+        alias /usr/share/nginx/html/$1;
+    }
+
     location / {
         try_files $uri $uri/ $target_path;
     }
