@@ -1,4 +1,4 @@
-import { Box, Button, ButtonProps, Tooltip } from "@mui/material";
+import { Box, Button, ButtonProps, IconButton, Tooltip } from "@mui/material";
 import { PropsWithChildren } from "react";
 
 import { HasAccessProps } from "../models/models";
@@ -23,6 +23,7 @@ const AccessButton = ({
   text,
   raised,
   rounded,
+  icon,
   ...props
 }: PropsWithChildren<
   ButtonProps &
@@ -32,6 +33,7 @@ const AccessButton = ({
       raised?: boolean | undefined;
       rounded?: boolean | undefined;
       htmlFor?: string | undefined;
+      icon?: boolean | undefined;
     }
 >) => {
   if (!tooltip) {
@@ -109,6 +111,8 @@ const AccessButton = ({
     props.color = "info";
   }
 
+  const targetButton = icon ? IconButton : Button;
+
   if (permission && config && config?.auth_enabled === true) {
     return (
       <HasAccess
@@ -125,9 +129,16 @@ const AccessButton = ({
           isLoading ?? (
             <Tooltip title={tooltip} placement="bottom" arrow>
               <Box component="span" aria-label={undefined}>
-                <Button {...{ ...props, ...{ disabled: true } }}>
-                  {children}
-                </Button>
+                {icon && (
+                  <IconButton {...{ ...props, ...{ disabled: true } }}>
+                    {children}
+                  </IconButton>
+                )}
+                {icon !== true && (
+                  <Button {...{ ...props, ...{ disabled: true } }}>
+                    {children}
+                  </Button>
+                )}
               </Box>
             </Tooltip>
           )
@@ -136,9 +147,16 @@ const AccessButton = ({
           renderAuthFailed ?? (
             <Tooltip title={tooltip} placement="bottom" arrow>
               <Box component="span" aria-label={undefined}>
-                <Button {...{ ...props, ...{ disabled: true } }}>
-                  {children}
-                </Button>
+                {icon && (
+                  <IconButton {...{ ...props, ...{ disabled: true } }}>
+                    {children}
+                  </IconButton>
+                )}
+                {icon !== true && (
+                  <Button {...{ ...props, ...{ disabled: true } }}>
+                    {children}
+                  </Button>
+                )}
               </Box>
             </Tooltip>
           )
@@ -146,7 +164,8 @@ const AccessButton = ({
       >
         <Tooltip title={tooltip} placement="bottom" arrow>
           <Box component="span" aria-label={undefined}>
-            <Button {...props}>{children}</Button>
+            {icon && <IconButton {...props}>{children}</IconButton>}
+            {icon !== true && <Button {...props}>{children}</Button>}
           </Box>
         </Tooltip>
       </HasAccess>
@@ -155,7 +174,8 @@ const AccessButton = ({
     return (
       <Tooltip title={tooltip} placement="bottom" arrow>
         <Box component="span" aria-label={undefined}>
-          <Button {...props}>{children}</Button>
+          {icon && <IconButton {...props}>{children}</IconButton>}
+          {icon !== true && <Button {...props}>{children}</Button>}
         </Box>
       </Tooltip>
     );

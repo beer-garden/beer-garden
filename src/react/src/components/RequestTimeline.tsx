@@ -2,6 +2,7 @@ import {
   Box,
   Chip,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
@@ -182,8 +183,9 @@ function RequestTimeline({ request }: { request: Request }) {
       <AccessButton
         onClick={() => setShowTimeline(true)}
         aria-label={`Show Request Status Timeline for ${request.id}`}
+        icon
       >
-        <FAIcon icon="timeline" />
+        <FAIcon icon="clock-rotate-left" />
       </AccessButton>
       <Dialog
         open={showTimeline}
@@ -237,6 +239,17 @@ function RequestTimeline({ request }: { request: Request }) {
             />
           </Box>
         </DialogContent>
+        <DialogActions>
+          <AccessButton
+            onClick={() => {
+              setShowTimeline(false);
+            }}
+            tooltip="Close Request Timeline Dialog"
+            label="Close Timeline"
+          >
+            Close
+          </AccessButton>
+        </DialogActions>
       </Dialog>
     </>
   );
