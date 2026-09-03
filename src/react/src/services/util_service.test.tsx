@@ -4,9 +4,9 @@ import { Garden, Instance, System } from "../models/brewtils-types.js";
 import {
   CompareObjects,
   GenerateStatusCounts,
+  GetBaseURL,
   getErrorCode,
   GetSeverity,
-  GetBaseURL,
 } from "./util_service.js";
 
 test("Compare Equal Objects", () => {
