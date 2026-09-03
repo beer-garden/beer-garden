@@ -121,30 +121,9 @@ function RequestView({
       parent_depth: 0,
     };
 
-    if (request) {
-      queryHeaders["include"] = [
-        "output",
-        "error_class",
-        "parameters",
-        "comment",
-        "metadata",
-      ];
-    }
-
     const data = await GetRequest(request_id, {}, queryHeaders);
 
-    if (update_request) {
-      setRequest({
-        ...update_request,
-        output: data.output,
-        error_class: data.error_class,
-        parameters: data.parameters,
-        comment: data.comment,
-        metadata: data.metadata,
-      });
-    } else {
-      setRequest(data);
-    }
+    setRequest(data);
 
     setReloadRequest(false);
   };
