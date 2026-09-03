@@ -13,7 +13,7 @@ import {
   Job,
   Request,
 } from "../models/brewtils-types";
-import { Config } from "../models/models";
+import { Config, RequestItem } from "../models/models";
 import { useConfirmDialog } from "../providers/ConfirmDialogProvider";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import {
@@ -32,12 +32,16 @@ function SchedulerViewCard({
   editJob,
   deleteJob,
   config,
+  updateRequestItem,
+  removeItem,
 }: {
   jobId: string;
   listeners: Record<string, any>;
   editJob: () => void;
   deleteJob: () => void;
   config: Config;
+  updateRequestItem: (itemParams?: Partial<RequestItem>) => void;
+  removeItem: (id?: string) => void;
 }) {
   const [job, setJob] = useState<Job | undefined>(undefined);
 
@@ -304,14 +308,33 @@ function SchedulerViewCard({
         <AccessButton
           rounded
           raised
-          onClick={() => void navigate(`/request/${request.id}`)}
+          onClick={() => {
+            removeItem();
+            void navigate(`/request/${request.id}`);
+          }}
           title={
             "Open Request " +
             (request.command_display_name ?? request.command ?? request.id)
           }
-          sx={{ mr: 2 }}
+          sx={{ mr: 1 }}
         >
           <FAIcon icon="arrow-up-right-from-square" />
+        </AccessButton>
+        <AccessButton
+          rounded
+          raised
+          onClick={() => {
+            if (request.id) {
+              updateRequestItem({
+                requestId: request.id,
+                type: "VIEW_REQUEST",
+              });
+            }
+          }}
+          tooltip={`View Request ${request.command_display_name ?? request.command} ${request.id}`}
+          sx={{ mr: 1 }}
+        >
+          <FAIcon icon="eye" />
         </AccessButton>
         {request.command_display_name ?? request.command ?? request.id}
       </>

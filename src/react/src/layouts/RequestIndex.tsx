@@ -121,7 +121,7 @@ function RequestIndex({
     prefix: tourPrefix,
     uuid: tourUUID,
     label: `View Job`,
-    content: `View assocaited Job in popup modal.`,
+    content: `View associated Job in popup modal.`,
     layer: "LAYOUT",
     pos: 6,
   };
@@ -270,7 +270,7 @@ function RequestIndex({
           <AccessButton
             basic
             onClick={() => PeekJobView(request)}
-            tooltip={`View Associate Job ${request?.metadata?.bg_job_id}`}
+            tooltip={`View Job ${request?.metadata?.bg_job_id}`}
             sx={{ mr: 1 }}
             {...GenerateTourProps(ViewJobTourStep)}
           >

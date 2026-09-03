@@ -172,7 +172,6 @@ function RequestOptions({
     });
 
     if (
-      !isCard &&
       request?.metadata?.bg_job_id !== undefined &&
       request.source_garden === config.garden_name
     ) {
