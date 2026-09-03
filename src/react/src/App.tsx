@@ -602,6 +602,7 @@ function App() {
                       "& .MuiPaper-root": {
                         minWidth: "50%",
                       },
+                      my: 4,
                     }}
                   >
                     <DialogTitle
