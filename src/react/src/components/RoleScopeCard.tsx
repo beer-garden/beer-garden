@@ -4,12 +4,12 @@ import {
   Box,
   Card,
   CardContent,
+  CardHeader,
   FormLabel,
   TextField,
 } from "@mui/material";
 import { grey } from "@mui/material/colors";
 import React, { useEffect, useRef, useState } from "react";
-import { CardHeader } from "react-bootstrap";
 
 import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetSystemList } from "../services/system_service";
@@ -140,7 +140,7 @@ function RoleScopeCard({
       <div id={`${scopeName}Scopes`}>
         {scopeList.map((item, index) => (
           <Card key={index} variant="outlined" sx={{ borderColor: grey[600] }}>
-            <CardHeader>{header(index)}</CardHeader>
+            <CardHeader action={header(index)} />
             <CardContent>
               <Autocomplete
                 sx={{ m: 2 }}
