@@ -10,6 +10,7 @@ import {
 
 import { Request } from "../models/brewtils-types";
 import { useSnackbar } from "../providers/SnackbarProvider";
+import { GetBaseURL } from "../services/util_service";
 import AccessButton from "./AccessButton";
 
 function CodeExample({
@@ -29,20 +30,16 @@ function CodeExample({
     };
 
     const getPort = () => {
-      return window.location.port;
-    };
+      const port = window.location.port;
 
-    const getPrefix = () => {
-      const path = window.location.pathname;
-
-      for (const knownPaths of ["/create", "/recreate"]) {
-        const index = path.indexOf(knownPaths);
-        if (index > 0) {
-          return path.slice(1, index) + "/";
-        }
+      if (port.length > 0) {
+        return port;
       }
 
-      return "";
+      if (window.location.protocol === "https:") {
+        return "443";
+      }
+      return "80";
     };
 
     const getSslEnabled = () => {
@@ -54,13 +51,13 @@ function CodeExample({
       wget --method=POST -O- \\
         --body-data='${JSON.stringify(request)}' \\
         --header=Content-Type:application/json \\
-        ${getHostName()}:${getPort()}${getPrefix()}/api/v1/requests?blocking=true
+        ${getHostName()}:${getPort()}${GetBaseURL()}/api/v1/requests?blocking=true
       `;
     };
 
     const curlCode = () => {
       return `
-      curl -X POST ${getHostName()}:${getPort()}${getPrefix()}/api/v1/requests?blocking=true \\
+      curl -X POST ${getHostName()}:${getPort()}${GetBaseURL()}/api/v1/requests?blocking=true \\
         -H "Content-Type: application/json" \\
         -d '${JSON.stringify(request)}'
       `;
@@ -99,7 +96,7 @@ function CodeExample({
         version_constraint = '${request?.system_version}',
         default_instance = '${request?.instance_name}',
         bg_host = '${getHostName()}',
-        bg_url_prefix = '${getPrefix()}',
+        bg_url_prefix = '${GetBaseURL()}',
         bg_port = ${getPort()},
         blocking = True,
         ssl_enabled = ${getSslEnabled()},
