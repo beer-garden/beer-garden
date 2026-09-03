@@ -159,6 +159,7 @@ function UnassociatedRunnerCard({
           border: "1px solid",
           borderColor: grey[300],
           m: 0,
+          overflow: "hidden",
           borderRadius: 2,
         }}
       >
@@ -226,7 +227,7 @@ function UnassociatedRunnerCard({
                 <Box
                   sx={{
                     display: "flex",
-                    flexWrap: 1,
+                    flexWrap: "wrap",
                     justifyContent: "space-between",
                     alignItems: "center",
                   }}
