@@ -111,8 +111,6 @@ const AccessButton = ({
     props.color = "info";
   }
 
-  const targetButton = icon ? IconButton : Button;
-
   if (permission && config && config?.auth_enabled === true) {
     return (
       <HasAccess
