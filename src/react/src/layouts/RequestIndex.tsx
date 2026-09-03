@@ -352,6 +352,7 @@ function RequestIndex({
     if (requests && requests.length > 0) {
       AddTourStep(tourStepsRef, OpenRequestTourStep);
       AddTourStep(tourStepsRef, ViewRequestTourStep);
+      AddTourStep(tourStepsRef, ViewJobTourStep);
     }
 
     return () => {
