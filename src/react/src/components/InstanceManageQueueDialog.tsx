@@ -1,13 +1,22 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { confirmDialog } from "primereact/confirmdialog";
-import { Dialog } from "primereact/dialog";
+import {
+  Box,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  Typography,
+} from "@mui/material";
 import { useEffect, useState } from "react";
 
 import { Queue } from "../models/brewtils-types";
 import { InstanceDialogProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useConfirmDialog } from "../providers/ConfirmDialogProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { ClearQueue, GetInstanceQueues } from "../services/queue_service";
+import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
+import EnhancedTable from "./EnhancedTable/components/EnhancedTable";
 
 function InstanceManageQueueDialog({
   instance,
@@ -16,7 +25,8 @@ function InstanceManageQueueDialog({
   onClose,
 }: InstanceDialogProps) {
   const [queues, setQueues] = useState<Array<Queue>>([]);
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
+  const showConfirmDialog = useConfirmDialog();
 
   useEffect(() => {
     if (isVisible) {
@@ -26,7 +36,7 @@ function InstanceManageQueueDialog({
         })
         .catch((error) => {
           console.error("Error fetching queues:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching queues: ${error}`,
@@ -54,7 +64,7 @@ function InstanceManageQueueDialog({
             });
             return newQueues;
           });
-          showToast({
+          showSnackbar({
             severity: "success",
             summary: "Success",
             detail: `Cleared queue: ${queueName}`,
@@ -63,7 +73,7 @@ function InstanceManageQueueDialog({
         })
         .catch((error) => {
           console.error("Error clearing queue:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error clearing queue: ${error}`,
@@ -75,11 +85,9 @@ function InstanceManageQueueDialog({
     const reject = () => {};
 
     const confirm = () => {
-      confirmDialog({
+      showConfirmDialog({
         message: "Are you sure you want to clear the Queue?",
         header: "Confirm",
-        icon: <FontAwesomeIcon icon="exclamation" />,
-        defaultFocus: "accept",
         accept,
         reject,
       });
@@ -88,43 +96,70 @@ function InstanceManageQueueDialog({
     confirm();
   }
 
+  const actionTemplate = (queue: any) => {
+    return (
+      <AccessButton onClick={() => clearQueue(queue.name)} label="Clear Queue">
+        Clear Queue
+      </AccessButton>
+    );
+  };
+
   return (
     <Dialog
-      header={`Queue Manager: ${system.name}[${system.version}]-${instance.name}`}
-      footer={
-        <AccessButton
-          onClick={onClose}
-          tooltip="Close Instance Manage Queue Dialog"
-          label="Close"
-        />
-      }
-      visible={isVisible}
-      style={{ width: "50vw" }}
-      onHide={onClose}
+      data-testid="instance-manage-queue-dialog"
+      open={isVisible}
+      onClose={onClose}
+      aria-labelledby="instance-manage-queue-dialog-title"
     >
-      <table className="table">
-        <thead>
-          <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Message Size</th>
-            <th scope="col"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {queues.map((queue, index) => (
-            <tr key={index}>
-              <td>{queue.name}</td>
-              <td>{queue.size}</td>
-              <td>
-                <AccessButton
-                  onClick={() => clearQueue(queue.name)}
-                  label="Clear Queue"
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <DialogTitle id="instance-manage-queue-dialog-title">
+        <Grid container>
+          <Grid size="grow">{`Queue Manager: ${system.name}[${system.version}]-${instance.name}`}</Grid>
+          <Grid>
+            <AccessButton
+              sx={{ ml: 2 }}
+              aria-label="Close manage queue dialog"
+              onClick={onClose}
+            >
+              <FAIcon icon="xmark" />
+            </AccessButton>
+          </Grid>
+        </Grid>
+      </DialogTitle>
+      <DialogContent>
+        <EnhancedTable
+          data={queues}
+          displayAll={true}
+          header={
+            <Box sx={{ m: 2 }}>
+              <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                Queues
+              </Typography>
+            </Box>
+          }
+          columns={[
+            {
+              id: "name",
+              field: "name",
+              label: "Name",
+            },
+            {
+              id: "size",
+              field: "size",
+              label: "Size",
+            },
+            {
+              id: "action",
+              label: "Action",
+              template: actionTemplate,
+            },
+          ]}
+        />
+      </DialogContent>
+      <DialogActions>
+        <AccessButton onClick={onClose} label="Close">
+          Close
+        </AccessButton>
+      </DialogActions>
     </Dialog>
   );
 }

@@ -1,6 +1,9 @@
+import { Box } from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
+import TextField from "@mui/material/TextField";
 import { validate as validateVersion } from "compare-versions";
-import { Dropdown } from "primereact/dropdown";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import { Command, Instance, System } from "../models/brewtils-types";
 import { RequestCommand } from "../models/models";
@@ -45,6 +48,8 @@ function CommandSelect({
   const [selectedCommand, setSelectedCommand] = useState<string | undefined>(
     requestCommand?.command ?? undefined,
   );
+
+  const [_searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     const namespaceList: Array<string> = [];
@@ -156,6 +161,10 @@ function CommandSelect({
 
     if (namespaceList.length === 1 && selectedNamespace !== namespaceList[0]) {
       setSelectedNamespace(namespaceList[0]);
+      setSearchParams((params) => {
+        params.set("namespace", namespaceList[0]);
+        return params;
+      });
     } else if (
       namespaceList.length > 0 &&
       selectedNamespace !== undefined &&
@@ -169,6 +178,13 @@ function CommandSelect({
       selectedSystemName !== systemNameList[0]
     ) {
       setSelectedSystemName(systemNameList[0]);
+      setSearchParams((params) => {
+        if (selectedNamespace) {
+          params.set("namespace", selectedNamespace);
+        }
+        params.set("system", systemNameList[0]);
+        return params;
+      });
     } else if (
       systemNameList.length > 0 &&
       selectedSystemName !== undefined &&
@@ -185,6 +201,16 @@ function CommandSelect({
         systemVersionList.length === 1)
     ) {
       setSelectedVersion(systemVersionList[0]);
+      setSearchParams((params) => {
+        if (selectedNamespace) {
+          params.set("namespace", selectedNamespace);
+        }
+        if (selectedSystemName) {
+          params.set("system", selectedSystemName);
+        }
+        params.set("version", systemVersionList[0]);
+        return params;
+      });
     } else if (
       selectedVersion !== undefined &&
       selectedVersion !== "latest" &&
@@ -205,6 +231,22 @@ function CommandSelect({
 
     if (commandList.length === 1 && selectedCommand !== commandList[0]) {
       setSelectedCommand(commandList[0]);
+      setSearchParams((params) => {
+        if (selectedNamespace) {
+          params.set("namespace", selectedNamespace);
+        }
+        if (selectedSystemName) {
+          params.set("system", selectedSystemName);
+        }
+        if (selectedVersion) {
+          params.set("version", selectedVersion);
+        }
+        if (selectedInstance) {
+          params.set("instance", selectedInstance);
+        }
+        params.set("command", commandList[0]);
+        return params;
+      });
     } else if (
       commandList.length > 0 &&
       selectedCommand !== undefined &&
@@ -212,6 +254,35 @@ function CommandSelect({
     ) {
       setSelectedCommand(undefined);
     }
+
+    setSearchParams((params) => {
+      if (selectedNamespace) {
+        params.set("namespace", selectedNamespace);
+      } else {
+        params.delete("namespace");
+      }
+      if (selectedSystemName) {
+        params.set("system", selectedSystemName);
+      } else {
+        params.delete("system");
+      }
+      if (selectedVersion) {
+        params.set("version", selectedVersion);
+      } else {
+        params.delete("version");
+      }
+      if (selectedInstance) {
+        params.set("instance", selectedInstance);
+      } else {
+        params.delete("instance");
+      }
+      if (selectedCommand) {
+        params.set("command", selectedCommand);
+      } else {
+        params.delete("command");
+      }
+      return params;
+    });
 
     if (
       requestCommand?.namespace !== selectedNamespace ||
@@ -305,115 +376,71 @@ function CommandSelect({
   ]);
 
   return (
-    <div className="border-2 border-dashed surface-border border-round surface-ground flex-auto flex justify-content-center align-items-center font-medium">
-      <div>
-        <datalist id="selectNamespaceDropdown" aria-hidden="true">
-          {namespaces?.map((value: string) => (
-            <option key={value} value={value} />
-          ))}
-        </datalist>
-        <Dropdown
-          value={selectedNamespace}
-          onChange={(e) => {
-            setSelectedNamespace(e.value);
-          }}
-          options={namespaces}
-          filter
-          optionLabel="Namespace"
-          placeholder="Select Namespace"
-          aria-label="Select Namespace"
-          pt={{
-            select: {
-              "aria-controls": "selectNamespaceDropdown",
-            },
-          }}
-        />
-        <datalist id="selectSystemDropdown" aria-hidden="true">
-          {systemNames?.map((value: string) => (
-            <option key={value} value={value} />
-          ))}
-        </datalist>
-        <Dropdown
-          value={selectedSystemName}
-          onChange={(e) => {
-            setSelectedSystemName(e.value);
-          }}
-          options={systemNames}
-          filter
-          optionLabel="System"
-          placeholder="Select System"
-          aria-label="Select System"
-          pt={{
-            select: {
-              "aria-controls": "selectSystemDropdown",
-            },
-          }}
-        />
-        <datalist id="selectVersionDropdown" aria-hidden="true">
-          {versions?.map((value: string) => (
-            <option key={value} value={value} />
-          ))}
-        </datalist>
-        <Dropdown
-          value={selectedVersion}
-          onChange={(e) => {
-            setSelectedVersion(e.value);
-          }}
-          options={versions}
-          filter
-          optionLabel="Version"
-          placeholder="Select Version"
-          aria-label="Select Version"
-          pt={{
-            select: {
-              "aria-controls": "selectVersionDropdown",
-            },
-          }}
-        />
-        <datalist id="selectInstanceDropdown" aria-hidden="true">
-          {instances?.map((value: string) => (
-            <option key={value} value={value} />
-          ))}
-        </datalist>
-        <Dropdown
-          value={selectedInstance}
-          onChange={(e) => {
-            setSelectedInstance(e.value);
-          }}
-          options={instances}
-          filter
-          optionLabel="Instance"
-          placeholder="Select Instance"
-          aria-label="Select Instance"
-          pt={{
-            select: {
-              "aria-controls": "selectInstanceDropdown",
-            },
-          }}
-        />
-        <datalist id="selectCommandDropdown" aria-hidden="true">
-          {commands?.map((value: string) => (
-            <option key={value} value={value} />
-          ))}
-        </datalist>
-        <Dropdown
-          value={selectedCommand}
-          onChange={(e) => {
-            setSelectedCommand(e.value);
-          }}
-          options={commands}
-          filter
-          optionLabel="Command"
-          placeholder="Select Command"
-          aria-label="Select Command"
-          pt={{
-            select: {
-              "aria-controls": "selectCommandDropdown",
-            },
-          }}
-        />
-      </div>
-    </div>
+    <Box
+      sx={{
+        display: "flex",
+        mb: 2,
+        border: "2px dashed grey",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <Autocomplete
+        sx={{ width: "100%", m: 2 }}
+        id={`select-namespace`}
+        disabled={namespaces && namespaces.length === 0}
+        options={namespaces}
+        value={selectedNamespace ?? null}
+        onChange={(_event: any, newValue: string | null) => {
+          setSelectedNamespace(newValue === null ? undefined : newValue);
+        }}
+        renderInput={(params) => <TextField {...params} label="Namespace" />}
+      />
+      <Autocomplete
+        sx={{ width: "100%", m: 2 }}
+        id={`select-system`}
+        disabled={systemNames && systemNames.length === 0}
+        options={systemNames}
+        value={selectedSystemName ?? null}
+        onChange={(_event: any, newValue: string | null) => {
+          setSelectedSystemName(newValue === null ? undefined : newValue);
+        }}
+        renderInput={(params) => <TextField {...params} label="System" />}
+      />
+      <Autocomplete
+        sx={{ width: "100%", m: 2 }}
+        id={`select-version`}
+        options={versions}
+        value={selectedVersion ?? null}
+        onChange={(_event: any, newValue: string | null) => {
+          setSelectedVersion(newValue === null ? undefined : newValue);
+        }}
+        disabled={versions && versions.length === 0}
+        renderInput={(params) => <TextField {...params} label="Version" />}
+      />
+      <Autocomplete
+        sx={{ width: "100%", m: 2 }}
+        id={`select-instance`}
+        options={instances}
+        value={selectedInstance ?? null}
+        onChange={(_event: any, newValue: string | null) => {
+          setSelectedInstance(newValue === null ? undefined : newValue);
+        }}
+        disabled={instances && instances.length === 0}
+        renderInput={(params) => <TextField {...params} label="Instance" />}
+      />
+      <Autocomplete
+        sx={{ width: "100%", m: 2 }}
+        id={`select-command`}
+        options={commands}
+        value={selectedCommand ?? null}
+        onChange={(_event: any, newValue: string | null) => {
+          setSelectedCommand(newValue === null ? undefined : newValue);
+        }}
+        disabled={commands && commands.length === 0}
+        renderInput={(params) => <TextField {...params} label="Command" />}
+      />
+    </Box>
   );
 }
 

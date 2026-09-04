@@ -1,13 +1,16 @@
-import { PrimeReactProvider } from "primereact/api";
-import { ConfirmDialog } from "primereact/confirmdialog";
-import { Dialog } from "primereact/dialog";
-import { Skeleton } from "primereact/skeleton";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Box, CssBaseline, Grid, Skeleton } from "@mui/material";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import { ThemeProvider } from "@mui/material/styles";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { ACTIONS, type EventData, Joyride, STATUS } from "react-joyride";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
+import AccessButton from "./components/AccessButton";
+import AppParams from "./components/AppParams";
 import ErrorPage from "./components/ErrorPage";
 import HasAccess from "./components/HasAccess";
 import NavigationMenu from "./components/Navigation";
@@ -21,42 +24,35 @@ import RoleIndex from "./layouts/RoleIndex";
 import Swagger from "./layouts/Swagger";
 import TopicIndex from "./layouts/TopicIndex";
 import UserIndex from "./layouts/UserIndex";
-import Workspace from "./layouts/Workspace";
 import { Garden, Instance, System } from "./models/brewtils-types";
 import { Config, Listener, RequestItem, TourStepProps } from "./models/models";
-import { AutoCompletePT } from "./passthrough/AutoCompletePT";
-import { ButtonPT } from "./passthrough/ButtonPT";
-import { CalendarPT } from "./passthrough/CalendarPT";
-import { CheckboxPT } from "./passthrough/CheckboxPT";
-import { DataTablePT } from "./passthrough/DataTablePT";
-import { DialogPT } from "./passthrough/DialogPT";
-import { DropdownPT } from "./passthrough/DropdownPT";
-import { FileUploadPT } from "./passthrough/FileUploadPT";
-import { InputNumberPT } from "./passthrough/InputNumberPT";
-import { InputTextareaPT } from "./passthrough/InputTextareaPT";
-import { InputTextPT } from "./passthrough/InputTextPT";
-import { MessagesPT } from "./passthrough/MessagesPT";
-import { MultiSelectPT } from "./passthrough/MultiSelectPT";
-import { PanelPT } from "./passthrough/PanelPT";
-import { SplitButtonPT } from "./passthrough/SplitButtonPT";
-import { TriStateCheckboxPT } from "./passthrough/TriStateCheckboxPT";
-import { ToastProvider } from "./providers/ToastProvider";
+import { ConfirmDialogProvider } from "./providers/ConfirmDialogProvider";
+import { SnackbarProvider } from "./providers/SnackbarProvider";
 import { GetConfig } from "./services/config_service";
 import { GetRootGarden } from "./services/garden_service";
+import { externalRoutesList } from "./services/routes_service";
 import { preemptiveRefresh } from "./services/token_service";
 import { GetToken } from "./services/token_service";
 import { ConvertToTourStepProps } from "./services/tour_service";
-import { ChangePowerUser, ChangeTheme } from "./services/util_service";
+import {
+  ChangePowerUser,
+  ChangeTheme,
+  GetBaseURL,
+} from "./services/util_service";
+import { theme } from "./theme";
 
 function App() {
   const socketRef = useRef(null as null | any);
   const listeners = useRef<Record<string, Listener>>({});
-  const [config, setConfig] = useState<Config | undefined>(undefined);
+  const [config, setConfig] = useState<Config>({});
+  const [invalidUrl, setInvalidUrl] = useState(false);
 
   const [reloadUI, setReloadUI] = useState(0);
   const [requestItem, setRequestItem] = useState<RequestItem | undefined>(
     undefined,
   );
+
+  const [fullScreenDialog, setFullScreenDialog] = useState(false);
 
   const addRequestItem = (itemParams?: Partial<RequestItem>) => {
     const newItem: RequestItem = {
@@ -119,30 +115,7 @@ function App() {
 
   const runReloadUI = () => {
     sessionStorage.clear();
-    localStorage.removeItem("requestItems");
     setReloadUI(reloadUI + 1);
-  };
-
-  const primeValue = {
-    hideOverlaysOnDocumentScrolling: true,
-    pt: {
-      autocomplete: AutoCompletePT,
-      button: ButtonPT,
-      calendar: CalendarPT,
-      checkbox: CheckboxPT,
-      datatable: DataTablePT,
-      dialog: DialogPT,
-      dropdown: DropdownPT,
-      fileUpload: FileUploadPT,
-      inputNumber: InputNumberPT,
-      inputText: InputTextPT,
-      inputTextarea: InputTextareaPT,
-      messages: MessagesPT,
-      multiselect: MultiSelectPT,
-      panel: PanelPT,
-      splitButton: SplitButtonPT,
-      triStateCheckbox: TriStateCheckboxPT,
-    },
   };
 
   const loadRootGarden = (config: Config) => {
@@ -174,6 +147,11 @@ function App() {
       });
   };
 
+  const clearSearchParams = () => {
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({}, "", cleanUrl);
+  };
+
   useEffect(() => {
     // might take a second to load in all of the data, so pushed it off to to allow for the page to load
     ChangeTheme();
@@ -198,9 +176,11 @@ function App() {
           preemptiveRefresh();
         }
         loadRootGarden(config);
+        setInvalidUrl(false);
       })
       .catch((error) => {
         console.log("Unable to retrieve configuration", error);
+        setInvalidUrl(true);
       });
 
     const interval = setInterval(preemptiveRefresh, 30000);
@@ -411,7 +391,7 @@ function App() {
   );
 
   useEffect(() => {
-    if (config && config.auth_enabled === true) {
+    if (Object.keys(config).length > 0 && config.auth_enabled === true) {
       if (
         (systemsRef.current !== undefined ||
           rootGardenRef.current !== undefined) &&
@@ -431,7 +411,8 @@ function App() {
 
   useEffect(() => {
     // Create WebSocket connection when component mounts
-    socketRef.current = new WebSocket("/api/v1/socket/events/");
+    // Get Prefix
+    socketRef.current = new WebSocket(GetBaseURL() + "/api/v1/socket/events/");
     const handleMessage = (event: any) => {
       // Update React state with new message
 
@@ -467,10 +448,8 @@ function App() {
     };
   }, []);
 
-  const baseURL =
-    import.meta.env.VITE_BASE_URL === "/"
-      ? undefined
-      : import.meta.env.VITE_BASE_URL || undefined;
+  const windowBaseUrl = GetBaseURL();
+  const baseURL = windowBaseUrl === "" ? undefined : windowBaseUrl || undefined;
 
   const handleJoyrideEvent = (data: EventData) => {
     const { action, status } = data;
@@ -494,19 +473,103 @@ function App() {
     return <ErrorPage errorMsg={errorMsg} />;
   }
 
+  const componentMap = new Map();
+  componentMap.set(
+    "Dashboard",
+    <GardenDashboard
+      tourStepsRef={tourStepsRef}
+      gardenRef={rootGardenRef}
+      systemsRef={systemsRef}
+      gardenState={gardenState}
+      systemState={systemState}
+      addRequestItem={addRequestItem}
+      config={config}
+      listeners={listeners.current}
+    />,
+  );
+  componentMap.set(
+    "Request_View",
+    <RequestView
+      listeners={listeners.current}
+      config={config}
+      addRequestItem={addRequestItem}
+    />,
+  );
+
+  componentMap.set(
+    "Requests",
+    <RequestIndex
+      listeners={listeners.current}
+      tourStepsRef={tourStepsRef}
+      addRequestItem={addRequestItem}
+      config={config}
+    />,
+  );
+  componentMap.set(
+    "Jobs",
+    <JobIndex
+      listeners={listeners.current}
+      tourStepsRef={tourStepsRef}
+      addRequestItem={addRequestItem}
+      config={config}
+    />,
+  );
+  componentMap.set("About", <AboutIndex config={config} />);
+  componentMap.set(
+    "Roles",
+    <HasAccess
+      config={config}
+      permission="GARDEN_ADMIN"
+      isGlobal={true}
+      renderAuthFailed={
+        <ErrorPage
+          errorCode={401}
+          errorMsg="Insufficient Access for Roles Management. Please contact Garden Administrator"
+        />
+      }
+    >
+      <RoleIndex config={config} tourStepsRef={tourStepsRef} />
+    </HasAccess>,
+  );
+  componentMap.set(
+    "Topics",
+    <TopicIndex
+      config={config}
+      listeners={listeners}
+      addRequestItem={addRequestItem}
+    />,
+  );
+  componentMap.set(
+    "Users",
+    <UserIndex config={config} tourStepsRef={tourStepsRef} />,
+  );
+  componentMap.set("Swagger", <Swagger />);
+
   return (
-    <PrimeReactProvider value={primeValue}>
-      <ToastProvider>
-        {config && Object.keys(config).length === 0 && (
-          <div>
-            <Skeleton height="5rem" className="mb-2" />
-            <Skeleton height="40rem" />
-          </div>
-        )}
-        {config && Object.keys(config).length > 0 && (
-          <div className="flex" key={reloadUI}>
-            <div className="flex-grow-1">
+    <ThemeProvider
+      theme={theme}
+      modeStorageKey="user_theme"
+      defaultMode="light"
+    >
+      <CssBaseline />
+      <ConfirmDialogProvider>
+        <SnackbarProvider>
+          {config && !invalidUrl && Object.keys(config).length === 0 && (
+            <Box sx={{ m: 1 }}>
+              <Skeleton variant="rounded" height={50} sx={{ mb: 2 }} />
+              <Skeleton variant="rounded" height={400} />
+            </Box>
+          )}
+          {invalidUrl && (
+            <ErrorPage
+              errorCode={404}
+              errorMsg="Unable to load configuration with current URL. Please verify the backend services are operational and the current URL is valid"
+            />
+          )}
+          {config && Object.keys(config).length > 0 && (
+            <div key={reloadUI}>
               <BrowserRouter basename={baseURL}>
+                <AppParams addRequestItem={addRequestItem} />
                 {runTour && (
                   <Joyride
                     onEvent={handleJoyrideEvent}
@@ -525,48 +588,84 @@ function App() {
                     tourStepsRef={tourStepsRef}
                   />
                 </div>
-                <ConfirmDialog />
                 {requestItem && (
                   <Dialog
-                    visible={requestItem !== undefined}
-                    style={{ width: "70%", overflowY: "auto" }}
-                    modal
-                    maximizable
-                    onHide={() => {
+                    open={requestItem !== undefined}
+                    fullScreen={fullScreenDialog}
+                    maxWidth="xl"
+                    scroll="paper"
+                    onClose={() => {
                       setRequestItem(undefined);
+                      setFullScreenDialog(false);
                     }}
-                    header={() => {
-                      if (requestItem.type === "REQUEST") {
-                        return "Create Request";
-                      } else if (requestItem.type === "VIEW_REQUEST") {
-                        return `View Request: ${requestItem?.requestId}`;
-                      } else if (requestItem.type === "VIEW_JOB") {
-                        return `View Scheduled Job: ${requestItem?.jobId}`;
-                      } else if (requestItem.type === "VIEW_TOPIC") {
-                        return `View Topic: ${requestItem?.topic?.name}`;
-                      }
+                    aria-labelledby="customized-dialog-title"
+                    sx={{
+                      "& .MuiPaper-root": {
+                        minWidth: "50%",
+                      },
                     }}
                   >
-                    <>
-                      <RequestItemCard
-                        removeItem={() => {
-                          setRequestItem(undefined);
-                        }}
-                        updateRequestItem={addRequestItem}
-                        requestItem={requestItem}
-                        listeners={listeners}
-                        config={config}
-                        isDialog={true}
-                      />
-                    </>
+                    <DialogTitle
+                      sx={{ m: 0, p: 2 }}
+                      id="customized-dialog-title"
+                    >
+                      <Grid container>
+                        <Grid size="grow">
+                          {requestItem.type === "REQUEST" && "Create Request"}
+                          {requestItem.type === "VIEW_REQUEST" &&
+                            `View Request: ${requestItem?.requestId}`}
+                          {requestItem.type === "VIEW_JOB" &&
+                            `View Scheduled Job: ${requestItem?.jobId}`}
+                          {requestItem.type === "VIEW_TOPIC" &&
+                            `View Topic: ${requestItem?.topic?.name}`}
+                        </Grid>
+                        <Grid>
+                          {fullScreenDialog === false && (
+                            <AccessButton
+                              sx={{ mr: 2 }}
+                              aria-label="Enter full screen"
+                              onClick={() => setFullScreenDialog(true)}
+                            >
+                              <FontAwesomeIcon icon="maximize" />
+                            </AccessButton>
+                          )}
+                          {fullScreenDialog === true && (
+                            <AccessButton
+                              sx={{ mr: 2 }}
+                              aria-label="Exit full screen"
+                              onClick={() => setFullScreenDialog(false)}
+                            >
+                              <FontAwesomeIcon icon="minimize" />
+                            </AccessButton>
+                          )}
+                          <AccessButton
+                            sx={{ mr: 2 }}
+                            aria-label="Close request dialog"
+                            onClick={() => {
+                              setRequestItem(undefined);
+                              setFullScreenDialog(false);
+                              clearSearchParams();
+                            }}
+                          >
+                            <FontAwesomeIcon icon="xmark" />
+                          </AccessButton>
+                        </Grid>
+                      </Grid>
+                    </DialogTitle>
+
+                    <RequestItemCard
+                      removeItem={() => {
+                        setRequestItem(undefined);
+                      }}
+                      updateRequestItem={addRequestItem}
+                      requestItem={requestItem}
+                      listeners={listeners}
+                      config={config}
+                      isDialog={true}
+                    />
                   </Dialog>
                 )}
-                <div
-                  className="flex-grow-1"
-                  role="main"
-                  id="main-content"
-                  tabIndex={-1}
-                >
+                <div role="main" id="main-content" tabIndex={-1}>
                   <HasAccess
                     config={config}
                     permission="READ_ONLY"
@@ -579,191 +678,27 @@ function App() {
                   >
                     <ErrorBoundary FallbackComponent={ErrorFallback}>
                       <Routes>
-                        <Route
-                          path="/dashboard"
-                          element={
-                            <GardenDashboard
-                              tourStepsRef={tourStepsRef}
-                              gardenRef={rootGardenRef}
-                              systemsRef={systemsRef}
-                              gardenState={gardenState}
-                              systemState={systemState}
-                              addRequestItem={addRequestItem}
-                              config={config}
-                              listeners={listeners.current}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/request/:requestId"
-                          element={
-                            <RequestView
-                              listeners={listeners.current}
-                              config={config}
-                              addRequestItem={addRequestItem}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/requests"
-                          element={
-                            <RequestIndex
-                              listeners={listeners.current}
-                              tourStepsRef={tourStepsRef}
-                              addRequestItem={addRequestItem}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/create/:defaultType/:paramNamespace?/:paramSystem?/:paramVersion?/:paramInstance?/:paramCommand?"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              display={false}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/recreate/:requestId"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              display={false}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/workspace"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/workspace/request/:requestId"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              display={true}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/workspace/job/:jobId"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              display={true}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/jobs"
-                          element={
-                            <JobIndex
-                              listeners={listeners.current}
-                              tourStepsRef={tourStepsRef}
-                              addRequestItem={addRequestItem}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/job/:jobId"
-                          element={
-                            <Workspace
-                              listeners={listeners.current}
-                              display={false}
-                              tourStepsRef={tourStepsRef}
-                              config={config}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/about"
-                          element={<AboutIndex config={config} />}
-                        />
-                        <Route
-                          path="/roles"
-                          element={
-                            <HasAccess
-                            config={config}
-                            permission="GARDEN_ADMIN"
-                            isGlobal={true}
-                            renderAuthFailed={
-                              <ErrorPage
-                                errorCode={401}
-                                errorMsg="Insufficient Access for Roles Management. Please contact Garden Administrator"
-                              />
+                        {externalRoutesList.map((route, index) => (
+                          <Route
+                            key={index}
+                            path={route.path}
+                            element={
+                              componentMap.get(route.componentName) ?? (
+                                <ErrorPage errorCode={404} />
+                              )
                             }
-                          >
-                            <RoleIndex
-                              config={config}
-                              tourStepsRef={tourStepsRef}
-                            />
-                          </HasAccess>
-                          }
-                        />
-                        <Route
-                          path="/topics"
-                          element={
-                            <TopicIndex
-                              config={config}
-                              listeners={listeners}
-                              addRequestItem={addRequestItem}
-                            />
-                          }
-                        />
-                        <Route
-                          path="/users"
-                          element={
-                            <UserIndex
-                              config={config}
-                              tourStepsRef={tourStepsRef}
-                            />
-                          }
-                        />
-                        <Route path="/swagger" element={<Swagger />} />
-                        <Route
-                          path="/"
-                          element={
-                            <GardenDashboard
-                              tourStepsRef={tourStepsRef}
-                              gardenRef={rootGardenRef}
-                              systemsRef={systemsRef}
-                              gardenState={gardenState}
-                              systemState={systemState}
-                              addRequestItem={addRequestItem}
-                              config={config}
-                              listeners={listeners.current}
-                            />
-                          }
-                        />
-                        <Route
-                          path="*"
-                          element={<ErrorPage errorCode={404} />}
-                        />
+                          />
+                        ))}
                       </Routes>
                     </ErrorBoundary>
                   </HasAccess>
                 </div>
               </BrowserRouter>
             </div>
-          </div>
-        )}
-      </ToastProvider>
-    </PrimeReactProvider>
+          )}
+        </SnackbarProvider>
+      </ConfirmDialogProvider>
+    </ThemeProvider>
   );
 }
 

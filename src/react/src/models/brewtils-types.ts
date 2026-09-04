@@ -328,7 +328,7 @@ export interface Request {
   id?: string;
   is_event?: boolean;
   parent?: any;
-  children?: any;
+  children?: Request[];
   output?: string;
   hidden?: boolean;
   status?: string;
@@ -344,7 +344,7 @@ export interface Request {
 }
 
 export interface RequestMetadata {
-  _topic?: string;
+  [key: string]: number | string;
 }
 
 export interface RequestTemplate {

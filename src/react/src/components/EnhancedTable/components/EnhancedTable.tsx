@@ -1,0 +1,767 @@
+import Box from "@mui/material/Box";
+import CircularProgress from "@mui/material/CircularProgress";
+import Paper from "@mui/material/Paper";
+import Table from "@mui/material/Table";
+import TableBody from "@mui/material/TableBody";
+import TableCell from "@mui/material/TableCell";
+import TableContainer from "@mui/material/TableContainer";
+import TableHead from "@mui/material/TableHead";
+import TablePagination from "@mui/material/TablePagination";
+import TableRow from "@mui/material/TableRow";
+import TableSortLabel from "@mui/material/TableSortLabel";
+import { visuallyHidden } from "@mui/utils";
+import dayjs from "dayjs";
+import { RefObject, useEffect, useRef, useState } from "react";
+
+import { ColumnField, FilterColumn } from "../models/EnhancedTableModels";
+import { EnhancedTableColumnHeaderFilter } from "./EnhancedTableColumnHeaderFilter";
+import { EnhancedTablePaginationActions } from "./EnhancedTablePaginationActions";
+
+const EnhancedTable = ({
+  data,
+  dataRef,
+  dataLength,
+  totalDataLength,
+  columns,
+  remoteFilter,
+  defaultOrderBy,
+  defaultOrder,
+  groupBy,
+  flattenBy,
+  header,
+  footer,
+  reloadTable,
+  isLoading,
+  displayAll,
+  keyField,
+  rowsPerPageOptions,
+  defaultRowsPerPageOptions,
+  ...props
+}: {
+  data?: any[];
+  dataRef?: RefObject<any[]>;
+  dataLength?: number;
+  totalDataLength?: number;
+  columns: ColumnField[];
+  remoteFilter?: (
+    columnFilters?: FilterColumn[],
+    orderBy?: string,
+    order?: "asc" | "desc",
+    page?: number,
+    rowsPerPage?: number,
+  ) => void;
+  defaultOrderBy?: string;
+  defaultOrder?: "asc" | "desc";
+  groupBy?: string;
+  flattenBy?: string;
+  header?: React.ReactElement;
+  footer?: React.ReactElement;
+  reloadTable?: number;
+  isLoading?: boolean;
+  displayAll?: boolean;
+  keyField?: string;
+  rowsPerPageOptions?: number[];
+  defaultRowsPerPageOptions?: number;
+}) => {
+  const [displayData, setDisplayData] = useState<any[] | undefined>(undefined);
+  const [displayFiltered, setDisplayFiltered] = useState<number | undefined>(
+    undefined,
+  );
+
+  const [displayDataLength, setDisplayDataLength] = useState(0);
+  const [displayGroupData, setDisplayGroupData] = useState<
+    { group?: string; data: any[] }[] | undefined
+  >(undefined);
+
+  const [order, setOrder] = useState<"asc" | "desc">(defaultOrder ?? "asc");
+  const [orderBy, setOrderBy] = useState<string | undefined>(defaultOrderBy);
+
+  const columnFiltersRef = useRef<FilterColumn[]>([]);
+  const [filters, setFilters] = useState<FilterColumn[]>([]);
+
+  const updateFilters = (newFilters: FilterColumn[]) => {
+    columnFiltersRef.current = newFilters;
+    setFilters(newFilters);
+  };
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(
+    defaultRowsPerPageOptions ??
+      (rowsPerPageOptions !== undefined && rowsPerPageOptions.length > 0
+        ? rowsPerPageOptions[0]
+        : 10),
+  );
+
+  const [pageRecords, setPageRecords] = useState(false);
+
+  const onRequestSort = (
+    event: React.MouseEvent<unknown>,
+    property: string,
+  ) => {
+    const isAsc = orderBy === property && order === "asc";
+    setOrder(isAsc ? "desc" : "asc");
+    setOrderBy(property);
+  };
+
+  const formatDate = (value: string) => {
+    const date = new Date(value);
+    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+  };
+
+  const createSortHandler =
+    (property?: string) => (event: React.MouseEvent<unknown>) => {
+      if (property) {
+        onRequestSort(event, property);
+      }
+    };
+
+  const findValue = (path: string, obj: any): any => {
+    const keys = path
+      .replace(/\[(\d+)\]/g, ".$1") // convert [0] to .0
+      .split(".")
+      .filter(Boolean);
+    const resolve = (current: any, keyIndex: number): any => {
+      if (current == null || keyIndex >= keys.length) {
+        return current;
+      }
+      const key = keys[keyIndex];
+      // 1. If the current object is an array AND the key is NOT a numeric index,
+      // we branch and search all elements for that key.
+      if (Array.isArray(current) && !/^\d+$/.test(key)) {
+        return current
+          .map((item) => resolve(item, keyIndex))
+          .filter((val) => val !== undefined);
+      }
+      // 2. Otherwise (it's an object, or it's an array and we have a specific index),
+      // we move deeper using the key.
+      return resolve(current[key], keyIndex + 1);
+    };
+    return resolve(obj, 0);
+  };
+
+  const columnData = (column: ColumnField, row: any) => {
+    if (column.template) {
+      return column.template(row);
+    }
+    if (column.field) {
+      const columnValue = findValue(column.field, row);
+
+      if (Array.isArray(columnValue)) {
+        return columnValue
+          .map((value) => {
+            if (column.isDate) {
+              return formatDate(value);
+            }
+            return value;
+          })
+          .join(", ");
+      }
+
+      if (columnValue !== undefined && columnValue !== null) {
+        if (column.isDate) {
+          return formatDate(columnValue);
+        }
+        return columnValue;
+      }
+    }
+    return undefined;
+  };
+
+  const filterSortData = (filterData: any[]) => {
+    const flatData = flattenByData([...filterData]);
+    const filteredData = flatData.filter((record) => {
+      if (
+        columnFiltersRef.current === undefined ||
+        columnFiltersRef.current.length === 0
+      ) {
+        return true;
+      }
+
+      return columnFiltersRef.current.every((filter: FilterColumn) => {
+        // No Modifier
+        if (filter.modifier === undefined) {
+          return true;
+        }
+
+        // Is Number and Is Date Empty
+        if (filter.value === undefined) {
+          return true;
+        }
+
+        // Is String Empty
+        if (typeof filter.value === "string" && filter.value.length === 0) {
+          return true;
+        }
+
+        // Is Array Empty
+        if (
+          typeof filter.value === "object" &&
+          Array.isArray(filter.value) &&
+          filter.value.length === 0
+        ) {
+          return true;
+        }
+
+        // Grab Compare Value
+        let compareValues = findValue(filter.column, record);
+
+        if (compareValues === undefined) {
+          return false;
+        }
+
+        if (Array.isArray(compareValues) && compareValues.length === 0) {
+          compareValues = [undefined];
+        }
+
+        if (!Array.isArray(compareValues)) {
+          compareValues = [compareValues];
+        }
+
+        return compareValues.some((compare: any) => {
+          if (filter.value === undefined) {
+            return true;
+          }
+          if (filter.isNumeric) {
+            if (typeof compare === "string") {
+              compare = Number(compare);
+            }
+          } else if (filter.isDate) {
+            if (typeof compare === "string") {
+              compare = dayjs(new Date(compare));
+            }
+          } else if (filter.isBoolean) {
+            if (typeof compare === "string") {
+              compare = compare.toLocaleLowerCase() === "true";
+            }
+          }
+
+          if (filter.modifier === "eq") {
+            if (filter.isBoolean) {
+              if (typeof filter.value === "string") {
+                return (
+                  (filter.value.toLocaleLowerCase() === "true") === compare
+                );
+              }
+            }
+            return filter.value === compare;
+          } else if (filter.modifier === "ne") {
+            return filter.value !== compare;
+          } else if (filter.modifier === "startswith") {
+            if (
+              typeof compare === "string" &&
+              typeof filter.value === "string"
+            ) {
+              return compare.startsWith(filter.value);
+            }
+          } else if (filter.modifier === "endswith") {
+            if (
+              typeof compare === "string" &&
+              typeof filter.value === "string"
+            ) {
+              return compare.endsWith(filter.value);
+            }
+          } else if (filter.modifier === "contains") {
+            if (compare === undefined) {
+              return false;
+            }
+
+            if (
+              typeof compare === "string" &&
+              typeof filter.value === "string"
+            ) {
+              return compare.includes(filter.value);
+            }
+          } else if (filter.modifier === "not__contains") {
+            if (compare === undefined) {
+              return true;
+            }
+
+            if (
+              typeof compare === "string" &&
+              typeof filter.value === "string"
+            ) {
+              return !compare.includes(filter.value);
+            }
+          } else if (filter.modifier === "gt") {
+            return compare > filter.value;
+          } else if (filter.modifier === "gte") {
+            return compare >= filter.value;
+          } else if (filter.modifier === "lt") {
+            return compare < filter.value;
+          } else if (filter.modifier === "lte") {
+            return compare <= filter.value;
+          } else if (filter.modifier === "in") {
+            if (
+              typeof compare === "string" &&
+              typeof filter.value === "object" &&
+              Array.isArray(filter.value)
+            ) {
+              return filter.value.some((field) => field === compare);
+            }
+          } else if (filter.modifier === "nin") {
+            if (
+              typeof compare === "string" &&
+              typeof filter.value === "object" &&
+              Array.isArray(filter.value)
+            ) {
+              return !filter.value.some((field) => field === compare);
+            }
+          } else if (filter.modifier === "exists") {
+            if (filter.value === "true") {
+              // Value Present
+              if (compare === undefined) {
+                return false;
+              }
+
+              if (
+                typeof compare === "string" &&
+                (compare === "" || compare.trim().length === 0)
+              ) {
+                return false;
+              }
+
+              return true;
+            } else {
+              // Value is empty
+              if (compare === undefined) {
+                return true;
+              }
+              if (
+                typeof compare === "string" &&
+                (compare === "" || compare.trim().length === 0)
+              ) {
+                return true;
+              }
+
+              return false;
+            }
+          }
+
+          // Default response if field is populated
+          return false;
+        });
+      });
+    });
+
+    const orderByField = columns.find(
+      (column) => column.field === orderBy,
+    )?.field;
+
+    const startIndex = page * rowsPerPage;
+
+    if (groupBy) {
+      const groupedData = groupByData(filteredData);
+      setDisplayFiltered(groupedData.length);
+
+      let sortedGroupData = [...groupedData];
+      if (orderByField) {
+        if (orderByField === groupBy) {
+          sortedGroupData = groupedData.sort((a, b) => {
+            if (orderByField === undefined) {
+              return 0;
+            }
+            return sortValues(a, b, "group");
+          });
+        } else {
+          sortedGroupData = groupedData.sort((a, b) => {
+            if (orderByField === undefined) {
+              return 0;
+            }
+            return sortValues(a, b, `data.${orderByField}`);
+          });
+        }
+      }
+      if (displayAll === true) {
+        return sortedGroupData;
+      }
+      return sortedGroupData.slice(startIndex, startIndex + rowsPerPage);
+    }
+    setDisplayFiltered(filteredData.length);
+
+    const sortedData = [...filteredData].sort((a, b) => {
+      if (orderByField === undefined) {
+        return 0;
+      }
+      return sortValues(a, b, orderByField);
+    });
+
+    if (displayAll === true) {
+      return sortedData;
+    }
+
+    return sortedData.slice(startIndex, startIndex + rowsPerPage);
+  };
+
+  const flattenByData = (flattenData: any[]) => {
+    if (flattenBy) {
+      const flattenRecords = [] as any[];
+      for (const record of flattenData) {
+        if (
+          Object.hasOwn(record, flattenBy) &&
+          Array.isArray(record?.[flattenBy])
+        ) {
+          if (record?.[flattenBy].length > 0) {
+            for (const flatten of record[flattenBy]) {
+              flattenRecords.push({ ...record, [flattenBy]: flatten });
+            }
+          } else {
+            flattenRecords.push({ ...record, [flattenBy]: undefined });
+          }
+        } else {
+          flattenRecords.push(record);
+        }
+      }
+      return flattenRecords;
+    }
+    return flattenData;
+  };
+
+  const groupByData = (groupByData: any[]) => {
+    const groupedData = [] as { group?: string; data: any[] }[];
+    if (groupBy) {
+      for (const record of groupByData) {
+        if (Object.hasOwn(record, groupBy) && record?.[groupBy] !== undefined) {
+          for (const groupKey of Array.isArray(record[groupBy])
+            ? record[groupBy]
+            : [record[groupBy]]) {
+            if (groupedData.some((group) => group.group === groupKey)) {
+              groupedData.map((group) => {
+                if (group.group === groupKey) {
+                  group.data.push(record);
+                }
+                return group;
+              });
+            } else {
+              groupedData.push({ group: groupKey, data: [record] });
+            }
+          }
+        } else {
+          if (groupedData.some((group) => group.group === undefined)) {
+            groupedData.map((group) => {
+              if (group.group === undefined) {
+                group.data.push(record);
+              }
+              return group;
+            });
+          } else {
+            groupedData.push({ group: undefined, data: [record] });
+          }
+        }
+      }
+    }
+    return groupedData;
+  };
+
+  const sortValues = (a: any, b: any, orderField?: string) => {
+    if (orderField) {
+      return sortValues(findValue(orderField, a), findValue(orderField, b));
+    }
+    if (order) {
+      if (a === undefined && b === undefined) {
+        return 0;
+      }
+      if (a === undefined) {
+        return order === "asc" ? 1 : -1;
+      }
+      if (b === undefined) {
+        return order === "asc" ? -1 : 1;
+      }
+
+      if (Array.isArray(a) && Array.isArray(b)) {
+        if (a.length === 0) {
+          return order === "asc" ? 1 : -1;
+        }
+        if (b.length === 0) {
+          return order === "asc" ? -1 : 1;
+        }
+
+        return sortValues(a.sort(sortValues)[0], b.sort(sortValues)[0]);
+      }
+
+      if (
+        columns.some((column) => column.field === orderBy && column.isNumeric)
+      ) {
+        return order === "asc" ? Number(a) - Number(b) : Number(b) - Number(a);
+      }
+      if (columns.some((column) => column.field === orderBy && column.isDate)) {
+        return order === "asc"
+          ? new Date(a).getTime() - new Date(b).getTime()
+          : new Date(b).getTime() - new Date(a).getTime();
+      }
+      if (
+        columns.some((column) => column.field === orderBy && column.isBoolean)
+      ) {
+        if (a && b) {
+          return 0;
+        }
+        if (a) {
+          return order === "asc" ? 1 : -1;
+        }
+        return order === "asc" ? -1 : 1;
+      }
+      if (
+        columns.some((column) => column.field === orderBy && column.isString)
+      ) {
+        return order === "asc"
+          ? (a as string).localeCompare(b as string)
+          : (b as string).localeCompare(a as string);
+      }
+      return order === "asc" ? a - b : b - a;
+    }
+    return 0;
+  };
+
+  const handleChangePage = (
+    event: React.MouseEvent<HTMLButtonElement> | null,
+    newPage: number,
+  ) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const getData = () => {
+    if (dataRef && dataRef.current) {
+      return [...dataRef.current];
+    }
+
+    if (data) {
+      return [...data];
+    }
+
+    return [];
+  };
+  // Data Updated Externally
+  useEffect(() => {
+    if (remoteFilter) {
+      // Accept remote updates
+      setPageRecords(dataLength !== undefined && dataLength > 5);
+      if (groupBy) {
+        setDisplayGroupData(groupByData(flattenByData(getData())));
+      } else {
+        setDisplayData(flattenByData(getData()));
+      }
+    } else {
+      // Local Filter
+      if (groupBy) {
+        const groupLength = groupByData(flattenByData(getData())).length;
+        setPageRecords(groupLength > 5);
+        setDisplayDataLength(groupLength);
+        setDisplayGroupData(filterSortData(getData()));
+      } else {
+        setDisplayData(filterSortData(getData()));
+        setPageRecords(getData().length > 5);
+        setDisplayDataLength(getData().length);
+      }
+    }
+  }, [data]);
+
+  // Table Filtering Changes or external reload requests
+  useEffect(() => {
+    if (remoteFilter) {
+      remoteFilter(filters, orderBy, order, page, rowsPerPage);
+    } else {
+      if (groupBy) {
+        setDisplayDataLength(groupByData(flattenByData(getData())).length);
+        setDisplayGroupData(filterSortData(getData()));
+      } else {
+        setDisplayData(filterSortData(getData()));
+      }
+    }
+  }, [reloadTable, order, orderBy, page, rowsPerPage]);
+
+  function defaultLabelDisplayedRows({
+    from,
+    to,
+    count,
+  }: {
+    from: number;
+    to: number;
+    count: number;
+  }) {
+    return `Showing ${from} to ${to} of ${count !== -1 ? count : `more than ${to}`} entries ${totalDataLength ? (dataLength === totalDataLength ? "" : `(Filtered from ${totalDataLength} entries)`) : (dataLength ?? displayDataLength) === displayFiltered ? "" : `(Filtered from ${dataLength ?? displayDataLength} entries)`}`;
+  }
+
+  const filterTriggerReload = () => {
+    setPage(0);
+    if (remoteFilter) {
+      remoteFilter(filters, orderBy, order, 0, rowsPerPage);
+    } else {
+      if (groupBy) {
+        setDisplayDataLength(groupByData(flattenByData(getData())).length);
+        setDisplayGroupData(filterSortData(getData()));
+      } else {
+        setDisplayData(filterSortData(getData()));
+      }
+    }
+  };
+
+  return (
+    <Box sx={{ position: "relative", width: "100%" }}>
+      <TableContainer
+        component={Paper}
+        sx={{ position: "relative", opacity: isLoading ? 0.5 : 1 }}
+      >
+        {header}
+        <Table {...props}>
+          <TableHead>
+            <TableRow>
+              {columns.map((column) => (
+                <TableCell
+                  key={column.id}
+                  sortDirection={orderBy === column.field ? order : false}
+                >
+                  <Box sx={{ display: "flex" }}>
+                    {column.label}
+                    {column.sortable && (
+                      <TableSortLabel
+                        active={orderBy === column.field}
+                        direction={orderBy === column.field ? order : "asc"}
+                        onClick={createSortHandler(column.field)}
+                        aria-label={`Toggle Sort ${orderBy === column.field ? order : "asc"} Column ${typeof column?.label === "string" ? column.label : column.field}`}
+                      >
+                        {orderBy === column.field ? (
+                          <Box component="span" sx={visuallyHidden}>
+                            {order === "desc"
+                              ? "sorted descending"
+                              : "sorted ascending"}
+                          </Box>
+                        ) : null}
+                      </TableSortLabel>
+                    )}
+                    {column.sortable && (
+                      <>
+                        <EnhancedTableColumnHeaderFilter
+                          column={column}
+                          columns={columns}
+                          columnFilters={filters}
+                          columnFiltersRef={columnFiltersRef}
+                          updateColumnFilters={updateFilters}
+                          order={order}
+                          setOrder={setOrder}
+                          orderBy={orderBy}
+                          setOrderBy={setOrderBy}
+                          triggerReload={filterTriggerReload}
+                        />
+                      </>
+                    )}
+                  </Box>
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {displayData &&
+              displayData.map((row) => (
+                <TableRow
+                  key={keyField ? row?.[keyField] : (row.id ?? undefined)}
+                >
+                  {columns.map((column) => (
+                    <TableCell
+                      key={`${column.id}-${keyField ? row?.[keyField] : (row.id ?? undefined)}`}
+                    >
+                      {columnData(column, row)}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            {displayGroupData &&
+              displayGroupData.map((group) => {
+                if (group.data.length === 1) {
+                  return (
+                    <TableRow key={`row-${group.group}`}>
+                      {columns.map((column) => (
+                        <TableCell
+                          key={`${column.id}-${keyField ? group.data[0]?.[keyField] : (group.group ?? undefined)}`}
+                        >
+                          {columnData(column, group.data[0])}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  );
+                }
+                if (group.data.length > 1) {
+                  return group.data.map((groupData, index) => (
+                    <TableRow key={`row-${group.group}-${index}`}>
+                      {columns.map((column) => {
+                        if (column.field === groupBy) {
+                          if (index === 0) {
+                            return (
+                              <TableCell
+                                rowSpan={group.data.length}
+                                key={`${group.group}-${index}`}
+                              >
+                                {columnData(column, groupData)}
+                              </TableCell>
+                            );
+                          } else {
+                            return;
+                          }
+                        } else {
+                          return (
+                            <TableCell
+                              key={`${column.id}-${index}-${keyField ? group.data[index]?.[keyField] : (group.group ?? undefined)}`}
+                            >
+                              {columnData(column, groupData)}
+                            </TableCell>
+                          );
+                        }
+                      })}
+                    </TableRow>
+                  ));
+                }
+              })}
+          </TableBody>
+        </Table>
+        {(displayAll === undefined || displayAll === false) && (
+          <TablePagination
+            component="div"
+            rowsPerPageOptions={
+              rowsPerPageOptions ?? (pageRecords ? [10, 25, 50, 100] : [])
+            }
+            count={dataLength ?? displayDataLength}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            slotProps={{
+              select: {
+                inputProps: {
+                  "aria-label": "rows per page",
+                  autoComplete: "off",
+                },
+                native: true,
+              },
+            }}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            ActionsComponent={
+              pageRecords ? EnhancedTablePaginationActions : () => <></>
+            }
+            labelDisplayedRows={defaultLabelDisplayedRows}
+          />
+        )}
+      </TableContainer>
+      {footer}
+      {isLoading && (
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 10, // Higher than the table
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      )}
+    </Box>
+  );
+};
+
+export default EnhancedTable;

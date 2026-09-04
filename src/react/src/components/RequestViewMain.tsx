@@ -1,27 +1,30 @@
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
-import { Message } from "primereact/message";
-import { Skeleton } from "primereact/skeleton";
-import { TabPanel, TabView } from "primereact/tabview";
-import { Tag } from "primereact/tag";
+import { Grid, Typography } from "@mui/material";
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Skeleton from "@mui/material/Skeleton";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 import { useEffect, useRef, useState } from "react";
 
 import CommandForm from "../components/CommandForm";
+import { ColumnField } from "../components/EnhancedTable//models/EnhancedTableModels";
+import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import RequestOptions from "../components/RequestOptions";
 import RequestOutput from "../components/RequestOutput";
 import { Request, System } from "../models/brewtils-types";
 import { Config, RequestCommand, RequestItem } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRequestProjections } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
 import { GetSeverity } from "../services/util_service";
 
 function UnformattedInput(request: Request) {
   return (
-    <div>
-      <Message severity="warn" text="Unable to find source System/Command" />
+    <Box>
+      <Alert severity="warning">Unable to find source System/Command</Alert>
       <pre>{JSON.stringify(request.parameters, null, 2)}</pre>
-    </div>
+    </Box>
   );
 }
 
@@ -48,17 +51,124 @@ function RequestViewMain({
   const [showCommandForm, setShowCommandForm] = useState(false);
   const [command, setCommand] = useState<any>(null);
   const [system, setSystem] = useState<System | null>(null);
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   const [requestProjections, setRequestProjections] = useState<
     RequestCommand[] | undefined
   >(undefined);
-  const [requestProjectionSelected, setRequestProjectionSelected] = useState<
-    RequestCommand | undefined
-  >(undefined);
   const requestProjectionSelectedRef = useRef<RequestCommand | undefined>(
     undefined,
   );
+
+  const statusTemplate = (request: Request) => {
+    return (
+      <Chip
+        label={request?.status}
+        color={GetSeverity(request?.status)}
+        id={`request_view_status_${request?.id}`}
+      />
+    );
+  };
+
+  const buildColumns = () => {
+    const requestColumns = [] as ColumnField[];
+
+    // Adding Columns in Order
+    if (isCard) {
+      requestColumns.push({
+        id: "command",
+        field: "command",
+        label: "Command",
+        isString: true,
+        template: (rowData: any) =>
+          rowData.command_display_name ?? rowData.command,
+      });
+    }
+    requestColumns.push({
+      id: "namespace",
+      field: "namespace",
+      label: "Namespace",
+      isString: true,
+    });
+    requestColumns.push({
+      id: "system",
+      field: "system",
+      label: "System",
+      isString: true,
+    });
+    requestColumns.push({
+      id: "system_version",
+      field: "system_version",
+      label: "Version",
+      isString: true,
+    });
+
+    requestColumns.push({
+      id: "instance_name",
+      field: "instance_name",
+      label: "Instance",
+      isString: true,
+    });
+    requestColumns.push({
+      id: "Status",
+      field: "status",
+      label: "Status",
+      isString: true,
+      template: statusTemplate,
+    });
+
+    if (!isCard) {
+      requestColumns.push({
+        id: "created_at",
+        field: "created_at",
+        label: "Created",
+        isDate: true,
+      });
+      requestColumns.push({
+        id: "status_updated_at",
+        field: "status_updated_at",
+        label: "Status Updated",
+        isDate: true,
+      });
+      requestColumns.push({
+        id: "updated_at",
+        field: "updated_at",
+        label: "Last Updated",
+        isDate: true,
+      });
+    }
+
+    requestColumns.push({
+      id: "comment",
+      field: "comment",
+      label: "Comment",
+      isString: true,
+    });
+
+    if (isCard) {
+      requestColumns.push({
+        id: "action",
+        label: "Action",
+        template: () => {
+          return (
+            <RequestOptions
+              request={request}
+              setRequest={setRequest}
+              config={config}
+              addRequestItem={addRequestItem}
+              requestProjections={requestProjections}
+              requestProjectionSelectedRef={requestProjectionSelectedRef}
+              isCard={isCard}
+              openRequest={openRequest}
+              closeRequest={closeRequest}
+            />
+          );
+        },
+      });
+    }
+
+    return requestColumns;
+  };
 
   useEffect(() => {
     if (request) {
@@ -66,12 +176,11 @@ function RequestViewMain({
         GetRequestProjections(request)
           .then((projections) => {
             setRequestProjections(projections);
-            setRequestProjectionSelected(projections[0]);
             requestProjectionSelectedRef.current = projections[0];
           })
           .catch((error) => {
             console.error("Error fetching request projections:", error);
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error fetching request projections: ${error}`,
@@ -103,7 +212,7 @@ function RequestViewMain({
           })
           .catch((error) => {
             console.error("Error fetching system list:", error);
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error fetching system list: ${error}`,
@@ -121,21 +230,25 @@ function RequestViewMain({
     }
   }, [request, showProjections, system]);
 
-  const statusTemplate = (request: Request) => {
-    return (
-      <Tag
-        value={request?.status}
-        severity={GetSeverity(request?.status)}
-        id={`request_view_status_${request?.id}`}
-        className="ml-2"
-      />
-    );
-  };
+  function CustomTabPanel(props: {
+    children?: React.ReactNode;
+    index: number;
+    value: number;
+  }) {
+    const { children, value, index, ...other } = props;
 
-  const formatDate = (value: string) => {
-    const date = new Date(value);
-    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
-  };
+    return (
+      <div
+        role="tabpanel"
+        hidden={value !== index}
+        id={`simple-tabpanel-${index}`}
+        aria-labelledby={`simple-tab-${index}`}
+        {...other}
+      >
+        {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      </div>
+    );
+  }
 
   // ARC Toolkit Errors:
   //     1) The tab role is missing the {{requiredContextRole}} required context role
@@ -147,152 +260,73 @@ function RequestViewMain({
   //     1) Found an <ol> ordered list or <ul> unordered list that contains no list items.
   // PrimeReact CSS styling is `list-style-type:none` that hides it from check in DOM
   return (
-    <div>
-      <div className="flex mb-2">
-        <div className="flex-1">
-          {isCard === false && (
-            <div className="flex">
-              <div className="flex flex-1">
-                <h1>Request View: {request.id}</h1>
-              </div>
-              <div className="flex-2 mt-4">
-                {request && (
-                  <>
-                    <RequestOptions
-                      request={request}
-                      setRequest={setRequest}
-                      config={config}
-                      addRequestItem={addRequestItem}
-                      requestProjections={requestProjections}
-                      requestProjectionSelected={requestProjectionSelected}
-                      setRequestProjectionSelected={
-                        setRequestProjectionSelected
-                      }
-                      requestProjectionSelectedRef={
-                        requestProjectionSelectedRef
-                      }
-                      isCard={isCard}
-                      openRequest={openRequest}
-                      closeRequest={closeRequest}
-                    />
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-
-          <DataTable value={[request]} size="small">
-            {isCard === true && (
-              <Column
-                header="Command"
-                body={(rowData) =>
-                  rowData.command_display_name ?? rowData.command
-                }
-              ></Column>
+    <Box sx={{ m: 1 }}>
+      {isCard === false && (
+        <Grid container sx={{ m: 2 }}>
+          <Grid size="grow">
+            <Typography variant="h3" component="h1">
+              Request View: {request.id}
+            </Typography>
+          </Grid>
+          <Grid>
+            {request && (
+              <>
+                <RequestOptions
+                  request={request}
+                  setRequest={setRequest}
+                  config={config}
+                  addRequestItem={addRequestItem}
+                  requestProjections={requestProjections}
+                  requestProjectionSelectedRef={requestProjectionSelectedRef}
+                  isCard={isCard}
+                  openRequest={openRequest}
+                  closeRequest={closeRequest}
+                />
+              </>
             )}
-            <Column field="namespace" header="Namespace"></Column>
-            <Column field="system" header="System"></Column>
-            <Column field="system_version" header="Version"></Column>
-            <Column field="instance_name" header="Instance"></Column>
-            <Column header="Status" body={statusTemplate}></Column>
-            {isCard === false && (
-              <Column
-                header="Created"
-                body={(rowData) => formatDate(rowData.created_at)}
-              ></Column>
-            )}
-            {isCard === false && (
-              <Column
-                header="Status Updated"
-                body={(rowData) => formatDate(rowData.status_updated_at)}
-              ></Column>
-            )}
-            {isCard === false && (
-              <Column
-                header="Last Updated"
-                body={(rowData) => formatDate(rowData.updated_at)}
-              ></Column>
-            )}
-            {request?.comment && (
-              <Column field="comment" header="Comment"></Column>
-            )}
-            {isCard === true && (
-              <Column
-                header="Action"
-                body={() => {
-                  return (
-                    <RequestOptions
-                      request={request}
-                      setRequest={setRequest}
-                      config={config}
-                      addRequestItem={addRequestItem}
-                      requestProjections={requestProjections}
-                      requestProjectionSelected={requestProjectionSelected}
-                      setRequestProjectionSelected={
-                        setRequestProjectionSelected
-                      }
-                      requestProjectionSelectedRef={
-                        requestProjectionSelectedRef
-                      }
-                      isCard={isCard}
-                      openRequest={openRequest}
-                      closeRequest={closeRequest}
-                    />
-                  );
-                }}
-              ></Column>
-            )}
-          </DataTable>
-        </div>
-      </div>
+          </Grid>
+        </Grid>
+      )}
+      <EnhancedTable
+        data={[request]}
+        columns={buildColumns()}
+        displayAll={true}
+      />
 
       {request && (
-        <div>
-          <div className="flex">
-            <div className="flex-1">
-              <TabView
-                style={{ flexBasis: "85%" }}
-                className="mt-2"
-                activeIndex={activeIndex}
-                onTabChange={(e) => setActiveIndex(e.index)}
-              >
-                <TabPanel
-                  header="Request Parameters"
-                  pt={{ headerAction: { tabIndex: 0 } }}
-                >
-                  <>
-                    {!showCommandForm && (
-                      <Skeleton width="100%" height="10rem" />
-                    )}
-                    {showCommandForm && command && (
-                      <CommandForm
-                        {...{
-                          command: command,
-                          request: request,
-                          setRequest: () => {},
-                          resetForm: false,
-                          setResetForm: () => {},
-                          setIsFormValid: () => {},
-                        }}
-                      />
-                    )}
-                    {showCommandForm && !command && (
-                      <UnformattedInput {...request} />
-                    )}
-                  </>
-                </TabPanel>
-                <TabPanel
-                  header="Request Output"
-                  pt={{ headerAction: { tabIndex: 0 } }}
-                >
-                  <RequestOutput request={request} />
-                </TabPanel>
-              </TabView>
-            </div>
-          </div>
-        </div>
+        <Box sx={{ m: 1 }}>
+          <Tabs
+            value={activeIndex}
+            onChange={(_, number) => setActiveIndex(number)}
+            sx={{ my: 2 }}
+          >
+            <Tab label="Request Parameters" id="simple-tab-0"></Tab>
+            <Tab label="Request Output" id="simple-tab-1"></Tab>
+          </Tabs>
+          <CustomTabPanel value={activeIndex} index={0}>
+            <>
+              {!showCommandForm && <Skeleton width="100%" height="10rem" />}
+              {showCommandForm && command && (
+                <CommandForm
+                  {...{
+                    command: command,
+                    request: request,
+                    setRequest: () => {},
+                    resetForm: false,
+                    setResetForm: () => {},
+                    setIsFormValid: () => {},
+                  }}
+                />
+              )}
+              {showCommandForm && !command && <UnformattedInput {...request} />}
+            </>
+          </CustomTabPanel>
+          <CustomTabPanel value={activeIndex} index={1}>
+            <RequestOutput request={request} />
+          </CustomTabPanel>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 }
 

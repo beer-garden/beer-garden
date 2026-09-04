@@ -1,8 +1,15 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Dialog } from "primereact/dialog";
+import {
+  Box,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  Typography,
+} from "@mui/material";
 
 import { Request } from "../models/brewtils-types";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import AccessButton from "./AccessButton";
 
 function CodeExample({
@@ -14,7 +21,7 @@ function CodeExample({
   visibleCodeExample: boolean;
   setVisibleCodeExample: (visibleCodeExample: boolean) => void;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   const CodeBlock = (codeType: string) => {
     const getHostName = () => {
@@ -124,7 +131,7 @@ function CodeExample({
     const copyToClipboard = () => {
       navigator.clipboard.writeText(code()).catch((error) => {
         console.error("Error copying to clipboard:", error);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error copying to clipboard: ${error}`,
@@ -134,49 +141,74 @@ function CodeExample({
     };
 
     return (
-      <div style={{ position: "relative" }}>
-        <h3>{codeType}</h3>
+      <Box sx={{ position: "relative", mb: 2 }}>
+        <Typography variant="h6">{codeType}</Typography>
         <AccessButton
-          className="p-button-rounded p-button-text"
           onClick={copyToClipboard}
-          style={{ position: "absolute", top: "0.5rem", right: "0.5rem" }}
+          sx={{
+            position: "absolute",
+            top: "0.5rem",
+            right: "0.5rem",
+            borderRadius: "50px",
+          }}
+          text
           tooltip={`Copy ${codeType} to clipboard`}
         >
           <FontAwesomeIcon icon="copy" />
         </AccessButton>
-        <pre>
-          <code
-            style={{
-              whiteSpace: "pre-wrap",
-              overflowWrap: "break-word",
-              overflowX: "auto",
-            }}
-          >
-            {code()}
-          </code>
-        </pre>
-      </div>
+        <Box
+          component="pre"
+          sx={{
+            whiteSpace: "pre-wrap",
+            overflowWrap: "break-word",
+            overflowX: "auto",
+          }}
+        >
+          {code()}
+        </Box>
+      </Box>
     );
   };
 
   return (
     <Dialog
-      header={"Code Examples"}
-      visible={visibleCodeExample}
-      onHide={() => {
+      open={visibleCodeExample}
+      onClose={() => {
         if (!visibleCodeExample) return;
         setVisibleCodeExample(false);
       }}
-      style={{ width: "50vw" }}
+      maxWidth="md"
+      fullWidth
+      aria-labelledby="customized-dialog-title"
     >
-      <div>Bytes and Base64 parameters are not supported in code examples.</div>
-      {CodeBlock("Python")}
+      <DialogTitle sx={{ m: 0, p: 2 }} id="customized-dialog-title">
+        <Grid container>
+          <Grid size="grow">Code Examples</Grid>
+          <Grid>
+            <AccessButton
+              sx={{ mr: 2 }}
+              aria-label="Close code examples dialog"
+              onClick={() => {
+                setVisibleCodeExample(false);
+              }}
+            >
+              <FontAwesomeIcon icon="xmark" />
+            </AccessButton>
+          </Grid>
+        </Grid>
+      </DialogTitle>
+      <DialogContent dividers>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          Bytes and Base64 parameters are not supported in code examples.
+        </Typography>
+        {CodeBlock("Python")}
 
-      {CodeBlock("cURL")}
+        {CodeBlock("cURL")}
 
-      {CodeBlock("Wget")}
+        {CodeBlock("Wget")}
 
-      {CodeBlock("JSON")}
+        {CodeBlock("JSON")}
+      </DialogContent>
     </Dialog>
   );
 }

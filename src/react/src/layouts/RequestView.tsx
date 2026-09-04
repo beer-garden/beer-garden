@@ -1,4 +1,4 @@
-import { Card } from "primereact/card";
+import { Box, Grid } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 
@@ -7,7 +7,7 @@ import RequestTreeMenu from "../components/RequestTreeMenu";
 import RequestViewMain from "../components/RequestViewMain";
 import { Request } from "../models/brewtils-types";
 import { Config, RequestItem } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRequest } from "../services/request_service";
 import { getErrorCode } from "../services/util_service";
 
@@ -20,9 +20,10 @@ function RequestView({
   config: Config;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [error, setError] = useState<Error>();
   const { requestId } = useParams<{ requestId: string }>();
+  const urlRequestId = useRef<string | undefined>(undefined);
   const [request, setRequest] = useState<Request | undefined>(undefined);
 
   const [rootRequest, setRootRequest] = useState<Request | undefined>(
@@ -31,9 +32,34 @@ function RequestView({
 
   const rootRequestRef = useRef<Request | undefined>(undefined);
 
-  const updateRootRequest = (request: Request) => {
-    rootRequestRef.current = request;
-    setRootRequest(request);
+  const updateRootRequest = async (request: Request) => {
+    if (request === undefined) {
+      rootRequestRef.current = undefined;
+      setRootRequest(undefined);
+    } else {
+      await loadChildrenRequests(request)
+        .then((updatedRequest) => {
+          rootRequestRef.current = updatedRequest;
+          setRootRequest(updatedRequest);
+        })
+        .catch((error) => {
+          showSnackbar({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching children requests: ${error}`,
+            life: 3000,
+          });
+        });
+      if (
+        request.id &&
+        request.status &&
+        !["CANCELED", "SUCCESS", "ERROR", "INVALID"].includes(request.status)
+      ) {
+        if (!(request.id in listeners)) {
+          listeners[request.id] = { listener: MonitorRequestId };
+        }
+      }
+    }
   };
 
   const MonitorRequestId = useCallback(
@@ -56,64 +82,100 @@ function RequestView({
           updateRootRequest({
             ...message.payload,
             children: rootRequestRef.current?.children,
-          } as Request);
+          } as Request).catch((error) => {
+            showSnackbar({
+              severity: "error",
+              summary: "Error",
+              detail: `Error Updating Root request: ${error}`,
+              life: 3000,
+            });
+            setError(error);
+          });
         } else if (rootRequestRef.current) {
-          updateRootRequest(
-            updateNestedRequest(message.payload, rootRequestRef.current),
-          );
+          const matchParentId = (
+            checkRequest: Request,
+            parentId: string,
+          ): boolean => {
+            if (checkRequest?.id === parentId) {
+              return true;
+            }
+            if (checkRequest?.children) {
+              return checkRequest.children.some((child) => {
+                return matchParentId(child, parentId);
+              });
+            }
+            return false;
+          };
+
+          if (
+            rootRequestRef.current?.id &&
+            message.payload?.parent?.id &&
+            matchParentId(rootRequestRef.current, message.payload.parent.id)
+          ) {
+            GetRequest(rootRequestRef.current.id, {})
+              .then((updatedRootRequest) => {
+                updateRootRequest(updatedRootRequest).catch((error) => {
+                  showSnackbar({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Error Updating Root request: ${error}`,
+                    life: 3000,
+                  });
+                  setError(error);
+                });
+              })
+              .catch((error) => {
+                showSnackbar({
+                  severity: "error",
+                  summary: "Error",
+                  detail: `Error Updating Root request: ${error}`,
+                  life: 3000,
+                });
+                setError(error);
+              });
+          }
         }
       }
     },
     [requestId],
   );
 
-  const updateNestedRequest = (
-    updatedRequest: Request,
-    parentRequest: Request,
-  ) => {
-    // Only check requests that have parents
-    const parent_id = updatedRequest?.parent_id ?? updatedRequest?.parent?.id;
-
-    if (parent_id) {
-      if (parent_id === parentRequest.id) {
+  const loadChildrenRequests = async (parent_request: Request) => {
+    if (parent_request.children) {
+      const requestQueries = [];
+      const loadedChildren = [];
+      for (const childRequest of parent_request.children) {
         if (
-          parentRequest?.children &&
-          parentRequest.children.some(
-            (childRequest: Request) => childRequest.id === updatedRequest.id,
-          )
+          childRequest.id &&
+          (childRequest.children === undefined ||
+            childRequest.children.length === 0)
         ) {
-          // Replace Request
-          parentRequest.children = parentRequest.children.map(
-            (childRequest: Request) => {
-              if (childRequest.id !== updatedRequest.id) {
-                return childRequest;
-              }
-              return { ...updatedRequest, children: childRequest.children };
-            },
-          );
-          return parentRequest;
+          requestQueries.push(GetRequest(childRequest.id, {}));
         } else {
-          // Insert Request
-          if (parentRequest?.children) {
-            parentRequest.children.push(updatedRequest);
-          } else {
-            parentRequest.children = [updatedRequest];
-          }
-          return parentRequest;
+          loadedChildren.push(childRequest);
         }
-      } else if (parentRequest?.children) {
-        // Check Children
-        parentRequest.children.map((childRequest: Request) => {
-          return updateNestedRequest(updatedRequest, childRequest);
-        });
+      }
+
+      if (requestQueries.length > 0) {
+        parent_request.children = [
+          ...loadedChildren,
+          ...(await Promise.all(requestQueries)),
+        ];
+      }
+      for (const childRequest of parent_request.children) {
+        await loadChildrenRequests(childRequest);
       }
     }
-
-    return parentRequest;
+    return parent_request;
   };
 
   useEffect(() => {
-    if (!request || request.id === undefined) {
+    if (urlRequestId.current != requestId && request !== undefined) {
+      // New Page Load
+      setRequest(undefined);
+      setRootRequest(undefined);
+      urlRequestId.current = requestId;
+    } else if (!request || request.id === undefined) {
       if (requestId !== undefined) {
         GetRequest(requestId, {})
           .then((data: Request) => {
@@ -129,7 +191,7 @@ function RequestView({
             }
           })
           .catch((error) => {
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error fetching request: ${error}`,
@@ -164,35 +226,6 @@ function RequestView({
         };
       }
 
-      const loadChildrenRequests = async (parent_request: Request) => {
-        if (parent_request.children) {
-          const requestQueries = [];
-          const loadedChildren = [];
-          for (const childRequest of parent_request.children) {
-            if (
-              childRequest.id &&
-              (childRequest.children === undefined ||
-                childRequest.children.length === 0)
-            ) {
-              requestQueries.push(GetRequest(childRequest.id, {}));
-            } else {
-              loadedChildren.push(childRequest);
-            }
-          }
-
-          if (requestQueries.length > 0) {
-            parent_request.children = [
-              ...loadedChildren,
-              ...(await Promise.all(requestQueries)),
-            ];
-          }
-          for (const childRequest of parent_request.children) {
-            await loadChildrenRequests(childRequest);
-          }
-        }
-        return parent_request;
-      };
-
       const loadRootRequest = async (check_request: Request) => {
         if (
           check_request.has_parent === true &&
@@ -204,30 +237,21 @@ function RequestView({
             throw new error();
           });
         } else {
-          updateRootRequest(check_request);
-          if (check_request.id) {
-            if (!(check_request.id in listeners)) {
-              listeners[check_request.id] = { listener: MonitorRequestId };
-            }
-          }
-          await loadChildrenRequests(check_request)
-            .then((updatedRequest) => {
-              updateRootRequest(updatedRequest);
-            })
-            .catch((error) => {
-              showToast({
-                severity: "error",
-                summary: "Error",
-                detail: `Error fetching children requests: ${error}`,
-                life: 3000,
-              });
+          updateRootRequest(check_request).catch((error) => {
+            showSnackbar({
+              severity: "error",
+              summary: "Error",
+              detail: `Error Updating Root request: ${error}`,
+              life: 3000,
             });
+            setError(error);
+          });
         }
       };
 
       if (rootRequest === undefined) {
         loadRootRequest(request).catch((error) => {
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching parent request: ${error}`,
@@ -258,37 +282,31 @@ function RequestView({
           errorMsg={`Request ${requestId} was not found`}
         />
       ) : (
-        <div>
-          <div className="flex">
-            <div className="mr-2" style={{ width: "auto" }}>
-              {rootRequest && (
-                <RequestTreeMenu
-                  rootRequest={rootRequest}
-                  request={request}
-                  setRequest={setRequest}
-                />
-              )}
-            </div>
-
-            <Card
-              className="mb-4"
-              style={{ width: "100%" }}
-              unstyled
-              key={request?.id}
-            >
-              {request && (
-                <RequestViewMain
-                  request={request}
-                  setRequest={setRequest}
-                  addRequestItem={addRequestItem}
-                  showProjections={true}
-                  config={config}
-                  isCard={false}
-                />
-              )}
-            </Card>
-          </div>
-        </div>
+        <Box sx={{ m: 2 }}>
+          <Grid container>
+            <Grid>
+              <RequestTreeMenu
+                rootRequest={rootRequest}
+                request={request}
+                setRequest={setRequest}
+              />
+            </Grid>
+            <Grid size="grow">
+              <Box sx={{ mx: 2 }} key={request?.id}>
+                {request && (
+                  <RequestViewMain
+                    request={request}
+                    setRequest={setRequest}
+                    addRequestItem={addRequestItem}
+                    showProjections={true}
+                    config={config}
+                    isCard={false}
+                  />
+                )}
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
       )}
     </>
   );

@@ -1,83 +1,57 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { FilterMatchMode } from "primereact/api";
-import { Calendar } from "primereact/calendar";
-import { Checkbox, CheckboxChangeEvent } from "primereact/checkbox";
-import { Column } from "primereact/column";
-import { DataTable, SortOrder } from "primereact/datatable";
-import { Divider } from "primereact/divider";
-import { MultiSelect } from "primereact/multiselect";
-import { Tooltip } from "primereact/tooltip";
 import {
-  RefObject,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+  Box,
+  Checkbox,
+  Divider,
+  FormLabel,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import { Dayjs } from "dayjs";
+import { RefObject, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import AccessButton from "../components/AccessButton";
+import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
+import {
+  ColumnField,
+  FilterColumn,
+} from "../components/EnhancedTable/models/EnhancedTableModels";
 import { Request } from "../models/brewtils-types";
-import { RequestItem } from "../models/models";
+import { Config, RequestItem } from "../models/models";
 import { TourStepProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRequestList } from "../services/request_service";
 import {
   AddTourStep,
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { GetBaseURL, PaginatorTemplate } from "../services/util_service";
-
-interface LazyParams {
-  first: number;
-  rows: number;
-  page: number;
-  sortField: string | undefined;
-  sortOrder: SortOrder | undefined;
-}
+import { FAIcon, GetBaseURL } from "../services/util_service";
 
 function RequestIndex({
   listeners,
   tourStepsRef,
   addRequestItem,
+  config,
 }: {
   listeners: Record<string, any>;
   tourStepsRef: RefObject<Array<TourStepProps>>;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+  config: Config;
 }) {
   const [requests, setRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
   const [filteredRecords, setFilteredRecords] = useState<number>(0);
-  const [lazyParams, setLazyParams] = useState<LazyParams>({
-    first: 0,
-    rows: 10,
-    page: 0,
-    sortField: undefined,
-    sortOrder: undefined,
-  });
+
   const [recordsUpdated, setRecordsUpdated] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState<boolean>(false);
   const [showHidden, setShowHidden] = useState<boolean>(false);
   const [showChildren, setShowChildren] = useState<boolean>(false);
-
-  const [filters, setFilters] = useState({
-    command_display_name: {
-      value: null,
-      matchMode: FilterMatchMode.STARTS_WITH,
-    },
-    namespace: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-    system: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-    system_version: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-    instance_name: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-    status: { value: null, matchMode: FilterMatchMode.IN },
-    created_at: { value: null, matchMode: FilterMatchMode.DATE_IS },
-    comment: { value: null, matchMode: FilterMatchMode.STARTS_WITH },
-  });
+  const [reloadRequestsTrigger, setReloadRequestsTrigger] = useState(0);
 
   const setDisplayRequests = (requests: Array<Request>) => {
     setRequests(requests);
@@ -143,277 +117,75 @@ function RequestIndex({
     pos: 5,
   };
 
-  const lazyLoadData = useCallback(() => {
-    setLoading(true);
-
-    const generateFilterQuery = () => {
-      const filterQuery: Record<string, any> = {};
-
-      Object.entries(filters).forEach(([field, filterMeta]) => {
-        if (field === null || field === undefined) {
-          return;
-        }
-
-        filterQuery["include"] = filterQuery["include"] || ["id"];
-        filterQuery["include"].push(field);
-        if (showHidden) {
-          filterQuery["include"].push("hidden");
-        }
-        if (showChildren) {
-          filterQuery["include"].push("parent");
-        }
-
-        if (
-          filterMeta.value === null ||
-          filterMeta.value === undefined ||
-          filterMeta.value === ""
-        ) {
-          return;
-        }
-
-        filterQuery["query"] = filterQuery["query"] || [];
-
-        const filter: Record<string, any> = {
-          field_name: field,
-          modifier: "",
-          value: filterMeta.value,
-        };
-
-        if (filterMeta.matchMode === FilterMatchMode.STARTS_WITH) {
-          filter["modifier"] = "startswith";
-        } else if (filterMeta.matchMode === FilterMatchMode.ENDS_WITH) {
-          filter["modifier"] = "endswith";
-        } else if (filterMeta.matchMode === FilterMatchMode.EQUALS) {
-          // Skip
-        } else if (filterMeta.matchMode === FilterMatchMode.NOT_EQUALS) {
-          filter["modifier"] = "ne";
-        } else if (filterMeta.matchMode === FilterMatchMode.CONTAINS) {
-          filter["modifier"] = "contains";
-        } else if (filterMeta.matchMode === FilterMatchMode.NOT_CONTAINS) {
-          filter["modifier"] = "not__contains";
-        } else if (filterMeta.matchMode === FilterMatchMode.LESS_THAN) {
-          filter["modifier"] = "lt";
-        } else if (
-          filterMeta.matchMode === FilterMatchMode.LESS_THAN_OR_EQUAL_TO
-        ) {
-          filter["modifier"] = "lte";
-        } else if (filterMeta.matchMode === FilterMatchMode.GREATER_THAN) {
-          filter["modifier"] = "gt";
-        } else if (
-          filterMeta.matchMode === FilterMatchMode.GREATER_THAN_OR_EQUAL_TO
-        ) {
-          filter["modifier"] = "gte";
-        } else if (filterMeta.matchMode === FilterMatchMode.DATE_IS) {
-          filter["value"] = (filterMeta.value as Date)
-            .toISOString()
-            .substring(0, 19)
-            .replace("T", " ");
-        } else if (filterMeta.matchMode === FilterMatchMode.DATE_IS_NOT) {
-          filter["modifier"] = "ne";
-          filter["value"] = (filterMeta.value as Date)
-            .toISOString()
-            .substring(0, 19)
-            .replace("T", " ");
-        } else if (filterMeta.matchMode === FilterMatchMode.DATE_AFTER) {
-          filter["modifier"] = "gt";
-          filter["value"] = (filterMeta.value as Date)
-            .toISOString()
-            .substring(0, 19)
-            .replace("T", " ");
-        } else if (filterMeta.matchMode === FilterMatchMode.DATE_BEFORE) {
-          filter["modifier"] = "lt";
-          filter["value"] = (filterMeta.value as Date)
-            .toISOString()
-            .substring(0, 19)
-            .replace("T", " ");
-        } else if (filterMeta.matchMode === FilterMatchMode.IN) {
-          filter["modifier"] = "in";
-          filter["value"] = (filterMeta.value as Array<any>).map(
-            (item) => item["name"],
-          );
-        } else if (filterMeta.matchMode === FilterMatchMode.NOT_IN) {
-          filter["modifier"] = "nin";
-          filter["value"] = (filterMeta.value as Array<any>).map(
-            (item) => item["name"],
-          );
-        } else {
-          // Not Defined yet
-        }
-
-        filterQuery["query"].push(JSON.stringify(filter));
-      });
-
-      return filterQuery;
-    };
-
-    const generateSortQuery = () => {
-      const sortQuery: Record<string, any> = {};
-
-      if (lazyParams.sortField) {
-        if (lazyParams.sortOrder && [-1, 1].includes(lazyParams.sortOrder)) {
-          sortQuery["order_by"] =
-            lazyParams.sortOrder == -1
-              ? "-" + lazyParams.sortField
-              : lazyParams.sortField;
-        }
-      }
-      return sortQuery;
-    };
-
-    const queryHeaders: Record<string, any> = {
-      length: lazyParams.rows,
-      start: lazyParams.first,
-      ...generateFilterQuery(),
-      ...generateSortQuery(),
-    };
-
-    if (showHidden) {
-      queryHeaders["include_hidden"] = true;
-    }
-    if (showChildren) {
-      queryHeaders["include_children"] = true;
-    }
-
-    GetRequestList(queryHeaders)
-      .then((data: [Array<Request>, Headers]) => {
-        const [requests, headers] = data;
-
-        setDisplayRequests(requests);
-        setRecordsUpdated(false);
-
-        if (headers.has("Recordstotal")) {
-          setTotalRecords(parseInt(headers.get("Recordstotal") || "0", 10));
-        } else {
-          setTotalRecords(requests.length);
-        }
-        if (headers.has("Recordsfiltered")) {
-          setFilteredRecords(
-            parseInt(headers.get("Recordsfiltered") || "0", 10),
-          );
-        } else {
-          setFilteredRecords(requests.length);
-        }
-        setLoading(false);
-      })
-      .catch((error) => {
-        setLoading(false);
-        showToast({
-          severity: "error",
-          summary: "Error",
-          detail: `Error fetching request list: ${error}`,
-          life: 3000,
-        });
-      });
-  }, [lazyParams, filters, showHidden, showChildren]);
-
-  const onPage = (event: any) => {
-    setLazyParams(event);
+  const ViewJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: `View Job`,
+    content: `View associated Job in popup modal.`,
+    layer: "LAYOUT",
+    pos: 6,
   };
 
-  const onSort = (event: any) => {
-    setLazyParams(event);
-  };
-
-  const formatDate = (value: string) => {
-    const date = new Date(value);
-    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
-  };
-
-  const dateTimeFilterTemplate = (options: any) => {
-    return (
-      <Calendar
-        value={options.value}
-        onChange={(e) => options.filterCallback(e.value, options.index)}
-        dateFormat="mm/dd/yy"
-        showTime
-        hourFormat="24" // or "12"
-        placeholder="MM/DD/YYYY HH:MM"
-        mask="99/99/9999 99:99"
-      />
-    );
-  };
-
-  const statuses = [
-    { name: "CREATED" },
-    { name: "RECEIVED" },
-    { name: "IN_PROGRESS" },
-    { name: "CANCELED" },
-    { name: "SUCCESS" },
-    { name: "ERROR" },
-    { name: "INVALID" },
-  ];
-
-  const statusFilterTemplate = (options: any) => {
-    return (
-      <MultiSelect
-        value={options.value}
-        onChange={(e) => options.filterCallback(e.value, options.index)}
-        options={statuses}
-        optionLabel="name"
-        placeholder="Status"
-        className="w-full md:w-20rem"
-      />
-    );
-  };
   useLayoutEffect(() => {
     if (autoRefresh && recordsUpdated) {
-      lazyLoadData();
+      setReloadRequestsTrigger(reloadRequestsTrigger + 1);
     }
   }, [autoRefresh, recordsUpdated]);
 
+  useEffect(() => {
+    setReloadRequestsTrigger(reloadRequestsTrigger + 1);
+  }, [showChildren, showHidden]);
+
   const header = (
-    <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-      <h1 className="text-xl text-900 font-bold">Requests</h1>
-      <div className="flex align-items-center">
-        <label className="mr-2" htmlFor="autoRefreshButton">
-          <Checkbox
-            id="autoRefreshButton"
-            onChange={(e: CheckboxChangeEvent) =>
-              setAutoRefresh(e.target?.checked ?? false)
-            }
-            checked={autoRefresh}
-            className="mr-2"
-            {...GenerateTourProps(AutoRefreshTourStep)}
-          />
+    <Box sx={{ display: "flex", justifyContent: "space-between", mx: 2 }}>
+      <Typography variant="h2" component="h1">
+        Requests
+      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center" }}>
+        <Checkbox
+          id="autoRefreshButton"
+          onChange={(e) => setAutoRefresh(e.target?.checked ?? false)}
+          checked={autoRefresh}
+          sx={{ mr: 2 }}
+          {...GenerateTourProps(AutoRefreshTourStep)}
+        />
+        <FormLabel sx={{ mr: 2 }} htmlFor="autoRefreshButton">
           Auto Refresh
-        </label>
-        <label className="mr-2" htmlFor="showHiddenButton">
-          <Checkbox
-            id="showHiddenButton"
-            onChange={(e: CheckboxChangeEvent) =>
-              setShowHidden(e.target?.checked ?? false)
-            }
-            checked={showHidden}
-            className="mr-2"
-            {...GenerateTourProps(ShowHiddenTourStep)}
-          />
+        </FormLabel>
+
+        <Checkbox
+          id="showHiddenButton"
+          onChange={(e) => setShowHidden(e.target?.checked ?? false)}
+          checked={showHidden}
+          sx={{ mr: 2 }}
+          {...GenerateTourProps(ShowHiddenTourStep)}
+        />
+        <FormLabel sx={{ mr: 2 }} htmlFor="showHiddenButton">
           Show Hidden
-        </label>
-        <label className="mr-2" htmlFor="showChildrenButton">
-          <Checkbox
-            id="showChildrenButton"
-            onChange={(e: CheckboxChangeEvent) =>
-              setShowChildren(e.target?.checked ?? false)
-            }
-            checked={showChildren}
-            className="mr-2"
-            {...GenerateTourProps(ShowChildrenTourStep)}
-          />
+        </FormLabel>
+
+        <Checkbox
+          id="showChildrenButton"
+          onChange={(e) => setShowChildren(e.target?.checked ?? false)}
+          checked={showChildren}
+          sx={{ mr: 2 }}
+          {...GenerateTourProps(ShowChildrenTourStep)}
+        />
+        <FormLabel sx={{ mr: 2 }} htmlFor="showChildrenButton">
           Show Children
-        </label>
+        </FormLabel>
+
         <AccessButton
-          rounded
-          raised
           basic
-          onClick={lazyLoadData}
+          onClick={() => setReloadRequestsTrigger(reloadRequestsTrigger + 1)}
           tooltip={recordsUpdated ? "New updates available" : "Refresh"}
           {...GenerateTourProps(RefreshTableTourStep)}
         >
           {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
           <FontAwesomeIcon icon="refresh" />
         </AccessButton>
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 
   const PeekRequestView = (request: Request) => {
@@ -422,35 +194,38 @@ function RequestIndex({
     }
   };
 
+  const PeekJobView = (request: Request) => {
+    if (
+      request?.metadata?.bg_job_id &&
+      typeof request.metadata.bg_job_id === "string"
+    ) {
+      addRequestItem({ jobId: request.metadata.bg_job_id, type: "VIEW_JOB" });
+    }
+  };
+
   const commandNameTemplate = (request: Request) => {
     return (
       <div>
         {request.parent && (
-          <>
-            <Tooltip target=".parent-icon">
-              <div className="flex flex-column">
-                <div
-                  className="justify-center font-bold"
-                  style={{ marginBottom: "4px" }}
-                >
+          <Tooltip
+            title={
+              <Box>
+                <Typography sx={{ fontWeight: "bold" }}>
                   parent request
-                </div>
-                <Divider className="p-0 mx-0 my-1" />
+                </Typography>
+                <Divider sx={{ my: 1 }} />
                 <span>{request.parent.command}</span>
-              </div>
-            </Tooltip>
+              </Box>
+            }
+          >
             <Link
               to={`${GetBaseURL()}/request/${request.parent.id}`}
               style={{ textDecoration: "none" }}
               tabIndex={-1}
             >
-              <FontAwesomeIcon
-                icon="level-up"
-                className="parent-icon mr-2"
-                data-pr-position="top"
-              />
+              <FAIcon icon="level-up" sx={{ mr: 2 }} data-pr-position="top" />
             </Link>
-          </>
+          </Tooltip>
         )}
         <span>{request.command_display_name ?? request.command}</span>
         {request.hidden && (
@@ -461,6 +236,10 @@ function RequestIndex({
   };
 
   const commandActionTemplate = (request: Request) => {
+    const showJob =
+      request?.metadata?.bg_job_id !== undefined &&
+      request.source_garden === config.garden_name;
+
     return (
       <div>
         <Link
@@ -470,36 +249,37 @@ function RequestIndex({
           style={{ textDecoration: "none" }}
         >
           <AccessButton
-            rounded
-            raised
-            link
             basic
             tooltip={`Open Request ${request.command_display_name ?? request.command} ${request.id}`}
-            className="mr-2"
+            sx={{ mr: 1 }}
             {...GenerateTourProps(OpenRequestTourStep)}
           >
             <FontAwesomeIcon icon="arrow-up-right-from-square" />
           </AccessButton>
         </Link>
         <AccessButton
-          rounded
-          raised
-          link
           basic
           onClick={() => PeekRequestView(request)}
           tooltip={`View Request ${request.command_display_name ?? request.command} ${request.id}`}
-          className="mr-2"
+          sx={{ mr: 1 }}
           {...GenerateTourProps(ViewRequestTourStep)}
         >
           <FontAwesomeIcon icon="eye" />
         </AccessButton>
+        {showJob && (
+          <AccessButton
+            basic
+            onClick={() => PeekJobView(request)}
+            tooltip={`View Job ${request?.metadata?.bg_job_id}`}
+            sx={{ mr: 1 }}
+            {...GenerateTourProps(ViewJobTourStep)}
+          >
+            <FontAwesomeIcon icon="briefcase" />
+          </AccessButton>
+        )}
       </div>
     );
   };
-
-  useEffect(() => {
-    lazyLoadData();
-  }, [lazyLoadData, lazyParams, filters]);
 
   useEffect(() => {
     if (!("requestIndex" in listeners)) {
@@ -572,6 +352,7 @@ function RequestIndex({
     if (requests && requests.length > 0) {
       AddTourStep(tourStepsRef, OpenRequestTourStep);
       AddTourStep(tourStepsRef, ViewRequestTourStep);
+      AddTourStep(tourStepsRef, ViewJobTourStep);
     }
 
     return () => {
@@ -579,101 +360,242 @@ function RequestIndex({
     };
   }, [requests]);
 
-  const paginatorTemplate = {
-    ...PaginatorTemplate,
-
-    CurrentPageReport: () => {
-      const lastCount = lazyParams.first + lazyParams.rows;
-      if (filteredRecords > 0 && filteredRecords < totalRecords) {
-        return (
-          <div className="mx-4">
-            <span>{`Showing ${lazyParams.first} to ${lastCount > filteredRecords ? filteredRecords : lastCount} of ${filteredRecords} entries (filtered from ${totalRecords} entries)`}</span>
-          </div>
-        );
-      } else {
-        return (
-          <div className="mx-4">
-            <span>{`Showing ${lazyParams.first} to ${lastCount > totalRecords ? totalRecords : lastCount} of ${totalRecords} entries`}</span>
-          </div>
-        );
-      }
+  const tableColumns: ColumnField[] = [
+    {
+      id: "action",
+      label: "Action",
+      template: commandActionTemplate,
     },
+    {
+      id: "command",
+      field: "command",
+      label: "Command",
+      template: commandNameTemplate,
+      sortable: true,
+      filterable: true,
+      isString: true,
+    },
+    {
+      id: "namespace",
+      label: "Namespace",
+      field: "namespace",
+      sortable: true,
+      filterable: true,
+      isString: true,
+    },
+    {
+      id: "system",
+      label: "System",
+      field: "system",
+      sortable: true,
+      filterable: true,
+      isString: true,
+    },
+    {
+      id: "system_version",
+      label: "Version",
+      field: "system_version",
+      sortable: true,
+      filterable: true,
+      isString: true,
+    },
+    {
+      id: "instance_name",
+      label: "Instance",
+      field: "instance_name",
+      sortable: true,
+      filterable: true,
+      isString: true,
+    },
+    {
+      id: "status",
+      label: "Status",
+      sortable: true,
+      filterable: true,
+      field: "status",
+      isString: true,
+      options: [
+        "CREATED",
+        "RECEIVED",
+        "IN_PROGRESS",
+        "CANCELED",
+        "SUCCESS",
+        "ERROR",
+        "INVALID",
+      ],
+    },
+    {
+      id: "created_at",
+      label: "Created",
+      field: "created_at",
+      isDate: true,
+      sortable: true,
+      filterable: true,
+    },
+    {
+      id: "comment",
+      label: "Comment",
+      field: "comment",
+      sortable: true,
+      filterable: true,
+      isString: true,
+    },
+  ];
+
+  const tableLoadData = (
+    columnFilters?: FilterColumn[],
+    orderBy?: string,
+    order?: "asc" | "desc",
+    page?: number,
+    rowsPerPage?: number,
+  ) => {
+    setLoading(true);
+
+    const queryHeaders: Record<string, any> = {
+      length: rowsPerPage,
+      start: (rowsPerPage ?? 0) * (page ?? 0),
+      include: [
+        "id",
+        "command",
+        "namespace",
+        "system",
+        "system_version",
+        "instance_name",
+        "status",
+        "created_at",
+        "comment",
+        "source_garden",
+        "metadata",
+      ],
+    };
+
+    if (columnFilters) {
+      for (const filter of columnFilters) {
+        let validFilter = true;
+
+        if (
+          filter.column === undefined ||
+          filter.modifier === undefined ||
+          filter.value === undefined
+        ) {
+          validFilter = false;
+        }
+
+        // Is String Empty
+        if (
+          validFilter &&
+          typeof filter.value === "string" &&
+          filter.value.length === 0
+        ) {
+          validFilter = false;
+        }
+
+        // Is Array Empty
+        if (
+          validFilter &&
+          typeof filter.value === "object" &&
+          Array.isArray(filter.value) &&
+          filter.value.length === 0
+        ) {
+          validFilter = false;
+        }
+
+        if (validFilter) {
+          queryHeaders["query"] = queryHeaders["query"] || [];
+
+          if (filter.isDate) {
+            queryHeaders["query"].push(
+              JSON.stringify({
+                field_name: filter.column,
+                modifier: filter.modifier === "eq" ? "" : filter.modifier,
+                value: (filter.value as Dayjs)
+                  .toISOString()
+                  .substring(0, 19)
+                  .replace("T", " "),
+              }),
+            );
+          } else if (filter.isNumeric) {
+            queryHeaders["query"].push(
+              JSON.stringify({
+                field_name: filter.column,
+                modifier: filter.modifier === "eq" ? "" : filter.modifier,
+                value: String(filter.value),
+              }),
+            );
+          } else {
+            queryHeaders["query"].push(
+              JSON.stringify({
+                field_name: filter.column,
+                modifier: filter.modifier === "eq" ? "" : filter.modifier,
+                value:
+                  filter.modifier === "exists"
+                    ? filter.value === "true"
+                    : filter.value,
+              }),
+            );
+          }
+        }
+      }
+    }
+
+    if (order && orderBy) {
+      queryHeaders["order_by"] = order === "asc" ? orderBy : "-" + orderBy;
+    }
+
+    if (showHidden) {
+      queryHeaders["include_hidden"] = true;
+    }
+    if (showChildren) {
+      queryHeaders["include_children"] = true;
+    }
+
+    GetRequestList(queryHeaders)
+      .then((data: [Array<Request>, Headers]) => {
+        const [requests, headers] = data;
+
+        setDisplayRequests(requests);
+        setRecordsUpdated(false);
+
+        if (headers.has("Recordstotal")) {
+          setTotalRecords(parseInt(headers.get("Recordstotal") || "0", 10));
+        } else {
+          setTotalRecords(requests.length);
+        }
+        if (headers.has("Recordsfiltered")) {
+          setFilteredRecords(
+            parseInt(headers.get("Recordsfiltered") || "0", 10),
+          );
+        } else {
+          setFilteredRecords(requests.length);
+        }
+        setLoading(false);
+      })
+      .catch((error) => {
+        setLoading(false);
+        showSnackbar({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching request list: ${error}`,
+          life: 3000,
+        });
+      });
   };
 
   return (
     <div>
-      <DataTable
-        value={requests}
-        loading={loading}
-        lazy
-        paginator
+      <EnhancedTable
+        data={requests}
+        columns={tableColumns}
         header={header}
-        rows={lazyParams.rows}
-        first={lazyParams.first}
-        sortField={lazyParams.sortField}
-        sortOrder={lazyParams.sortOrder}
-        totalRecords={totalRecords}
-        onPage={onPage}
-        onSort={onSort}
-        filters={filters}
-        onFilter={(e) => setFilters(e.filters as typeof filters)}
-        rowsPerPageOptions={[5, 10, 20, 50]}
-        paginatorTemplate={paginatorTemplate}
-        pt={{
-          paginator: {
-            firstPageIcon: {
-              role: "img",
-              "aria-label": "First Paginator Icon",
-            },
-            prevPageIcon: {
-              role: "img",
-              "aria-label": "Previous Paginator Icon",
-            },
-            nextPageIcon: {
-              role: "img",
-              "aria-label": "Next Paginator Icon",
-            },
-            lastPageIcon: {
-              role: "img",
-              "aria-label": "Last Paginator Icon",
-            },
-          },
-        }}
-      >
-        <Column header="Actions" body={commandActionTemplate} />
-        <Column
-          field="command_display_name"
-          filter
-          sortable
-          header="Command"
-          body={commandNameTemplate}
-        />
-        <Column field="namespace" filter sortable header="Namespace" />
-        <Column field="system" filter sortable header="System" />
-        <Column field="system_version" filter sortable header="Version" />
-        <Column field="instance_name" filter sortable header="Instance" />
-        <Column
-          field="status"
-          filter
-          sortable
-          header="Status"
-          filterElement={statusFilterTemplate}
-          filterMatchModeOptions={[
-            { label: "In", value: FilterMatchMode.IN },
-            { label: "Not In", value: FilterMatchMode.NOT_IN },
-          ]}
-        />
-        <Column
-          field="created_at"
-          filter
-          sortable
-          dataType="date"
-          header="Created"
-          body={(rowData) => formatDate(rowData.created_at)}
-          filterElement={dateTimeFilterTemplate}
-        />
-        <Column field="comment" filter sortable header="Comment" />
-      </DataTable>
+        remoteFilter={tableLoadData}
+        dataLength={filteredRecords}
+        totalDataLength={totalRecords}
+        reloadTable={reloadRequestsTrigger}
+        defaultOrderBy="created_at"
+        defaultOrder="desc"
+        isLoading={loading}
+        defaultRowsPerPageOptions={25}
+      />
     </div>
   );
 }

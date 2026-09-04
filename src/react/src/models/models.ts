@@ -39,12 +39,6 @@ export interface Listener {
   props: Record<string, any>;
 }
 
-export interface ScratchPadValue {
-  padId: string;
-  padType: string | null;
-  values: any;
-}
-
 export interface RequestCommand {
   namespace?: string;
   systemName?: string;
@@ -76,6 +70,13 @@ export interface InputParam extends Parameter {
   errorMsg?: string;
 }
 
+export interface SystemForceDeleteDialogProps {
+  system: System;
+  error: string;
+  isVisible: boolean;
+  onClose: any;
+}
+
 export interface InstanceDialogProps {
   instance: Instance;
   system: System;
@@ -94,6 +95,8 @@ export interface PermissionCheck {
 }
 
 export interface HasAccessProps {
+  label?: string;
+  tooltip?: string;
   config?: Config;
   permission?: "READ_ONLY" | "OPERATOR" | "PLUGIN_ADMIN" | "GARDEN_ADMIN";
   isGlobal?: boolean;
