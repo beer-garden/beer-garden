@@ -48,18 +48,18 @@ function CodeExample({
 
     const wgetCode = () => {
       return `
-      wget --method=POST -O- \\
-        --body-data='${JSON.stringify(request)}' \\
-        --header=Content-Type:application/json \\
-        ${getHostName()}:${getPort()}${GetBaseURL()}/api/v1/requests?blocking=true
+wget --method=POST -O- \\
+  --body-data='${JSON.stringify(request)}' \\
+  --header=Content-Type:application/json \\
+  ${getHostName()}:${getPort()}${GetBaseURL()}/api/v1/requests?blocking=true
       `;
     };
 
     const curlCode = () => {
       return `
-      curl -X POST ${getHostName()}:${getPort()}${GetBaseURL()}/api/v1/requests?blocking=true \\
-        -H "Content-Type: application/json" \\
-        -d '${JSON.stringify(request)}'
+curl -X POST ${getHostName()}:${getPort()}${GetBaseURL()}/api/v1/requests?blocking=true \\
+  -H "Content-Type: application/json" \\
+  -d '${JSON.stringify(request)}'
       `;
     };
 
@@ -88,23 +88,23 @@ function CodeExample({
       };
 
       return `
-      from brewtils import SystemClient
-      
-      request = SystemClient(
-        system_name = '${request?.system}',
-        system_namespace = '${request?.namespace}',
-        version_constraint = '${request?.system_version}',
-        default_instance = '${request?.instance_name}',
-        bg_host = '${getHostName()}',
-        bg_url_prefix = '${GetBaseURL()}',
-        bg_port = ${getPort()},
-        blocking = True,
-        ssl_enabled = ${getSslEnabled()},
-        ca_cert = None,
-        ca_verify = None,
-        client_cert = None).${request?.command ? request?.command : "command"}(${generateParams()})
-      
-      print(request)
+from brewtils import SystemClient
+
+request = SystemClient(
+  system_name = '${request?.system}',
+  system_namespace = '${request?.namespace}',
+  version_constraint = '${request?.system_version}',
+  default_instance = '${request?.instance_name}',
+  bg_host = '${getHostName()}',
+  bg_url_prefix = '${GetBaseURL()}',
+  bg_port = ${getPort()},
+  blocking = True,
+  ssl_enabled = ${getSslEnabled()},
+  ca_cert = None,
+  ca_verify = None,
+  client_cert = None).${request?.command ? request?.command : "command"}(${generateParams()})
+
+print(request)
       `;
     };
 
