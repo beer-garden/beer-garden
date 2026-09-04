@@ -286,7 +286,7 @@ function RequestView({
             </Grid>
             <Grid size="grow">
               <Box sx={{ mx: 2 }} key={request?.id}>
-                {request && (
+                {request && reloadRequest === false && (
                   <RequestViewMain
                     request={request}
                     setRequest={updateRequest}
