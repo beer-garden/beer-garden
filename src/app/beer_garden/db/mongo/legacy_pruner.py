@@ -34,12 +34,16 @@ def prune_temp_requests():
     prune_by_name("temp")
 
 
+def prune_garden_requests():
+    prune_by_name("garden")
+
+
 def prune_requests(ttl_name):
 
     batch_size = config.get("db.prune.batch_size")
     current_time = datetime.now(timezone.utc)
 
-    if ttl_name in ["admin", "temp"]:
+    if ttl_name in ["admin", "temp", "garden"]:
         ttl_length = config.get("db.prune.interval", default=15)
     else:
         ttl_length = config.get(f"db.prune.ttl.{ttl_name}")
@@ -52,6 +56,8 @@ def prune_requests(ttl_name):
         query = query & Q(has_parent=False) & Q(command_type="ADMIN")
     elif ttl_name == "temp":
         query = query & Q(command_type="TEMP")
+    elif ttl_name == "garden":
+        query = query & Q(command_type="GARDEN")
     elif ttl_name == "action":
         query = (
             query
