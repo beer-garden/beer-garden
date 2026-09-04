@@ -20,7 +20,7 @@ function RequestItemCard({
   requestItem: RequestItem;
   listeners: Record<string, any>;
   updateRequestItem: (itemParams?: Partial<RequestItem>) => void;
-  removeItem: (id: string) => void;
+  removeItem: (id?: string) => void;
   isDialog: boolean;
   config: Config;
 }) {
@@ -62,6 +62,8 @@ function RequestItemCard({
           jobId={requestItem.jobId}
           listeners={listeners}
           config={config}
+          updateRequestItem={updateRequestItem}
+          removeItem={removeItem}
           editJob={() => {
             updateRequestItem({
               ...requestItem,

@@ -18,7 +18,7 @@ import {
   FilterColumn,
 } from "../components/EnhancedTable/models/EnhancedTableModels";
 import { Request } from "../models/brewtils-types";
-import { RequestItem } from "../models/models";
+import { Config, RequestItem } from "../models/models";
 import { TourStepProps } from "../models/models";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRequestList } from "../services/request_service";
@@ -33,10 +33,12 @@ function RequestIndex({
   listeners,
   tourStepsRef,
   addRequestItem,
+  config,
 }: {
   listeners: Record<string, any>;
   tourStepsRef: RefObject<Array<TourStepProps>>;
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+  config: Config;
 }) {
   const [requests, setRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
@@ -115,6 +117,15 @@ function RequestIndex({
     pos: 5,
   };
 
+  const ViewJobTourStep: TourStepProps = {
+    prefix: tourPrefix,
+    uuid: tourUUID,
+    label: `View Job`,
+    content: `View associated Job in popup modal.`,
+    layer: "LAYOUT",
+    pos: 6,
+  };
+
   useLayoutEffect(() => {
     if (autoRefresh && recordsUpdated) {
       setReloadRequestsTrigger(reloadRequestsTrigger + 1);
@@ -183,6 +194,15 @@ function RequestIndex({
     }
   };
 
+  const PeekJobView = (request: Request) => {
+    if (
+      request?.metadata?.bg_job_id &&
+      typeof request.metadata.bg_job_id === "string"
+    ) {
+      addRequestItem({ jobId: request.metadata.bg_job_id, type: "VIEW_JOB" });
+    }
+  };
+
   const commandNameTemplate = (request: Request) => {
     return (
       <div>
@@ -216,6 +236,10 @@ function RequestIndex({
   };
 
   const commandActionTemplate = (request: Request) => {
+    const showJob =
+      request?.metadata?.bg_job_id !== undefined &&
+      request.source_garden === config.garden_name;
+
     return (
       <div>
         <Link
@@ -227,7 +251,7 @@ function RequestIndex({
           <AccessButton
             basic
             tooltip={`Open Request ${request.command_display_name ?? request.command} ${request.id}`}
-            sx={{ mr: 2 }}
+            sx={{ mr: 1 }}
             {...GenerateTourProps(OpenRequestTourStep)}
           >
             <FontAwesomeIcon icon="arrow-up-right-from-square" />
@@ -237,11 +261,22 @@ function RequestIndex({
           basic
           onClick={() => PeekRequestView(request)}
           tooltip={`View Request ${request.command_display_name ?? request.command} ${request.id}`}
-          sx={{ mr: 2 }}
+          sx={{ mr: 1 }}
           {...GenerateTourProps(ViewRequestTourStep)}
         >
           <FontAwesomeIcon icon="eye" />
         </AccessButton>
+        {showJob && (
+          <AccessButton
+            basic
+            onClick={() => PeekJobView(request)}
+            tooltip={`View Job ${request?.metadata?.bg_job_id}`}
+            sx={{ mr: 1 }}
+            {...GenerateTourProps(ViewJobTourStep)}
+          >
+            <FontAwesomeIcon icon="briefcase" />
+          </AccessButton>
+        )}
       </div>
     );
   };
@@ -317,6 +352,7 @@ function RequestIndex({
     if (requests && requests.length > 0) {
       AddTourStep(tourStepsRef, OpenRequestTourStep);
       AddTourStep(tourStepsRef, ViewRequestTourStep);
+      AddTourStep(tourStepsRef, ViewJobTourStep);
     }
 
     return () => {
@@ -428,6 +464,8 @@ function RequestIndex({
         "status",
         "created_at",
         "comment",
+        "source_garden",
+        "metadata",
       ],
     };
 

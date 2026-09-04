@@ -299,7 +299,7 @@ function NavigationMenu({
             {...GenerateTourProps(schedulerTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon icon="clock" />
+              <FAIcon icon="briefcase" />
               <Box component="span">Scheduler</Box>
             </Stack>
           </Button>
