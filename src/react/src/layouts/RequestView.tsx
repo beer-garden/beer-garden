@@ -176,6 +176,7 @@ function RequestView({
           "updated_at",
           "status_updated_at",
           "has_parent",
+          "target_garden",
         ],
       };
 
@@ -286,7 +287,7 @@ function RequestView({
             </Grid>
             <Grid size="grow">
               <Box sx={{ mx: 2 }} key={request?.id}>
-                {request && reloadRequest === false && (
+                {request && (
                   <RequestViewMain
                     request={request}
                     setRequest={updateRequest}
