@@ -18,6 +18,7 @@ import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRequestProjections } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
 import { GetSeverity } from "../services/util_service";
+import RequestTimeline from "./RequestTimeline";
 
 function UnformattedInput(request: Request) {
   return (
@@ -67,6 +68,22 @@ function RequestViewMain({
         color={GetSeverity(request?.status)}
         id={`request_view_status_${request?.id}`}
       />
+    );
+  };
+
+  const formatDate = (value: string) => {
+    const date = new Date(value);
+    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+  };
+
+  const updatedTemplate = (request: Request) => {
+    return (
+      <Box sx={{ display: "flex" }}>
+        <Typography sx={{ mr: 1, alignContent: "center" }}>
+          {formatDate(request.updated_at)}
+        </Typography>
+        <RequestTimeline request={request} />
+      </Box>
     );
   };
 
@@ -129,12 +146,7 @@ function RequestViewMain({
         field: "status_updated_at",
         label: "Status Updated",
         isDate: true,
-      });
-      requestColumns.push({
-        id: "updated_at",
-        field: "updated_at",
-        label: "Last Updated",
-        isDate: true,
+        template: updatedTemplate,
       });
     }
 

@@ -59,7 +59,6 @@ function parseRequest(request: Request): ExtendedTreeItemProps {
       instance_name: request.instance_name,
       created_at: new Date(request.created_at).toLocaleString(),
       status_updated_at: new Date(request.status_updated_at).toLocaleString(),
-      updated_at: new Date(request.updated_at).toLocaleString(),
       comment: request.comment,
       parent: request.parent_id,
       has_parent: request.has_parent,
@@ -220,14 +219,6 @@ function RequestTreeMenu({
                     </Typography>
                     <Typography variant="caption" sx={{ marginLeft: "auto" }}>
                       {node.data?.status_updated_at}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: "flex" }}>
-                    <Typography variant="caption" sx={{ mr: 2 }}>
-                      Last Updated At:
-                    </Typography>
-                    <Typography variant="caption" sx={{ marginLeft: "auto" }}>
-                      {node.data?.updated_at}
                     </Typography>
                   </Box>
                 </Box>
