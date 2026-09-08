@@ -127,12 +127,11 @@ const AccessButton = ({
           isLoading ?? (
             <Tooltip title={tooltip} placement="bottom" arrow>
               <Box component="span" aria-label={undefined}>
-                {icon && (
+                {icon ? (
                   <IconButton {...{ ...props, ...{ disabled: true } }}>
                     {children}
                   </IconButton>
-                )}
-                {icon !== true && (
+                ) : (
                   <Button {...{ ...props, ...{ disabled: true } }}>
                     {children}
                   </Button>
