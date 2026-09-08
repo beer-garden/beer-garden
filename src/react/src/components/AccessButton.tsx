@@ -144,12 +144,11 @@ const AccessButton = ({
           renderAuthFailed ?? (
             <Tooltip title={tooltip} placement="bottom" arrow>
               <Box component="span" aria-label={undefined}>
-                {icon && (
+                {icon ? (
                   <IconButton {...{ ...props, ...{ disabled: true } }}>
                     {children}
                   </IconButton>
-                )}
-                {icon !== true && (
+                ) : (
                   <Button {...{ ...props, ...{ disabled: true } }}>
                     {children}
                   </Button>
@@ -161,8 +160,11 @@ const AccessButton = ({
       >
         <Tooltip title={tooltip} placement="bottom" arrow>
           <Box component="span" aria-label={undefined}>
-            {icon && <IconButton {...props}>{children}</IconButton>}
-            {icon !== true && <Button {...props}>{children}</Button>}
+            {icon ? (
+              <IconButton {...props}>{children}</IconButton>
+            ) : (
+              <Button {...props}>{children}</Button>
+            )}
           </Box>
         </Tooltip>
       </HasAccess>
@@ -171,8 +173,11 @@ const AccessButton = ({
     return (
       <Tooltip title={tooltip} placement="bottom" arrow>
         <Box component="span" aria-label={undefined}>
-          {icon && <IconButton {...props}>{children}</IconButton>}
-          {icon !== true && <Button {...props}>{children}</Button>}
+          {icon ? (
+            <IconButton {...props}>{children}</IconButton>
+          ) : (
+            <Button {...props}>{children}</Button>
+          )}
         </Box>
       </Tooltip>
     );
