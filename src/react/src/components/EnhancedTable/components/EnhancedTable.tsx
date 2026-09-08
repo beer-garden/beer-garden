@@ -634,7 +634,7 @@ const EnhancedTable = ({
                         ) : null}
                       </TableSortLabel>
                     )}
-                    {column.sortable && (
+                    {column.filterable && (
                       <>
                         <EnhancedTableColumnHeaderFilter
                           column={column}
