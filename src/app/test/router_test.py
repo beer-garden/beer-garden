@@ -6,6 +6,7 @@ from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Operation
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System as BrewtilsSystem
+from brewtils.schema_parser import SchemaParser
 from mock import Mock
 
 import beer_garden.garden
@@ -267,3 +268,91 @@ class TestRequestRouting:
         assert target_from_type_mock.call_count == 0
         assert forward_mock.call_args[0][0].target_garden_name == "two_hop"
         assert forward_mock.call_args[0][1].name == "one_hop"
+
+    def test_process_garden_operation(self, monkeypatch, localgarden):
+
+        def mock_request(request):
+            return request
+
+        beer_garden.router.setup_routing()
+        garden_sync_mock = Mock()
+
+        monkeypatch.setattr(beer_garden.router, "execute_local", garden_sync_mock)
+        monkeypatch.setattr(beer_garden.router, "create_request", mock_request)
+        monkeypatch.setattr(beer_garden.router, "update_request", mock_request)
+
+        monkeypatch.setattr(
+            beer_garden.router.asyncio, "get_event_loop", Mock(return_value=None)
+        )
+
+        target_operation = Operation(
+            operation_type="GARDEN_SYNC",
+        )
+
+        operation = Operation(
+            operation_type="REQUEST_CREATE",
+            model=BrewtilsRequest(
+                command_type="GARDEN",
+                parameters={
+                    "operation": SchemaParser.serialize_operation(
+                        target_operation, to_string=False
+                    )
+                },
+            ),
+            model_type="Request",
+        )
+
+        result = beer_garden.router.route(operation)
+
+        assert garden_sync_mock.call_count == 1
+        args, _ = garden_sync_mock.call_args
+        assert args[0].operation_type == "GARDEN_SYNC"
+        assert args[0].source_garden_name == localgarden.name
+        assert args[0].target_garden_name == localgarden.name
+
+        assert result.status == "SUCCESS"
+
+    def test_process_garden_operation_exception(self, monkeypatch, localgarden):
+
+        def mock_request(request):
+            return request
+
+        beer_garden.router.setup_routing()
+        garden_sync_mock = Mock(side_effect=Exception("Raised Exception"))
+
+        monkeypatch.setattr(beer_garden.router, "execute_local", garden_sync_mock)
+        monkeypatch.setattr(beer_garden.router, "create_request", mock_request)
+        monkeypatch.setattr(beer_garden.router, "update_request", mock_request)
+
+        monkeypatch.setattr(
+            beer_garden.router.asyncio, "get_event_loop", Mock(return_value=None)
+        )
+
+        target_operation = Operation(
+            operation_type="GARDEN_SYNC",
+        )
+
+        operation = Operation(
+            operation_type="REQUEST_CREATE",
+            model=BrewtilsRequest(
+                command_type="GARDEN",
+                parameters={
+                    "operation": SchemaParser.serialize_operation(
+                        target_operation, to_string=False
+                    )
+                },
+            ),
+            model_type="Request",
+        )
+
+        result = beer_garden.router.route(operation)
+
+        assert garden_sync_mock.call_count == 1
+        args, _ = garden_sync_mock.call_args
+        assert args[0].operation_type == "GARDEN_SYNC"
+        assert args[0].source_garden_name == localgarden.name
+        assert args[0].target_garden_name == localgarden.name
+
+        assert result.status == "ERROR"
+        assert result.output == "Raised Exception"
+        assert result.error_class == "Exception"

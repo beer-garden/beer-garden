@@ -464,6 +464,13 @@ class MixedScheduler(object):
             )
 
             self.add_schedule(
+                beer_garden.db.mongo.legacy_pruner.prune_garden_requests,
+                interval=15,
+                max_instances=1,
+                name="prune_garden_requests",
+            )
+
+            self.add_schedule(
                 beer_garden.db.mongo.legacy_pruner.prune_missed_temp_command,
                 interval=15,
                 max_instances=1,
