@@ -364,6 +364,13 @@ class RequestListAPI(AuthorizationHandler):
                 Flag indicating whether to include hidden requests in the response list
             type: boolean
             default: false
+          - name: include_garden_type
+            in: query
+            required: false
+            description: |
+                Flag indicating whether to include garden type requests in the response list
+            type: boolean
+            default: false
           - name: start
             in: query
             required: false
@@ -475,9 +482,13 @@ class RequestListAPI(AuthorizationHandler):
         query_args = self._parse_datatables_parameters()
 
         # Add the filter for only requests the user is permitted to see
-        q_filter = self.permitted_objects_filter(Request) | Q(
-            **{"command_type__ne": "GARDEN"}
-        )
+        q_filter = self.permitted_objects_filter(Request)
+
+        if bool(
+            self.get_query_argument("include_hidden", default="false").lower()
+            == "false"
+        ):
+            q_filter = q_filter | Q(**{"command_type__ne": "GARDEN"})
 
         q_filtered = None
 
