@@ -29,7 +29,7 @@ def parse_args(cli_args):
     parser.add_argument("--python", choices=SUPPORTED_PYTHONS)
     parser.add_argument("--local", action="store_true", default=False)
     parser.add_argument("--docker-envs", type=json.loads, default="{}")
-    parser.add_argument("--rpm-digest", default="sha384")
+    parser.add_argument("--rpm-digest", default="sha256")
     return parser.parse_args(cli_args)
 
 

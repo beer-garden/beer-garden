@@ -67,8 +67,8 @@ if [ -z "$ITERATION" ]; then
 fi
 
 if [ -z "$DIGEST" ]; then
-  echo "DIGEST not specified, using sha384"
-  DIGEST="sha384"
+  echo "DIGEST not specified, using sha256"
+  DIGEST="sha256"
 fi
 
 # Constants
@@ -154,7 +154,7 @@ create_rpm() {
     # --description String      Descrpition metadata on RPM
     # --license                 The license name
     # --url                     Project site url
-    # --rpm-digest              Select a digest algorithm. sha384 default, options md5|sha1|sha256|sha384|sha512
+    # --rpm-digest              Select a digest algorithm. sha256 default, options md5|sha1|sha256|sha384|sha512
     # -d "$DEPS"                Specify any necessary package dependencies
 
     echo "Building beer-garden (${VERSION}) RPM Package..."
