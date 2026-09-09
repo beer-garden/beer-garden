@@ -11,7 +11,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { grey } from "@mui/material/colors";
-import React, { RefObject, useEffect, useRef, useState } from "react";
+import React, { RefObject, useEffect, useMemo, useRef, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
 import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteRequestsDialog";
@@ -150,6 +150,12 @@ function SystemCard({
     layer: "COMPONENT",
     pos: 7,
   };
+
+  const sortedInstances = useMemo(() => {
+    return system.instances?.sort((a, b) =>
+      (a.name ?? "").localeCompare(b.name ?? ""),
+    );
+  }, [system]);
 
   useEffect(() => {
     if (tourStepsRef === undefined) {
@@ -644,7 +650,7 @@ function SystemCard({
             <Divider sx={{ my: 2, clear: "right" }} />
           </Box>
           <Stack divider={<Divider />} spacing={2}>
-            {system.instances?.map((instance: Instance) => (
+            {sortedInstances.map((instance: Instance) => (
               <div key={JSON.stringify(instance)}>
                 <Box
                   sx={{
