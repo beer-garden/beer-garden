@@ -1,7 +1,7 @@
 # Beer Garden Changelog
 
 # 3.35.1
-TBD
+9/9/2026
 
 - Fixed migration script to only run on versions earlier that 3.35.0 for Request Parent model (#2405)
 - Updating RPM Release process to support various rpm-digest options (#2420)
