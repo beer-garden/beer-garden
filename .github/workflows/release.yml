@@ -236,6 +236,7 @@ jobs:
       matrix:
         python-version: ["3.11","3.12","3.13", "3.14"]
         dist: ["centos7"]
+        digest: ["sha256"]
       fail-fast: false
 
     steps:
@@ -257,7 +258,7 @@ jobs:
         uses: battila7/get-version-action@v2
 
       - name: Build RPM
-        run: make rpm-build VERSION=${{ steps.get_version.outputs.version }} PYTHON_VERSION=${{ matrix.python-version }} DIST=${{ matrix.dist }}
+        run: make rpm-build VERSION=${{ steps.get_version.outputs.version }} PYTHON_VERSION=${{ matrix.python-version }} DIST=${{ matrix.dist }} RPM_DIGEST=${{matrix.digest}}
 
       - name: Upload Release Asset
         id: upload-release-asset
