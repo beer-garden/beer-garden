@@ -64,4 +64,4 @@ jobs:
 
       - name: Build and Publish Images
         working-directory: ./docker/dockerfiles/build
-        run: make build-image-rocky9 PYTHON_VERSION=${{ PYTHON_VERSION}}
+        run: make build-image-rocky9 PYTHON_VERSION=${{ env.PYTHON_VERSION}}
