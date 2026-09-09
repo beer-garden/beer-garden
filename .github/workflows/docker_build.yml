@@ -38,7 +38,7 @@ jobs:
 
     strategy:
       matrix:
-        python-minor-version: ["11","12","13", "14"]
+        python-minor-version: ["11","12","13", "14", "15"]
       fail-fast: false
 
     steps:
