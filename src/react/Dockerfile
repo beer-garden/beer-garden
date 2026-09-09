@@ -1,4 +1,4 @@
-FROM nginx:1.27-alpine
+FROM nginx:alpine
 ARG VERSION=latest
 
 # Defaults for the application proxy info
