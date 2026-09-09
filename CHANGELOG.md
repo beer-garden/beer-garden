@@ -1,5 +1,10 @@
 # Beer Garden Changelog
 
+# 3.35.1
+TBD
+
+- Updating RPM Release process to support various rpm-digest options (#2420)
+
 # 3.35.0
 9/1/2026
 
