@@ -646,7 +646,8 @@ function SystemCard({
           <Stack divider={<Divider />} spacing={2}>
             {system.instances?.map((instance: Instance) => (
               <div key={JSON.stringify(instance)}>
-                <Box
+                <Stack
+                  direction="row"
                   sx={{
                     display: "flex",
                     flexWrap: "wrap",
@@ -654,11 +655,13 @@ function SystemCard({
                     alignItems: "center",
                   }}
                 >
-                  <div>{instanceIconTemplate(instance)}</div>
-                  <div>{statusTemplate(instance)}</div>
-                  <div>{instanceNameTemplate(instance)}</div>
-                  <div>{instanceActions(instance)}</div>
-                </Box>
+                  <Box>{instanceIconTemplate(instance)}</Box>
+                  <Box>{statusTemplate(instance)}</Box>
+                  <Box sx={{ width: "30%", textAlign: "center" }}>
+                    {instanceNameTemplate(instance)}
+                  </Box>
+                  <Box>{instanceActions(instance)}</Box>
+                </Stack>
               </div>
             ))}
           </Stack>
