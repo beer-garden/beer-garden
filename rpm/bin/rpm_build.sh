@@ -11,7 +11,7 @@ usage() {
   echo "  -r, --release [RELEASE]      The fedora release to target. Must be 7."
   echo "  -v, --version [VERSION]      Version for the rpm"
   echo "  -i, --iteration [ITERATION]  Iteration for the rpm"
-  echo "  --rpm-digest [DISGEST]       Select a digest algorithm. md5|sha1|sha256|sha384|sha512"
+  echo "  --rpm-digest [DIGEST]       Select a digest algorithm. md5|sha1|sha256|sha384|sha512"
   echo ""
   exit 1
 }
