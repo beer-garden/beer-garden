@@ -1,5 +1,10 @@
 # Beer Garden Changelog
 
+# 3.35.1
+TBD
+
+- Fixed migration script to only run on versions earlier that 3.35.0 for Request Parent model (#2405)
+
 # 3.35.0
 9/1/2026
 
