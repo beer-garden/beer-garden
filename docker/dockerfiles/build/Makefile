@@ -15,11 +15,11 @@ build-image-centos7:
 
 build-image-rocky9: 
 	echo "Building: rocky9-python$(PYTHON_VERSION)"; \
-	docker build -f rocky9/Dockerfile . \
-		--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
-		-t bgio/build:rocky9-python$(PYTHON_VERSION) \
-		--build-arg PYTHON_MINOR_VERSION=$(PYTHON_MINOR_VERSION) \
-		-t bgio/build:rocky9-python$(PYTHON_MINOR_VERSION); \
-	docker push bgio/build:rocky9-python$(PYTHON_MINOR_VERSION); \
-	docker push bgio/build:rocky9-python$(PYTHON_VERSION);
+	#docker build -f rocky9/Dockerfile . \
+	#	--build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
+	#	-t bgio/build:rocky9-python$(PYTHON_VERSION) \
+	#	--build-arg PYTHON_MINOR_VERSION=$(PYTHON_MINOR_VERSION) \
+	#	-t bgio/build:rocky9-python$(PYTHON_MINOR_VERSION); \
+	# docker push bgio/build:rocky9-python$(PYTHON_MINOR_VERSION); \
+	# docker push bgio/build:rocky9-python$(PYTHON_VERSION);
 
