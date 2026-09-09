@@ -51,7 +51,7 @@ const darkPalette = {
   action: {
     active: grey[100],
     hover: grey[800],
-    selected: grey[700],
+    selected: grey[600],
   },
   divider: grey[700],
 };
