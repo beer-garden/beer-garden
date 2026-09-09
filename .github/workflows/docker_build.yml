@@ -52,11 +52,11 @@ jobs:
 
       - name: Get Latest Python Version
         run: |
-          LATEST_3=$(curl -s https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json | \
+          LATEST=$(curl -s https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json | \
             grep -oP '"version": "\K3\.${{matrix.python-minor-version}}\.[0-9]+' | head -n 1)
-          echo "Latest 3.${{matrix.python-minor-version}} version is: $LATEST_3"
-          echo "PYTHON_VERSION=$LATEST_3_11" >> $GITHUB_ENV
+          echo "Latest 3.${{matrix.python-minor-version}} version is: $LATEST"
+          echo "PYTHON_VERSION=$LATEST" >> $GITHUB_ENV
 
       - name: Build and Publish Images
         working-directory: ./docker/dockerfiles/build
-        run: make build-image-rocky9 PYTHON_VERSION=${{ env.PYTHON_VERSION}}
+        run: make build-image-rocky9 PYTHON_VERSION=${{ env.PYTHON_VERSION }}
