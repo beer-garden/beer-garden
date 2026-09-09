@@ -11,6 +11,7 @@ usage() {
   echo "  -r, --release [RELEASE]      The fedora release to target. Must be 7."
   echo "  -v, --version [VERSION]      Version for the rpm"
   echo "  -i, --iteration [ITERATION]  Iteration for the rpm"
+  echo "  --rpm-digest [DISGEST]       Select a digest algorithm. md5|sha1|sha256|sha384|sha512"
   echo ""
   exit 1
 }
@@ -37,6 +38,10 @@ while [[ "$#" -gt 0 ]]; do
     ITERATION="$2"
     shift
     ;;
+    --rpm-digest)
+    DIGEST="$2"
+    shift
+    ;;
     *) echo "Unknown argument: $key"; usage;;
   esac
   shift
@@ -59,6 +64,11 @@ fi
 if [ -z "$ITERATION" ]; then
   echo "ITERATION not specified, using 1"
   ITERATION="1"
+fi
+
+if [ -z "$DIGEST" ]; then
+  echo "DIGEST not specified, using sha384"
+  DIGEST="sha384"
 fi
 
 # Constants
@@ -144,6 +154,7 @@ create_rpm() {
     # --description String      Descrpition metadata on RPM
     # --license                 The license name
     # --url                     Project site url
+    # --rpm-digest              Select a digest algorithm. sha384 default, options md5|sha1|sha256|sha384|sha512
     # -d "$DEPS"                Specify any necessary package dependencies
 
     echo "Building beer-garden (${VERSION}) RPM Package..."
@@ -156,6 +167,7 @@ create_rpm() {
         -v $VERSION
         -a x86_64
         --rpm-dist "el${RELEASE}"
+        --rpm-digest $DIGEST
         --iteration $ITERATION
         -s dir
         -x "*.bak"

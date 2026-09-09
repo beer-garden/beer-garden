@@ -29,10 +29,11 @@ def parse_args(cli_args):
     parser.add_argument("--python", choices=SUPPORTED_PYTHONS)
     parser.add_argument("--local", action="store_true", default=False)
     parser.add_argument("--docker-envs", type=json.loads, default="{}")
+    parser.add_argument("--rpm-digest", default="sha384")
     return parser.parse_args(cli_args)
 
 
-def build_rpms(version, iteration, cli_dist, cli_python, local, docker_envs):
+def build_rpms(version, iteration, cli_dist, cli_python, local, docker_envs, rpm_digest):
 
     if cli_dist:
         if cli_dist not in SUPPORTED_DISTRIBUTIONS:
@@ -95,6 +96,8 @@ def build_rpms(version, iteration, cli_dist, cli_python, local, docker_envs):
                 version,
                 "-i",
                 iteration,
+                "--rpm-digest",
+                rpm_digest,
             ]
         )
 
@@ -114,6 +117,7 @@ def main():
             args.python,
             args.local,
             args.docker_envs,
+            args.rpm_digest,
         )
 
 
