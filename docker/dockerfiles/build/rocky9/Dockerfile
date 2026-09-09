@@ -54,7 +54,7 @@ RUN cd /usr/src/python && \
     $APP_HOME/bin/python${PYTHON_MINOR_VERSION} -m pip install --upgrade setuptools \ 
     $APP_HOME/bin/python${PYTHON_MINOR_VERSION} -m pip install --upgrade setuptools \
     $APP_HOME/bin/python${PYTHON_MINOR_VERSION} -m pip install --upgrade setuptools \
-    $APP_HOME/bin/python${PYTHON_MINOR_VERSION} -m pip show msgpack &>/dev/null && pip install --upgrade msgpack || echo "Package not installed, skipping."
+    $APP_HOME/bin/python${PYTHON_MINOR_VERSION} -m pip show msgpack &>/dev/null && $APP_HOME/bin/python${PYTHON_MINOR_VERSION} -m pip install --upgrade msgpack || echo "Package not installed, skipping."
 RUN cd $APP_HOME/bin && \
     ln -fs python${PYTHON_MINOR_VERSION} python && ln -fs pip${PYTHON_MINOR_VERSION} pip && \
     find $APP_HOME -type d '(' -name '__pycache__' -o -name 'test' -o -name 'tests' ')' -exec rm -rfv '{}' + && \
