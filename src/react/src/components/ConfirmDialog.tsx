@@ -95,9 +95,9 @@ function ConfirmDialog({
           }}
           startIcon={<FAIcon icon="xmark" />}
           sx={{ m: 1 }}
-          tooltip="Reject"
+          tooltip="Cancel"
         >
-          Reject
+          Cancel
         </AccessButton>
       </DialogActions>
     </Dialog>
