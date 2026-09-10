@@ -62,7 +62,7 @@ describe("ConfirmDialogProvider", () => {
     expect(screen.getByText("Confirm Action")).toBeInTheDocument();
     expect(screen.getByText("Are you sure?")).toBeInTheDocument();
     expect(screen.getByText("Accept")).toBeInTheDocument();
-    expect(screen.getByText("Reject")).toBeInTheDocument();
+    expect(screen.getByText("Cancel")).toBeInTheDocument();
   });
 
   test("calls accept callback when Accept is clicked", async () => {
@@ -91,7 +91,7 @@ describe("ConfirmDialogProvider", () => {
 
     expect(screen.getByText("Confirm Action")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "Reject" }));
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
     expect(screen.queryByText("Confirm Action")).not.toBeInTheDocument();
   });
