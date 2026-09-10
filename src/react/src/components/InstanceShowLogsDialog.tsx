@@ -168,6 +168,7 @@ function InstanceShowLogsDialog({
       open={isVisible}
       onClose={onClose}
       aria-labelledby="instance-show-logs-dialog-title"
+      maxWidth={false}
     >
       <DialogTitle id="instance-show-logs-dialog-title">
         <Grid container>
@@ -258,7 +259,15 @@ function InstanceShowLogsDialog({
                   Download
                   <FAIcon icon="download" sx={{ ml: 1 }} />
                 </Box>
-                <Box component="pre" id="rawOutput">
+                <Box
+                  component="pre"
+                  id="rawOutput"
+                  sx={{
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    width: "100%",
+                  }}
+                >
                   {displayLogs}
                 </Box>
               </Stack>
