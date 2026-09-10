@@ -10,7 +10,7 @@ import ConfirmDialog from "../components/ConfirmDialog";
 
 export interface ConfirmDialogArgs {
   accept: () => void;
-  reject?: () => void;
+  cancel?: () => void;
   header: string | ReactElement;
   message: string | ReactElement;
 }
@@ -44,7 +44,7 @@ export const ConfirmDialogProvider = ({
         <ConfirmDialog
           open={true}
           accept={dialogProps.accept}
-          reject={dialogProps.reject}
+          cancel={dialogProps.cancel}
           closeDialog={() => {
             setDialogProps(undefined);
           }}

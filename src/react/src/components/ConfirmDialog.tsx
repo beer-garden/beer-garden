@@ -8,7 +8,7 @@ import { FAIcon } from "../services/util_service";
 
 function ConfirmDialog({
   accept,
-  reject,
+  cancel,
   header,
   message,
   setOpen,
@@ -16,7 +16,7 @@ function ConfirmDialog({
   closeDialog,
 }: {
   accept: () => void;
-  reject?: () => void;
+  cancel?: () => void;
   setOpen?: (open: boolean) => void;
   closeDialog?: () => void;
   header: string | ReactElement;
@@ -82,8 +82,8 @@ function ConfirmDialog({
         </AccessButton>
         <AccessButton
           onClick={() => {
-            if (reject) {
-              reject();
+            if (cancel) {
+              cancel();
             }
 
             if (setOpen) {
