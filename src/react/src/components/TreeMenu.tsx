@@ -96,25 +96,14 @@ function TreeMenu({
               onClick={() => onSelected(option)}
               sx={{
                 ml: option.depth ? option.depth * 2 : 0,
-                // Styling the hover state
-                "&:hover": {
-                  backgroundColor: (theme) => theme.palette.action.hover,
-                },
-                "&:Mui-focused": {  
-                    backgroundColor: (theme) => theme.palette.secondary.main,
-                  },
-
-                // Styling the Material UI selected state class
-                "&.Mui-selected": {
-                  backgroundColor: (theme) => theme.palette.action.selected,
-                  "&:hover": {
+                "&:hover, &:focus, &.Mui-focusVisible, &.Mui-selected.Mui-focusVisible, &.Mui-selected:hover":
+                  {
                     backgroundColor: (theme) => theme.palette.action.hover,
                   },
-                  "&:Mui-focus": {
-                    backgroundColor: (theme) => theme.palette.secondary.main,
-                  },
+                "&.Mui-selected": {
+                  backgroundColor: (theme) => theme.palette.action.selected,
                 },
-              }}  
+              }}
             >
               {itemTemplate ? itemTemplate(option) : option.label}
             </MenuItem>
