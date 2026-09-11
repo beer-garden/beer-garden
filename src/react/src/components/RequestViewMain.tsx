@@ -17,7 +17,8 @@ import { Config, RequestCommand, RequestItem } from "../models/models";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRequestProjections } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
-import { GetSeverity } from "../services/util_service";
+import { FAIcon, GetSeverity } from "../services/util_service";
+import AccessButton from "./AccessButton";
 import RequestTimeline from "./RequestTimeline";
 
 function UnformattedInput(request: Request) {
@@ -275,10 +276,32 @@ function RequestViewMain({
     <Box sx={{ m: 1 }}>
       {isCard === false && (
         <Grid container sx={{ m: 2 }}>
-          <Grid size="grow">
+          <Grid size="grow" sx={{ display: "flex" }}>
             <Typography variant="h3" component="h1">
               Request View: {request.id}
             </Typography>
+            {request?.metadata?.bg_job_id &&
+              typeof request.metadata.bg_job_id === "string" &&
+              request?.source_garden === config?.garden_name && (
+                <AccessButton
+                  icon
+                  title={`Job ID: ${request.metadata.bg_job_id}`}
+                  sx={{ ml: 2 }}
+                  onClick={() => {
+                    if (
+                      request?.metadata?.bg_job_id &&
+                      typeof request.metadata.bg_job_id === "string"
+                    ) {
+                      addRequestItem({
+                        jobId: request.metadata.bg_job_id,
+                        type: "VIEW_JOB",
+                      });
+                    }
+                  }}
+                >
+                  <FAIcon icon="briefcase" sx={{ alignContent: "center" }} />
+                </AccessButton>
+              )}
           </Grid>
           <Grid>
             {request && (
