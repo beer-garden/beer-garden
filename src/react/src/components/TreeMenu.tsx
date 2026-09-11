@@ -1,130 +1,81 @@
-import { Skeleton } from "@mui/material";
-import { useTreeItemModel } from "@mui/x-tree-view/hooks";
-import { TreeViewItemId } from "@mui/x-tree-view/models";
-import { RichTreeView, RichTreeViewProps } from "@mui/x-tree-view/RichTreeView";
-import {
-  TreeItemCheckbox,
-  TreeItemContent,
-  TreeItemIconContainer,
-  TreeItemRoot,
-} from "@mui/x-tree-view/TreeItem";
-import { TreeItemDragAndDropOverlay } from "@mui/x-tree-view/TreeItemDragAndDropOverlay";
-import { TreeItemIcon } from "@mui/x-tree-view/TreeItemIcon";
-import { TreeItemProvider } from "@mui/x-tree-view/TreeItemProvider";
-import {
-  useTreeItem,
-  UseTreeItemParameters,
-} from "@mui/x-tree-view/useTreeItem";
-import { forwardRef, ReactElement, useState } from "react";
+import { MenuItem, MenuList, MenuListProps, Skeleton } from "@mui/material";
+import { ReactElement, useEffect, useState } from "react";
 
-export type ExtendedTreeItemProps = {
+export type TreeMenuItemProps = {
   data?: any;
   id?: string;
   label?: string;
-  children?: ExtendedTreeItemProps[];
+  depth?: number;
+  children?: TreeMenuItemProps[];
 };
 
-interface CustomTreeItemProps
-  extends
-    Omit<UseTreeItemParameters, "rootRef">,
-    Omit<React.HTMLAttributes<HTMLLIElement>, "onFocus"> {}
-
-function TreeMenu<T extends ExtendedTreeItemProps, M extends boolean = false>({
+function TreeMenu({
   itemTemplate,
   changeSelected,
-  disableToggle,
-  expandAll,
   isLoading,
-  ...richTreeProps
+  treeItems,
+  selectedItem,
+  ...menuProps
 }: {
-  itemTemplate?: (node: ExtendedTreeItemProps) => ReactElement;
+  itemTemplate?: (node: TreeMenuItemProps) => ReactElement;
   changeSelected: (id: string) => void;
-  disableToggle?: boolean;
-  expandAll?: boolean;
   isLoading?: boolean;
-} & RichTreeViewProps<T, M>) {
-  const getAllItemsWithChildrenItemIds = () => {
-    const itemIds: TreeViewItemId[] = [];
-    const registerItemId = (item: ExtendedTreeItemProps) => {
-      if (item.children?.length) {
-        if (item.id) {
-          itemIds.push(item.id);
-        }
-        item.children.forEach(registerItemId);
-      }
-    };
+  treeItems?: TreeMenuItemProps[] | any[];
+  selectedItem?: string;
+} & MenuListProps) {
+  const [options, setOptions] = useState<any[] | undefined>([]);
+  const [selected, setSelected] = useState<string | undefined>(selectedItem);
 
-    richTreeProps.items.forEach(registerItemId);
-
-    return itemIds;
-  };
-
-  const [expandedItems, setExpandedItems] = useState<string[]>(
-    expandAll ? getAllItemsWithChildrenItemIds() : [],
-  );
-
-  const handleExpandedItemsChange = (
-    event: React.SyntheticEvent | null,
-    itemIds: string[],
-  ) => {
-    setExpandedItems(itemIds);
-  };
-
-  const handleItemSelectionToggle = (
-    _event: React.SyntheticEvent | null,
-    itemId: string,
-    isSelected: boolean,
-  ) => {
-    if (isSelected) {
-      changeSelected(itemId);
+  useEffect(() => {
+    if (selected) {
+      changeSelected(selected);
     }
+  }, [selected]);
+
+  useEffect(() => {
+    if (selectedItem) {
+      setSelected(selectedItem);
+    }
+  }, [selectedItem]);
+
+  useEffect(() => {
+    if (isLoading !== true) {
+      // Parse Tree Items
+
+      const parseItems = (
+        item: TreeMenuItemProps,
+        parsedOptions: TreeMenuItemProps[],
+        depth: number,
+      ) => {
+        const { children, ...node } = item;
+
+        parsedOptions.push({ ...node, depth: depth });
+
+        if (children) {
+          for (const child of children) {
+            parseItems(child, parsedOptions, depth + 1);
+          }
+        }
+        return parsedOptions;
+      };
+
+      const parsedOptions = [] as TreeMenuItemProps[];
+
+      if (treeItems) {
+        for (const item of treeItems) {
+          parseItems(item, parsedOptions, 0);
+        }
+      }
+      setOptions(parsedOptions);
+      if (selected === undefined && parsedOptions.length > 0) {
+        setSelected(parsedOptions[0].id);
+      }
+    }
+  }, [isLoading, treeItems]);
+
+  const onSelected = (item: TreeMenuItemProps) => {
+    setSelected(item.id);
   };
-
-  const CustomTreeItem = forwardRef(function CustomTreeItem(
-    props: CustomTreeItemProps,
-    ref: React.Ref<HTMLLIElement>,
-  ) {
-    const { id, itemId, label, disabled, children, ...other } = props;
-
-    const {
-      getContextProviderProps,
-      getRootProps,
-      getContentProps,
-      getIconContainerProps,
-      getCheckboxProps,
-      getDragAndDropOverlayProps,
-      status,
-    } = useTreeItem({ id, itemId, children, label, disabled, rootRef: ref });
-
-    const hasChildren = Array.isArray(children) && children.length > 0;
-
-    const item = useTreeItemModel<ExtendedTreeItemProps>(itemId)!;
-    return (
-      <TreeItemProvider {...getContextProviderProps()}>
-        <TreeItemRoot
-          {...getRootProps(other)}
-          tabIndex={0}
-          role={hasChildren ? "group" : "treeitem"}
-          aria-checked={undefined}
-          {...(disableToggle !== true ? {} : { "aria-expanded": undefined })}
-          id={itemId}
-        >
-          <TreeItemContent {...getContentProps()}>
-            {disableToggle !== true && (
-              <TreeItemIconContainer {...getIconContainerProps()}>
-                <TreeItemIcon status={status} />
-              </TreeItemIconContainer>
-            )}
-            <TreeItemCheckbox {...getCheckboxProps()} />
-            {itemTemplate && itemTemplate(item)}
-            {itemTemplate === undefined && item.label}
-            <TreeItemDragAndDropOverlay {...getDragAndDropOverlayProps()} />
-          </TreeItemContent>
-          {(status.expanded || disableToggle === true) && <ul>{children}</ul>}
-        </TreeItemRoot>
-      </TreeItemProvider>
-    );
-  });
 
   return (
     <>
@@ -133,17 +84,31 @@ function TreeMenu<T extends ExtendedTreeItemProps, M extends boolean = false>({
           variant="rectangular"
           width={210}
           height={"100%"}
-          sx={richTreeProps?.sx}
+          sx={menuProps?.sx}
         />
       )}
       {(isLoading === undefined || isLoading === false) && (
-        <RichTreeView
-          slots={{ item: CustomTreeItem }}
-          onItemSelectionToggle={handleItemSelectionToggle}
-          expandedItems={expandedItems}
-          onExpandedItemsChange={handleExpandedItemsChange}
-          {...richTreeProps}
-        />
+        <MenuList {...menuProps}>
+          {options?.map((option: TreeMenuItemProps) => (
+            <MenuItem
+              key={option.id}
+              selected={selected === option.id}
+              onClick={() => onSelected(option)}
+              sx={{
+                ml: option.depth ? option.depth * 2 : 0,
+                "&:hover, &:focus, &.Mui-focusVisible, &.Mui-selected.Mui-focusVisible, &.Mui-selected:hover":
+                  {
+                    backgroundColor: (theme) => theme.palette.action.hover,
+                  },
+                "&.Mui-selected": {
+                  backgroundColor: (theme) => theme.palette.action.selected,
+                },
+              }}
+            >
+              {itemTemplate ? itemTemplate(option) : option.label}
+            </MenuItem>
+          ))}
+        </MenuList>
       )}
     </>
   );
