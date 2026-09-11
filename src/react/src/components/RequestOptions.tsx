@@ -61,6 +61,11 @@ function RequestOptions({
 
   const [showDeletRequest, setShowDeletRequest] = useState(false);
 
+  const viewJob =
+    request?.metadata?.bg_job_id &&
+    typeof request.metadata.bg_job_id === "string" &&
+    request?.source_garden === config?.garden_name;
+
   const handleToggle = () => {
     setOpenSplitMenu((prevOpen) => !prevOpen);
   };
@@ -140,6 +145,24 @@ function RequestOptions({
           icon: "plus",
           command: () => {
             pourAgain(request);
+          },
+        });
+      }
+      if (viewJob) {
+        items.push({
+          label: "View Job",
+          icon: "briefcase",
+          command: () => {
+            if (
+              request?.metadata?.bg_job_id &&
+              typeof request.metadata.bg_job_id === "string" &&
+              request?.source_garden === config?.garden_name
+            ) {
+              addRequestItem({
+                jobId: request.metadata.bg_job_id,
+                type: "VIEW_JOB",
+              });
+            }
           },
         });
       }
