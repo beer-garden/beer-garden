@@ -1,14 +1,13 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Column } from "primereact/column";
-import { confirmDialog } from "primereact/confirmdialog";
-import { DataTable } from "primereact/datatable";
-import { FileUpload } from "primereact/fileupload";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { Box, Typography } from "@mui/material";
+import { styled } from "@mui/material/styles";
+import { RefObject, useEffect, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
+import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import { Job } from "../models/brewtils-types";
 import { Config, RequestItem, TourStepProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useConfirmDialog } from "../providers/ConfirmDialogProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import {
   DeleteJob,
   ExportJobs,
@@ -23,7 +22,7 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { PaginatorTemplate } from "../services/util_service";
+import { FAIcon } from "../services/util_service";
 
 function JobIndex({
   listeners,
@@ -36,7 +35,8 @@ function JobIndex({
   addRequestItem: (itemParams?: Partial<RequestItem>) => void;
   config: Config;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
+  const showConfirmDialog = useConfirmDialog();
   const [jobs, setJobs] = useState<Array<Job>>([]);
   const tourUuid = "job_index_tour";
   const tourPrefix = "job_index";
@@ -114,6 +114,8 @@ function JobIndex({
     pos: 7,
   };
 
+  const buttonStyle = { m: 1 };
+
   useEffect(() => {
     ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
     AddTourStep(tourStepsRef, createJobTourStep);
@@ -121,8 +123,8 @@ function JobIndex({
     AddTourStep(tourStepsRef, exportJobTourStep);
 
     if (jobs.length > 0) {
-      AddTourStep(tourStepsRef, runNowTourStep);
       AddTourStep(tourStepsRef, viewJobTourStep);
+      AddTourStep(tourStepsRef, runNowTourStep);
       AddTourStep(tourStepsRef, editJobTourStep);
       AddTourStep(tourStepsRef, pauseResumeJobTourStep);
       AddTourStep(tourStepsRef, deleteJobTourStep);
@@ -132,7 +134,6 @@ function JobIndex({
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
     };
   }, [jobs]);
-  const jobImportFileRef = useRef<FileUpload | null>(null);
 
   useEffect(() => {
     const MonitorJobs = (message: any) => {
@@ -178,7 +179,7 @@ function JobIndex({
         setJobs(responseJobs);
       })
       .catch((error) => {
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching jobs: ${error}`,
@@ -186,17 +187,6 @@ function JobIndex({
         });
       });
   }, []);
-
-  const runTimeTemplate = (job: Job) => {
-    if (
-      job?.next_run_time &&
-      (typeof job.next_run_time === "string" ||
-        typeof job.next_run_time === "number")
-    ) {
-      return new Date(job.next_run_time).toLocaleString();
-    }
-    return job.next_run_time;
-  };
 
   const editJob = (jobId: string) => {
     addRequestItem({ jobId: jobId, type: "REQUEST" });
@@ -211,30 +201,29 @@ function JobIndex({
       hasSystemVersion: job.request_template?.system_version,
       hasCommandName: job.request_template?.command,
     };
+
     return (
       <div>
         <AccessButton
           rounded
           raised
-          link
           basic
           onClick={() => addRequestItem({ jobId: job.id, type: "VIEW_JOB" })}
           title={"View Job " + job.name}
-          className="mr-2"
+          sx={buttonStyle}
           {...GenerateTourProps(viewJobTourStep)}
         >
-          <FontAwesomeIcon icon="arrow-up-right-from-square" />
+          <FAIcon icon="arrow-up-right-from-square" />
         </AccessButton>
         <>
           <AccessButton
             rounded
             raised
-            link
             basic
             onClick={() => {
               if (job.id) {
                 RunAdhocJob(job.id).catch((error) => {
-                  showToast({
+                  showSnackbar({
                     severity: "error",
                     summary: "Error",
                     detail: `Error running job: ${error}`,
@@ -244,18 +233,17 @@ function JobIndex({
               }
             }}
             title={"Run Now " + job.name}
-            className="mr-2"
+            sx={buttonStyle}
             {...GenerateTourProps(runNowTourStep)}
             {...permissions}
             permission="OPERATOR"
           >
-            <FontAwesomeIcon icon="forward" />
+            <FAIcon icon="forward" />
           </AccessButton>
 
           <AccessButton
             rounded
             raised
-            link
             basic
             onClick={() => {
               if (job.id) {
@@ -263,18 +251,17 @@ function JobIndex({
               }
             }}
             title={"Update Job " + job.name}
-            className="mr-2"
+            sx={buttonStyle}
             {...GenerateTourProps(editJobTourStep)}
             {...permissions}
             permission="OPERATOR"
           >
-            <FontAwesomeIcon icon="edit" />
+            <FAIcon icon="edit" />
           </AccessButton>
           {job.status === "RUNNING" && (
             <AccessButton
               rounded
               raised
-              link
               basic
               onClick={() => {
                 PauseJob(job)
@@ -286,7 +273,7 @@ function JobIndex({
                     );
                   })
                   .catch((error) => {
-                    showToast({
+                    showSnackbar({
                       severity: "error",
                       summary: "Error",
                       detail: `Error pausing job: ${error}`,
@@ -295,19 +282,18 @@ function JobIndex({
                   });
               }}
               title={"Pause Job " + job.name}
-              className="mr-2"
+              sx={buttonStyle}
               {...GenerateTourProps(pauseResumeJobTourStep)}
               {...permissions}
               permission="OPERATOR"
             >
-              <FontAwesomeIcon icon="pause" />
+              <FAIcon icon="pause" />
             </AccessButton>
           )}
           {job.status === "PAUSED" && (
             <AccessButton
               rounded
               raised
-              link
               basic
               onClick={() => {
                 ResumeJob(job)
@@ -319,7 +305,7 @@ function JobIndex({
                     );
                   })
                   .catch((error) => {
-                    showToast({
+                    showSnackbar({
                       severity: "error",
                       summary: "Error",
                       detail: `Error resuming job: ${error}`,
@@ -328,18 +314,17 @@ function JobIndex({
                   });
               }}
               title={"Resume Job " + job.name}
-              className="mr-2"
+              sx={buttonStyle}
               {...GenerateTourProps(pauseResumeJobTourStep)}
               {...permissions}
               permission="OPERATOR"
             >
-              <FontAwesomeIcon icon="play" />
+              <FAIcon icon="play" />
             </AccessButton>
           )}
           <AccessButton
             rounded
             raised
-            link
             basic
             onClick={() => {
               const accept = () => {
@@ -350,7 +335,7 @@ function JobIndex({
                     );
                   })
                   .catch((error) => {
-                    showToast({
+                    showSnackbar({
                       severity: "error",
                       summary: "Error",
                       detail: `Error deleting job: ${error}`,
@@ -358,26 +343,20 @@ function JobIndex({
                     });
                   });
               };
-              const reject = () => {};
-              const confirm = () => {
-                confirmDialog({
-                  message: "Are you sure you want to delete this job?",
-                  header: `Confirm Delete ${job.name}`,
-                  icon: "pi pi-exclamation-triangle",
-                  defaultFocus: "accept",
-                  accept,
-                  reject,
-                });
-              };
-              confirm();
+
+              showConfirmDialog({
+                accept: accept,
+                message: "Are you sure you want to delete this job?",
+                header: `Confirm Delete ${job.name}`,
+              });
             }}
             title={"Delete Job " + job.name}
-            className="mr-2"
+            sx={buttonStyle}
             {...GenerateTourProps(deleteJobTourStep)}
             {...permissions}
             permission="OPERATOR"
           >
-            <FontAwesomeIcon icon="trash" />
+            <FAIcon icon="trash" />
           </AccessButton>
         </>
       </div>
@@ -389,10 +368,10 @@ function JobIndex({
   };
 
   const customJobImporter = (event: any) => {
-    const file = event?.files?.[0];
+    const file = event?.target?.files?.[0];
 
     if (!file) {
-      showToast({
+      showSnackbar({
         severity: "error",
         summary: "Error",
         detail: "No file selected for import",
@@ -407,16 +386,12 @@ function JobIndex({
       if (typeof contents === "string") {
         try {
           await ImportJobs(JSON.parse(contents));
-          showToast({
+          showSnackbar({
             severity: "success",
             summary: "Success",
             detail: "Jobs imported successfully",
             life: 3000,
           });
-
-          if (jobImportFileRef.current) {
-            jobImportFileRef.current.clear();
-          }
 
           // Refresh the job list after successful import
           GetJobList()
@@ -425,7 +400,7 @@ function JobIndex({
               setJobs(responseJobs);
             })
             .catch((error) => {
-              showToast({
+              showSnackbar({
                 severity: "error",
                 summary: "Error",
                 detail: `Error fetching jobs: ${error}`,
@@ -434,7 +409,7 @@ function JobIndex({
             });
         } catch (error) {
           if (error instanceof Error) {
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Failed to import jobs: ${error}`,
@@ -442,7 +417,7 @@ function JobIndex({
             });
           } else {
             console.error("Error importing jobs:", error);
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: "Error importing jobs",
@@ -455,47 +430,70 @@ function JobIndex({
     reader.readAsText(file);
   };
 
-  const header = (
-    <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-      <h1 className="text-xl text-900 font-bold">Requests Scheduler</h1>
+  const VisuallyHiddenInput = styled("input")({
+    clip: "rect(0 0 0 0)",
+    clipPath: "inset(50%)",
+    height: 1,
+    overflow: "hidden",
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    whiteSpace: "nowrap",
+    width: 1,
+  });
 
-      <div className="flex">
+  const header = (
+    <Box
+      sx={{
+        display: "flex",
+        flexWrap: "wrap",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 1,
+      }}
+    >
+      <Typography variant="h2" component="h1">
+        Requests Scheduler
+      </Typography>
+
+      <Box sx={{ display: "flex" }}>
         <AccessButton
-          className="mr-2"
+          sx={buttonStyle}
           raised
           onClick={createJob}
+          startIcon={<FAIcon icon="pencil" />}
           {...GenerateTourProps(createJobTourStep)}
           config={config}
           permission="OPERATOR"
-          label="Create Job"
-        />
-
-        <FileUpload
-          ref={jobImportFileRef}
-          className="mr-2"
-          mode="basic"
-          name="file"
-          accept=".json"
-          maxFileSize={1000000}
-          chooseLabel="Import Jobs"
-          customUpload
-          auto
-          uploadHandler={customJobImporter}
-          {...GenerateTourProps(importJobTourStep)}
-          pt={{
-            uploadIcon: { role: "img", "aria-label": "Upload Job File" },
-            cancelIcon: { role: "img", "aria-label": "Remove Upload Job File" },
-            chooseIcon: { role: "img", "aria-label": "Choose Upload Job File" },
-            basicButton: { role: "button" },
-          }}
-        />
+        >
+          Create Job
+        </AccessButton>
 
         <AccessButton
-          className="mr-2"
+          component="label"
+          htmlFor="import_job_input"
+          role={undefined}
+          variant="contained"
+          tabIndex={-1}
+          startIcon={<FAIcon icon="upload" />}
+          sx={buttonStyle}
+          {...GenerateTourProps(importJobTourStep)}
+        >
+          Import Jobs
+          <VisuallyHiddenInput
+            id="import_job_input"
+            type="file"
+            accept=".json,application/json"
+            onChange={customJobImporter}
+          />
+        </AccessButton>
+
+        <AccessButton
+          sx={buttonStyle}
           raised
           onClick={() =>
             ExportJobs().catch((error) =>
-              showToast({
+              showSnackbar({
                 severity: "error",
                 summary: "Error",
                 detail: `Error exporting jobs: ${error}`,
@@ -503,45 +501,112 @@ function JobIndex({
               }),
             )
           }
+          startIcon={<FAIcon icon="file-export" />}
           {...GenerateTourProps(exportJobTourStep)}
           config={config}
           permission="OPERATOR"
-          label="Export Jobs"
-        />
-      </div>
-    </div>
+        >
+          Export Jobs
+        </AccessButton>
+      </Box>
+    </Box>
   );
 
   return (
     <div>
-      <DataTable
-        value={jobs}
+      <EnhancedTable
+        data={jobs}
+        columns={[
+          {
+            id: "action",
+            label: "Action",
+            template: actionTemplate,
+          },
+          {
+            id: "name",
+            field: "name",
+            label: "Name",
+            sortable: true,
+            filterable: true,
+            isString: true,
+          },
+          {
+            id: "status",
+            field: "status",
+            label: "Status",
+            sortable: true,
+            filterable: true,
+            isString: true,
+          },
+          {
+            id: "system",
+            field: "request_template.system",
+            label: "System",
+            sortable: true,
+            filterable: true,
+            isString: true,
+          },
+          {
+            id: "instance",
+            field: "request_template.instance_name",
+            label: "Instance",
+            sortable: true,
+            filterable: true,
+            isString: true,
+          },
+          {
+            id: "command",
+            field: "request_template.command",
+            label: "Command",
+            sortable: true,
+            filterable: true,
+            isString: true,
+          },
+          {
+            id: "next_run_time",
+            field: "next_run_time",
+            label: "Next Run Time",
+            sortable: true,
+            filterable: true,
+            isDate: true,
+          },
+          {
+            id: "success_count",
+            field: "success_count",
+            label: "Success Count",
+            sortable: true,
+            filterable: true,
+            isNumeric: true,
+          },
+          {
+            id: "error_count",
+            field: "error_count",
+            label: "Error Count",
+            sortable: true,
+            filterable: true,
+            isNumeric: true,
+          },
+          {
+            id: "canceled_count",
+            field: "canceled_count",
+            label: "Canceled Count",
+            sortable: true,
+            filterable: true,
+            isNumeric: true,
+          },
+          {
+            id: "skip_count",
+            field: "skip_count",
+            label: "Skip Count",
+            sortable: true,
+            filterable: true,
+            isNumeric: true,
+          },
+        ]}
         header={header}
-        paginator
-        rows={5}
-        rowsPerPageOptions={[5, 10, 25, 50]}
-        paginatorTemplate={PaginatorTemplate}
-        tableStyle={{ minWidth: "50rem" }}
-      >
-        <Column field="name" header="Actions" body={actionTemplate}></Column>
-        <Column field="name" header="Name"></Column>
-        <Column field="status" header="Status"></Column>
-        <Column field="request_template.system" header="System"></Column>
-        <Column
-          field="request_template.instance_name"
-          header="Instance"
-        ></Column>
-        <Column field="request_template.command" header="Command"></Column>
-        <Column
-          field="next_run_time"
-          header="Next Run Time"
-          body={runTimeTemplate}
-        ></Column>
-        <Column field="success_count" header="Success Count"></Column>
-        <Column field="error_count" header="Error Count"></Column>
-        <Column field="canceled_count" header="Canceled Count"></Column>
-        <Column field="skip_count" header="Skip Count"></Column>
-      </DataTable>
+        defaultOrderBy="name"
+        defaultOrder="desc"
+      />
     </div>
   );
 }

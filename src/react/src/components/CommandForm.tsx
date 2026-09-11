@@ -1,7 +1,19 @@
-import { Dropdown } from "primereact/dropdown";
-import { InputTextarea } from "primereact/inputtextarea";
-import { Messages } from "primereact/messages";
-import { useEffect, useRef, useState } from "react";
+import {
+  Alert,
+  AlertTitle,
+  Box,
+  Divider,
+  FormControl,
+  FormLabel,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+  Tooltip,
+} from "@mui/material";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 
 import {
   ChoicesValue,
@@ -10,9 +22,12 @@ import {
   Request,
 } from "../models/brewtils-types";
 import { CommandFormProps, InputParam } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { PostRequest } from "../services/request_service";
-import { GetSystemList } from "../services/system_service";
+import {
+  DetermineLatestSystemVersion,
+  GetSystemList,
+} from "../services/system_service";
 import { CompareObjects } from "../services/util_service";
 import CommandFormField from "./CommandFormField";
 
@@ -30,7 +45,7 @@ function CommandForm({
     [] as Array<InputParam>,
   );
   const altParametersFields = useRef<Array<InputParam>>([]);
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   const [initialized, setInitialized] = useState(false);
 
@@ -40,7 +55,23 @@ function CommandForm({
   const altLoadingChoices = useRef<Array<{ key: string; timestamp: number }>>(
     [],
   );
-  const msgs = useRef<Messages>(null);
+
+  const [errorMessages, setErrorMessages] = useState<
+    Array<{
+      summary: string;
+      detail: string;
+      severity: "error" | "info" | "success" | "warning";
+    }>
+  >([]);
+
+  const clearMessages = () => setErrorMessages([]);
+  const addMessage = (msg: {
+    summary: string;
+    detail: string;
+    severity: "error" | "info" | "success" | "warning";
+  }) => {
+    setErrorMessages((prev) => [...prev, msg]);
+  };
 
   const generateChoices = (
     parameter: InputParam,
@@ -203,7 +234,7 @@ function CommandForm({
         .then((options) => resolveOptions(options))
         .catch((error) => {
           console.error("Error fetching choices:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching choices: ${error}`,
@@ -262,7 +293,7 @@ function CommandForm({
             .then((choices) => resolveOptions(choices))
             .catch((error) => {
               console.error("Error fetching choices:", error);
-              showToast({
+              showSnackbar({
                 severity: "error",
                 summary: "Error",
                 detail: `Error fetching choices: ${error}`,
@@ -273,7 +304,7 @@ function CommandForm({
         })
         .catch((error) => {
           console.error("Error fetching choices:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching choices: ${error}`,
@@ -331,7 +362,7 @@ function CommandForm({
               .then((choices) => resolveOptions(choices))
               .catch((error) => {
                 console.error("Error fetching choices:", error);
-                showToast({
+                showSnackbar({
                   severity: "error",
                   summary: "Error",
                   detail: `Error fetching choices: ${error}`,
@@ -345,7 +376,7 @@ function CommandForm({
         })
         .catch((error) => {
           console.error("Error fetching choices:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching choices: ${error}`,
@@ -401,20 +432,24 @@ function CommandForm({
         if (param.type === "DateTime") {
           if (param.multi) {
             newParam.value = (newParam.value as Array<any>).map((value) => {
-              return new Date(value);
+              return value ? new Date(value).getTime() : value;
             });
           } else {
-            newParam.value = new Date(newParam.value);
+            newParam.value = newParam.value
+              ? new Date(newParam.value).getTime()
+              : newParam.value;
           }
         }
 
         if (param.type === "Date") {
           if (param.multi) {
             newParam.value = (newParam.value as Array<any>).map((value) => {
-              return new Date(value);
+              return value ? new Date(value).getTime() : value;
             });
           } else {
-            newParam.value = new Date(newParam.value);
+            newParam.value = newParam.value
+              ? new Date(newParam.value).getTime()
+              : newParam.value;
           }
         }
 
@@ -559,16 +594,12 @@ function CommandForm({
       };
 
       if (!validateChildren(rootGarden, garden_name)) {
-        if (msgs.current) {
-          msgs.current.clear();
-          msgs.current.show({
-            sticky: true,
-            severity: "error",
-            summary: "Garden Check",
-            detail: "Target Garden for command is not routable",
-            life: 3000,
-          });
-        }
+        clearMessages();
+        addMessage({
+          severity: "error",
+          summary: "Garden Check",
+          detail: "Target Garden for command is not routable",
+        });
       }
     }
   };
@@ -580,7 +611,15 @@ function CommandForm({
           (system) =>
             system.name === request?.system &&
             system.namespace === request?.namespace &&
-            system.version === request?.system_version &&
+            system.version ===
+              (request?.system_version === "latest"
+                ? DetermineLatestSystemVersion(
+                    systems,
+                    request?.system,
+                    request?.namespace,
+                    request?.system_version,
+                  ).version
+                : request?.system_version) &&
             system.instances &&
             system.instances.some(
               (instance) => instance.name === request?.instance_name,
@@ -588,35 +627,27 @@ function CommandForm({
         );
 
         if (targetSystem === undefined) {
-          if (msgs.current) {
-            msgs.current.clear();
-            msgs.current.show({
-              sticky: true,
-              severity: "error",
-              summary: "System Check",
-              detail:
-                "Unable to find target system for command, unable to validate routing",
-              life: 3000,
-            });
-          }
+          clearMessages();
+          addMessage({
+            severity: "error",
+            summary: "System Check",
+            detail:
+              "Unable to find target system for command, unable to validate routing",
+          });
         } else if (
           targetSystem.instances?.some(
             (instance) => "RUNNING" !== instance.status,
           )
         ) {
-          if (msgs.current) {
-            const targetInstance = targetSystem.instances?.find(
-              (instance) => instance.name === request?.instance_name,
-            );
-            msgs.current.clear();
-            msgs.current.show({
-              sticky: true,
-              severity: "error",
-              summary: "System Check",
-              detail: `Target System has a status of ${targetInstance?.status}`,
-              life: 3000,
-            });
-          }
+          const targetInstance = targetSystem.instances?.find(
+            (instance) => instance.name === request?.instance_name,
+          );
+          clearMessages();
+          addMessage({
+            severity: "error",
+            summary: "System Check",
+            detail: `Target System has a status of ${targetInstance?.status}`,
+          });
         } else {
           // Validate Garden Routing
           if (request?.target_garden) {
@@ -624,31 +655,23 @@ function CommandForm({
           } else if (targetSystem?.garden_name) {
             validateGardenRouting(targetSystem.garden_name);
           } else {
-            if (msgs.current) {
-              msgs.current.clear();
-              msgs.current.show({
-                sticky: true,
-                severity: "error",
-                summary: "Garden Check",
-                detail:
-                  "Unable to find target Garden for command, unable to validate routing",
-                life: 3000,
-              });
-            }
+            clearMessages();
+            addMessage({
+              severity: "error",
+              summary: "Garden Check",
+              detail:
+                "Unable to find target Garden for command, unable to validate routing",
+            });
           }
         }
       })
       .catch((error: any) => {
-        if (msgs.current) {
-          msgs.current.clear();
-          msgs.current.show({
-            sticky: true,
-            severity: "error",
-            summary: "Command Check",
-            detail: `Error validating command routing: ${error}`,
-            life: 3000,
-          });
-        }
+        clearMessages();
+        addMessage({
+          severity: "error",
+          summary: "Command Check",
+          detail: `Error validating command routing: ${error}`,
+        });
       });
   };
 
@@ -777,95 +800,116 @@ function CommandForm({
   };
 
   const renderInputLabel = (parameter: InputParam) => {
-    return <label htmlFor={parameter.key}>{parameter.key}</label>;
+    return (
+      <FormLabel htmlFor={parameter.key} sx={{ fontWeight: "bold" }}>
+        {parameter.key}
+      </FormLabel>
+    );
   };
 
-  // Need to find a better way to handle states of dynamic options loading instead of
-  // checking if loading choices has items and rendering two tables
   return (
-    <div
+    <Box
       key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}`}
-      className="mt-4 mb-4"
+      sx={{ mt: 4, mb: 4 }}
     >
-      <Messages ref={msgs} />
-      <div
-        className="flex justify-content-between mb-3"
-        key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMAND_TYPE`}
-      >
-        <div style={{ width: "20%" }}>
-          <label id="command-type-label" htmlFor="COMMAND_TYPE">
-            Command Type
-          </label>
-        </div>
-        <div style={{ width: "80%" }}>
-          <datalist id="selectCommandTypeDropdown" aria-hidden="true">
-            {["ACTION", "INFO", "TEMP"]?.map((status: any) => (
-              <option key={status.label} value={status.value} />
-            ))}
-          </datalist>
-          <Dropdown
-            id="COMMAND_TYPE"
-            value={request?.command_type}
-            onChange={(e) =>
-              setRequest({ ...request, command_type: e.target.value })
-            }
-            options={["ACTION", "INFO", "TEMP"]}
-            disabled={disabled}
-            style={{ maxWidth: "75%" }}
-            pt={{
-              select: {
-                "aria-controls": "selectCommandTypeDropdown",
-              },
-            }}
-          />
-        </div>
-      </div>
-      {parametersFields &&
-        parametersFields?.map((parameter: InputParam) => (
-          <div
-            className="flex justify-content-between mb-3"
-            key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}.${parameter.key}`}
-          >
-            <div style={{ width: "20%" }}>{renderInputLabel(parameter)}</div>
-            <div style={{ width: "60%" }}>
-              <CommandFormField
-                parameter={parameter}
-                disabled={disabled}
-                parametersFields={parametersFields}
-                loadingChoices={loadingChoices}
-                handleChange={handleChange}
-                resetForm={resetForm}
-              />
-            </div>
-            <div style={{ overflowWrap: "break-word", width: "20%" }}>
-              {parameter.description}
-            </div>
-          </div>
+      <Box sx={{ mb: 2 }}>
+        {errorMessages.map((msg, index) => (
+          <Alert key={index} severity={msg.severity} sx={{ mb: 1 }}>
+            <AlertTitle>{msg.summary}</AlertTitle>
+            {msg.detail}
+          </Alert>
         ))}
-      {(() => {
-        const commentId = `${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMENT`;
-        return (
-          <div className="flex justify-content-between mb-3" key={commentId}>
-            <div style={{ width: "20%" }}>
-              <label htmlFor={commentId}>Comment</label>
-            </div>
-            <div style={{ width: "80%" }}>
-              <InputTextarea
-                id={commentId}
-                name={commentId}
-                value={request?.comment}
-                onChange={(e) =>
-                  setRequest({ ...request, comment: e.target.value })
-                }
-                disabled={disabled}
-                style={{ maxWidth: "75%" }}
-                tooltip="Comment Field"
-              />
-            </div>
-          </div>
-        );
-      })()}
-    </div>
+      </Box>
+      <Stack divider={<Divider flexItem />} spacing={1}>
+        {request && request.command_type && (
+          <Grid
+            container
+            key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMAND_TYPE`}
+          >
+            <Grid size="grow">
+              <FormLabel
+                id="command-type-label"
+                htmlFor="COMMAND_TYPE"
+                sx={{ fontWeight: "bold" }}
+              >
+                Command Type
+              </FormLabel>
+            </Grid>
+
+            <Grid size="grow">
+              <FormControl fullWidth>
+                <InputLabel id="command-type-label-select">
+                  Command Type
+                </InputLabel>
+                <Select
+                  labelId="command-type-label-select"
+                  id="COMMAND_TYPE"
+                  label="Command Type"
+                  value={request?.command_type}
+                  onChange={(e) =>
+                    setRequest({ ...request, command_type: e.target.value })
+                  }
+                  disabled={disabled}
+                  size="small"
+                >
+                  {["ACTION", "INFO", "TEMP"].map((status: any) => (
+                    <MenuItem key={status} value={status}>
+                      {status}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        )}
+
+        {parametersFields &&
+          parametersFields?.map((parameter: InputParam) => (
+            <Grid
+              container
+              key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}.${parameter.key}`}
+            >
+              <Grid size="grow">{renderInputLabel(parameter)}</Grid>
+              <Grid size="grow">
+                <CommandFormField
+                  parameter={parameter}
+                  disabled={disabled}
+                  parametersFields={parametersFields}
+                  loadingChoices={loadingChoices}
+                  handleChange={handleChange}
+                  resetForm={resetForm}
+                />
+              </Grid>
+            </Grid>
+          ))}
+
+        {(() => {
+          const commentId = `${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMENT`;
+          return (
+            <Box
+              key={`${commentId}-box`}
+              sx={{ display: "flex", justifyContent: "flex-end", m: 1 }}
+            >
+              <Tooltip title={`Add Comment`}>
+                <TextField
+                  id={`${commentId}-value`}
+                  value={request?.comment}
+                  helperText="Add Comment"
+                  variant="outlined"
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    setRequest({ ...request, comment: event.target.value });
+                  }}
+                  fullWidth
+                  multiline
+                  disabled={disabled}
+                  autoComplete="off"
+                />
+              </Tooltip>
+            </Box>
+          );
+        })()}
+      </Stack>
+    </Box>
   );
 }
 

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, test, vi } from "vitest";
 
 import { Connection, Garden, Instance, System } from "../models/brewtils-types";
 import { TourStepProps } from "../models/models";
-import { ToastProvider } from "../providers/ToastProvider";
+import { SnackbarProvider } from "../providers/SnackbarProvider";
 import * as gardenService from "../services/garden_service";
 import * as queueService from "../services/queue_service";
 import * as systemService from "../services/system_service";
@@ -79,7 +79,7 @@ describe("GardenSummary", () => {
     const refGarden = getRootGarden();
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -88,7 +88,7 @@ describe("GardenSummary", () => {
           selectedSystems={[]}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -108,7 +108,7 @@ describe("GardenSummary", () => {
     const refGarden = getRootGarden();
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -117,7 +117,7 @@ describe("GardenSummary", () => {
           selectedSystems={[]}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -140,7 +140,7 @@ describe("GardenSummary", () => {
     const refGarden = getRootGarden();
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -149,7 +149,7 @@ describe("GardenSummary", () => {
           selectedSystems={[]}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -175,7 +175,7 @@ describe("GardenSummary", () => {
     const refGarden = getRootGarden();
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -184,7 +184,7 @@ describe("GardenSummary", () => {
           selectedSystems={[]}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     // Global
@@ -226,7 +226,7 @@ describe("GardenSummary", () => {
     vi.mocked(systemService.Rescan);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -235,7 +235,7 @@ describe("GardenSummary", () => {
           selectedSystems={[]}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId("RESCAN_PLUGINS");
@@ -256,7 +256,7 @@ describe("GardenSummary", () => {
     vi.mocked(gardenService.RescanGarden).mockResolvedValue(mockGarden);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -265,7 +265,7 @@ describe("GardenSummary", () => {
           selectedSystems={[]}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId("RESCAN_DOWNSTREAM");
@@ -286,7 +286,7 @@ describe("GardenSummary", () => {
     vi.mocked(queueService.ClearAllQueues);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -295,7 +295,7 @@ describe("GardenSummary", () => {
           selectedSystems={[]}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId("CLEAR_PLUGIN_QUEUES");
@@ -316,7 +316,7 @@ describe("GardenSummary", () => {
     vi.mocked(gardenService.SyncGarden);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -325,7 +325,7 @@ describe("GardenSummary", () => {
           selectedSystems={[]}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId("SYNC_ALL");
@@ -346,7 +346,7 @@ describe("GardenSummary", () => {
     vi.mocked(gardenService.SyncGarden);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -355,7 +355,7 @@ describe("GardenSummary", () => {
           selectedSystems={[]}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId("SYNC_GARDEN");
@@ -376,7 +376,7 @@ describe("GardenSummary", () => {
     vi.mocked(gardenService.SyncUsersGarden);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -385,7 +385,7 @@ describe("GardenSummary", () => {
           selectedSystems={[]}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId("SYNC_USERS");
@@ -408,7 +408,7 @@ describe("GardenSummary", () => {
     vi.mocked(gardenService.DeleteGarden);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -417,7 +417,7 @@ describe("GardenSummary", () => {
           selectedSystems={[]}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId("DELETE_GARDEN");
@@ -438,7 +438,7 @@ describe("GardenSummary", () => {
     vi.mocked(gardenService.UpdateApiGarden);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -447,7 +447,7 @@ describe("GardenSummary", () => {
           selectedSystems={[]}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId(
@@ -476,7 +476,7 @@ describe("GardenSummary", () => {
     vi.mocked(gardenService.UpdateApiGarden);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -485,7 +485,7 @@ describe("GardenSummary", () => {
           selectedSystems={[]}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId(
@@ -513,7 +513,7 @@ describe("GardenSummary", () => {
     vi.mocked(gardenService.UpdateApiGarden);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -522,7 +522,7 @@ describe("GardenSummary", () => {
           selectedSystems={[]}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId(
@@ -550,7 +550,7 @@ describe("GardenSummary", () => {
     vi.mocked(gardenService.UpdateApiGarden);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -559,7 +559,7 @@ describe("GardenSummary", () => {
           selectedSystems={[]}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId(
@@ -606,7 +606,7 @@ describe("GardenSummary", () => {
     const refGarden = { name: "rootGarden" };
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
           selectedGarden={mockGarden}
@@ -615,7 +615,7 @@ describe("GardenSummary", () => {
           selectedSystems={mockGarden.systems}
           associatedRunners={{ current: [] }}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const summary = screen.queryByTestId(`${status}_severity_system_summary`);

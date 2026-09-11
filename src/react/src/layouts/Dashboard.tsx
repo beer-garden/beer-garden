@@ -1,27 +1,39 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Badge } from "primereact/badge";
-import { MultiSelect } from "primereact/multiselect";
-import { Skeleton } from "primereact/skeleton";
-import { Tag } from "primereact/tag";
-import { Tooltip } from "primereact/tooltip";
-import { Tree } from "primereact/tree";
+import {
+  Box,
+  Chip,
+  FormControl,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
+  Skeleton,
+  Tooltip,
+} from "@mui/material";
+import { grey } from "@mui/material/colors";
 import { RefObject, useEffect, useRef, useState } from "react";
 
 import GardenSummary from "../components/GardenSummary";
 import SystemCard from "../components/SystemCard";
+import TreeMenu from "../components/TreeMenu";
 import UnassociatedRunnerCard from "../components/UnassociatedRunnerCard";
 import { Garden, Runner, System } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { RequestItem, RunnerGroup, TourStepProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRunnerList } from "../services/runner_service";
 import {
   AddTourStep,
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { GenerateStatusCounts, GetSeverity } from "../services/util_service";
+import {
+  FAIcon,
+  GenerateStatusCounts,
+  GetSeverity,
+} from "../services/util_service";
 
 function GardenDashboard({
   gardenRef,
@@ -60,7 +72,7 @@ function GardenDashboard({
 
   const [loading, setLoading] = useState<boolean>(true);
 
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   const instanceStatuses = [
     "RUNNING",
@@ -75,12 +87,6 @@ function GardenDashboard({
     "ERROR",
     "UNKNOWN",
   ] as string[];
-
-  const instanceStatusTemplate = (option: string) => {
-    const statusSeverity = GetSeverity(option);
-
-    return <Tag value={option} severity={statusSeverity} />;
-  };
 
   const updateFilteredSystems = () => {
     if (selectedGardenRef?.current) {
@@ -268,6 +274,7 @@ function GardenDashboard({
     const receiving = receivingStatus(garden);
     const publishing = publishingStatus(garden);
     return {
+      id: garden.id,
       key: garden.id,
       label: garden.name,
       statusCounts: generateStatusCounts(garden, systems),
@@ -333,22 +340,26 @@ function GardenDashboard({
     if (!parentRouting) {
       return (
         <>
-          <Tooltip
-            content="Upstream Routing Error"
-            target={`#GARDEN_MENU_${garden.id}`}
-            position="bottom"
-          />
-          <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
-            <FontAwesomeIcon
-              icon="play"
-              style={{ color: "var(--warning-color)" }}
-              rotation={270}
-            />
-            <FontAwesomeIcon
-              icon="triangle-exclamation"
-              style={{ color: "var(--warning-background-color)" }}
-            />
-          </span>
+          <Tooltip title="Upstream Routing Error">
+            <Box
+              component="span"
+              aria-label={undefined}
+              className="fa-layers"
+              id={`GARDEN_MENU_${garden.id}`}
+            >
+              <FAIcon
+                icon="play"
+                sx={{ color: "warning.contrast" }}
+                rotation={270}
+              />
+              <FAIcon
+                icon="triangle-exclamation"
+                sx={{
+                  color: "warning.main",
+                }}
+              />
+            </Box>
+          </Tooltip>
         </>
       );
     } else if (publishing && receiving) {
@@ -362,61 +373,64 @@ function GardenDashboard({
     } else if (!publishing && !receiving) {
       return (
         <>
-          <Tooltip
-            content={`Routing Error for ${garden.name}`}
-            target={`#GARDEN_MENU_${garden.id}`}
-            position="bottom"
-          />
-          <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
-            <FontAwesomeIcon
-              icon="circle"
-              style={{ color: "var(--danger-color)" }}
-            />
-            <FontAwesomeIcon
-              icon="circle-exclamation"
-              style={{ color: "var(--danger-background-color)" }}
-            />
-          </span>
+          <Tooltip title={`Routing Error for ${garden.name}`}>
+            <Box
+              component="span"
+              aria-label={undefined}
+              className="fa-layers"
+              id={`GARDEN_MENU_${garden.id}`}
+            >
+              <FAIcon icon="circle" sx={{ color: "error.contrast" }} />
+              <FAIcon
+                icon="circle-exclamation"
+                sx={{
+                  color: "error.main",
+                }}
+              />
+            </Box>
+          </Tooltip>
         </>
       );
     } else if (!publishing) {
       return (
         <>
-          <Tooltip
-            content={`Publishing Connection Error for ${garden.name}`}
-            target={`#GARDEN_MENU_${garden.id}`}
-            position="bottom"
-          />
-          <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
-            <FontAwesomeIcon
-              icon="circle"
-              style={{ color: "var(--danger-color)" }}
-            />
-            <FontAwesomeIcon
-              icon="circle-exclamation"
-              style={{ color: "var(--danger-background-color)" }}
-            />
-          </span>
+          <Tooltip title={`Publishing Connection Error for ${garden.name}`}>
+            <Box
+              component="span"
+              aria-label={undefined}
+              className="fa-layers"
+              id={`GARDEN_MENU_${garden.id}`}
+            >
+              <FAIcon icon="circle" sx={{ color: "error.contrast" }} />
+              <FAIcon
+                icon="circle-exclamation"
+                sx={{
+                  color: "error.main",
+                }}
+              />
+            </Box>
+          </Tooltip>
         </>
       );
     } else if (!receiving) {
       return (
         <>
-          <Tooltip
-            content={`Receiving Connection Error for ${garden.name}`}
-            target={`#GARDEN_MENU_${garden.id}`}
-            position="bottom"
-          />
-          <span className="fa-layers" id={`GARDEN_MENU_${garden.id}`}>
-            <FontAwesomeIcon
-              icon="circle"
-              style={{ color: "var(--danger-color)" }}
-            />
-            <FontAwesomeIcon
-              icon="circle-exclamation"
-              style={{ color: "var(--danger-background-color)" }}
-            />
-          </span>
+          <Tooltip title={`Receiving Connection Error for ${garden.name}`}>
+            <Box
+              component="span"
+              aria-label={undefined}
+              className="fa-layers"
+              id={`GARDEN_MENU_${garden.id}`}
+            >
+              <FAIcon icon="circle" sx={{ color: "error.contrast" }} />
+              <FAIcon
+                icon="circle-exclamation"
+                sx={{
+                  color: "error.main",
+                }}
+              />
+            </Box>
+          </Tooltip>
         </>
       );
     }
@@ -438,17 +452,16 @@ function GardenDashboard({
         const statusSeverity = GetSeverity(status);
         return (
           <div key={`${status}_${garden?.name}_count`}>
-            <Tooltip
-              content={`${status} Count ${count} for ${garden?.name}`}
-              target={`#${status}_${garden?.id}_menu_severity_system_summary`}
-              position="bottom"
-            />
-            <Badge
-              value={count}
-              id={`${status}_${garden?.id}_menu_severity_system_summary`}
-              severity={statusSeverity}
-              key={`${status}_${garden?.name}`}
-            />
+            <Tooltip title={`${status} Count ${count} for ${garden?.name}`}>
+              <Box component="span" aria-label={undefined}>
+                <Chip
+                  label={count}
+                  id={`${status}_${garden?.id}_menu_severity_system_summary`}
+                  color={statusSeverity}
+                  key={`${status}_${garden?.name}`}
+                />
+              </Box>
+            </Tooltip>
           </div>
         );
       }
@@ -552,7 +565,7 @@ function GardenDashboard({
         })
         .catch((error) => {
           console.error("Error loading runners", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error loading runners: ${error}`,
@@ -567,18 +580,16 @@ function GardenDashboard({
     };
   }, []);
 
-  const [selectedKey, setSelectedKey] = useState<any | null>("");
-
-  const gardenTreeNode = (node: any, options: any) => {
+  const gardenTreeNode = (node: any) => {
     return (
-      <div className={options.className}>
+      <div>
         <div>
           {node.gardenIcon}
-          <span className="ml-1">{node.label}</span>
+          <Box component="span" sx={{ ml: 1 }}>
+            {node.label}
+          </Box>
         </div>
-        <div style={{ flexWrap: "wrap" }} className="flex ml-4">
-          {node.statusCounts}
-        </div>
+        <Box sx={{ display: "flex" }}>{node.statusCounts}</Box>
       </div>
     );
   };
@@ -586,31 +597,32 @@ function GardenDashboard({
   return (
     <div>
       {/* LEFT NAV TREE */}
-      <div className="flex flex-wrap">
-        <div
-          style={{ width: "16%", minWidth: "250px" }}
-          className="surface-border p-3"
-        >
-          <Tree
+      <Box sx={{ display: "flex", flexWrap: "wrap" }}>
+        <Box sx={{ width: "16%", minWidth: "250px", p: 2 }}>
+          <TreeMenu
+            sx={{
+              border: "1px solid",
+              borderColor: grey[300],
+              borderRadius: 2,
+              p: 2,
+            }}
             {...GenerateTourProps(gardenTreeTourStep)}
-            loading={loading}
-            value={gardenMenu}
-            emptyMessage={"No gardens found"}
-            nodeTemplate={gardenTreeNode}
-            selectionMode="single"
-            selectionKeys={selectedKey}
-            onSelectionChange={(e) => {
-              setSelectedKey(e.value);
-              if (typeof e.value === "string") {
-                findSelectedGarden(e.value);
+            items={gardenMenu ?? []}
+            itemTemplate={gardenTreeNode}
+            expandAll={true}
+            disableToggle={true}
+            isLoading={loading}
+            changeSelected={(id: string) => {
+              if (typeof id === "string") {
+                findSelectedGarden(id);
               }
             }}
-            togglerTemplate={<></>}
+            itemChildrenIndentation={"0px"}
           />
-        </div>
+        </Box>
 
         {/* MAIN WORKSPACE */}
-        <div style={{ width: "84%", minWidth: "250px" }}>
+        <Box sx={{ width: "84%", minWidth: "250px" }}>
           {/* Garden Summary */}
           <GardenSummary
             gardenRef={gardenRef}
@@ -620,73 +632,86 @@ function GardenDashboard({
             associatedRunners={associatedRunnersRef}
             selectedSystems={selectedSystems}
           />
-          <datalist id="instance_status_multiselect_input" aria-hidden="true">
-            {instanceStatuses?.map((status: string) => (
-              <option key={status} value={status} />
-            ))}
-          </datalist>
 
           {loading ? (
             <Skeleton width="100%" height="350px"></Skeleton>
           ) : (
             <>
-              <MultiSelect
-                value={filteredStatuses}
-                onChange={(e) => setFilteredStatuses(e.value)}
-                options={instanceStatuses}
-                itemTemplate={instanceStatusTemplate}
-                placeholder="Filter by Instance Status"
-                className="mb-3"
-                filter
-                pt={{
-                  input: {
-                    "aria-label": "Filter by Instance Status",
-                    "aria-controls": "instance_status_multiselect_input",
+              <FormControl sx={{ m: 1, minWidth: 300 }}>
+                <InputLabel id="instance-select-label">
+                  Filter By Input Status
+                </InputLabel>
+                <Select
+                  id="instanceStatuses"
+                  labelId="instance-select-label"
+                  value={filteredStatuses}
+                  multiple
+                  label="Filter By Input Status"
+                  slotProps={{
+                    root: {
+                      "aria-haspopup": "listbox",
+                      id: "instance-select-menu",
+                    },
+                  }}
+                  inputProps={{
                     autoComplete: "off",
-                  },
-                  triggerIcon: {
-                    role: "img",
-                    "aria-label": "Toggle Instance Status Filter",
-                  },
-                }}
-              />
+                  }}
+                  SelectDisplayProps={{
+                    "aria-controls": "instance-select-menu",
+                  }}
+                  onChange={(
+                    event: SelectChangeEvent<typeof instanceStatuses | null>,
+                  ) => {
+                    const {
+                      target: { value },
+                    } = event;
 
-              <div className="flex justify-content-left">
-                <div className="grid grid-nogutter gap-2">
-                  {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
-                    <div
-                      key={runnerGroup.path}
-                      className="mb-4 mr-2"
-                      style={{ width: "26.5vw", minWidth: "250px" }}
-                    >
-                      <UnassociatedRunnerCard
-                        runnerGroup={runnerGroup}
-                        config={config}
-                      />
-                    </div>
-                  ))}
-                  {filteredSystems?.map((system: System) => (
-                    <div
-                      key={system.id}
-                      className="mr-2 mb-2"
-                      style={{ width: "26.5vw", minWidth: "250px" }}
-                    >
-                      <SystemCard
-                        system={system}
-                        tourStepsRef={tourStepsRef}
-                        selectedGarden={selectedGarden?.name}
-                        addRequestItem={addRequestItem}
-                        config={config}
-                        associatedRunners={associatedRunners}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
+                    if (value === null) {
+                      setFilteredStatuses([]);
+                    } else {
+                      setFilteredStatuses(
+                        typeof value === "string" ? value.split(",") : value,
+                      );
+                    }
+                  }}
+                >
+                  {instanceStatuses?.map((option) => {
+                    const statusSeverity = GetSeverity(option);
+
+                    return (
+                      <MenuItem key={option} value={option}>
+                        <Chip label={option} color={statusSeverity} />
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+              </FormControl>
+              <Grid container spacing={1}>
+                {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
+                  <Grid size={4} sx={{ minWidth: "250px" }}>
+                    <UnassociatedRunnerCard
+                      runnerGroup={runnerGroup}
+                      config={config}
+                    />
+                  </Grid>
+                ))}
+                {filteredSystems?.map((system: System) => (
+                  <Grid key={system.id} size={4} sx={{ minWidth: "250px" }}>
+                    <SystemCard
+                      system={system}
+                      tourStepsRef={tourStepsRef}
+                      selectedGarden={selectedGarden?.name}
+                      addRequestItem={addRequestItem}
+                      config={config}
+                      associatedRunners={associatedRunners}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
             </>
           )}
-        </div>
-      </div>
+        </Box>
+      </Box>
     </div>
   );
 }

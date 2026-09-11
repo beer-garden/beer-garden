@@ -1,48 +1,43 @@
-import { FilterMatchMode } from "primereact/api";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
 import { useEffect, useState } from "react";
 
 import { System } from "../models/brewtils-types";
-import { useToast } from "../providers/ToastProvider";
-import { GetSystemList } from "../services/system_service";
+import { useSnackbar } from "../providers/SnackbarProvider";
+import { CompareVersions, GetSystemList } from "../services/system_service";
 import AccessButton from "./AccessButton";
+import EnhancedTable from "./EnhancedTable/components/EnhancedTable";
+import VersionList from "./VersionList";
 
 function SystemList({ systemListButtonClick }: { systemListButtonClick: any }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
+  const [allSystems, setAllSystems] = useState<System[]>([]);
   const [systems, setSystems] = useState<System[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [filters, setFilters] = useState({
-    namespace: {
-      value: null,
-      matchMode: FilterMatchMode.CONTAINS,
-    },
-    name: {
-      value: null,
-      matchMode: FilterMatchMode.CONTAINS,
-    },
-    description: { value: null, matchMode: FilterMatchMode.CONTAINS },
-    version: {
-      value: null,
-      matchMode: FilterMatchMode.CONTAINS,
-    },
-  });
 
   useEffect(() => {
     GetSystemList()
       .then((systems: System[]) => {
+        setAllSystems(systems);
+        // Sort systems by name and version
         const sortedSystems = [...systems].sort((a: System, b: System) => {
           if (a?.name && b?.name) {
-            return a.name.localeCompare(b.name);
+            const nameCompare = a.name.localeCompare(b.name);
+            if (nameCompare !== 0) {
+              return nameCompare;
+            }
+            return CompareVersions(a.version!, b.version!);
           }
           return 1;
         });
-        setSystems(sortedSystems);
+        const uniqueSystems = [
+          ...new Map(sortedSystems.map((item) => [item.name, item])).values(),
+        ];
+
+        setSystems(uniqueSystems);
         setLoading(false);
       })
       .catch((error) => {
         console.error("Error fetching systems:", error);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching systems: ${error}`,
@@ -51,35 +46,80 @@ function SystemList({ systemListButtonClick }: { systemListButtonClick: any }) {
       });
   }, []);
 
+  function versionTemplate(system: System) {
+    return (
+      <VersionList
+        system={system}
+        systems={allSystems}
+        setSystems={setSystems}
+      />
+    );
+  }
+
   function actionTemplate(system: System) {
     return (
       <AccessButton
-        tooltip={`Select System ${system.namespace} ${system.name} ${system.version}`}
+        tooltip={`Select System ${system.namespace} ${system.name}`}
         onClick={() => {
-          systemListButtonClick(system);
+          systemListButtonClick(
+            systems.find(
+              (s) => s.namespace === system.namespace && s.name === system.name,
+            ),
+          );
         }}
         label="Select"
-      />
+      >
+        Select
+      </AccessButton>
     );
   }
 
   //Get a list of systems and output them to a table
   return (
-    <DataTable
-      value={systems}
-      loading={loading}
-      paginator
-      rows={10}
-      filterDisplay="row"
-      filters={filters}
-      onFilter={(e) => setFilters(e.filters as typeof filters)}
-    >
-      <Column field="namespace" header="Namespace" sortable filter />
-      <Column field="name" header="System Name" sortable filter />
-      <Column field="description" header="Description" sortable filter />
-      <Column field="version" header="Version" sortable filter />
-      <Column header="Actions" body={actionTemplate} />
-    </DataTable>
+    <EnhancedTable
+      data={systems}
+      isLoading={loading}
+      columns={[
+        {
+          id: "namespace",
+          label: "Namespace",
+          field: "namespace",
+          sortable: true,
+          filterable: true,
+          isString: true,
+        },
+        {
+          id: "name",
+          label: "System Name",
+          field: "name",
+          sortable: true,
+          filterable: true,
+          isString: true,
+        },
+        {
+          id: "description",
+          label: "Description",
+          field: "description",
+          sortable: true,
+          filterable: true,
+          isString: true,
+        },
+        {
+          id: "version",
+          label: "Version",
+          field: "version",
+          sortable: true,
+          filterable: true,
+          isString: true,
+          template: versionTemplate,
+        },
+        {
+          id: "actions",
+          label: "Actions",
+          template: actionTemplate,
+        },
+      ]}
+    />
   );
 }
 

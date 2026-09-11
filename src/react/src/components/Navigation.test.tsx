@@ -3,7 +3,7 @@ import { BrowserRouter } from "react-router-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { TourStepProps } from "../models/models";
-import { ToastProvider } from "../providers/ToastProvider";
+import { SnackbarProvider } from "../providers/SnackbarProvider";
 import * as tokenService from "../services/token_service";
 import * as userService from "../services/user_service";
 import Navigation from "./Navigation";
@@ -30,7 +30,7 @@ describe("Navigation", () => {
 
     render(
       <BrowserRouter basename="/">
-        <ToastProvider>
+        <SnackbarProvider>
           <Navigation
             listeners={{}}
             config={{ auth_enabled: true }}
@@ -39,7 +39,7 @@ describe("Navigation", () => {
             tourStepsRef={mockTourSteps()}
             addRequestItem={() => {}}
           />
-        </ToastProvider>
+        </SnackbarProvider>
       </BrowserRouter>,
     );
 
@@ -53,7 +53,7 @@ describe("Navigation", () => {
 
     render(
       <BrowserRouter basename="/">
-        <ToastProvider>
+        <SnackbarProvider>
           <Navigation
             listeners={{}}
             config={{
@@ -64,7 +64,7 @@ describe("Navigation", () => {
             tourStepsRef={mockTourSteps()}
             addRequestItem={() => {}}
           />
-        </ToastProvider>
+        </SnackbarProvider>
       </BrowserRouter>,
     );
 

@@ -224,19 +224,6 @@ class UserAPI(AuthorizationHandler):
                         ),
                         filter_results=False,
                     )
-                elif op.path == "/preferences/theme":
-                    response = await self.process_operation(
-                        Operation(
-                            operation_type="USER_UPDATE",
-                            kwargs={
-                                "username": username,
-                                "preferences": {
-                                    "theme": op.value,
-                                },
-                            },
-                        ),
-                        filter_results=False,
-                    )
                 elif op.path == "/preferences/dark_mode":
                     response = await self.process_operation(
                         Operation(

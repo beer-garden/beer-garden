@@ -1,39 +1,36 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Card } from "primereact/card";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
+import { Box, DialogContent, Grid, Stack, Typography } from "@mui/material";
+import { Dayjs } from "dayjs";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { FilterColumn } from "../components/EnhancedTable/models/EnhancedTableModels";
 import { Request, Topic } from "../models/brewtils-types";
 import { RequestItem } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRequestList } from "../services/request_service";
-import { PaginatorTemplate } from "../services/util_service";
 import AccessButton from "./AccessButton";
+import EnhancedTable from "./EnhancedTable/components/EnhancedTable";
 
 function TopicCard({
   requestItem,
-  isDialog,
   listeners,
   removeItem,
 }: {
   requestItem: RequestItem;
-  isDialog: boolean;
   listeners: Record<string, any>;
   removeItem: (id: string) => void;
 }) {
   const [topic, setTopic] = useState<Topic | undefined>(undefined);
   const navigate = useNavigate();
-  const showToast = useToast();
-  const [requests, setRequests] = useState<Array<Request> | undefined>(
-    undefined,
-  );
+  const showSnackbar = useSnackbar();
+  const [requests, setRequests] = useState<Array<Request>>([]);
   const altRequests = useRef<Array<Request>>([]);
   const [loading, setLoading] = useState(false);
   const [totalRecords, setTotalRecords] = useState(0);
-  const [lazyParams, setLazyParams] = useState({ first: 0, rows: 5, page: 0 });
+  const [filteredRecords, setFilteredRecords] = useState<number>(0);
   const [recordsUpdated, setRecordsUpdated] = useState(false);
+  const [reloadRequestsTrigger, setReloadRequestsTrigger] = useState(0);
 
   useEffect(() => {
     if (topic?.id) {
@@ -113,77 +110,147 @@ function TopicCard({
     if (topic === undefined) {
       setTopic(requestItem.topic);
     } else {
-      queryTopicRequests();
+      setReloadRequestsTrigger(reloadRequestsTrigger + 1);
     }
-  }, [topic, lazyParams]);
+  }, [topic]);
 
   const setDisplayRequests = (requests: Array<Request>) => {
     setRequests(requests);
     altRequests.current = requests;
   };
 
-  const queryTopicRequests = () => {
+  const tableLoadData = (
+    columnFilters?: FilterColumn[],
+    orderBy?: string,
+    order?: "asc" | "desc",
+    page?: number,
+    rowsPerPage?: number,
+  ) => {
+    if (topic === undefined) {
+      return;
+    }
+
     setLoading(true);
 
-    if (topic?.id) {
-      const queryHeaders = {
-        length: lazyParams.rows,
-        start: lazyParams.first,
-        include_children: true,
-        include: [
-          "id",
-          "command",
-          "command_display_name",
-          "status",
-          "created_at",
-        ],
-        query: [
-          JSON.stringify({
-            field_name: "metadata__bg_topic_id",
-            modifier: "",
-            value: topic.id,
-          }),
-        ],
-      };
-      GetRequestList(queryHeaders)
-        .then((data: [Array<Request>, Headers]) => {
-          const [requests, headers] = data;
+    const queryHeaders: Record<string, any> = {
+      length: rowsPerPage,
+      start: (rowsPerPage ?? 0) * (page ?? 0),
+      query: [
+        JSON.stringify({
+          field_name: "metadata__bg_topic_id",
+          modifier: "",
+          value: topic.id,
+        }),
+      ],
+    };
 
-          setDisplayRequests(requests);
-          setRecordsUpdated(false);
+    if (columnFilters) {
+      for (const filter of columnFilters) {
+        let validFilter = true;
 
-          if (headers.has("recordsfiltered")) {
-            setTotalRecords(
-              parseInt(headers.get("recordsfiltered") || "0", 10),
+        if (
+          filter.column === undefined ||
+          filter.modifier === undefined ||
+          filter.value === undefined
+        ) {
+          validFilter = false;
+        }
+
+        // Is String Empty
+        if (
+          validFilter &&
+          typeof filter.value === "string" &&
+          filter.value.length === 0
+        ) {
+          validFilter = false;
+        }
+
+        // Is Array Empty
+        if (
+          validFilter &&
+          typeof filter.value === "object" &&
+          Array.isArray(filter.value) &&
+          filter.value.length === 0
+        ) {
+          validFilter = false;
+        }
+
+        if (validFilter) {
+          queryHeaders["query"] = queryHeaders["query"] || [];
+
+          if (filter.isDate) {
+            queryHeaders["query"].push(
+              JSON.stringify({
+                field_name: filter.column,
+                modifier: filter.modifier === "eq" ? "" : filter.modifier,
+                value: (filter.value as Dayjs)
+                  .toISOString()
+                  .substring(0, 19)
+                  .replace("T", " "),
+              }),
+            );
+          } else if (filter.isNumeric) {
+            queryHeaders["query"].push(
+              JSON.stringify({
+                field_name: filter.column,
+                modifier: filter.modifier === "eq" ? "" : filter.modifier,
+                value: String(filter.value),
+              }),
             );
           } else {
-            setTotalRecords(requests.length);
+            queryHeaders["query"].push(
+              JSON.stringify({
+                field_name: filter.column,
+                modifier: filter.modifier === "eq" ? "" : filter.modifier,
+                value:
+                  filter.modifier === "exists"
+                    ? filter.value === "true"
+                    : filter.value,
+              }),
+            );
           }
-          setLoading(false);
-        })
-        .catch((error) => {
-          console.error("Error fetching request list:", error);
-          showToast({
-            severity: "error",
-            summary: "Error",
-            detail: `Error fetching request list: ${error}`,
-            life: 3000,
-          });
-          setLoading(false);
-        });
-    } else {
-      setLoading(false);
+        }
+      }
     }
-  };
 
-  const onPage = (event: any) => {
-    setLazyParams(event);
-  };
+    if (order && orderBy) {
+      queryHeaders["order_by"] = order === "asc" ? orderBy : "-" + orderBy;
+    }
 
-  const formatDate = (value: string | undefined) => {
-    if (!value) return "N/A";
-    const date = new Date(value);
-    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+    queryHeaders["include_hidden"] = true;
+
+    queryHeaders["include_children"] = true;
+
+    GetRequestList(queryHeaders)
+      .then((data: [Array<Request>, Headers]) => {
+        const [requests, headers] = data;
+
+        setDisplayRequests(requests);
+        setRecordsUpdated(false);
+
+        if (headers.has("Recordstotal")) {
+          setTotalRecords(parseInt(headers.get("Recordstotal") || "0", 10));
+        } else {
+          setTotalRecords(requests.length);
+        }
+        if (headers.has("Recordsfiltered")) {
+          setFilteredRecords(
+            parseInt(headers.get("Recordsfiltered") || "0", 10),
+          );
+        } else {
+          setFilteredRecords(requests.length);
+        }
+        setLoading(false);
+      })
+      .catch((error) => {
+        setLoading(false);
+        showSnackbar({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching request list: ${error}`,
+          life: 3000,
+        });
+      });
   };
 
   const commandNameTemplate = (request: Request) => {
@@ -192,13 +259,15 @@ function TopicCard({
         <AccessButton
           rounded
           raised
-          link
-          onClick={() => void navigate(`/request/${request.id}`)}
+          onClick={() => {
+            void navigate(`/request/${request.id}`);
+            removeItem(requestItem.itemId);
+          }}
           title={
             "Open Request " +
             (request.command_display_name ?? request.command ?? request.id)
           }
-          className="mr-2"
+          sx={{ mr: 2 }}
         >
           <FontAwesomeIcon icon="arrow-up-right-from-square" />
         </AccessButton>
@@ -208,160 +277,177 @@ function TopicCard({
   };
 
   const tableHeader = (
-    <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-      <span className="text-xl text-900 font-bold">Associated Requests</span>
-      <AccessButton
-        rounded
-        raised
-        onClick={queryTopicRequests}
-        tooltip={recordsUpdated ? "New updates available" : "Refresh"}
-      >
-        {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
-        <FontAwesomeIcon icon="refresh" />
-      </AccessButton>
-    </div>
+    <Grid sx={{ m: 2 }} container>
+      <Grid size="grow">
+        <Typography sx={{ fontWeight: "bold" }}>Associated Requests</Typography>
+      </Grid>
+      <Grid>
+        <AccessButton
+          rounded
+          raised
+          onClick={() => {
+            setReloadRequestsTrigger(reloadRequestsTrigger + 1);
+          }}
+          tooltip={recordsUpdated ? "New updates available" : "Refresh"}
+          sx={{ alignItems: "flex-end" }}
+        >
+          {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
+          <FontAwesomeIcon icon="refresh" />
+        </AccessButton>
+      </Grid>
+    </Grid>
   );
 
   return (
-    <Card
-      className="justify-content-center"
-      unstyled={isDialog}
-      title={!isDialog && requestItem?.topic?.name}
-      header={
-        !isDialog && (
-          <AccessButton
-            onClick={() => {
-              removeItem(requestItem.itemId);
-            }}
-            tooltip={`Close Topic View for ${topic?.name ?? "Unknown Topic"}`}
-          >
-            <FontAwesomeIcon icon="xmark" />
-          </AccessButton>
-        )
-      }
-    >
-      <div>
-        <div className="mr-4">
+    <>
+      <DialogContent dividers>
+        <Stack spacing={2}>
           {topic && (
-            <div>
-              <p>
-                <strong className="mr-2">Publisher Count:</strong>
-                {topic.publisher_count}
-              </p>
-              {topic?.subscribers && (
-                <DataTable
-                  data-testid="topic-datatable"
-                  value={topic?.subscribers}
-                  header={
-                    <div className="flex flex-wrap align-items-center justify-content-between gap-2">
-                      <span className="text-xl text-900 font-bold">
-                        Subscribers
-                      </span>
-                    </div>
-                  }
-                  paginator
-                  paginatorTemplate={PaginatorTemplate}
-                  rows={5}
-                >
-                  <Column
-                    field="consumer_count"
-                    sortable
-                    filter
-                    header="Consumer Count"
-                    showFilterMenu={false}
-                  />
-                  <Column
-                    field="garden"
-                    sortable
-                    filter
-                    header="Garden"
-                    body={(row) => row.garden || "*"}
-                    showFilterMenu={false}
-                  />
-                  <Column
-                    field="namespace"
-                    sortable
-                    filter
-                    header="Namespace"
-                    body={(row) => row.namespace || "*"}
-                    showFilterMenu={false}
-                  />
-                  <Column
-                    field="system"
-                    sortable
-                    filter
-                    header="System"
-                    body={(row) => row.system || "*"}
-                    showFilterMenu={false}
-                  />
-                  <Column
-                    field="version"
-                    sortable
-                    filter
-                    header="Version"
-                    body={(row) => row.version || "*"}
-                    showFilterMenu={false}
-                  />
-                  <Column
-                    field="instance"
-                    sortable
-                    filter
-                    header="Instance"
-                    body={(row) => row.instance || "*"}
-                    showFilterMenu={false}
-                  />
-                  <Column
-                    field="command"
-                    sortable
-                    filter
-                    header="Command"
-                    body={(row) => row.command || "*"}
-                    style={{ maxWidth: "300px", overflowWrap: "break-word" }}
-                    showFilterMenu={false}
-                  />
+            <Box sx={{ display: "flex" }}>
+              <Typography sx={{ fontWeight: "bold" }}>
+                Publisher Count:
+              </Typography>
+              <Typography sx={{ ml: 2 }}>
+                {topic.publisher_count ?? "N/A"}
+              </Typography>
+            </Box>
+          )}
+          {topic && topic.subscribers && topic.subscribers.length > 0 && (
+            <EnhancedTable
+              data={topic.subscribers}
+              header={
+                <Box sx={{ m: 2 }}>
+                  <Typography sx={{ fontWeight: "bold" }}>
+                    Subscribers
+                  </Typography>
+                </Box>
+              }
+              columns={[
+                {
+                  id: "consumer_count",
+                  label: "Consumer Count",
+                  field: "consumer_count",
+                  sortable: true,
+                  filterable: true,
+                  isNumeric: true,
+                },
+                {
+                  id: "garden",
+                  label: "Garden",
+                  field: "garden",
+                  sortable: true,
+                  filterable: true,
+                  isString: true,
+                  template: (row) => row.garden || "*",
+                },
+                {
+                  id: "namespace",
+                  label: "Namespace",
+                  field: "namespace",
+                  sortable: true,
+                  filterable: true,
+                  isString: true,
+                  template: (row) => row.namespace || "*",
+                },
+                {
+                  id: "system",
+                  label: "System",
+                  field: "system",
+                  sortable: true,
+                  filterable: true,
+                  isString: true,
+                  template: (row) => row.system || "*",
+                },
+                {
+                  id: "version",
+                  label: "Version",
+                  field: "version",
+                  sortable: true,
+                  filterable: true,
+                  isString: true,
+                  template: (row) => row.version || "*",
+                },
+                {
+                  id: "instance",
+                  label: "Instance",
+                  field: "instance",
+                  sortable: true,
+                  filterable: true,
+                  isString: true,
+                  template: (row) => row.instance || "*",
+                },
+                {
+                  id: "command",
+                  label: "Command",
+                  field: "command",
+                  sortable: true,
+                  filterable: true,
+                  isString: true,
+                  template: (row) => row.command || "*",
+                },
+                {
+                  id: "subscriber_type",
+                  label: "Subscriber Type",
+                  field: "subscriber_type",
+                  sortable: true,
+                  filterable: true,
+                  isString: true,
+                  options: ["ANNOTATED", "GENERATED", "DYNAMIC"],
+                },
+              ]}
+            />
+          )}
 
-                  <Column
-                    field="subscriber_type"
-                    sortable
-                    filter
-                    header="Subscriber Type"
-                    showFilterMenu={false}
-                  />
-                </DataTable>
-              )}
-            </div>
-          )}
-        </div>
-        <div style={{ flexGrow: "1" }}>
-          {requests ? (
-            <DataTable
-              value={requests}
-              loading={loading}
-              lazy
-              paginator
-              paginatorTemplate={PaginatorTemplate}
-              header={tableHeader}
-              rows={lazyParams.rows}
-              first={lazyParams.first}
-              totalRecords={totalRecords}
-              onPage={onPage}
-              rowsPerPageOptions={[5, 10, 20, 50]}
-            >
-              <Column header="Command" body={commandNameTemplate} />
-              <Column field="status" header="Status" />
-              <Column
-                field="created_at"
-                dataType="date"
-                header="Created"
-                body={(rowData) => formatDate(rowData.created_at)}
-              />
-            </DataTable>
-          ) : (
-            <p>Loading Requests...</p>
-          )}
-        </div>
-      </div>
-    </Card>
+          <EnhancedTable
+            data={requests}
+            columns={[
+              {
+                id: "command",
+                label: "Command",
+                field: "command",
+                sortable: true,
+                filterable: true,
+                isString: true,
+                template: commandNameTemplate,
+              },
+              {
+                id: "status",
+                label: "Status",
+                field: "status",
+                sortable: true,
+                filterable: true,
+                isString: true,
+                options: [
+                  "CREATED",
+                  "RECEIVED",
+                  "IN_PROGRESS",
+                  "CANCELED",
+                  "SUCCESS",
+                  "ERROR",
+                  "INVALID",
+                ],
+              },
+              {
+                id: "created_at",
+                label: "Created",
+                field: "created_at",
+                isDate: true,
+                sortable: true,
+                filterable: true,
+              },
+            ]}
+            header={tableHeader}
+            remoteFilter={tableLoadData}
+            dataLength={filteredRecords}
+            totalDataLength={totalRecords}
+            reloadTable={reloadRequestsTrigger}
+            defaultOrderBy="created_at"
+            defaultOrder="desc"
+            isLoading={loading}
+          />
+        </Stack>
+      </DialogContent>
+    </>
   );
 }
 

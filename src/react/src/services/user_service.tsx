@@ -36,29 +36,6 @@ export const GetCurrentRoles = (): Array<Role> | undefined => {
   return undefined;
 };
 
-export const UpdateUserTheme = async (theme: string): Promise<void> => {
-  const headers = GetAuthHeaders();
-  const username = GetCurrentUser();
-  if (!username) {
-    return;
-  }
-  headers.append("Content-Type", "application/json");
-  const fetch_url = `${GetBaseURL()}/api/v1/users/${username}`;
-  const response = await fetch(fetch_url, {
-    headers: headers,
-    method: "PATCH",
-    body: JSON.stringify({
-      operation: "set",
-      path: "/preferences/theme",
-      value: theme,
-    }),
-  });
-  if (!response.ok) {
-    // Handle non-OK responses (e.g., 404, 500)
-    throw new Error(`HTTP error: Status ${response.status}`);
-  }
-};
-
 export const UpdateUserDarkMode = async (darkMode: boolean): Promise<void> => {
   const headers = GetAuthHeaders();
   const username = GetCurrentUser();
