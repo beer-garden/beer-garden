@@ -1,4 +1,3 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Box, DialogContent, Grid, Typography } from "@mui/material";
 import { Dayjs } from "dayjs";
 import { useEffect, useRef, useState } from "react";
@@ -442,7 +441,7 @@ function SchedulerViewCard({
               {...permissions}
               permission="OPERATOR"
             >
-              <FAIcon icon="play" />
+              <FAIcon icon="forward" />
             </AccessButton>
 
             <AccessButton
@@ -509,9 +508,7 @@ function SchedulerViewCard({
                 {...permissions}
                 permission="OPERATOR"
               >
-                <span>
-                  <FontAwesomeIcon icon="eject" className="fa-rotate-90" />
-                </span>
+                <FAIcon icon="play" />
               </AccessButton>
             )}
             <AccessButton
