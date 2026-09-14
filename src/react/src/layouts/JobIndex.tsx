@@ -1,3 +1,4 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Box, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { RefObject, useEffect, useState } from "react";
@@ -238,7 +239,7 @@ function JobIndex({
             {...permissions}
             permission="OPERATOR"
           >
-            <FAIcon icon="forward" />
+            <FAIcon icon="play" />
           </AccessButton>
 
           <AccessButton
@@ -319,7 +320,9 @@ function JobIndex({
               {...permissions}
               permission="OPERATOR"
             >
-              <FAIcon icon="play" />
+              <span>
+                <FontAwesomeIcon icon="eject" className="fa-rotate-90" />
+              </span>
             </AccessButton>
           )}
           <AccessButton
