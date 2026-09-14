@@ -4,7 +4,6 @@ import {
   Box,
   Chip,
   Divider,
-  Grid,
   Skeleton,
   Tooltip,
   Typography,
@@ -36,6 +35,7 @@ import {
   GetSeverity,
 } from "../services/util_service";
 import AccessButton from "./AccessButton";
+import { ColumnField } from "./EnhancedTable/models/EnhancedTableModels";
 
 function GardenSummary({
   gardenRef,
@@ -55,25 +55,6 @@ function GardenSummary({
   const showSnackbar = useSnackbar();
   const tourUuid = selectedGarden?.id;
   const tourPrefix = "garden_summary";
-  const getPublishingConnections = () => {
-    if (selectedGarden?.publishing_connections) {
-      return selectedGarden.publishing_connections.filter(
-        (connection: Connection) => connection.status !== "NOT_CONFIGURED",
-      );
-    } else {
-      return [];
-    }
-  };
-
-  const getReceivingConnections = () => {
-    if (selectedGarden?.receiving_connections) {
-      return selectedGarden.receiving_connections.filter(
-        (connection: Connection) => connection.status !== "NOT_CONFIGURED",
-      );
-    } else {
-      return [];
-    }
-  };
 
   const getSystemCounts = () => {
     if (selectedGarden) {
@@ -88,15 +69,78 @@ function GardenSummary({
     return new Map();
   };
 
+  const getDownstreamConnections = () => {
+    const connections = [] as any[];
+
+    if (gardenRef?.current?.name === selectedGarden?.name) {
+      if (selectedGarden?.receiving_connections) {
+        for (const connection of selectedGarden.receiving_connections) {
+          if (connection.status !== "NOT_CONFIGURED") {
+            connections.push({
+              garden: selectedGarden.parent ?? "UPSTREAM",
+              api: connection.api,
+              status: connection.status,
+              type: "RECEIVING",
+              direction: "UPSTREAM",
+            });
+          }
+        }
+      }
+
+      if (selectedGarden?.publishing_connections) {
+        for (const connection of selectedGarden.publishing_connections) {
+          if (connection.status !== "NOT_CONFIGURED") {
+            connections.push({
+              garden: selectedGarden.parent ?? "UPSTREAM",
+              api: connection.api,
+              status: connection.status,
+              type: "PUBLISHING",
+              direction: "UPSTREAM",
+            });
+          }
+        }
+      }
+    }
+    if (selectedGarden?.children) {
+      for (const child of selectedGarden.children) {
+        if (child?.receiving_connections) {
+          for (const connection of child.receiving_connections) {
+            if (connection.status !== "NOT_CONFIGURED") {
+              connections.push({
+                garden: child.name,
+                api: connection.api,
+                status: connection.status,
+                type: "RECEIVING",
+                direction: "DOWNSTREAM",
+              });
+            }
+          }
+        }
+        if (child?.publishing_connections) {
+          for (const connection of child.publishing_connections) {
+            if (connection.status !== "NOT_CONFIGURED") {
+              connections.push({
+                garden: child.name,
+                api: connection.api,
+                status: connection.status,
+                type: "PUBLISHING",
+                direction: "DOWNSTREAM",
+              });
+            }
+          }
+        }
+      }
+    }
+    return connections;
+  };
+
   const [invalidRouting, setInvalidRouting] = useState(false);
-  const [publishingConnections, setPublishingConnections] = useState<
-    Array<Connection>
-  >(getPublishingConnections());
-  const [receivingConnections, setReceivingonnections] = useState<
-    Array<Connection>
-  >(getReceivingConnections());
   const [systemCounts, setSystemCounts] =
     useState<Map<string, number>>(getSystemCounts());
+
+  const [downstreamConnections, setDownstreamConnections] = useState(
+    getDownstreamConnections(),
+  );
 
   const rescanPluginTourStep: TourStepProps = {
     prefix: tourPrefix,
@@ -196,9 +240,8 @@ function GardenSummary({
   };
 
   useEffect(() => {
-    setPublishingConnections(getPublishingConnections());
-    setReceivingonnections(getReceivingConnections());
     setSystemCounts(getSystemCounts());
+    setDownstreamConnections(getDownstreamConnections());
 
     if (tourStepsRef !== undefined) {
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
@@ -334,15 +377,55 @@ function GardenSummary({
     return <Chip label={row.status} color={severity} />;
   };
 
-  const connectionActions = (node: Connection, type: string) => {
-    if (
-      gardenRef.current?.name === selectedGarden?.name ||
-      (selectedGarden?.has_parent === true &&
-        selectedGarden.parent !== undefined &&
-        selectedGarden.parent !== gardenRef.current?.name)
-    ) {
-      return <></>;
+  const getConnectionColumns = () => {
+    const columns = [
+      {
+        id: "garden",
+        field: "garden",
+        label: "Garden",
+        template: (row) => {
+          return (
+            <>
+              <FAIcon
+                icon={
+                  row.direction === "DOWNSTREAM" ? "arrow-down" : "arrow-up"
+                }
+                sx={{ mr: 2 }}
+              />
+              {row.garden}
+            </>
+          );
+        },
+      },
+      {
+        id: "type",
+        field: "type",
+        label: "Type",
+      },
+      {
+        id: "api",
+        field: "api",
+        label: "API",
+        template: (row) => apiTemplate(row, row.type),
+      },
+      {
+        id: "status",
+        field: "status",
+        label: "Status",
+        template: statusTemplate,
+      },
+    ] as ColumnField[];
+
+    if (gardenRef?.current?.name === selectedGarden?.name) {
+      columns.push({
+        id: "actions",
+        label: "Actions",
+        template: (node: any) => connectionActions(node, node.type),
+      });
     }
+    return columns;
+  };
+  const connectionActions = (node: Connection, type: string) => {
     return (
       <Box sx={{ display: "flex", gap: 2 }}>
         <AccessButton
@@ -434,15 +517,55 @@ function GardenSummary({
           margin: "20px 0 20px",
         }}
       >
-        <Typography
-          variant="h4"
-          component="h1"
-          sx={{ flexGrow: 1, fontWeight: "bold" }}
-        >
-          {selectedGarden?.name
-            ? `Garden Summary: ${selectedGarden?.name}`
-            : "Garden Summary"}
-        </Typography>
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: "bold" }}>
+            {selectedGarden?.name
+              ? `Garden Summary: ${selectedGarden?.name}`
+              : "Garden Summary"}
+          </Typography>
+          <Box sx={{ display: "flex" }}>
+            <Box sx={{ display: "flex", mr: 2 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ mr: 2, fontWeight: "bold" }}
+              >
+                Version:
+              </Typography>
+              <Typography variant="subtitle1">
+                {selectedGarden?.version}
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex" }}>
+              <Typography sx={{ mr: 2, fontWeight: "bold" }}>
+                Systems:{" "}
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                {Array.from(systemCounts, ([status, count]) => {
+                  if (count && count > 0) {
+                    const statusSeverity = GetSeverity(status);
+                    return (
+                      <div key={`${status}_Summary`}>
+                        <Tooltip title={`${status} Count ${count}`}>
+                          <Box component="span" aria-label={undefined}>
+                            <Chip
+                              data-testid={`${status}_severity_system_summary`}
+                              id={`${status}_${selectedGarden?.id}_severity_system_summary`}
+                              label={count}
+                              color={statusSeverity}
+                              key={status}
+                            />
+                          </Box>
+                        </Tooltip>
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })}
+              </Box>
+            </Box>
+          </Box>
+        </Box>
         {selectedGarden?.name && (
           <div>
             <AccessButton
@@ -725,128 +848,17 @@ function GardenSummary({
               interrupted or missed. Please contact your Garden Admin
             </Alert>
           )}
-          <Grid container spacing={1}>
-            <Grid size={3}>
-              <h2>Version</h2>
-              <p>{selectedGarden?.version}</p>
-            </Grid>
-            <Grid size={3}>
-              <h2>Systems</h2>
-              <Box sx={{ display: "flex" }}>
-                {Array.from(systemCounts, ([status, count]) => {
-                  if (count && count > 0) {
-                    const statusSeverity = GetSeverity(status);
-                    return (
-                      <div key={`${status}_Summary`}>
-                        <Tooltip title={`${status} Count ${count}`}>
-                          <Box component="span" aria-label={undefined}>
-                            <Chip
-                              data-testid={`${status}_severity_system_summary`}
-                              id={`${status}_${selectedGarden?.id}_severity_system_summary`}
-                              label={count}
-                              color={statusSeverity}
-                              key={status}
-                            />
-                          </Box>
-                        </Tooltip>
-                      </div>
-                    );
-                  }
-
-                  return null;
-                })}
-              </Box>
-            </Grid>
-
-            {selectedGarden?.children &&
-              selectedGarden?.children.length > 0 && (
-                <Grid size={3}>
-                  <h2>Downstream</h2>
-
-                  {selectedGarden?.children &&
-                    selectedGarden?.children.length > 0 && (
-                      <ul>
-                        {" "}
-                        {Array.from(
-                          selectedGarden.children ?? [],
-                          (child: Garden) => {
-                            return <li key={child.name}>{child.name}</li>;
-                          },
-                        )}
-                      </ul>
-                    )}
-                </Grid>
-              )}
-            {selectedGarden?.parent && (
-              <Grid size={3}>
-                <h2>Upstream</h2>
-                <ul>
-                  <li>{selectedGarden?.parent}</li>
-                </ul>
-              </Grid>
+          <Box sx={{ mt: 2 }}>
+            {downstreamConnections && downstreamConnections.length > 0 && (
+              <EnhancedTable
+                data={downstreamConnections}
+                groupBy="garden"
+                size="small"
+                displayAll={true}
+                columns={getConnectionColumns()}
+              />
             )}
-          </Grid>
-          <Grid container spacing={1}>
-            {receivingConnections && receivingConnections.length > 0 && (
-              <Grid size={4}>
-                <h2>Receiving</h2>
-
-                <EnhancedTable
-                  data={receivingConnections}
-                  displayAll={true}
-                  columns={[
-                    {
-                      id: "api",
-                      field: "api",
-                      label: "API",
-                      template: (row) => apiTemplate(row, "RECEIVING"),
-                    },
-                    {
-                      id: "status",
-                      field: "status",
-                      label: "Status",
-                      template: statusTemplate,
-                    },
-                    {
-                      id: "actions",
-                      label: "Actions",
-                      template: (node: any) =>
-                        connectionActions(node, "RECEIVING"),
-                    },
-                  ]}
-                />
-              </Grid>
-            )}
-            {publishingConnections && publishingConnections.length > 0 && (
-              <Grid size={4}>
-                <h2>Publishing</h2>
-                <EnhancedTable
-                  data={publishingConnections}
-                  displayAll={true}
-                  columns={[
-                    {
-                      id: "api",
-                      field: "api",
-                      label: "API",
-                      template: (row) => apiTemplate(row, "PUBLISHING"),
-                    },
-                    {
-                      id: "status",
-                      field: "status",
-                      label: "Status",
-                      template: statusTemplate,
-                    },
-                    {
-                      id: "actions",
-                      label: "Actions",
-                      template: (node: any) =>
-                        connectionActions(node, "PUBLISHING"),
-                    },
-                  ]}
-                />
-              </Grid>
-            )}
-          </Grid>
+          </Box>
         </div>
       ) : (
         <Skeleton width="100%" height="150px"></Skeleton>
