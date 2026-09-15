@@ -434,15 +434,55 @@ function GardenSummary({
           margin: "20px 0 20px",
         }}
       >
-        <Typography
-          variant="h4"
-          component="h1"
-          sx={{ flexGrow: 1, fontWeight: "bold" }}
-        >
-          {selectedGarden?.name
-            ? `Garden Summary: ${selectedGarden?.name}`
-            : "Garden Summary"}
-        </Typography>
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: "bold" }}>
+            {selectedGarden?.name
+              ? `Garden Summary: ${selectedGarden?.name}`
+              : "Garden Summary"}
+          </Typography>
+          <Box sx={{ display: "flex" }}>
+            <Box sx={{ display: "flex", mr: 2 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ mr: 2, fontWeight: "bold" }}
+              >
+                Version:
+              </Typography>
+              <Typography variant="subtitle1">
+                {selectedGarden?.version}
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex" }}>
+              <Typography sx={{ mr: 2, fontWeight: "bold" }}>
+                Systems:{" "}
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                {Array.from(systemCounts, ([status, count]) => {
+                  if (count && count > 0) {
+                    const statusSeverity = GetSeverity(status);
+                    return (
+                      <div key={`${status}_Summary`}>
+                        <Tooltip title={`${status} Count ${count}`}>
+                          <Box component="span" aria-label={undefined}>
+                            <Chip
+                              data-testid={`${status}_severity_system_summary`}
+                              id={`${status}_${selectedGarden?.id}_severity_system_summary`}
+                              label={count}
+                              color={statusSeverity}
+                              key={status}
+                            />
+                          </Box>
+                        </Tooltip>
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })}
+              </Box>
+            </Box>
+          </Box>
+        </Box>
         {selectedGarden?.name && (
           <div>
             <AccessButton
@@ -726,67 +766,6 @@ function GardenSummary({
             </Alert>
           )}
           <Grid container spacing={1}>
-            <Grid size={3}>
-              <h2>Version</h2>
-              <p>{selectedGarden?.version}</p>
-            </Grid>
-            <Grid size={3}>
-              <h2>Systems</h2>
-              <Box sx={{ display: "flex" }}>
-                {Array.from(systemCounts, ([status, count]) => {
-                  if (count && count > 0) {
-                    const statusSeverity = GetSeverity(status);
-                    return (
-                      <div key={`${status}_Summary`}>
-                        <Tooltip title={`${status} Count ${count}`}>
-                          <Box component="span" aria-label={undefined}>
-                            <Chip
-                              data-testid={`${status}_severity_system_summary`}
-                              id={`${status}_${selectedGarden?.id}_severity_system_summary`}
-                              label={count}
-                              color={statusSeverity}
-                              key={status}
-                            />
-                          </Box>
-                        </Tooltip>
-                      </div>
-                    );
-                  }
-
-                  return null;
-                })}
-              </Box>
-            </Grid>
-
-            {selectedGarden?.children &&
-              selectedGarden?.children.length > 0 && (
-                <Grid size={3}>
-                  <h2>Downstream</h2>
-
-                  {selectedGarden?.children &&
-                    selectedGarden?.children.length > 0 && (
-                      <ul>
-                        {" "}
-                        {Array.from(
-                          selectedGarden.children ?? [],
-                          (child: Garden) => {
-                            return <li key={child.name}>{child.name}</li>;
-                          },
-                        )}
-                      </ul>
-                    )}
-                </Grid>
-              )}
-            {selectedGarden?.parent && (
-              <Grid size={3}>
-                <h2>Upstream</h2>
-                <ul>
-                  <li>{selectedGarden?.parent}</li>
-                </ul>
-              </Grid>
-            )}
-          </Grid>
-          <Grid container spacing={1}>
             {receivingConnections && receivingConnections.length > 0 && (
               <Grid size={4}>
                 <h2>Receiving</h2>
@@ -844,6 +823,33 @@ function GardenSummary({
                     },
                   ]}
                 />
+              </Grid>
+            )}
+            {selectedGarden?.children &&
+              selectedGarden?.children.length > 0 && (
+                <Grid size={2}>
+                  <h2>Downstream</h2>
+
+                  {selectedGarden?.children &&
+                    selectedGarden?.children.length > 0 && (
+                      <ul>
+                        {" "}
+                        {Array.from(
+                          selectedGarden.children ?? [],
+                          (child: Garden) => {
+                            return <li key={child.name}>{child.name}</li>;
+                          },
+                        )}
+                      </ul>
+                    )}
+                </Grid>
+              )}
+            {selectedGarden?.parent && (
+              <Grid size={2}>
+                <h2>Upstream</h2>
+                <ul>
+                  <li>{selectedGarden?.parent}</li>
+                </ul>
               </Grid>
             )}
           </Grid>
