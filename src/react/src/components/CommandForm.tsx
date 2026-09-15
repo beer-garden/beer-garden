@@ -29,6 +29,7 @@ import {
   GetSystemList,
 } from "../services/system_service";
 import { CompareObjects } from "../services/util_service";
+import { inputDisplayStyling } from "../styles/sharedStyles";
 import CommandFormField from "./CommandFormField";
 
 function CommandForm({
@@ -63,12 +64,6 @@ function CommandForm({
       severity: "error" | "info" | "success" | "warning";
     }>
   >([]);
-
-  const inputDisplayStyling = {
-    display: "flex",
-    justifyContent: "flex-end",
-    m: 1,
-  };
 
   const clearMessages = () => setErrorMessages([]);
   const addMessage = (msg: {
