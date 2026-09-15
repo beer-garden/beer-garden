@@ -155,8 +155,7 @@ function RequestOptions({
           command: () => {
             if (
               request?.metadata?.bg_job_id &&
-              typeof request.metadata.bg_job_id === "string" &&
-              request?.source_garden === config?.garden_name
+              typeof request.metadata.bg_job_id === "string"
             ) {
               addRequestItem({
                 jobId: request.metadata.bg_job_id,
