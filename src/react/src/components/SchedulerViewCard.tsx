@@ -441,7 +441,7 @@ function SchedulerViewCard({
               {...permissions}
               permission="OPERATOR"
             >
-              <FAIcon icon="forward" />
+              <FAIcon icon="rocket" />
             </AccessButton>
 
             <AccessButton
