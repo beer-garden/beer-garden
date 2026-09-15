@@ -277,14 +277,12 @@ function SystemCard({
           setForceDeleteVisible(true);
         });
     };
-    const reject = () => {};
     const confirm = () => {
       showConfirmDialog({
         message:
           "Are you sure you want to delete a system with running instances?",
         header: `Confirm Delete ${system.name}`,
         accept,
-        reject,
       });
     };
 

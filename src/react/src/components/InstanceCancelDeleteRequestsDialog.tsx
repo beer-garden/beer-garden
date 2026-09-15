@@ -356,14 +356,11 @@ function InstanceCancelDeleteRequestsDialog({
         });
     };
 
-    const reject = () => {};
-
     const confirm = () => {
       showConfirmDialog({
         message: msg,
         header: "Confirmation",
         accept,
-        reject,
       });
     };
 

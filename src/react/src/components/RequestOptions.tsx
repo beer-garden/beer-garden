@@ -233,7 +233,6 @@ function RequestOptions({
               });
             });
         }}
-        reject={() => {}}
         message={"Are you sure you want to delete this request?"}
         header={`Confirm Delete ${request.id}`}
       />

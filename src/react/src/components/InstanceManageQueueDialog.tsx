@@ -82,14 +82,11 @@ function InstanceManageQueueDialog({
         });
     };
 
-    const reject = () => {};
-
     const confirm = () => {
       showConfirmDialog({
         message: "Are you sure you want to clear the Queue?",
         header: "Confirm",
         accept,
-        reject,
       });
     };
 
