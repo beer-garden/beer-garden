@@ -183,12 +183,22 @@ function RequestTreeMenu({
     const statusSeverity = GetSeverity(node.data.status);
 
     return (
-      <Box>
+      <>
         <Stack>
           <Box sx={{ display: "flex" }}>
             {commandIcons(node)}
 
-            <Typography sx={{ fontWeight: "bold", ml: 1 }}>
+            <Typography
+              noWrap
+              title={node.data?.command_display_name ?? node.data?.command}
+              sx={{
+                fontWeight: "bold",
+                ml: 1,
+                wordBreak: "break-word",
+                overflowWrap: "break-word",
+                maxWidth: 200,
+              }}
+            >
               {node.data?.command_display_name ?? node.data?.command}
             </Typography>
 
@@ -240,7 +250,7 @@ function RequestTreeMenu({
             </Typography>
           </Box>
         </Stack>
-      </Box>
+      </>
     );
   };
 

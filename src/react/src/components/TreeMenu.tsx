@@ -1,4 +1,10 @@
-import { MenuItem, MenuList, MenuListProps, Skeleton } from "@mui/material";
+import {
+  Box,
+  MenuItem,
+  MenuList,
+  MenuListProps,
+  Skeleton,
+} from "@mui/material";
 import { ReactElement, useEffect, useState } from "react";
 
 export type TreeMenuItemProps = {
@@ -95,17 +101,19 @@ function TreeMenu({
               selected={selected === option.id}
               onClick={() => onSelected(option)}
               sx={{
-                ml: option.depth ? option.depth * 2 : 0,
                 "&:hover, &:focus, &.Mui-focusVisible, &.Mui-selected.Mui-focusVisible, &.Mui-selected:hover":
                   {
                     backgroundColor: (theme) => theme.palette.action.hover,
                   },
                 "&.Mui-selected": {
-                  backgroundColor: (theme) => theme.palette.action.selected,
+                  backgroundColor: (theme) => theme.palette.background.paper,
+                  border: "2px dashed grey",
                 },
               }}
             >
-              {itemTemplate ? itemTemplate(option) : option.label}
+              <Box sx={{ ml: option.depth ? option.depth * 2 : 0 }}>
+                {itemTemplate ? itemTemplate(option) : option.label}
+              </Box>
             </MenuItem>
           ))}
         </MenuList>
