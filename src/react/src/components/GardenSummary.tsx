@@ -1,17 +1,14 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Alert,
   Box,
   Chip,
   Divider,
-  Grid,
   Skeleton,
   Tooltip,
   Typography,
 } from "@mui/material";
 import { RefObject, useEffect, useState } from "react";
 
-import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import { Connection, Garden, Runner, System } from "../models/brewtils-types";
 import { Config } from "../models/models";
 import { TourStepProps } from "../models/models";
@@ -21,7 +18,6 @@ import {
   RescanGarden,
   SyncGarden,
   SyncUsersGarden,
-  UpdateApiGarden,
 } from "../services/garden_service";
 import { ClearAllQueues } from "../services/queue_service";
 import { Rescan } from "../services/system_service";
@@ -55,25 +51,6 @@ function GardenSummary({
   const showSnackbar = useSnackbar();
   const tourUuid = selectedGarden?.id;
   const tourPrefix = "garden_summary";
-  const getPublishingConnections = () => {
-    if (selectedGarden?.publishing_connections) {
-      return selectedGarden.publishing_connections.filter(
-        (connection: Connection) => connection.status !== "NOT_CONFIGURED",
-      );
-    } else {
-      return [];
-    }
-  };
-
-  const getReceivingConnections = () => {
-    if (selectedGarden?.receiving_connections) {
-      return selectedGarden.receiving_connections.filter(
-        (connection: Connection) => connection.status !== "NOT_CONFIGURED",
-      );
-    } else {
-      return [];
-    }
-  };
 
   const getSystemCounts = () => {
     if (selectedGarden) {
@@ -89,12 +66,6 @@ function GardenSummary({
   };
 
   const [invalidRouting, setInvalidRouting] = useState(false);
-  const [publishingConnections, setPublishingConnections] = useState<
-    Array<Connection>
-  >(getPublishingConnections());
-  const [receivingConnections, setReceivingonnections] = useState<
-    Array<Connection>
-  >(getReceivingConnections());
   const [systemCounts, setSystemCounts] =
     useState<Map<string, number>>(getSystemCounts());
 
@@ -196,8 +167,6 @@ function GardenSummary({
   };
 
   useEffect(() => {
-    setPublishingConnections(getPublishingConnections());
-    setReceivingonnections(getReceivingConnections());
     setSystemCounts(getSystemCounts());
 
     if (tourStepsRef !== undefined) {
@@ -276,154 +245,6 @@ function GardenSummary({
     }
   }, [selectedGarden, selectedSystems]);
 
-  const apiTemplate = (connection: Connection, type: string) => {
-    let url = "";
-
-    if (connection.config?.host !== undefined) {
-      url = url + connection.config?.host;
-    }
-    if (connection.config?.port !== undefined) {
-      url = url + ":" + connection.config?.port;
-    }
-
-    if (
-      connection.config?.url_prefix !== undefined &&
-      connection.config?.url_prefix != null &&
-      connection.config?.url_prefix != "" &&
-      connection.config?.url_prefix != "/"
-    ) {
-      url = url + "/" + connection.config?.url_prefix;
-    }
-
-    if (type === "RECEIVING") {
-      if (connection.config?.subscribe_destination !== undefined) {
-        const sub_dest = connection.config?.subscribe_destination.replace(
-          /^\/+/,
-          "",
-        );
-        url = url.replace(/\/+$/, "");
-        url = url.concat("/", sub_dest);
-      }
-    } else {
-      if (connection.config?.send_destination !== undefined) {
-        const send_dest = connection.config?.send_destination.replace(
-          /^\/+/,
-          "",
-        );
-        url = url.replace(/\/+$/, "");
-        url = url.concat("/", send_dest);
-      }
-    }
-
-    const targetId = `Connection_${type}_${connection.api}`;
-
-    return (
-      <>
-        <Tooltip title={url ?? ""}>
-          <Box component="span" aria-label={undefined} id={targetId}>
-            {connection.api}
-          </Box>
-        </Tooltip>
-      </>
-    );
-  };
-
-  const statusTemplate = (row: Connection) => {
-    const severity = GetSeverity(row.status);
-
-    return <Chip label={row.status} color={severity} />;
-  };
-
-  const connectionActions = (node: Connection, type: string) => {
-    if (
-      gardenRef.current?.name === selectedGarden?.name ||
-      (selectedGarden?.has_parent === true &&
-        selectedGarden.parent !== undefined &&
-        selectedGarden.parent !== gardenRef.current?.name)
-    ) {
-      return <></>;
-    }
-    return (
-      <Box sx={{ display: "flex", gap: 2 }}>
-        <AccessButton
-          data-testid={type + "_" + node?.api + "_START"}
-          {...GenerateTourProps({
-            prefix: tourPrefix,
-            uuid: tourUuid,
-            label: `${type} START ${node?.api}`,
-          })}
-          onClick={() => {
-            if (selectedGarden?.name && node?.status && node?.api) {
-              UpdateApiGarden(selectedGarden.name, type, node.api, type)
-                .then(() => {
-                  showSnackbar({
-                    severity: "success",
-                    summary: "Success",
-                    detail: `Stopped Garden API connection ${node.api}`,
-                    life: 3000,
-                  });
-                })
-                .catch((error) => {
-                  console.error("Error Updating Garden API Connection:", error);
-                  showSnackbar({
-                    severity: "error",
-                    summary: "Error",
-                    detail: `Error Updating Garden API Connection: ${error}`,
-                    life: 3000,
-                  });
-                });
-            } else if (node?.api === null || node?.api === undefined) {
-              throw Error(`Error missing ${JSON.stringify(node)}`);
-            }
-          }}
-          tooltip={`${type} START ${node?.api}`}
-          config={config}
-          permission="GARDEN_ADMIN"
-          hasGardenName={selectedGarden?.name}
-        >
-          <FontAwesomeIcon icon="play" />
-        </AccessButton>
-        <AccessButton
-          color="warning"
-          data-testid={type + "_" + node?.api + "_STOP"}
-          {...GenerateTourProps({
-            prefix: tourPrefix,
-            uuid: tourUuid,
-            label: `${type} STOP ${node?.api}`,
-          })}
-          onClick={() => {
-            if (selectedGarden?.name && node?.status && node?.api) {
-              UpdateApiGarden(selectedGarden.name, "DISABLED", node.api, type)
-                .then(() => {
-                  showSnackbar({
-                    severity: "success",
-                    summary: "Success",
-                    detail: `Started Garden API connection ${node.api}`,
-                    life: 3000,
-                  });
-                })
-                .catch((error) => {
-                  console.error("Error Updating Garden API Connection:", error);
-                  showSnackbar({
-                    severity: "error",
-                    summary: "Error",
-                    detail: `Error Updating Garden API Connection: ${error}`,
-                    life: 3000,
-                  });
-                });
-            }
-          }}
-          tooltip={`${type} STOP ${node?.api}`}
-          config={config}
-          permission="GARDEN_ADMIN"
-          hasGardenName={selectedGarden?.name}
-        >
-          <FontAwesomeIcon icon="stop" />
-        </AccessButton>
-      </Box>
-    );
-  };
-
   return (
     <Box sx={{ mb: 4, width: "100%" }} key={selectedGarden?.name}>
       <Box
@@ -434,15 +255,55 @@ function GardenSummary({
           margin: "20px 0 20px",
         }}
       >
-        <Typography
-          variant="h4"
-          component="h1"
-          sx={{ flexGrow: 1, fontWeight: "bold" }}
-        >
-          {selectedGarden?.name
-            ? `Garden Summary: ${selectedGarden?.name}`
-            : "Garden Summary"}
-        </Typography>
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: "bold" }}>
+            {selectedGarden?.name
+              ? `Garden Summary: ${selectedGarden?.name}`
+              : "Garden Summary"}
+          </Typography>
+          <Box sx={{ display: "flex" }}>
+            <Box sx={{ display: "flex", mr: 2 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{ mr: 2, fontWeight: "bold" }}
+              >
+                Version:
+              </Typography>
+              <Typography variant="subtitle1">
+                {selectedGarden?.version}
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex" }}>
+              <Typography sx={{ mr: 2, fontWeight: "bold" }}>
+                Systems:{" "}
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                {Array.from(systemCounts, ([status, count]) => {
+                  if (count && count > 0) {
+                    const statusSeverity = GetSeverity(status);
+                    return (
+                      <div key={`${status}_Summary`}>
+                        <Tooltip title={`${status} Count ${count}`}>
+                          <Box component="span" aria-label={undefined}>
+                            <Chip
+                              data-testid={`${status}_severity_system_summary`}
+                              id={`${status}_${selectedGarden?.id}_severity_system_summary`}
+                              label={count}
+                              color={statusSeverity}
+                              key={status}
+                            />
+                          </Box>
+                        </Tooltip>
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })}
+              </Box>
+            </Box>
+          </Box>
+        </Box>
         {selectedGarden?.name && (
           <div>
             <AccessButton
@@ -725,128 +586,6 @@ function GardenSummary({
               interrupted or missed. Please contact your Garden Admin
             </Alert>
           )}
-          <Grid container spacing={1}>
-            <Grid size={3}>
-              <h2>Version</h2>
-              <p>{selectedGarden?.version}</p>
-            </Grid>
-            <Grid size={3}>
-              <h2>Systems</h2>
-              <Box sx={{ display: "flex" }}>
-                {Array.from(systemCounts, ([status, count]) => {
-                  if (count && count > 0) {
-                    const statusSeverity = GetSeverity(status);
-                    return (
-                      <div key={`${status}_Summary`}>
-                        <Tooltip title={`${status} Count ${count}`}>
-                          <Box component="span" aria-label={undefined}>
-                            <Chip
-                              data-testid={`${status}_severity_system_summary`}
-                              id={`${status}_${selectedGarden?.id}_severity_system_summary`}
-                              label={count}
-                              color={statusSeverity}
-                              key={status}
-                            />
-                          </Box>
-                        </Tooltip>
-                      </div>
-                    );
-                  }
-
-                  return null;
-                })}
-              </Box>
-            </Grid>
-
-            {selectedGarden?.children &&
-              selectedGarden?.children.length > 0 && (
-                <Grid size={3}>
-                  <h2>Downstream</h2>
-
-                  {selectedGarden?.children &&
-                    selectedGarden?.children.length > 0 && (
-                      <ul>
-                        {" "}
-                        {Array.from(
-                          selectedGarden.children ?? [],
-                          (child: Garden) => {
-                            return <li key={child.name}>{child.name}</li>;
-                          },
-                        )}
-                      </ul>
-                    )}
-                </Grid>
-              )}
-            {selectedGarden?.parent && (
-              <Grid size={3}>
-                <h2>Upstream</h2>
-                <ul>
-                  <li>{selectedGarden?.parent}</li>
-                </ul>
-              </Grid>
-            )}
-          </Grid>
-          <Grid container spacing={1}>
-            {receivingConnections && receivingConnections.length > 0 && (
-              <Grid size={4}>
-                <h2>Receiving</h2>
-
-                <EnhancedTable
-                  data={receivingConnections}
-                  displayAll={true}
-                  columns={[
-                    {
-                      id: "api",
-                      field: "api",
-                      label: "API",
-                      template: (row) => apiTemplate(row, "RECEIVING"),
-                    },
-                    {
-                      id: "status",
-                      field: "status",
-                      label: "Status",
-                      template: statusTemplate,
-                    },
-                    {
-                      id: "actions",
-                      label: "Actions",
-                      template: (node: any) =>
-                        connectionActions(node, "RECEIVING"),
-                    },
-                  ]}
-                />
-              </Grid>
-            )}
-            {publishingConnections && publishingConnections.length > 0 && (
-              <Grid size={4}>
-                <h2>Publishing</h2>
-                <EnhancedTable
-                  data={publishingConnections}
-                  displayAll={true}
-                  columns={[
-                    {
-                      id: "api",
-                      field: "api",
-                      label: "API",
-                      template: (row) => apiTemplate(row, "PUBLISHING"),
-                    },
-                    {
-                      id: "status",
-                      field: "status",
-                      label: "Status",
-                      template: statusTemplate,
-                    },
-                    {
-                      id: "actions",
-                      label: "Actions",
-                      template: (node: any) =>
-                        connectionActions(node, "PUBLISHING"),
-                    },
-                  ]}
-                />
-              </Grid>
-            )}
-          </Grid>
         </div>
       ) : (
         <Skeleton width="100%" height="150px"></Skeleton>
