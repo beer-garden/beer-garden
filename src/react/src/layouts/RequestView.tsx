@@ -32,6 +32,7 @@ function RequestView({
   );
 
   const rootRequestRef = useRef<Request | undefined>(undefined);
+  const requestIdRef = useRef<string | undefined>(requestId);
 
   const updateRootRequest = (request?: Request) => {
     rootRequestRef.current = request;
@@ -40,9 +41,12 @@ function RequestView({
 
   const updateRequest = (request?: Request) => {
     setRequest(request);
-    if (request !== undefined) {
+    if (request === undefined) {
+      requestIdRef.current = undefined;
+    } else if (requestIdRef.current !== request?.id) {
       // Force the UI to reload the request for parameters and output fields
       setReloadRequest(true);
+      requestIdRef.current = request?.id;
     }
   };
 
@@ -123,9 +127,14 @@ function RequestView({
 
     const data = await GetRequest(request_id, {}, queryHeaders);
 
-    setRequest(data);
-
-    setReloadRequest(false);
+    if (
+      requestIdRef.current == undefined ||
+      requestIdRef.current === request_id
+    ) {
+      setRequest(data);
+      requestIdRef.current = request_id;
+      setReloadRequest(false);
+    }
   };
 
   const reloadRootRequest = async () => {
@@ -278,7 +287,9 @@ function RequestView({
       ) : (
         <Box sx={{ m: 2 }}>
           <Grid container>
-            <Grid>
+            <Grid
+              sx={{ maxWidth: "30vw", overflowX: "auto", maxHeight: "90vh" }}
+            >
               <RequestTreeMenu
                 rootRequest={rootRequest}
                 request={request}
