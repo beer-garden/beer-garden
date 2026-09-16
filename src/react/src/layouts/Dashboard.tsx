@@ -607,17 +607,14 @@ function GardenDashboard({
               p: 2,
             }}
             {...GenerateTourProps(gardenTreeTourStep)}
-            items={gardenMenu ?? []}
+            treeItems={gardenMenu ?? []}
             itemTemplate={gardenTreeNode}
-            expandAll={true}
-            disableToggle={true}
             isLoading={loading}
             changeSelected={(id: string) => {
               if (typeof id === "string") {
                 findSelectedGarden(id);
               }
             }}
-            itemChildrenIndentation={"0px"}
           />
         </Box>
 
