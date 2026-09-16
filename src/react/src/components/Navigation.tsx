@@ -553,7 +553,7 @@ function NavigationMenu({
       <Container maxWidth={false}>
         <Toolbar
           disableGutters
-          sx={{ display: "flex", alignItems: "center", gap: 2}}
+          sx={{ display: "flex", alignItems: "center", gap: 2 }}
         >
           <Button
             sx={navButtonStyles}
