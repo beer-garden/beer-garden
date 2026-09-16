@@ -101,6 +101,7 @@ function TreeMenu({
               selected={selected === option.id}
               onClick={() => onSelected(option)}
               sx={{
+                width: 'max-content',
                 border: (theme) =>
                   `2px solid ${theme.palette.background.default}`,
                 "&:hover, &:focus, &.Mui-focusVisible, &.Mui-selected.Mui-focusVisible, &.Mui-selected:hover":
