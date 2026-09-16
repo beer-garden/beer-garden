@@ -722,6 +722,11 @@ const EnhancedTable = ({
         {(displayAll === undefined || displayAll === false) && (
           <TablePagination
             component="div"
+            sx={{
+              "& .MuiTablePagination-toolbar": {
+                ml: 2,
+              },
+            }}
             rowsPerPageOptions={
               rowsPerPageOptions ?? (pageRecords ? [10, 25, 50, 100] : [])
             }

@@ -1,4 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { FormControl, InputLabel } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import MenuItem from "@mui/material/MenuItem";
@@ -430,38 +431,39 @@ export const EnhancedTableFilterOptions = ({
             borderColor: "divider",
           }}
         >
-          <Grid size={1}>
-            <IconButton
-              onClick={() => removeFilter(id)}
-              aria-label="Remove filter"
-            >
-              <FontAwesomeIcon icon="xmark" />
-            </IconButton>
-          </Grid>
-          <Grid size={3}>
-            <TextField
-              id={`filter-column-${id}`}
-              select
-              label="Column"
-              value={filterColumn}
-              onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                updateColumn(id, event.target.value);
-              }}
-              sx={{ width: "100%", mr: 2 }}
-            >
-              {columns
-                .filter((tableColumns) => tableColumns.filterable === true)
-                .map((tableColumns) => (
-                  <MenuItem key={tableColumns.id} value={tableColumns.field}>
-                    {typeof tableColumns.label === "string"
-                      ? tableColumns.label
-                      : tableColumns.id}
-                  </MenuItem>
-                ))}
-            </TextField>
+          <IconButton
+            onClick={() => removeFilter(id)}
+            aria-label="Remove filter"
+          >
+            <FontAwesomeIcon icon="xmark" />
+          </IconButton>
+          <Grid size="grow">
+            <FormControl fullWidth>
+              <InputLabel id={`filter-column-${id}-label`}>Column</InputLabel>
+              <Select
+                label="Column"
+                labelId={`filter-column-${id}-label`}
+                id={`filter-column-${id}`}
+                value={filterColumn}
+                onChange={(event: SelectChangeEvent) => {
+                  updateColumn(id, event.target.value);
+                }}
+                sx={{ width: "100%", mr: 2 }}
+              >
+                {columns
+                  .filter((tableColumns) => tableColumns.filterable === true)
+                  .map((tableColumns) => (
+                    <MenuItem key={tableColumns.id} value={tableColumns.field}>
+                      {typeof tableColumns.label === "string"
+                        ? tableColumns.label
+                        : tableColumns.id}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
           </Grid>
 
-          <Grid size={3}>
+          <Grid size="grow">
             {filterColumn === undefined && (
               <TextField
                 id={`filter-modifier-${id}`}
@@ -551,7 +553,6 @@ export const EnhancedTableFilterOptions = ({
 
             {filterColumn && isArray && (
               <TextField
-                sx={{ width: "100%", mr: 2 }}
                 id={`filter-modifier-${id}`}
                 select
                 label="Operator"
@@ -568,7 +569,7 @@ export const EnhancedTableFilterOptions = ({
               </TextField>
             )}
           </Grid>
-          <Grid size={5}>
+          <Grid size="grow">
             {(filterColumn === undefined || filterModifier === undefined) && (
               <TextField
                 id={`filter-value-${id}`}
