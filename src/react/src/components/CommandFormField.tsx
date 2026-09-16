@@ -28,6 +28,7 @@ import { ChangeEvent, useEffect, useState } from "react";
 import { InputParam } from "../models/models";
 import { uploadFile } from "../services/file_service";
 import { FAIcon } from "../services/util_service";
+import { inputDisplayStyling } from "../styles/sharedStyles";
 import AccessButton from "./AccessButton";
 import NumberField from "./EnhancedTable/components/NumberField";
 
@@ -119,13 +120,6 @@ function CommandFormField({
   const addInputAriaLabel = `Add new value to List for Parameter ${parameter.display_name ?? parameter.key}`;
 
   const removeInputAriaLabel = `Remove value from List for Parameter ${parameter.display_name ?? parameter.key}`;
-
-  // Single Item Formatting
-  const inputDisplayStyling = {
-    display: "flex",
-    justifyContent: "flex-end",
-    m: 1,
-  };
 
   // Multi Item Formatting
   const inputDisplayContainerStyling = {

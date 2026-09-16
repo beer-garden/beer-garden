@@ -196,7 +196,7 @@ function RequestTreeMenu({
                 ml: 1,
                 wordBreak: "break-word",
                 overflowWrap: "break-word",
-                maxWidth: 200,
+                maxWidth: "10vw",
               }}
             >
               {node.data?.command_display_name ?? node.data?.command}

@@ -11,7 +11,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { grey } from "@mui/material/colors";
-import React, { RefObject, useEffect, useRef, useState } from "react";
+import React, { RefObject, useEffect, useMemo, useRef, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
 import InstanceCancelDeleteDialog from "../components/InstanceCancelDeleteRequestsDialog";
@@ -151,6 +151,12 @@ function SystemCard({
     pos: 7,
   };
 
+  const sortedInstances = useMemo(() => {
+    return system.instances?.sort((a, b) =>
+      (a.name ?? "").localeCompare(b.name ?? ""),
+    );
+  }, [system]);
+
   useEffect(() => {
     if (tourStepsRef === undefined) {
       return;
@@ -271,14 +277,12 @@ function SystemCard({
           setForceDeleteVisible(true);
         });
     };
-    const reject = () => {};
     const confirm = () => {
       showConfirmDialog({
         message:
           "Are you sure you want to delete a system with running instances?",
         header: `Confirm Delete ${system.name}`,
         accept,
-        reject,
       });
     };
 
@@ -644,9 +648,10 @@ function SystemCard({
             <Divider sx={{ my: 2, clear: "right" }} />
           </Box>
           <Stack divider={<Divider />} spacing={2}>
-            {system.instances?.map((instance: Instance) => (
+            {sortedInstances.map((instance: Instance) => (
               <div key={JSON.stringify(instance)}>
-                <Box
+                <Stack
+                  direction="row"
                   sx={{
                     display: "flex",
                     flexWrap: "wrap",
@@ -654,11 +659,13 @@ function SystemCard({
                     alignItems: "center",
                   }}
                 >
-                  <div>{instanceIconTemplate(instance)}</div>
-                  <div>{statusTemplate(instance)}</div>
-                  <div>{instanceNameTemplate(instance)}</div>
-                  <div>{instanceActions(instance)}</div>
-                </Box>
+                  <Box>{instanceIconTemplate(instance)}</Box>
+                  <Box>{statusTemplate(instance)}</Box>
+                  <Box sx={{ width: "30%", textAlign: "center" }}>
+                    {instanceNameTemplate(instance)}
+                  </Box>
+                  <Box>{instanceActions(instance)}</Box>
+                </Stack>
               </div>
             ))}
           </Stack>

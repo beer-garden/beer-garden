@@ -96,7 +96,7 @@ describe("garden_service", () => {
     it("sends DELETE request", async () => {
       globalThis.fetch = vi.fn().mockResolvedValue({
         ok: true,
-        json: () => ({}),
+        text: () => "{}",
       });
 
       await gardenService.DeleteGarden("test_garden");
@@ -110,7 +110,7 @@ describe("garden_service", () => {
       globalThis.fetch = vi.fn().mockResolvedValue({
         ok: false,
         status: 404,
-        json: () => ({}),
+        text: () => "{}",
       });
 
       await expect(gardenService.DeleteGarden("missing")).rejects.toThrow(
