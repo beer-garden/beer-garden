@@ -27,7 +27,7 @@ const lightPalette = {
   action: {
     active: grey[100],
     hover: grey[600],
-    selected: grey[700],
+    selected: grey[500],
   },
   divider: grey[700],
 };
