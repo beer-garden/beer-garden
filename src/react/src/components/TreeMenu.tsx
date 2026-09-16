@@ -101,13 +101,16 @@ function TreeMenu({
               selected={selected === option.id}
               onClick={() => onSelected(option)}
               sx={{
+                border: (theme) =>
+                  `2px solid ${theme.palette.background.default}`,
                 "&:hover, &:focus, &.Mui-focusVisible, &.Mui-selected.Mui-focusVisible, &.Mui-selected:hover":
                   {
                     backgroundColor: (theme) => theme.palette.action.hover,
                   },
                 "&.Mui-selected": {
                   backgroundColor: (theme) => theme.palette.background.paper,
-                  border: "2px dashed grey",
+                  border: (theme) =>
+                    `2px dashed ${theme.palette.action.selected}`,
                 },
               }}
             >
