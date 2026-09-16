@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Box, CssBaseline, Grid, Skeleton } from "@mui/material";
+import { Box, CssBaseline, Grid, Skeleton, Toolbar } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import { ThemeProvider } from "@mui/material/styles";
@@ -587,6 +587,7 @@ function App() {
                     toggleRunTour={toggleRunTour}
                     tourStepsRef={tourStepsRef}
                   />
+                  <Toolbar />
                 </div>
                 {requestItem && (
                   <Dialog

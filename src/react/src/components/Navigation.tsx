@@ -549,11 +549,11 @@ function NavigationMenu({
   }, []);
 
   return (
-    <AppBar position="static" sx={{ bgcolor: "primary.main" }}>
+    <AppBar position="fixed" sx={{ bgcolor: "primary.main" }}>
       <Container maxWidth={false}>
         <Toolbar
           disableGutters
-          sx={{ display: "flex", alignItems: "center", gap: 2 }}
+          sx={{ display: "flex", alignItems: "center", gap: 2}}
         >
           <Button
             sx={navButtonStyles}
