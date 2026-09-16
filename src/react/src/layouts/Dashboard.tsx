@@ -585,7 +585,7 @@ function GardenDashboard({
       <div>
         <div>
           {node.gardenIcon}
-          <Box component="span" sx={{ ml: 1 }}>
+          <Box component="span" title={node.label} sx={{ mx: 1 }}>
             {node.label}
           </Box>
         </div>
@@ -604,7 +604,7 @@ function GardenDashboard({
               border: "1px solid",
               borderColor: grey[300],
               borderRadius: 2,
-              p: 2,
+              overflowX: "scroll"
             }}
             {...GenerateTourProps(gardenTreeTourStep)}
             treeItems={gardenMenu ?? []}
