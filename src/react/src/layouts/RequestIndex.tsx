@@ -197,7 +197,8 @@ function RequestIndex({
   const PeekJobView = (request: Request) => {
     if (
       request?.metadata?.bg_job_id &&
-      typeof request.metadata.bg_job_id === "string"
+      typeof request.metadata.bg_job_id === "string" &&
+      request?.source_garden === config?.garden_name
     ) {
       addRequestItem({ jobId: request.metadata.bg_job_id, type: "VIEW_JOB" });
     }
@@ -238,7 +239,8 @@ function RequestIndex({
   const commandActionTemplate = (request: Request) => {
     const showJob =
       request?.metadata?.bg_job_id !== undefined &&
-      request.source_garden === config.garden_name;
+      request.source_garden === config.garden_name &&
+      request?.source_garden === config?.garden_name;
 
     return (
       <div>

@@ -29,6 +29,7 @@ import {
   GetSystemList,
 } from "../services/system_service";
 import { CompareObjects } from "../services/util_service";
+import { inputDisplayStyling } from "../styles/sharedStyles";
 import CommandFormField from "./CommandFormField";
 
 function CommandForm({
@@ -826,7 +827,7 @@ function CommandForm({
             container
             key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}_COMMAND_TYPE`}
           >
-            <Grid size="grow">
+            <Grid size={{ xs: 4 }}>
               <FormLabel
                 id="command-type-label"
                 htmlFor="COMMAND_TYPE"
@@ -851,6 +852,7 @@ function CommandForm({
                   }
                   disabled={disabled}
                   size="small"
+                  sx={inputDisplayStyling}
                 >
                   {["ACTION", "INFO", "TEMP"].map((status: any) => (
                     <MenuItem key={status} value={status}>
@@ -869,7 +871,7 @@ function CommandForm({
               container
               key={`${request?.namespace}.${request?.system}.${request?.system_version}.${request?.instance_name}.${request?.command}.${parameter.key}`}
             >
-              <Grid size="grow">{renderInputLabel(parameter)}</Grid>
+              <Grid size={{ xs: 4 }}>{renderInputLabel(parameter)}</Grid>
               <Grid size="grow">
                 <CommandFormField
                   parameter={parameter}

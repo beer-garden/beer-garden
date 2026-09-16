@@ -46,7 +46,7 @@ const darkPalette = {
   },
   text: {
     primary: grey[50],
-    secondary: grey[100],
+    secondary: grey[400],
   },
   action: {
     active: grey[100],
@@ -144,6 +144,16 @@ export const theme = createTheme({
       styleOverrides: {
         icon: ({ theme }) => ({
           color: theme.palette.text.primary,
+        }),
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          color: theme.palette.text.secondary,
+          "&.Mui-selected": {
+            color: theme.palette.text.primary,
+          },
         }),
       },
     },
