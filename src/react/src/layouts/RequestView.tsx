@@ -287,7 +287,9 @@ function RequestView({
       ) : (
         <Box sx={{ m: 2 }}>
           <Grid container>
-            <Grid>
+            <Grid
+              sx={{ maxWidth: "30vw", overflowX: "auto", maxHeight: "90vh" }}
+            >
               <RequestTreeMenu
                 rootRequest={rootRequest}
                 request={request}

@@ -114,7 +114,7 @@ function TreeMenu({
                 },
               }}
             >
-              <Box sx={{ ml: option.depth ? option.depth * 2 : 0 }}>
+              <Box sx={{ ml: option.depth ? option.depth : 0 }}>
                 {itemTemplate ? itemTemplate(option) : option.label}
               </Box>
             </MenuItem>
