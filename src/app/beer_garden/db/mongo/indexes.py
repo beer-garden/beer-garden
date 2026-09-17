@@ -191,6 +191,7 @@ def update_ttl_indexes():
     )
     update_request_ttl_indexes("INFO", info_ttl, previous_config.get("info_ttl", 15))
     update_request_ttl_indexes("TEMP", 1, 1)
+    update_request_ttl_indexes("GARDEN", 1, 1)
     update_request_ttl_indexes("ADMIN", 1, 1)
 
     update_file_ttl_indexes(file_ttl, previous_config.get("file_ttl", 15))
