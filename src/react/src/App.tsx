@@ -177,10 +177,10 @@ function App() {
         }
         loadRootGarden(config);
         setInvalidUrl(false);
-        
+
         // Allows legacy deployment services to trigger events
         // once the configuration is loaded
-        window.dispatchEvent(new Event('load'));
+        window.dispatchEvent(new Event("load"));
       })
       .catch((error) => {
         console.log("Unable to retrieve configuration", error);
