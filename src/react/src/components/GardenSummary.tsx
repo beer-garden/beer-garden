@@ -37,6 +37,15 @@ import {
 import AccessButton from "./AccessButton";
 import { ColumnField } from "./EnhancedTable/models/EnhancedTableModels";
 
+interface GardenConnection {
+  garden: string;
+  api: string;
+  status: string;
+  type: string;
+  direction: string;
+  config?: any;
+}
+
 function GardenSummary({
   gardenRef,
   selectedGarden,
@@ -70,7 +79,7 @@ function GardenSummary({
   };
 
   const getDownstreamConnections = () => {
-    const connections = [] as any[];
+    const connections = [] as GardenConnection[];
 
     if (gardenRef?.current?.name === selectedGarden?.name) {
       if (selectedGarden?.receiving_connections) {
@@ -82,6 +91,7 @@ function GardenSummary({
               status: connection.status,
               type: "RECEIVING",
               direction: "UPSTREAM",
+              config: connection.config,
             });
           }
         }
@@ -96,6 +106,7 @@ function GardenSummary({
               status: connection.status,
               type: "PUBLISHING",
               direction: "UPSTREAM",
+              config: connection.config,
             });
           }
         }
@@ -112,6 +123,7 @@ function GardenSummary({
                 status: connection.status,
                 type: "RECEIVING",
                 direction: "DOWNSTREAM",
+                config: connection.config,
               });
             }
           }
@@ -125,6 +137,7 @@ function GardenSummary({
                 status: connection.status,
                 type: "PUBLISHING",
                 direction: "DOWNSTREAM",
+                config: connection.config,
               });
             }
           }
@@ -319,7 +332,7 @@ function GardenSummary({
     }
   }, [selectedGarden, selectedSystems]);
 
-  const apiTemplate = (connection: Connection, type: string) => {
+  const apiTemplate = (connection: GardenConnection, type: string) => {
     let url = "";
 
     if (connection.config?.host !== undefined) {
@@ -371,7 +384,7 @@ function GardenSummary({
     );
   };
 
-  const statusTemplate = (row: Connection) => {
+  const statusTemplate = (row: GardenConnection) => {
     const severity = GetSeverity(row.status);
 
     return <Chip label={row.status} color={severity} />;
@@ -425,19 +438,19 @@ function GardenSummary({
     }
     return columns;
   };
-  const connectionActions = (node: Connection, type: string) => {
+  const connectionActions = (node: GardenConnection, type: string) => {
     return (
       <Box sx={{ display: "flex", gap: 2 }}>
         <AccessButton
-          data-testid={type + "_" + node?.api + "_START"}
+          data-testid={`${node.garden}_${type}_${node?.api}_START`}
           {...GenerateTourProps({
             prefix: tourPrefix,
             uuid: tourUuid,
             label: `${type} START ${node?.api}`,
           })}
           onClick={() => {
-            if (selectedGarden?.name && node?.status && node?.api) {
-              UpdateApiGarden(selectedGarden.name, type, node.api, type)
+            if (node?.status && node?.api) {
+              UpdateApiGarden(node.garden, type, node.api, type)
                 .then(() => {
                   showSnackbar({
                     severity: "success",
@@ -468,15 +481,15 @@ function GardenSummary({
         </AccessButton>
         <AccessButton
           color="warning"
-          data-testid={type + "_" + node?.api + "_STOP"}
+          data-testid={`${node.garden}_${type}_${node?.api}_STOP`}
           {...GenerateTourProps({
             prefix: tourPrefix,
             uuid: tourUuid,
             label: `${type} STOP ${node?.api}`,
           })}
           onClick={() => {
-            if (selectedGarden?.name && node?.status && node?.api) {
-              UpdateApiGarden(selectedGarden.name, "DISABLED", node.api, type)
+            if (node?.status && node?.api) {
+              UpdateApiGarden(node.garden, "DISABLED", node.api, type)
                 .then(() => {
                   showSnackbar({
                     severity: "success",
