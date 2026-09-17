@@ -604,7 +604,7 @@ function GardenDashboard({
               border: "1px solid",
               borderColor: grey[300],
               borderRadius: 2,
-              overflowX: "scroll"
+              overflowX: "auto"
             }}
             {...GenerateTourProps(gardenTreeTourStep)}
             treeItems={gardenMenu ?? []}
