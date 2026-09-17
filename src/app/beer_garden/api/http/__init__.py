@@ -350,7 +350,7 @@ def _load_swagger(url_specs, title=None):
     global api_spec
     api_spec = APISpec(
         title=title,
-        version="2.0",
+        version=str(beer_garden.__version__),
         openapi_version="3.0.0",
         plugins=(MarshmallowPlugin(), TornadoPlugin()),
         info=dict(description="Beer Garden API"),
@@ -358,6 +358,13 @@ def _load_swagger(url_specs, title=None):
             "Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"},
         },
         security=[{"Bearer": []}],
+        servers=[
+            {
+                "url": f'{"https" if config.get("entry.http.ssl.enabled") else "http"}:// '
+                f'{config.get("entry.http.host")}:{config.get("entry.http.port")}'
+                f'{config.get("entry.http.url_prefix")}'
+            }
+        ],
     )
 
     # Schemas from Marshmallow
