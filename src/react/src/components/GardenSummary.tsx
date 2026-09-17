@@ -203,7 +203,7 @@ function GardenSummary({
     if (gardenRef.current && selectedGarden?.parent) {
       parentRoutingCheck(gardenRef.current, selectedGarden?.parent, true);
     } else {
-      setInvalidRouting(false)
+      setInvalidRouting(false);
     }
 
     if (tourStepsRef !== undefined) {
@@ -216,7 +216,7 @@ function GardenSummary({
       if (gardenRef.current) {
         if (gardenRef.current.name === selectedGarden?.name) {
           AddTourStep(tourStepsRef, syncAllTourStep);
-        } else {        
+        } else {
           AddTourStep(tourStepsRef, syncGardenTourStep);
           AddTourStep(tourStepsRef, syncUsersTourStep);
           AddTourStep(tourStepsRef, deleteGardenTourStep);
