@@ -549,7 +549,7 @@ function NavigationMenu({
   }, []);
 
   return (
-    <AppBar position="fixed" sx={{ bgcolor: "primary.main" }}>
+    <AppBar id="navbar" position="fixed" sx={{ bgcolor: "primary.main" }}>
       <Container maxWidth={false}>
         <Toolbar
           disableGutters
