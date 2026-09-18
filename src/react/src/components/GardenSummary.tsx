@@ -397,11 +397,13 @@ function GardenSummary({
         label: "Garden",
         template: (row) => {
           return (
-            <span title={
-                  row.direction === "DOWNSTREAM"
-                    ? `Downstream: ${row.garden}\n${selectedGarden?.name} send Operations and accept Events from ${row.garden}`
-                    : `Upstream: ${row.garden}\n${selectedGarden?.name} send events to ${row.garden}`
-                }>
+            <span
+              title={
+                row.direction === "DOWNSTREAM"
+                  ? `Downstream: ${row.garden}\n${selectedGarden?.name} send Operations and accept Events from ${row.garden}`
+                  : `Upstream: ${row.garden}\n${selectedGarden?.name} send events to ${row.garden}`
+              }
+            >
               <FAIcon
                 icon={
                   row.direction === "DOWNSTREAM" ? "arrow-down" : "arrow-up"
@@ -475,7 +477,15 @@ function GardenSummary({
               throw Error(`Error missing ${JSON.stringify(node)}`);
             }
           }}
-          tooltip={`${type} START ${node?.api}`}
+          title={
+            node.type === "RECEIVING"
+              ? node.direction === "DOWNSTREAM"
+                ? `Start acceping events from ${node.garden} to ${selectedGarden?.name} over ${node.api}`
+                : `Start acceping operation from ${node.garden} to ${selectedGarden?.name} over ${node.api}`
+              : node.direction === "DOWNSTREAM"
+                ? `Start sending operations from ${selectedGarden?.name} to ${node.garden} over ${node.api}`
+                : `Start sending events from ${selectedGarden?.name} to ${node.garden} over ${node.api}`
+          }
           config={config}
           permission="GARDEN_ADMIN"
           hasGardenName={selectedGarden?.name}
@@ -512,7 +522,15 @@ function GardenSummary({
                 });
             }
           }}
-          tooltip={`${type} STOP ${node?.api}`}
+          title={
+            node.type === "RECEIVING"
+              ? node.direction === "DOWNSTREAM"
+                ? `Stop acceping events from ${node.garden} to ${selectedGarden?.name} over ${node.api}`
+                : `Stop acceping operation from ${node.garden} to ${selectedGarden?.name} over ${node.api}`
+              : node.direction === "DOWNSTREAM"
+                ? `Stop sending operations from ${selectedGarden?.name} to ${node.garden} over ${node.api}`
+                : `Stop sending events from ${selectedGarden?.name} to ${node.garden} over ${node.api}`
+          }
           config={config}
           permission="GARDEN_ADMIN"
           hasGardenName={selectedGarden?.name}
