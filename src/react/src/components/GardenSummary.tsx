@@ -397,20 +397,19 @@ function GardenSummary({
         label: "Garden",
         template: (row) => {
           return (
-            <>
+            <span title={
+                  row.direction === "DOWNSTREAM"
+                    ? `Downstream: ${row.garden}\n${selectedGarden?.name} send Operations and accept Events from ${row.garden}`
+                    : `Upstream: ${row.garden}\n${selectedGarden?.name} send events to ${row.garden}`
+                }>
               <FAIcon
                 icon={
                   row.direction === "DOWNSTREAM" ? "arrow-down" : "arrow-up"
                 }
-                title={
-                  row.direction === "DOWNSTREAM"
-                    ? `${selectedGarden?.name} send Operations and accept Events from ${row.garden}`
-                    : `${selectedGarden?.name} send events to ${row.garden}`
-                }
                 sx={{ mr: 2 }}
               />
               {row.garden}
-            </>
+            </span>
           );
         },
       },
