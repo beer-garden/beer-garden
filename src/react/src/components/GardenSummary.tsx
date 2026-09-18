@@ -375,11 +375,10 @@ function GardenSummary({
 
     return (
       <>
-        <Tooltip title={url ?? ""}>
-          <Box component="span" aria-label={undefined} id={targetId}>
-            {connection.api}
-          </Box>
-        </Tooltip>
+        {connection.api}
+        {url.length > 0 && (
+          <FAIcon icon="server" title={url} id={targetId} sx={{ ml: 1 }} />
+        )}
       </>
     );
   };
