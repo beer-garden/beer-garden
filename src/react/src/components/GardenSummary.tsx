@@ -386,7 +386,23 @@ function GardenSummary({
   const statusTemplate = (row: GardenConnection) => {
     const severity = GetSeverity(row.status);
 
-    return <Chip label={row.status} color={severity} />;
+    return (
+      <Tooltip
+        title={
+          row.type === "RECEIVING"
+            ? row.direction === "DOWNSTREAM"
+              ? `Status ${row.status} over ${row.api} for accepting events from ${row.garden} to ${selectedGarden?.name}`
+              : `Status ${row.status} over ${row.api} for accepting operations from ${row.garden} to ${selectedGarden?.name}`
+            : row.direction === "DOWNSTREAM"
+              ? `Status ${row.status} over ${row.api} for sending operations from ${row.garden} to ${selectedGarden?.name}`
+              : `Status ${row.status} over ${row.api} for sending events from ${row.garden} to ${selectedGarden?.name}`
+        }
+      >
+        <Box component="span" aria-label={undefined}>
+          <Chip label={row.status} color={severity} />
+        </Box>
+      </Tooltip>
+    );
   };
 
   const getConnectionColumns = () => {
