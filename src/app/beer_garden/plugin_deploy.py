@@ -1,4 +1,5 @@
 import shutil
+import tarfile
 import tempfile
 import zipfile
 from io import BytesIO
@@ -8,6 +9,7 @@ from brewtils.models import System
 
 import beer_garden.config as config
 import beer_garden.db.api as db
+from beer_garden.errors import PluginValidationError
 from beer_garden.files import fetch_file
 from beer_garden.local_plugins.manager import rescan, runners
 from beer_garden.systems import purge_system
@@ -18,6 +20,8 @@ def deploy_plugin(
     file_bytes: BytesIO = None,
     file_id: str = None,
     migrate_conf: bool = False,
+    is_zip: bool = False,
+    is_tarfile: bool = False,
 ):
     if file_bytes is None:
         # Load File ID
@@ -25,7 +29,12 @@ def deploy_plugin(
         file_bytes = BytesIO(file.data.encode("utf-8"))
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        staged_path = _stage_files(file_bytes, target_folder, tmpdir)
+        if is_zip:
+            staged_path = _stage_files_zip(file_bytes, target_folder, tmpdir)
+        elif is_tarfile:
+            staged_path = _stage_files_tarfile(file_bytes, target_folder, tmpdir)
+        else:
+            raise PluginValidationError("Unknown Compression Library")
 
         if migrate_conf:
             _migrate_conf(target_folder, staged_path)
@@ -34,7 +43,16 @@ def deploy_plugin(
         _release_plugin(target_folder, staged_path)
 
 
-def _stage_files(file_bytes: BytesIO, target_folder: str, tmpdir: str) -> Path:
+def _stage_files_tarfile(file_bytes: BytesIO, target_folder: str, tmpdir: str) -> Path:
+
+    target_path = Path(f"{tmpdir}/{target_folder}").resolve()
+    with tarfile.open(fileobj=file_bytes, mode="r:gz") as tar:
+        tar.extractall(path=target_path)
+
+    return target_path
+
+
+def _stage_files_zip(file_bytes: BytesIO, target_folder: str, tmpdir: str) -> Path:
 
     target_path = Path(f"{tmpdir}/{target_folder}").resolve()
 
