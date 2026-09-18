@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { Config, RequestItem } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { DeleteJob } from "../services/job_service";
 import RequestCreateCard from "./RequestCreateCard";
 import RequestViewCard from "./RequestViewCard";
@@ -20,7 +20,7 @@ function RequestItemCard({
   requestItem: RequestItem;
   listeners: Record<string, any>;
   updateRequestItem: (itemParams?: Partial<RequestItem>) => void;
-  removeItem: (id: string) => void;
+  removeItem: (id?: string) => void;
   isDialog: boolean;
   config: Config;
 }) {
@@ -28,7 +28,7 @@ function RequestItemCard({
     localStorage.getItem("user_advanced") === "true" ? false : true,
   );
 
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   return (
     <>
@@ -36,8 +36,6 @@ function RequestItemCard({
         <RequestWizard
           requestItem={requestItem}
           updateRequestItem={updateRequestItem}
-          removeItem={removeItem}
-          isDialog={isDialog}
           config={config}
         />
       )}
@@ -45,8 +43,6 @@ function RequestItemCard({
         <RequestCreateCard
           requestItem={requestItem}
           updateRequestItem={updateRequestItem}
-          removeItem={removeItem}
-          isDialog={isDialog}
           config={config}
         />
       )}
@@ -64,10 +60,10 @@ function RequestItemCard({
       {requestItem?.type === "VIEW_JOB" && requestItem?.jobId && (
         <SchedulerViewCard
           jobId={requestItem.jobId}
-          removeItem={removeItem}
           listeners={listeners}
-          isDialog={isDialog}
           config={config}
+          updateRequestItem={updateRequestItem}
+          removeItem={removeItem}
           editJob={() => {
             updateRequestItem({
               ...requestItem,
@@ -82,7 +78,7 @@ function RequestItemCard({
                 })
                 .catch((error) => {
                   console.error("Error deleting job:", error);
-                  showToast({
+                  showSnackbar({
                     severity: "error",
                     summary: "Error",
                     detail: `Error deleting job: ${error}`,
@@ -98,7 +94,6 @@ function RequestItemCard({
           requestItem={requestItem}
           removeItem={removeItem}
           listeners={listeners}
-          isDialog={isDialog}
         />
       )}
     </>

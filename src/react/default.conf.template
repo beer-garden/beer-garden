@@ -1,3 +1,10 @@
+map $request_uri $target_path {
+    default /index.html;
+    ~^/api @beergarden;
+    ~^/config @beergarden;
+    ~^/version @beergarden;
+}
+
 server {
     listen       80;
     server_name  localhost;
@@ -7,8 +14,17 @@ server {
 
     client_max_body_size 100m;
 
+    # Support loading assets from any page
+    location /assets/(.+)$  {
+        alias /usr/share/nginx/html/$1;
+    }
+
+    location ~* /assets/(.+)$  {
+        alias /usr/share/nginx/html/$1;
+    }
+
     location / {
-        try_files $uri $uri/ @beergarden;
+        try_files $uri $uri/ $target_path;
     }
 
     location @beergarden {

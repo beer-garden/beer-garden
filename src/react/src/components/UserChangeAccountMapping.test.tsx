@@ -9,7 +9,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { Garden, User } from "../models/brewtils-types";
-import { ToastProvider } from "../providers/ToastProvider";
+import { SnackbarProvider } from "../providers/SnackbarProvider";
 import * as gardenService from "../services/garden_service";
 import * as userService from "../services/user_service";
 import UserChangeAccountMapping from "./UserChangeAccountMapping";
@@ -35,14 +35,14 @@ describe("UserChangeAccountMapping", () => {
     } as User;
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UserChangeAccountMapping
           config={{}}
           user={mockUser}
           showAccountMappingDialog={true}
           setShowAccountMappingDialog={() => {}}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -63,14 +63,14 @@ describe("UserChangeAccountMapping", () => {
     } as User;
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UserChangeAccountMapping
           config={{}}
           user={mockUser}
           showAccountMappingDialog={true}
           setShowAccountMappingDialog={() => {}}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -91,24 +91,26 @@ describe("UserChangeAccountMapping", () => {
     } as User;
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UserChangeAccountMapping
           config={{}}
           user={mockUser}
           showAccountMappingDialog={true}
           setShowAccountMappingDialog={() => {}}
         />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
       expect(
-        screen.getByTestId(`edit-user-account-${mockGarden.children[0].name}`),
-      );
+        screen.queryByLabelText(
+          `Edit User Account ${mockGarden.children[0].name}`,
+        ),
+      ).toBeInTheDocument();
     });
 
-    const aliasUsername = await screen.findByTestId(
-      `edit-user-account-${mockGarden.children[0].name}`,
+    const aliasUsername = await screen.findByLabelText(
+      `Edit User Account ${mockGarden.children[0].name}`,
     );
 
     fireEvent.change(aliasUsername, { target: { value: "new_username" } });

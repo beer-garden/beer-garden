@@ -1,7 +1,8 @@
-import { Skeleton } from "primereact/skeleton";
+import { Box, Skeleton } from "@mui/material";
 import { useState } from "react";
 
 import { Request } from "../models/brewtils-types";
+import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
 
 function largeOutputCheck(request: Request): boolean {
@@ -61,17 +62,18 @@ function displayOutput(request: Request) {
   return (
     <div>
       {hideOutput && (
-        <div>
-          <div>Output is too large</div>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <span>Output is too large</span>
           <AccessButton
             label="Show Output"
-            severity="warning"
-            icon="pi pi-arrow-right"
-            iconPos="right"
+            color="warning"
             data-testid="request-show-output"
             onClick={() => setHideOutput(false)}
-          />
-        </div>
+            sx={{ ml: 2 }}
+          >
+            <FAIcon icon="plus" />
+          </AccessButton>
+        </Box>
       )}
       {!hideOutput && formattedOutputData(request)}
     </div>
@@ -85,7 +87,7 @@ function RequestOutput({ request }: { request: Request }) {
   ) {
     return (
       <div id="request-output-skeleton">
-        <Skeleton width="100%" height="200px" borderRadius="16px" />
+        <Skeleton width="100%" height="200px" variant="rounded" />
       </div>
     );
   }

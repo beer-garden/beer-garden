@@ -1,7 +1,3 @@
-@import "primereact/resources/primereact.min.css";
-@import "primeflex/primeflex.css";
-@import "primeicons/primeicons.css";
-
 .App {
   text-align: center;
 }
@@ -49,6 +45,11 @@
 
 .p-menuitem-text {
   margin-left: 5px;
+}
+
+/* Override Z Layer for react-cron-js */
+.ant-select-dropdown {
+  z-index: 2000 !important;
 }
 
 /* Start 508 Color Contrast Formatting */

@@ -1,14 +1,23 @@
-import { Dialog } from "primereact/dialog";
-import { Divider } from "primereact/divider";
-import { Dropdown } from "primereact/dropdown";
-import { InputText } from "primereact/inputtext";
-import { Messages } from "primereact/messages";
-import { ChangeEvent, useEffect, useRef, useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  Alert,
+  Autocomplete,
+  Box,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  FormLabel,
+  Grid,
+  TextField,
+} from "@mui/material";
+import { ChangeEvent, useEffect, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
 import RoleScopeCard from "../components/RoleScopeCard";
 import { Role } from "../models/brewtils-types";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { CreateRole, EditRole, GetRole } from "../services/role_service";
 
 function RoleCard({
@@ -16,6 +25,7 @@ function RoleCard({
   targetRole,
   isEdit,
   disabled = false,
+  dialogVisible = false,
   updateRoles,
   onClose,
 }: {
@@ -23,10 +33,11 @@ function RoleCard({
   targetRole?: Role;
   isEdit?: boolean;
   disabled?: boolean;
+  dialogVisible?: boolean;
   updateRoles?: (role: Role) => void;
   onClose: () => void;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   const [roleName, setRoleName] = useState<string>("");
   const [roleDescription, setRoleDescription] = useState<string>("");
@@ -41,14 +52,15 @@ function RoleCard({
     "",
   ]);
   const [commandScopeList, setCommandScopeList] = useState<Array<string>>([""]);
-  const msgs = useRef<Messages>(null);
 
-  const permissions = [
-    { label: "GARDEN_ADMIN", value: "GARDEN_ADMIN" },
-    { label: "PLUGIN_ADMIN", value: "PLUGIN_ADMIN" },
-    { label: "OPERATOR", value: "OPERATOR" },
-    { label: "READ_ONLY", value: "READ_ONLY" },
-  ];
+  interface AlertObj {
+    severity: "success" | "info" | "warning" | "error";
+    detail: string;
+  }
+
+  const [alert, setAlert] = useState<AlertObj | undefined>(undefined);
+
+  const permissions = ["GARDEN_ADMIN", "PLUGIN_ADMIN", "OPERATOR", "READ_ONLY"];
 
   function setRole(role: Role) {
     setRoleName(isEdit === true || disabled ? role.name || "" : "");
@@ -93,7 +105,7 @@ function RoleCard({
           setRole(role);
         })
         .catch((error) => {
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error loading the role: ${error}`,
@@ -113,9 +125,17 @@ function RoleCard({
     }
   }, []);
 
+  const handleDismissAlert = () => {
+    setAlert(undefined);
+  };
+
+  const addAlert = (newAlert: AlertObj) => {
+    setAlert(newAlert);
+  };
+
   function handleDialogSubmit() {
     if (updateRoles === undefined) {
-      showToast({
+      showSnackbar({
         severity: "error",
         summary: "Error",
         detail: `Missing Roles Updater Logic`,
@@ -142,7 +162,7 @@ function RoleCard({
           .then((updatedRole: Role) => {
             updateRoles(updatedRole);
 
-            showToast({
+            showSnackbar({
               severity: "info",
               summary: "Role Updated",
               detail: `Role updated: ${roleObj.name}`,
@@ -151,7 +171,7 @@ function RoleCard({
             onClose();
           })
           .catch((error) => {
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error editing the role: ${error}`,
@@ -164,7 +184,7 @@ function RoleCard({
           .then((createdRole: Role) => {
             updateRoles(createdRole);
 
-            showToast({
+            showSnackbar({
               severity: "info",
               summary: "Role Created",
               detail: `New role created: ${roleObj.name}`,
@@ -173,7 +193,7 @@ function RoleCard({
             onClose();
           })
           .catch((error) => {
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error creating the role: ${error}`,
@@ -189,10 +209,9 @@ function RoleCard({
       if (!rolePermission) {
         reqs.push("Permission");
       }
-      msgs.current?.show({
+      addAlert({
         severity: "error",
         detail: `Missing required field(s): ${reqs.join(", ")}`,
-        sticky: true,
       });
     }
   }
@@ -200,120 +219,143 @@ function RoleCard({
   return (
     <Dialog
       data-testid="role-dialog"
-      appendTo={"self"}
-      header={
-        !disabled
-          ? isEdit === true
-            ? "Edit Role"
-            : "Create Role"
-          : "View Role"
-      }
-      footer={
+      open={dialogVisible}
+      onClose={onClose}
+      fullWidth={true}
+      maxWidth="md"
+      aria-labelledby="role-dialog-title"
+    >
+      <DialogTitle id="role-dialog-title">
+        <Grid container>
+          <Grid size="grow">
+            {!disabled
+              ? isEdit === true
+                ? "Edit Role"
+                : "Create Role"
+              : "View Role"}
+          </Grid>
+          <Grid>
+            <AccessButton
+              sx={{ mr: 2 }}
+              onClick={onClose}
+              aria-label="Close role dialog"
+            >
+              <FontAwesomeIcon icon="xmark" />
+            </AccessButton>
+          </Grid>
+        </Grid>
+      </DialogTitle>
+      <DialogContent dividers>
+        {alert && (
+          <Alert
+            sx={{ mb: 1 }}
+            severity={alert.severity}
+            onClose={handleDismissAlert}
+          >
+            {alert.detail}
+          </Alert>
+        )}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <FormLabel sx={{ fontWeight: "bold" }} htmlFor="roleName">
+            Name
+          </FormLabel>
+          <TextField
+            required
+            id="roleName"
+            type="text"
+            sx={{ mb: 1 }}
+            value={roleName}
+            disabled={disabled}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setRoleName(e.target.value)
+            }
+          />
+        </Box>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <FormLabel sx={{ fontWeight: "bold" }} htmlFor="roleDescription">
+            Description
+          </FormLabel>
+          <TextField
+            id="roleDescription"
+            type="text"
+            sx={{ mb: 1 }}
+            value={roleDescription}
+            disabled={disabled}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setRoleDescription(e.target.value)
+            }
+          />
+        </Box>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <FormLabel sx={{ fontWeight: "bold" }} htmlFor="rolePermission">
+            Permission
+          </FormLabel>
+          <Autocomplete
+            id="rolePermission"
+            options={permissions}
+            value={rolePermission ?? null}
+            onChange={(_event: any, newValue: string | null) => {
+              setRolePermission(newValue || "");
+            }}
+            disabled={disabled}
+            renderInput={(params) => <TextField {...params} />}
+          />
+        </Box>
+        <Divider sx={{ my: 2 }} />
+        <RoleScopeCard
+          scopeName="garden"
+          scopeList={gardenScopeList}
+          setScopeList={setGardenScopeList}
+          disabled={disabled}
+        />
+        <RoleScopeCard
+          scopeName="namespace"
+          scopeList={namespaceScopeList}
+          setScopeList={setNamespaceScopeList}
+          disabled={disabled}
+        />
+        <RoleScopeCard
+          scopeName="system"
+          scopeList={systemScopeList}
+          setScopeList={setSystemScopeList}
+          disabled={disabled}
+        />
+        <RoleScopeCard
+          scopeName="version"
+          scopeList={versionScopeList}
+          setScopeList={setVersionScopeList}
+          disabled={disabled}
+        />
+        <RoleScopeCard
+          scopeName="instance"
+          scopeList={instanceScopeList}
+          setScopeList={setInstanceScopeList}
+          disabled={disabled}
+        />
+        <RoleScopeCard
+          scopeName="command"
+          scopeList={commandScopeList}
+          setScopeList={setCommandScopeList}
+          disabled={disabled}
+        />
+      </DialogContent>
+      <DialogActions>
         <>
-          <AccessButton onClick={onClose} label="Close" />
+          <AccessButton onClick={onClose} label="Close">
+            Close
+          </AccessButton>
           {!disabled && updateRoles !== undefined && (
             <AccessButton
               data-testid={`submit-btn-dialog`}
-              severity="danger"
+              color="error"
               onClick={handleDialogSubmit}
               label="Submit"
-            />
+            >
+              Submit
+            </AccessButton>
           )}
         </>
-      }
-      style={{ width: "50vw" }}
-      visible
-      onHide={() => {
-        onClose();
-      }}
-    >
-      <Messages ref={msgs} />
-      <div className="flex flex-column gap-2">
-        <label htmlFor="roleName" className="font-bold">
-          Name
-        </label>
-        <InputText
-          required
-          id="roleName"
-          type="text"
-          className="mb-2"
-          value={roleName}
-          disabled={disabled}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setRoleName(e.target.value)
-          }
-        />
-      </div>
-      <div className="flex flex-column gap-2">
-        <label htmlFor="roleDescription" className="font-bold">
-          Description
-        </label>
-        <InputText
-          id="roleDescription"
-          type="text"
-          className="mb-2"
-          value={roleDescription}
-          disabled={disabled}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setRoleDescription(e.target.value)
-          }
-        />
-      </div>
-      <div className="flex flex-column gap-2">
-        <label htmlFor="rolePermission" className="font-bold">
-          Permission
-        </label>
-        <Dropdown
-          required
-          id="rolePermission"
-          className="mb-2"
-          options={permissions}
-          value={rolePermission}
-          optionLabel="label"
-          placeholder="Select One"
-          disabled={disabled}
-          onChange={(e) => {
-            setRolePermission(e.value);
-          }}
-        />
-      </div>
-      <Divider />
-      <RoleScopeCard
-        scopeName="garden"
-        scopeList={gardenScopeList}
-        setScopeList={setGardenScopeList}
-        disabled={disabled}
-      />
-      <RoleScopeCard
-        scopeName="namespace"
-        scopeList={namespaceScopeList}
-        setScopeList={setNamespaceScopeList}
-        disabled={disabled}
-      />
-      <RoleScopeCard
-        scopeName="system"
-        scopeList={systemScopeList}
-        setScopeList={setSystemScopeList}
-        disabled={disabled}
-      />
-      <RoleScopeCard
-        scopeName="version"
-        scopeList={versionScopeList}
-        setScopeList={setVersionScopeList}
-        disabled={disabled}
-      />
-      <RoleScopeCard
-        scopeName="instance"
-        scopeList={instanceScopeList}
-        setScopeList={setInstanceScopeList}
-        disabled={disabled}
-      />
-      <RoleScopeCard
-        scopeName="command"
-        scopeList={commandScopeList}
-        setScopeList={setCommandScopeList}
-        disabled={disabled}
-      />
+      </DialogActions>
     </Dialog>
   );
 }
