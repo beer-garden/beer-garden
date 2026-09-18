@@ -200,6 +200,12 @@ function GardenSummary({
     setReceivingonnections(getReceivingConnections());
     setSystemCounts(getSystemCounts());
 
+    if (gardenRef.current && selectedGarden?.parent) {
+      parentRoutingCheck(gardenRef.current, selectedGarden?.parent, true);
+    } else {
+      setInvalidRouting(false);
+    }
+
     if (tourStepsRef !== undefined) {
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
 
@@ -211,9 +217,6 @@ function GardenSummary({
         if (gardenRef.current.name === selectedGarden?.name) {
           AddTourStep(tourStepsRef, syncAllTourStep);
         } else {
-          if (selectedGarden?.parent) {
-            parentRoutingCheck(gardenRef.current, selectedGarden?.parent, true);
-          }
           AddTourStep(tourStepsRef, syncGardenTourStep);
           AddTourStep(tourStepsRef, syncUsersTourStep);
           AddTourStep(tourStepsRef, deleteGardenTourStep);
