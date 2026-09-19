@@ -3,6 +3,7 @@ map $request_uri $target_path {
     ~^/api @beergarden;
     ~^/config @beergarden;
     ~^/version @beergarden;
+    ~^/metrics @beergarden;
 }
 
 server {
