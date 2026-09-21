@@ -41,6 +41,7 @@ import beer_garden.garden
 import beer_garden.local_plugins.manager
 import beer_garden.log
 import beer_garden.plugin
+import beer_garden.plugin_deploy
 import beer_garden.queues
 import beer_garden.requests
 import beer_garden.role
@@ -153,6 +154,7 @@ route_functions = {
     "PLUGIN_LOG_READ": beer_garden.log.get_plugin_log_config,
     "PLUGIN_LOG_READ_LEGACY": beer_garden.log.get_plugin_log_config_legacy,
     "PLUGIN_LOG_RELOAD": beer_garden.log.load_plugin_log_config,
+    "PLUGIN_DEPLOY": beer_garden.plugin_deploy.deploy_plugin,
     "QUEUE_READ": beer_garden.queues.get_all_queue_info,
     "QUEUE_DELETE": beer_garden.queues.clear_queue,
     "QUEUE_DELETE_ALL": beer_garden.queues.clear_all_queues,

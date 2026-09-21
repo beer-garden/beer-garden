@@ -36,6 +36,8 @@ def deploy_plugin(
         else:
             raise PluginValidationError("Unknown Compression Library")
 
+        staged_path = _validate_extracted_folder(staged_path)
+
         if migrate_conf:
             _migrate_conf(target_folder, staged_path)
 
@@ -79,6 +81,20 @@ def _stage_files_zip(file_bytes: BytesIO, target_folder: str, tmpdir: str) -> Pa
     return target_path
 
 
+def _validate_extracted_folder(staged_folder: Path) -> Path:
+    # Sometimes when people compress folders, they make it a nested folder
+    # This will handle that pathing update
+
+    if (staged_folder / "beer.conf").exists():
+        return staged_folder
+
+    for path in staged_folder.iterdir():
+        if path.is_dir():
+            if (path / "beer.conf").exists():
+                return path
+    raise PluginValidationError("Unable to find beer.conf")
+
+
 def _migrate_conf(target_folder: str, staged_folder: Path):
     target_directory = _get_target_folder_path(target_folder)
     source_conf = Path(f"{target_directory}/beer.conf")
@@ -89,7 +105,7 @@ def _migrate_conf(target_folder: str, staged_folder: Path):
 
 
 def _get_target_folder_path(target_folder: str):
-    plugin_dir = config.get("")
+    plugin_dir = config.get("plugin.local.directory")  # TODO: Fix This Pathing
     if target_folder.startswith(plugin_dir) or target_folder.startswith("/"):
         # Target Path was given in full
         return target_folder
@@ -112,7 +128,7 @@ def _clean_existing(target_folder: str):
 
         # Find runner
         runner_id = None
-        for runner in runners:
+        for runner in runners():
             if runner.path == instance_path:
                 # This is the instance to use to trace back system
                 runner_id = runner.id
