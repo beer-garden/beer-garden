@@ -49,7 +49,7 @@ def _stage_files_tarfile(file_bytes: BytesIO, target_folder: str, tmpdir: str) -
 
     target_path = Path(f"{tmpdir}/{target_folder}").resolve()
     with tarfile.open(fileobj=file_bytes, mode="r:gz") as tar:
-        tar.extractall(path=target_path)
+        tar.extractall(path=target_path, filter="data")
 
     return target_path
 
