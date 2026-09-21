@@ -380,7 +380,9 @@ function GardenSummary({
       <>
         {connection.api}
         {url.length > 0 && (
-          <FAIcon icon="server" title={url} id={targetId} sx={{ ml: 1 }} />
+          <Tooltip title={url}>
+            <FAIcon icon="server" id={targetId} sx={{ ml: 1 }} />
+          </Tooltip>
         )}
       </>
     );
@@ -416,21 +418,25 @@ function GardenSummary({
         label: "Garden",
         template: (row) => {
           return (
-            <span
+            <Tooltip
               title={
-                row.direction === "DOWNSTREAM"
-                  ? `Downstream: ${row.garden}\n${selectedGarden?.name} send Operations and accept Events from ${row.garden}`
-                  : `Upstream: ${row.garden}\n${selectedGarden?.name} send events to ${row.garden}`
+                <Box component="span" sx={{ whiteSpace: "pre-line" }}>
+                  {row.direction === "DOWNSTREAM"
+                    ? `Downstream: ${row.garden}\n${selectedGarden?.name} sends operations and accepts events from ${row.garden}`
+                    : `Upstream: ${row.garden}\n${selectedGarden?.name} sends events to ${row.garden}`}
+                </Box>
               }
             >
-              <FAIcon
-                icon={
-                  row.direction === "DOWNSTREAM" ? "arrow-down" : "arrow-up"
-                }
-                sx={{ mr: 2 }}
-              />
-              {row.garden}
-            </span>
+              <span>
+                <FAIcon
+                  icon={
+                    row.direction === "DOWNSTREAM" ? "arrow-down" : "arrow-up"
+                  }
+                  sx={{ mr: 2 }}
+                />
+                {row.garden}
+              </span>
+            </Tooltip>
           );
         },
       },
