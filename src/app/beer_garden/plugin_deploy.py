@@ -108,16 +108,20 @@ def _migrate_conf(target_folder: str, staged_folder: Path):
 
 
 def _get_target_folder_path(target_folder: str):
-    plugin_dir = config.get("plugin.local.directory")  # TODO: Fix This Pathing
-    if target_folder.startswith(plugin_dir) or target_folder.startswith("/"):
+
+    if target_folder.startswith("/"):
         # Target Path was given in full
         return target_folder
+
+    plugin_dir = config.get("plugin.local.directory")
+    if target_folder.startswith(plugin_dir):
+        # Target Path was given with Plugin Dir included
+        return target_folder
+
+    if plugin_dir.endswith("/"):
+        return plugin_dir + target_folder
     else:
-        # Combine config path and target folder
-        if plugin_dir.endswith("/"):
-            return plugin_dir + target_folder
-        else:
-            return f"{plugin_dir}/{target_folder}"
+        return f"{plugin_dir}/{target_folder}"
 
 
 def _clean_existing(target_folder: str):
