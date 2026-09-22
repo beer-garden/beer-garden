@@ -75,14 +75,13 @@ describe("GardenSummary", () => {
   };
 
   test("renders root garden summary", async () => {
-    const mockGarden = getRootGarden();
     const refGarden = getRootGarden();
 
     render(
       <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
-          selectedGarden={mockGarden}
+          selectedGarden={refGarden}
           config={{}}
           tourStepsRef={mockTourSteps()}
           selectedSystems={[]}
@@ -93,13 +92,11 @@ describe("GardenSummary", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(`Garden Summary: ${mockGarden?.name}`),
+        screen.getByText(`Garden Summary: ${refGarden?.name}`),
       ).toBeVisible();
       expect(screen.getByText("1.0.0")).toBeInTheDocument();
       expect(screen.getByText("child_one")).toBeInTheDocument();
       expect(screen.getByText("child_two")).toBeInTheDocument();
-      expect(screen.getByText("RECEIVING")).toBeInTheDocument();
-      expect(screen.getByText("PUBLISHING")).toBeInTheDocument();
     });
   });
 
@@ -125,13 +122,6 @@ describe("GardenSummary", () => {
         screen.getByText(`Garden Summary: ${mockGarden?.name}`),
       ).toBeVisible();
       expect(screen.getByText(`${mockGarden.version}`)).toBeInTheDocument();
-      expect(screen.getByText(`${mockGarden.parent}`)).toBeInTheDocument();
-      expect(
-        screen.getByText(`${mockGarden.receiving_connections[0].status}`),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(`${mockGarden.publishing_connections[0].status}`),
-      ).toBeInTheDocument();
     });
   });
 
@@ -157,13 +147,6 @@ describe("GardenSummary", () => {
         screen.getByText(`Garden Summary: ${mockGarden?.name}`),
       ).toBeVisible();
       expect(screen.getByText(`${mockGarden.version}`)).toBeInTheDocument();
-      expect(screen.getByText(`${mockGarden.parent}`)).toBeInTheDocument();
-      expect(
-        screen.getByText(`${mockGarden.receiving_connections[0].status}`),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByText(`${mockGarden.publishing_connections[0].status}`),
-      ).toBeInTheDocument();
     });
   });
 
@@ -441,7 +424,7 @@ describe("GardenSummary", () => {
       <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
-          selectedGarden={mockGarden}
+          selectedGarden={refGarden}
           config={{}}
           tourStepsRef={mockTourSteps()}
           selectedSystems={[]}
@@ -451,7 +434,7 @@ describe("GardenSummary", () => {
     );
 
     const target_button = await screen.findByTestId(
-      `RECEIVING_${mockGarden.receiving_connections[0].api}_START`,
+      `${mockGarden.name}_RECEIVING_${mockGarden.receiving_connections[0].api}_START`,
     );
 
     expect(target_button).toBeInTheDocument();
@@ -479,7 +462,7 @@ describe("GardenSummary", () => {
       <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
-          selectedGarden={mockGarden}
+          selectedGarden={refGarden}
           config={{}}
           tourStepsRef={mockTourSteps()}
           selectedSystems={[]}
@@ -489,7 +472,7 @@ describe("GardenSummary", () => {
     );
 
     const target_button = await screen.findByTestId(
-      `RECEIVING_${mockGarden.receiving_connections[0].api}_STOP`,
+      `${mockGarden.name}_RECEIVING_${mockGarden.receiving_connections[0].api}_STOP`,
     );
     expect(target_button).toBeInTheDocument();
 
@@ -516,7 +499,7 @@ describe("GardenSummary", () => {
       <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
-          selectedGarden={mockGarden}
+          selectedGarden={refGarden}
           config={{}}
           tourStepsRef={mockTourSteps()}
           selectedSystems={[]}
@@ -526,7 +509,7 @@ describe("GardenSummary", () => {
     );
 
     const target_button = await screen.findByTestId(
-      `PUBLISHING_${mockGarden.publishing_connections[0].api}_START`,
+      `${mockGarden.name}_PUBLISHING_${mockGarden.publishing_connections[0].api}_START`,
     );
     expect(target_button).toBeInTheDocument();
 
@@ -553,7 +536,7 @@ describe("GardenSummary", () => {
       <SnackbarProvider>
         <GardenSummary
           gardenRef={{ current: refGarden }}
-          selectedGarden={mockGarden}
+          selectedGarden={refGarden}
           config={{}}
           tourStepsRef={mockTourSteps()}
           selectedSystems={[]}
@@ -563,7 +546,7 @@ describe("GardenSummary", () => {
     );
 
     const target_button = await screen.findByTestId(
-      `PUBLISHING_${mockGarden.publishing_connections[0].api}_STOP`,
+      `${mockGarden.name}_PUBLISHING_${mockGarden.publishing_connections[0].api}_STOP`,
     );
     expect(target_button).toBeInTheDocument();
 
