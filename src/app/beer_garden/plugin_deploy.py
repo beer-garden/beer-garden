@@ -1,3 +1,4 @@
+import logging
 import shutil
 import tarfile
 import tempfile
@@ -13,6 +14,8 @@ from beer_garden.errors import PluginValidationError
 from beer_garden.files import fetch_file
 from beer_garden.local_plugins.manager import rescan, runners
 from beer_garden.systems import purge_system
+
+logger = logging.getLogger(__name__)
 
 
 def deploy_plugin(
@@ -71,8 +74,8 @@ def _stage_files_zip(file_bytes: BytesIO, target_folder: str, tmpdir: str) -> Pa
                 member_path.relative_to(target_path)
                 safe_members.append(member)
             except ValueError:
-                print(
-                    f"[!] Warning: Blocked dangerous Zip Slip path: {member.filename}"
+                logger.error(
+                    f"Blocked dangerous Zip Slip path: {member.filename}"
                 )
 
         # Extract only the validated members
@@ -82,8 +85,9 @@ def _stage_files_zip(file_bytes: BytesIO, target_folder: str, tmpdir: str) -> Pa
 
 
 def _validate_extracted_folder(staged_folder: Path) -> Path:
-    # Sometimes when people compress folders, they make it a nested folder
-    # This will handle that pathing update
+    # Sometimes when people compress folders, it is compressed in a nested folder.
+    # This will handle that pathing update. Only the folder with beer.conf
+    # will be deployed.
 
     if (staged_folder / "beer.conf").exists():
         return staged_folder
