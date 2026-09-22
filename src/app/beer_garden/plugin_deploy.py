@@ -74,9 +74,7 @@ def _stage_files_zip(file_bytes: BytesIO, target_folder: str, tmpdir: str) -> Pa
                 member_path.relative_to(target_path)
                 safe_members.append(member)
             except ValueError:
-                logger.error(
-                    f"Blocked dangerous Zip Slip path: {member.filename}"
-                )
+                logger.error(f"Blocked dangerous Zip Slip path: {member.filename}")
 
         # Extract only the validated members
         archive.extractall(path=target_path, members=safe_members)
