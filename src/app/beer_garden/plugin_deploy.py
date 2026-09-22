@@ -77,7 +77,8 @@ def _stage_files_zip(file_bytes: BytesIO, target_folder: str, tmpdir: str) -> Pa
                 logger.error(f"Blocked dangerous Zip Slip path: {member.filename}")
 
         # Extract only the validated members
-        archive.extractall(path=target_path, members=safe_members)
+        # (Ignore tarfile_unsafe_members security check)
+        archive.extractall(path=target_path, members=safe_members)  # nosec B202
 
     return target_path
 
