@@ -916,6 +916,7 @@ def _remap_garden_operation(operation: Operation):
         target_garden_name=operation.target_garden_name,
         model=Request(
             command_type="GARDEN",
+            hidden=True,
             parameters={
                 "operation_type": SchemaParser.serialize_operation(
                     operation, to_string=False
