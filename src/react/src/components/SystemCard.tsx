@@ -532,7 +532,7 @@ function SystemCard({
           />
           <AccessButton
             size="small"
-            title={`Admin Tools for ${instance.name}`}
+            title={`Admin Tools for ${instance.name} in ${system.namespace}.${system.name}.${system.version}`}
             onClick={handleInstanceMenuOpen}
             {...permissions}
             permission="OPERATOR"
