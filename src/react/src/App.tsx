@@ -3,7 +3,7 @@ import { Box, CssBaseline, Grid, Skeleton, Toolbar } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import { ThemeProvider } from "@mui/material/styles";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { MouseEvent,useCallback, useEffect, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { ACTIONS, type EventData, Joyride, STATUS } from "react-joyride";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
@@ -53,6 +53,16 @@ function App() {
   );
 
   const [fullScreenDialog, setFullScreenDialog] = useState(false);
+
+  const mainContentRef = useRef<HTMLElement>(null);
+
+  const handleSkip = (e: MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (mainContentRef.current) {
+      mainContentRef.current.focus();
+      mainContentRef.current.scrollIntoView();
+    }
+  };
 
   const addRequestItem = (itemParams?: Partial<RequestItem>) => {
     const newItem: RequestItem = {
@@ -571,138 +581,143 @@ function App() {
             />
           )}
           {config && Object.keys(config).length > 0 && (
-            <div key={reloadUI}>
-              <BrowserRouter basename={baseURL}>
-                <AppParams addRequestItem={addRequestItem} />
-                {runTour && (
-                  <Joyride
-                    onEvent={handleJoyrideEvent}
-                    continuous
-                    run={true}
-                    steps={ConvertToTourStepProps(tourStepsRef.current)}
-                  />
-                )}
-                <div role="navigation">
-                  <NavigationMenu
-                    listeners={listeners.current}
-                    config={config}
-                    runReloadUI={runReloadUI}
-                    addRequestItem={addRequestItem}
-                    toggleRunTour={toggleRunTour}
-                    tourStepsRef={tourStepsRef}
-                  />
-                  <Toolbar />
-                </div>
-                {requestItem && (
-                  <Dialog
-                    open={requestItem !== undefined}
-                    fullScreen={fullScreenDialog}
-                    maxWidth="xl"
-                    scroll="paper"
-                    onClose={() => {
-                      setRequestItem(undefined);
-                      setFullScreenDialog(false);
-                    }}
-                    aria-labelledby="customized-dialog-title"
-                    sx={{
-                      "& .MuiPaper-root": {
-                        minWidth: "50%",
-                      },
-                      mt: 8,
-                      mx: 2,
-                      mb: 2,
-                    }}
-                  >
-                    <DialogTitle
-                      sx={{ m: 0, p: 2 }}
-                      id="customized-dialog-title"
-                    >
-                      <Grid container>
-                        <Grid size="grow">
-                          {requestItem.type === "REQUEST" && "Create Request"}
-                          {requestItem.type === "VIEW_REQUEST" &&
-                            `View Request: ${requestItem?.requestId}`}
-                          {requestItem.type === "VIEW_JOB" &&
-                            `View Scheduled Job: ${requestItem?.jobId}`}
-                          {requestItem.type === "VIEW_TOPIC" &&
-                            `View Topic: ${requestItem?.topic?.name}`}
-                        </Grid>
-                        <Grid>
-                          {fullScreenDialog === false && (
-                            <AccessButton
-                              sx={{ mr: 2 }}
-                              aria-label="Enter full screen"
-                              onClick={() => setFullScreenDialog(true)}
-                            >
-                              <FontAwesomeIcon icon="maximize" />
-                            </AccessButton>
-                          )}
-                          {fullScreenDialog === true && (
-                            <AccessButton
-                              sx={{ mr: 2 }}
-                              aria-label="Exit full screen"
-                              onClick={() => setFullScreenDialog(false)}
-                            >
-                              <FontAwesomeIcon icon="minimize" />
-                            </AccessButton>
-                          )}
-                          <AccessButton
-                            sx={{ mr: 2 }}
-                            aria-label="Close request dialog"
-                            onClick={() => {
-                              setRequestItem(undefined);
-                              setFullScreenDialog(false);
-                              clearSearchParams();
-                            }}
-                          >
-                            <FontAwesomeIcon icon="xmark" />
-                          </AccessButton>
-                        </Grid>
-                      </Grid>
-                    </DialogTitle>
-
-                    <RequestItemCard
-                      removeItem={() => {
-                        setRequestItem(undefined);
-                      }}
-                      updateRequestItem={addRequestItem}
-                      requestItem={requestItem}
-                      listeners={listeners}
-                      config={config}
-                      isDialog={true}
+            <>
+              <a href="#maincontent" className="skip-link" onClick={handleSkip}>
+                Skip to main content
+              </a>
+              <div key={reloadUI}>
+                <BrowserRouter basename={baseURL}>
+                  <AppParams addRequestItem={addRequestItem} />
+                  {runTour && (
+                    <Joyride
+                      onEvent={handleJoyrideEvent}
+                      continuous
+                      run={true}
+                      steps={ConvertToTourStepProps(tourStepsRef.current)}
                     />
-                  </Dialog>
-                )}
-                <div role="main" id="main-content" tabIndex={-1}>
-                  <HasAccess
-                    config={config}
-                    permission="READ_ONLY"
-                    renderAuthFailed={
-                      <ErrorPage
-                        errorCode={401}
-                        errorMsg="Insufficient access or not logged in. Please contact Garden Administrator."
+                  )}
+                  <div role="navigation">
+                    <NavigationMenu
+                      listeners={listeners.current}
+                      config={config}
+                      runReloadUI={runReloadUI}
+                      addRequestItem={addRequestItem}
+                      toggleRunTour={toggleRunTour}
+                      tourStepsRef={tourStepsRef}
+                    />
+                    <Toolbar />
+                  </div>
+                  {requestItem && (
+                    <Dialog
+                      open={requestItem !== undefined}
+                      fullScreen={fullScreenDialog}
+                      maxWidth="xl"
+                      scroll="paper"
+                      onClose={() => {
+                        setRequestItem(undefined);
+                        setFullScreenDialog(false);
+                      }}
+                      aria-labelledby="customized-dialog-title"
+                      sx={{
+                        "& .MuiPaper-root": {
+                          minWidth: "50%",
+                        },
+                        mt: 8,
+                        mx: 2,
+                        mb: 2,
+                      }}
+                    >
+                      <DialogTitle
+                        sx={{ m: 0, p: 2 }}
+                        id="customized-dialog-title"
+                      >
+                        <Grid container>
+                          <Grid size="grow">
+                            {requestItem.type === "REQUEST" && "Create Request"}
+                            {requestItem.type === "VIEW_REQUEST" &&
+                              `View Request: ${requestItem?.requestId}`}
+                            {requestItem.type === "VIEW_JOB" &&
+                              `View Scheduled Job: ${requestItem?.jobId}`}
+                            {requestItem.type === "VIEW_TOPIC" &&
+                              `View Topic: ${requestItem?.topic?.name}`}
+                          </Grid>
+                          <Grid>
+                            {fullScreenDialog === false && (
+                              <AccessButton
+                                sx={{ mr: 2 }}
+                                aria-label="Enter full screen"
+                                onClick={() => setFullScreenDialog(true)}
+                              >
+                                <FontAwesomeIcon icon="maximize" />
+                              </AccessButton>
+                            )}
+                            {fullScreenDialog === true && (
+                              <AccessButton
+                                sx={{ mr: 2 }}
+                                aria-label="Exit full screen"
+                                onClick={() => setFullScreenDialog(false)}
+                              >
+                                <FontAwesomeIcon icon="minimize" />
+                              </AccessButton>
+                            )}
+                            <AccessButton
+                              sx={{ mr: 2 }}
+                              aria-label="Close request dialog"
+                              onClick={() => {
+                                setRequestItem(undefined);
+                                setFullScreenDialog(false);
+                                clearSearchParams();
+                              }}
+                            >
+                              <FontAwesomeIcon icon="xmark" />
+                            </AccessButton>
+                          </Grid>
+                        </Grid>
+                      </DialogTitle>
+
+                      <RequestItemCard
+                        removeItem={() => {
+                          setRequestItem(undefined);
+                        }}
+                        updateRequestItem={addRequestItem}
+                        requestItem={requestItem}
+                        listeners={listeners}
+                        config={config}
+                        isDialog={true}
                       />
-                    }
-                  >
-                    <ErrorBoundary FallbackComponent={ErrorFallback}>
-                      <Routes>
-                        {externalRoutesList.map((route, index) => (
-                          <Route
-                            key={index}
-                            path={route.path}
-                            element={
-                              componentMap.get(route.componentName) ?? (
-                                <ErrorPage errorCode={404} />
-                              )
-                            }
-                          />
-                        ))}
-                      </Routes>
-                    </ErrorBoundary>
-                  </HasAccess>
-                </div>
-              </BrowserRouter>
-            </div>
+                    </Dialog>
+                  )}
+                  <main ref={mainContentRef} id="maincontent" tabIndex={-1}>
+                    <HasAccess
+                      config={config}
+                      permission="READ_ONLY"
+                      renderAuthFailed={
+                        <ErrorPage
+                          errorCode={401}
+                          errorMsg="Insufficient access or not logged in. Please contact Garden Administrator."
+                        />
+                      }
+                    >
+                      <ErrorBoundary FallbackComponent={ErrorFallback}>
+                        <Routes>
+                          {externalRoutesList.map((route, index) => (
+                            <Route
+                              key={index}
+                              path={route.path}
+                              element={
+                                componentMap.get(route.componentName) ?? (
+                                  <ErrorPage errorCode={404} />
+                                )
+                              }
+                            />
+                          ))}
+                        </Routes>
+                      </ErrorBoundary>
+                    </HasAccess>
+                  </main>
+                </BrowserRouter>
+              </div>
+            </>
           )}
         </SnackbarProvider>
       </ConfirmDialogProvider>
