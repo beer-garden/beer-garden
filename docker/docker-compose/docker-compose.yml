@@ -118,7 +118,7 @@ services:
             - beer-garden
 
     grafana:
-        image: grafana/grafana:5.2.3
+        image: grafana/grafana:11.1.0
         ports:
             - "3000:3000"
         volumes:
@@ -141,15 +141,17 @@ services:
             - mongo-config:/data/configdb
 
     prometheus:
-        image: prom/prometheus:v2.3.2
+        image: prom/prometheus:v3.14.0
         ports:
-          - "9091:9090"
+            - "9090:9090"
         networks:
             - bg-network
         volumes:
             - ./data/prometheus:/prometheus-data
-        command:
-            --config.file=/prometheus-data/prometheus.yml
+            - ./data/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+        # Uncomment to allow prometheus to scrape docker host
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
 
     ldap:
         image: osixia/openldap:latest

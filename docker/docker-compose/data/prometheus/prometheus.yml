@@ -26,4 +26,20 @@ scrape_configs:
     # scheme defaults to 'http'.
 
     static_configs:
-            - targets: ['prometheus:9091','brew-view:2338']
+      - targets: ['prometheus:9090']
+
+  - job_name: 'beer-garden-docker'
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+
+    static_configs:
+      - targets: ['beer-garden:2337']
+
+  - job_name: 'beer-garden-local'
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+
+    static_configs:
+      - targets: ['host.docker.internal:2337']
