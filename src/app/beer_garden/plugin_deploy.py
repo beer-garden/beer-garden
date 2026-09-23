@@ -1,3 +1,4 @@
+import base64
 import logging
 import shutil
 import tarfile
@@ -11,7 +12,6 @@ from brewtils.models import System
 import beer_garden.config as config
 import beer_garden.db.api as db
 from beer_garden.errors import PluginValidationError
-from beer_garden.files import fetch_file
 from beer_garden.local_plugins.manager import rescan, runners
 from beer_garden.systems import purge_system
 
@@ -21,15 +21,15 @@ logger = logging.getLogger(__name__)
 def deploy_plugin(
     target_folder: str,
     file_bytes: BytesIO = None,
-    file_id: str = None,
+    file_b64: str = None,
     migrate_conf: bool = False,
     is_zip: bool = False,
     is_tarfile: bool = False,
 ):
     if file_bytes is None:
         # Load File ID
-        file = fetch_file(file_id)
-        file_bytes = BytesIO(file.data.encode("utf-8"))
+        decoded_file = base64.b64decode(file_b64)
+        file_bytes = BytesIO(decoded_file)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         if is_zip:

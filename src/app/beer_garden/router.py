@@ -15,6 +15,7 @@ The router service is responsible for:
 """
 
 import asyncio
+import base64
 import logging
 import threading
 from concurrent.futures.thread import ThreadPoolExecutor
@@ -64,6 +65,7 @@ logger = logging.getLogger(__name__)
 routable_operations = [
     "INSTANCE_START",
     "INSTANCE_STOP",
+    "PLUGIN_DEPLOY",
     "REQUEST_CREATE",
     "REQUEST_REFRESH",
     "SYSTEM_DELETE",
@@ -857,7 +859,25 @@ def _pre_forward(operation: Operation) -> Operation:
 
     operation.source_garden_name = None
 
-    if operation.operation_type == "REQUEST_CREATE":
+    if operation.operation_type == "PLUGIN_DEPLOY":
+        try:
+            # TODO: UPDATE VERSION TO MATCH RELEASE
+            if parse(gardens[operation.target_garden_name].version) < parse("3.35.0"):
+                raise RoutingRequestException(
+                    f"Operation type '{operation.operation_type}' can not be forwarded"
+                )
+        except InvalidVersion:
+            raise RoutingRequestException(
+                f"Operation type '{operation.operation_type}' can not be forwarded"
+            )
+
+        file_bytes = operation.kwargs.pop("file_bytes", None)
+
+        if file_bytes:
+            raw_bytes = file_bytes.getvalue()
+            operation.kwargs["file_b64"] = base64.b64encode(raw_bytes).decode("utf-8")
+
+    elif operation.operation_type == "REQUEST_CREATE":
         # Save the request so it'll have an ID and we'll have something to update
         operation.model.target_garden = operation.target_garden_name
         local_request = create_request(operation.model)

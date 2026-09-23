@@ -27,6 +27,12 @@ class PluginDeployAPI(AuthorizationHandler):
             description: |
               The target directory for the plugin to be deployed to within
               the plugin directory.
+          - name: target_garden
+            in: query
+            required: false
+            type: string
+            description: |
+              The target garden for deployment
           - name: migrate
             in: query
             required: false
@@ -67,7 +73,8 @@ class PluginDeployAPI(AuthorizationHandler):
             self.write("No Plugin file uploaded.")
             return
 
-        target_file = self.get_argument("target_file", default=None)
+        target_folder = self.get_argument("target_folder", default=None)
+        target_garden = self.get_argument("target_garden", default=None)
         migrate_arg = self.get_query_argument("migrate", default="false")
         migrate_conf = bool(migrate_arg.lower() == "true")
 
@@ -81,14 +88,15 @@ class PluginDeployAPI(AuthorizationHandler):
         is_zip = file_name.endswith(".zip")
         is_tarfile = file_name.endswith(".tar.gz") or file_name.endswith(".tgz")
 
-        if target_file is None:
-            target_file = file_name.split(".")[0]
+        if target_folder is None:
+            target_folder = file_name.split(".")[0]
 
         await self.process_operation(
             Operation(
                 operation_type="PLUGIN_DEPLOY",
+                target_garden_name=target_garden,
                 kwargs={
-                    "target_folder": target_file,
+                    "target_folder": target_folder,
                     "file_bytes": file_bytes,
                     "migrate_conf": migrate_conf,
                     "is_zip": is_zip,
