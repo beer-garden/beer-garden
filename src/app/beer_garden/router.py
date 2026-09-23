@@ -895,38 +895,31 @@ def _pre_route(operation: Operation) -> Operation:
     return operation
 
 
-def _remap_garden_operation(operation: Operation):
+# def _remap_garden_operation(operation: Operation):
 
-    # If not sent in asyncio loop, raise exception because it can't be waited for
-    try:
-        asyncio.get_running_loop()
-    except RuntimeError:
-        raise RoutingRequestException(
-            f"Operation type '{operation.operation_type}' can not be forwarded"
-        )
-    # Check version of target garden. If below the release, raise exception
-    # TODO: Update to actual release version
-    if parse(gardens[operation.model.target_garden].version) < parse("3.35.0"):
-        raise RoutingRequestException(
-            f"Operation type '{operation.operation_type}' can not be forwarded"
-        )
+#     # TODO: Update to actual release version
+#     if parse(gardens[operation.target_garden_name].version) < parse("3.35.0"):
+#         raise RoutingRequestException(
+#             f"Operation type '{operation.operation_type}' can not be forwarded"
+#         )
 
-    garden_request = Operation(
-        operation_type="REQUEST_CREATE",
-        target_garden_name=operation.target_garden_name,
-        model=Request(
-            command_type="GARDEN",
-            hidden=True,
-            parameters={
-                "operation_type": SchemaParser.serialize_operation(
-                    operation, to_string=False
-                )
-            },
-        ),
-        kwargs={"garden_operation_wait": Future()},
-    )
+#     garden_request = Operation(
+#         operation_type="REQUEST_CREATE",
+#         target_garden_name=operation.target_garden_name,
+#         model=Request(
+#             command_type="GARDEN",
+#             hidden=True,
+#             parameters={
+#                 "operation": SchemaParser.serialize_operation(
+#                     operation, to_string=False
+#                 )
+#             },
+#         ),
+#         model_type="Request",
+#         kwargs={"garden_operation_wait": Future()},
+#     )
 
-    return garden_request
+#     return garden_request
 
 
 def _pre_forward(operation: Operation) -> Operation:
@@ -934,7 +927,9 @@ def _pre_forward(operation: Operation) -> Operation:
 
     # Validate that the operation can be forwarded
     if operation.operation_type not in routable_operations:
-        operation = _remap_garden_operation(operation)
+        raise RoutingRequestException(
+            f"Operation type '{operation.operation_type}' can not be forwarded"
+        )      
 
     operation.source_garden_name = None
 
