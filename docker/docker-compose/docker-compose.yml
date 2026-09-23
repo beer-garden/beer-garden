@@ -118,8 +118,7 @@ services:
             - beer-garden
 
     grafana:
-        image: grafana/grafana:13.2.2
-        user: "0:0"
+        image: grafana/grafana:11.1.0
         ports:
             - "3000:3000"
         volumes:
@@ -151,8 +150,8 @@ services:
             - ./data/prometheus:/prometheus-data
             - ./data/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
         # Uncomment to allow prometheus to scrape docker host
-        # extra_hosts:
-        #     - "host.docker.internal:host-gateway"
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
 
     ldap:
         image: osixia/openldap:latest
