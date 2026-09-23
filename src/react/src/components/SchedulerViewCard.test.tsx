@@ -72,6 +72,8 @@ describe("SchedulerViewCard", () => {
             editJob={() => {}}
             deleteJob={() => {}}
             config={{}}
+            updateRequestItem={() => {}}
+            removeItem={() => {}}
           />
         </ConfirmDialogProvider>
       </SnackbarProvider>,
@@ -238,6 +240,8 @@ describe("SchedulerViewCard", () => {
             editJob={() => {}}
             deleteJob={() => {}}
             config={{}}
+            updateRequestItem={() => {}}
+            removeItem={() => {}}
           />
         </ConfirmDialogProvider>
       </SnackbarProvider>,
@@ -286,6 +290,8 @@ describe("SchedulerViewCard", () => {
             editJob={() => {}}
             deleteJob={() => {}}
             config={{}}
+            updateRequestItem={() => {}}
+            removeItem={() => {}}
           />
         </ConfirmDialogProvider>
       </SnackbarProvider>,
@@ -369,6 +375,8 @@ describe("SchedulerViewCard", () => {
             editJob={() => {}}
             deleteJob={() => {}}
             config={{}}
+            updateRequestItem={() => {}}
+            removeItem={() => {}}
           />
         </ConfirmDialogProvider>
       </SnackbarProvider>,
@@ -414,6 +422,8 @@ describe("SchedulerViewCard", () => {
             editJob={() => {}}
             deleteJob={() => {}}
             config={{}}
+            updateRequestItem={() => {}}
+            removeItem={() => {}}
           />
         </ConfirmDialogProvider>
       </SnackbarProvider>,
@@ -471,6 +481,8 @@ describe("SchedulerViewCard", () => {
             editJob={() => {}}
             deleteJob={() => {}}
             config={{}}
+            updateRequestItem={() => {}}
+            removeItem={() => {}}
           />
         </ConfirmDialogProvider>
       </SnackbarProvider>,
@@ -540,6 +552,8 @@ describe("SchedulerViewCard", () => {
             editJob={() => {}}
             deleteJob={() => {}}
             config={{}}
+            updateRequestItem={() => {}}
+            removeItem={() => {}}
           />
         </ConfirmDialogProvider>
       </SnackbarProvider>,
@@ -600,6 +614,8 @@ describe("SchedulerViewCard", () => {
             editJob={() => {}}
             deleteJob={() => {}}
             config={{}}
+            updateRequestItem={() => {}}
+            removeItem={() => {}}
           />
         </ConfirmDialogProvider>
       </SnackbarProvider>,
@@ -659,6 +675,8 @@ describe("SchedulerViewCard", () => {
             editJob={() => {}}
             deleteJob={deleteJobMock}
             config={{}}
+            updateRequestItem={() => {}}
+            removeItem={() => {}}
           />
         </ConfirmDialogProvider>
       </SnackbarProvider>,
@@ -716,6 +734,8 @@ describe("SchedulerViewCard", () => {
             editJob={() => {}}
             deleteJob={() => {}}
             config={{}}
+            updateRequestItem={() => {}}
+            removeItem={() => {}}
           />
         </ConfirmDialogProvider>
       </SnackbarProvider>,
@@ -780,6 +800,8 @@ describe("SchedulerViewCard", () => {
             editJob={() => {}}
             deleteJob={() => {}}
             config={{}}
+            updateRequestItem={() => {}}
+            removeItem={() => {}}
           />
         </ConfirmDialogProvider>
       </SnackbarProvider>,
