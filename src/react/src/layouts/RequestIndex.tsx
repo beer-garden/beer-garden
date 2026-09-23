@@ -4,12 +4,13 @@ import {
   Checkbox,
   Divider,
   FormLabel,
+  Link,
   Tooltip,
   Typography,
 } from "@mui/material";
 import { Dayjs } from "dayjs";
 import { RefObject, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 
 import AccessButton from "../components/AccessButton";
 import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
@@ -220,8 +221,9 @@ function RequestIndex({
             }
           >
             <Link
+              component={RouterLink}
               to={`${GetBaseURL()}/request/${request.parent.id}`}
-              style={{ textDecoration: "none" }}
+              sx={{ textDecoration: "none" }}
               tabIndex={-1}
             >
               <FAIcon icon="level-up" sx={{ mr: 2 }} data-pr-position="top" />
@@ -245,10 +247,11 @@ function RequestIndex({
     return (
       <div>
         <Link
+          component={RouterLink}
           to={`/request/${request.id}`}
           aria-label={`Open Request ${request.command_display_name ?? request.command} ${request.id}`}
           tabIndex={-1}
-          style={{ textDecoration: "none" }}
+          sx={{ textDecoration: "none" }}
         >
           <AccessButton
             basic

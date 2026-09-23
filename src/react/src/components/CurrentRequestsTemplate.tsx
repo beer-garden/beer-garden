@@ -1,9 +1,16 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Badge, Box, Chip, ClickAwayListener, Typography } from "@mui/material";
+import {
+  Badge,
+  Box,
+  Chip,
+  ClickAwayListener,
+  Link,
+  Typography,
+} from "@mui/material";
 import Fade from "@mui/material/Fade";
 import Popper from "@mui/material/Popper";
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 
 import { Request } from "../models/brewtils-types";
 import { Config } from "../models/models";
@@ -243,6 +250,7 @@ function CurrentRequestsTemplate({
     return (
       <div>
         <Link
+          component={RouterLink}
           to={`/request/${request.id}`}
           tabIndex={-1}
           aria-label={`Open Request ${request.id}`}
