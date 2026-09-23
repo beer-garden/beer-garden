@@ -6,7 +6,7 @@ TBD
 - Create new Plugin Deploy API supporting `.zip`, `.tar.gz`, and `.tgz` folder compression. Supports cross 
   Beer Garden deployment if within the tornado max size limitation. (#2442)
   Example Code:
-  ```
+```
 import requests
 
 with requests.Session() as session:
@@ -20,7 +20,7 @@ with requests.Session() as session:
         response = session.post(url, files=files)
 
     print(response.status_code)
-  ```
+```
 
 ## TODO: Update Plugin Deploy Logic to target release version
 
