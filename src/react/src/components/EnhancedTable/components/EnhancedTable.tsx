@@ -1,7 +1,7 @@
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
-import Table from "@mui/material/Table";
+import Table, { TableProps } from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableContainer from "@mui/material/TableContainer";
@@ -37,7 +37,7 @@ const EnhancedTable = ({
   rowsPerPageOptions,
   defaultRowsPerPageOptions,
   ...props
-}: {
+}: TableProps & {
   data?: any[];
   dataRef?: RefObject<any[]>;
   dataLength?: number;
