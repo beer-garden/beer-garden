@@ -1016,6 +1016,9 @@ def _target_from_type(operation: Operation) -> str:
     if operation.operation_type == "RUNNER_RESCAN":
         return config.get("garden.name")
 
+    if operation.operation_type == "PLUGIN_DEPLOY":
+        return config.get("garden.name")
+
     raise Exception(f"Bad operation type {operation.operation_type}")
 
 
