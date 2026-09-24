@@ -1,5 +1,29 @@
 # Beer Garden Changelog
 
+# TBD
+TBD
+
+- Create new Plugin Deploy API supporting `.zip`, `.tar.gz`, and `.tgz` folder compression. Supports cross 
+  Beer Garden deployment if within the tornado max size limitation. (#2442)
+  Example Code:
+```
+import requests
+
+with requests.Session() as session:
+
+    url = "http://localhost:2337/api/vbeta/plugin"
+
+    print("Deploying echo.zip")
+    with open("echo.zip", "rb") as f:
+        files = {"plugin_upload": f}
+
+        response = session.post(url, files=files)
+
+    print(response.status_code)
+```
+
+## TODO: Update Plugin Deploy Logic to target release version
+
 # 3.35.1
 9/9/2026
 

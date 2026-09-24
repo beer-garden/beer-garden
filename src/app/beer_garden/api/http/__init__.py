@@ -130,6 +130,7 @@ def _get_published_url_specs(
         ),
         (rf"{prefix}api/vbeta/file/?", vbeta.file.RawFileListAPI),
         (rf"{prefix}api/vbeta/file/(\w+)/?", vbeta.file.RawFileAPI),
+        (rf"{prefix}api/vbeta/plugin/?", vbeta.plugin.PluginDeployAPI),
         # V2
         (rf"{prefix}api/v2/users/?", v1.user.UserListAPI),
         (rf"{prefix}api/v2/users/(\w+)/?", v1.user.UserAPI),
