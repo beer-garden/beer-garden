@@ -244,9 +244,14 @@ def route(operation: Operation):
             operation.model.target_garden = operation.target_garden_name
             local_request = create_request(operation.model)
 
-            garden_operation = SchemaParser.parse_operation(
-                operation.model.parameters["operation"], from_string=False
-            )
+            if type(operation.model.parameters["operation"]) is str:
+                garden_operation = SchemaParser.parse_operation(
+                    operation.model.parameters["operation"], from_string=True
+                )
+            else:
+                garden_operation = SchemaParser.parse_operation(
+                    operation.model.parameters["operation"], from_string=False
+                )
 
             try:
                 local_request.output = route(garden_operation)
@@ -929,7 +934,7 @@ def _pre_forward(operation: Operation) -> Operation:
     if operation.operation_type not in routable_operations:
         raise RoutingRequestException(
             f"Operation type '{operation.operation_type}' can not be forwarded"
-        )      
+        )
 
     operation.source_garden_name = None
 

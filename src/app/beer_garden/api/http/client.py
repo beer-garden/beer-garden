@@ -1,21 +1,23 @@
 # -*- coding: utf-8 -*-
 import json
+import logging
+from asyncio import Future
 from inspect import isawaitable
 from typing import Any, Optional
 
 import elasticapm
-from brewtils.models import BaseModel, Operation, User, Request
+from brewtils.models import BaseModel, Operation, Request, User
 from brewtils.schema_parser import SchemaParser
-from asyncio import Future
+
 import beer_garden.api
 import beer_garden.config as config
 import beer_garden.router
+from beer_garden.api.http.base_handler import future_wait
 from beer_garden.authorization import ModelFilter
 from beer_garden.metrics import CollectMetrics, extract_custom_context
-from beer_garden.api.http.base_handler import future_wait
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 class SerializeHelper(object):
     def __init__(self):
@@ -33,7 +35,7 @@ class SerializeHelper(object):
                 hidden=True,
                 parameters={
                     "operation": SchemaParser.serialize_operation(
-                        operation, to_string=False
+                        operation, to_string=True
                     )
                 },
             ),
@@ -52,9 +54,12 @@ class SerializeHelper(object):
         **kwargs,
     ):
         wait_event = None
-        if operation.target_garden_name != None and operation.target_garden_name != config.get("garden.name"):
+        if (
+            operation.target_garden_name != None
+            and operation.target_garden_name != config.get("garden.name")
+        ):
             if operation.operation_type != "REQUEST_CREATE":
-                new_operation = self.remap_garden_operation(operation)           
+                new_operation = self.remap_garden_operation(operation)
                 try:
                     wait_event = Future()
                     new_operation.kwargs["wait_event"] = wait_event
