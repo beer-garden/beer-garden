@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 import json
 import logging
-from asyncio import Future
 from inspect import isawaitable
 from typing import Any, Optional
 
 import elasticapm
-from brewtils.models import BaseModel, Operation, Request, User
+from brewtils.models import BaseModel, Operation, User
 from brewtils.schema_parser import SchemaParser
 
 import beer_garden.api
 import beer_garden.config as config
 import beer_garden.router
-from beer_garden.api.http.base_handler import future_wait
 from beer_garden.authorization import ModelFilter
 from beer_garden.metrics import CollectMetrics, extract_custom_context
 
@@ -23,27 +21,6 @@ class SerializeHelper(object):
     def __init__(self):
         self.model_filter = ModelFilter()
 
-    def remap_garden_operation(self, operation: Operation):
-
-        # TODO: Update to actual release version
-        logger.error("Mapping over operation to Gardeen Request")
-        garden_request = Operation(
-            operation_type="REQUEST_CREATE",
-            target_garden_name=operation.target_garden_name,
-            model=Request(
-                command_type="GARDEN",
-                hidden=True,
-                parameters={
-                    "operation": SchemaParser.serialize_operation(
-                        operation, to_string=True
-                    )
-                },
-            ),
-            model_type="Request",
-        )
-
-        return garden_request
-
     async def __call__(
         self,
         operation: Operation,
@@ -53,20 +30,6 @@ class SerializeHelper(object):
         filter_results: bool = True,
         **kwargs,
     ):
-        wait_event = None
-        if (
-            operation.target_garden_name != None
-            and operation.target_garden_name != config.get("garden.name")
-        ):
-            if operation.operation_type != "REQUEST_CREATE":
-                new_operation = self.remap_garden_operation(operation)
-                try:
-                    wait_event = Future()
-                    new_operation.kwargs["wait_event"] = wait_event
-                    operation = new_operation
-                except RuntimeError:
-                    logger.error("Failed to create future for mapped operation")
-                    pass
 
         trace_parent_header = None
         if hasattr(operation, "metadata") and "_trace_parent" in operation.metadata:
@@ -107,11 +70,6 @@ class SerializeHelper(object):
             # Await any coroutines
             if isawaitable(result):
                 result = await result
-
-            if wait_event is not None:
-                logger.error("Waiting for operation to return")
-                await future_wait(wait_event, 60)
-                result = wait_event.result().output
 
             if filter_results and minimum_permission and current_user:
                 result = self.model_filter.filter_object(

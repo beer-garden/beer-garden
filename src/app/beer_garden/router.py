@@ -16,7 +16,6 @@ The router service is responsible for:
 import asyncio
 import logging
 import threading
-from asyncio import Future
 from concurrent.futures.thread import ThreadPoolExecutor
 from copy import deepcopy
 from functools import partial
@@ -25,7 +24,7 @@ from typing import Dict, Union
 import brewtils.models
 from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
-from brewtils.models import Events, Garden, Operation, Request, System
+from brewtils.models import Events, Garden, Operation, System
 from brewtils.schema_parser import SchemaParser
 from mongoengine import DoesNotExist
 from packaging.version import InvalidVersion, parse
@@ -898,33 +897,6 @@ def _pre_route(operation: Operation) -> Operation:
             operation.model.namespace = config.get("garden.name")
 
     return operation
-
-
-# def _remap_garden_operation(operation: Operation):
-
-#     # TODO: Update to actual release version
-#     if parse(gardens[operation.target_garden_name].version) < parse("3.35.0"):
-#         raise RoutingRequestException(
-#             f"Operation type '{operation.operation_type}' can not be forwarded"
-#         )
-
-#     garden_request = Operation(
-#         operation_type="REQUEST_CREATE",
-#         target_garden_name=operation.target_garden_name,
-#         model=Request(
-#             command_type="GARDEN",
-#             hidden=True,
-#             parameters={
-#                 "operation": SchemaParser.serialize_operation(
-#                     operation, to_string=False
-#                 )
-#             },
-#         ),
-#         model_type="Request",
-#         kwargs={"garden_operation_wait": Future()},
-#     )
-
-#     return garden_request
 
 
 def _pre_forward(operation: Operation) -> Operation:

@@ -99,7 +99,7 @@ def publish_event(event_type: Events):
                 formatted_traceback = "".join(tbe.format())
 
                 # Replicate function call
-            
+
                 args_str = ", ".join(str(arg) for arg in args)
                 kwargs_str = ", ".join(f"{key}={kwargs[key]!r}" for key in kwargs)
 
