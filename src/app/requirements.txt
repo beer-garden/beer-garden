@@ -54,6 +54,8 @@ pika==1.3.2
     # via brewtils
 prometheus-client==0.23.1
     # via beer_garden (setup.py)
+psutil==7.2.2
+    # via beer_garden (setup.py)
 pyasn1==0.6.1
     # via ldap3
 pyjwt==2.10.1
