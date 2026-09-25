@@ -1,14 +1,22 @@
-import { Panel } from "primereact/panel";
+import {
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  Divider,
+  Link,
+  Typography,
+} from "@mui/material";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 
 import { Config, Version } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetVersion } from "../services/util_service";
 
 function AboutIndex({ config }: { config: Config }) {
   const [version, setVersion] = useState<Version | null>(null);
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   useEffect(() => {
     GetVersion()
@@ -16,7 +24,7 @@ function AboutIndex({ config }: { config: Config }) {
         setVersion(version);
       })
       .catch((error) => {
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching the version: ${error}`,
@@ -27,9 +35,9 @@ function AboutIndex({ config }: { config: Config }) {
 
   function AboutHeader({ config }: { config: Config | null }) {
     return (
-      <div className="flex ml-2 page-header">
-        <h1 className="al">About {config ? config.application_name : ""}</h1>
-      </div>
+      <Typography variant="h2" component="h1" sx={{ ml: 2 }}>
+        About {config ? config.application_name : ""}
+      </Typography>
     );
   }
 
@@ -38,43 +46,48 @@ function AboutIndex({ config }: { config: Config }) {
     return (
       <ul>
         <li>
-          <Link to={`/swagger`}>Open API documentation</Link>-{" "}
-          {config.application_name} uses OpenAPI Documentation for our ReST
+          <Link component={RouterLink} sx={{ mr: 0.5 }} to={`/swagger`}>
+            Open API documentation
+          </Link>
+          - {config.application_name} uses OpenAPI Documentation for our ReST
           Interface.
         </li>
         {config.metrics_url && (
           <li>
-            <a
+            <Link
+              sx={{ mr: 0.5 }}
               href={config.metrics_url}
               target="_blank"
               rel="noopener noreferrer"
             >
               Metrics
-            </a>{" "}
+            </Link>
             - Link to the configured metrics backend.
           </li>
         )}
         <li>
-          <a
+          <Link
+            sx={{ mr: 0.5 }}
             href="https://grafana.com/dashboards/6621"
             target="_blank"
             rel="noopener noreferrer"
           >
             Grafana Dashboard ({config.application_name})
-          </a>
-          - A grafana dashboard for monitoring {config.application_name}
+          </Link>
+          - A grafana dashboard for monitoring {config.application_name}{" "}
           performance.
         </li>
         <li>
-          <a
+          <Link
+            sx={{ mr: 0.5 }}
             href="https://grafana.com/dashboards/6624"
             target="_blank"
             rel="noopener noreferrer"
           >
             Grafana Dashboard (Plugins)
-          </a>
-          - A grafana dashboard for monitoring {config.application_name}
-          plugin performance.
+          </Link>
+          - A grafana dashboard for monitoring {config.application_name} plugin
+          performance.
         </li>
       </ul>
     );
@@ -91,14 +104,20 @@ function AboutIndex({ config }: { config: Config }) {
     return (
       <>
         <div>
-          <span className="mr-1">
+          <Box component="span" sx={{ mr: 1 }}>
             {config.application_name} is currently on version
-          </span>
-          <span className="font-bold">{version.beer_garden_version}</span>
+          </Box>
+          <Box component="span" sx={{ fontWeight: "bold" }}>
+            {version.beer_garden_version}
+          </Box>
         </div>
         <div>
-          <span className="mr-1">Python version</span>
-          <span className="font-bold">{version.python_version}</span>
+          <Box component="span" sx={{ mr: 1 }}>
+            Python version
+          </Box>
+          <Box component="span" sx={{ fontWeight: "bold" }}>
+            {version.python_version}
+          </Box>
         </div>
       </>
     );
@@ -107,18 +126,49 @@ function AboutIndex({ config }: { config: Config }) {
   return (
     <div>
       <AboutHeader config={config} />
-      <div className="flex">
-        <Panel header="Helpful Links" className="m-2 flex-1">
-          <>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "flex-start",
+          flexDirection: "row",
+          ml: 2,
+        }}
+      >
+        <Card variant="outlined" sx={{ mr: 2 }}>
+          <CardHeader
+            title={
+              <Typography
+                variant="h6"
+                component="h2"
+                sx={{ fontWeight: "bold" }}
+              >
+                Helpful Links
+              </Typography>
+            }
+          />
+          <Divider />
+          <CardContent>
             <HelpfulLinks config={config} />
-          </>
-        </Panel>
-        <Panel header="Version Information" className="m-2 flex-1">
-          <>
+          </CardContent>
+        </Card>
+        <Card variant="outlined" sx={{ mr: 2, flexGrow: 1 }}>
+          <CardHeader
+            title={
+              <Typography
+                variant="h6"
+                component="h2"
+                sx={{ fontWeight: "bold" }}
+              >
+                Version Information
+              </Typography>
+            }
+          />
+          <Divider />
+          <CardContent>
             <VersionInformation config={config} version={version} />
-          </>
-        </Panel>
-      </div>
+          </CardContent>
+        </Card>
+      </Box>
     </div>
   );
 }

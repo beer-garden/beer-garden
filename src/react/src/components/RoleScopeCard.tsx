@@ -1,9 +1,17 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { AutoComplete } from "primereact/autocomplete";
-import { Card } from "primereact/card";
+import {
+  Autocomplete,
+  Box,
+  Card,
+  CardContent,
+  CardHeader,
+  FormLabel,
+  TextField,
+} from "@mui/material";
+import { grey } from "@mui/material/colors";
 import React, { useEffect, useRef, useState } from "react";
 
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetSystemList } from "../services/system_service";
 import AccessButton from "./AccessButton";
 
@@ -23,7 +31,7 @@ function RoleScopeCard({
   const [filteredItems, setFilteredItems] = useState([] as Array<string>);
   const items = useRef<Array<string>>([]);
 
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   useEffect(() => {
     GetSystemList()
@@ -73,10 +81,11 @@ function RoleScopeCard({
           );
           items.current = Array.from(commands);
         }
+        setFilteredItems(items.current);
       })
       .catch((error) => {
         console.error("Error fetching system list:", error);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching system list: ${error}`,
@@ -90,12 +99,11 @@ function RoleScopeCard({
       return <></>;
     }
     return (
-      <div className="flex justify-content-between p-3 pb-0 items-end">
-        <div className="flex flex-1"></div>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1 }}>
         <AccessButton tooltip="Remove" onClick={() => handleClose(index)}>
           <FontAwesomeIcon icon="close" />
         </AccessButton>
-      </div>
+      </Box>
     );
   }
 
@@ -113,66 +121,57 @@ function RoleScopeCard({
   }
 
   function handleUpdateScope(inputValue: any, inputIndex: number) {
-    if (inputValue.trim()) {
-      setScopeList((currentList) => {
-        const newList = currentList.map((scope, index) => {
-          if (index == inputIndex) {
-            scope = inputValue;
-          }
-          return scope;
-        });
-        return newList;
+    setScopeList((currentList) => {
+      const newList = currentList.map((scope, index) => {
+        if (index == inputIndex) {
+          scope = inputValue;
+        }
+        return scope;
       });
-    }
+      return newList;
+    });
   }
 
-  const searchItems = (event: any) => {
-    if (items.current) {
-      const query = event.query.toLowerCase();
-      const filtered = items.current.filter((item) =>
-        item.toLowerCase().includes(query),
-      );
-      setFilteredItems(filtered);
-    }
-  };
-
   return (
-    <div className="flex flex-column gap-2">
-      <label className="font-bold" htmlFor={`${scopeName}Scopes`}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      <FormLabel sx={{ fontWeight: "bold" }} htmlFor={`${scopeName}Scopes`}>
         {scopeName.charAt(0).toUpperCase() + scopeName.slice(1)} Scopes
-      </label>
-      <div className="card" id={`${scopeName}Scopes`}>
+      </FormLabel>
+      <div id={`${scopeName}Scopes`}>
         {scopeList.map((item, index) => (
-          <Card
-            key={index}
-            className="card flex flex-column gap-2 border-1"
-            header={() => header(index)}
-          >
-            <label className="font-bold" htmlFor={`${scopeName}Scope-${index}`}>
-              Scope
-            </label>
-            <AutoComplete
-              dropdown
-              id={`${scopeName}Scope-${index}`}
-              value={item}
-              suggestions={filteredItems}
-              completeMethod={searchItems}
-              onChange={(e) => handleUpdateScope(e.target.value, index)}
-              disabled={disabled}
-            />
+          <Card key={index} variant="outlined" sx={{ borderColor: grey[600] }}>
+            <CardHeader action={header(index)} />
+            <CardContent>
+              <Autocomplete
+                sx={{ m: 2 }}
+                id={`${scopeName}Scope-${index}`}
+                options={filteredItems}
+                value={item ?? null}
+                onChange={(_event: any, newValue: string | null) => {
+                  handleUpdateScope(
+                    newValue === null ? undefined : newValue,
+                    index,
+                  );
+                }}
+                disabled={disabled}
+                renderInput={(params) => (
+                  <TextField {...params} label="Scope" />
+                )}
+              />
+            </CardContent>
           </Card>
         ))}
         {!disabled && (
-          <div className="flex">
+          <Box sx={{ display: "flex" }}>
             <AccessButton
-              className="mt-1 mb-3"
+              sx={{ mt: 1, mb: 3 }}
               label={`Add ${scopeName}`}
               onClick={handleAddScope}
-            />
-          </div>
+            >{`Add ${scopeName}`}</AccessButton>
+          </Box>
         )}
       </div>
-    </div>
+    </Box>
   );
 }
 

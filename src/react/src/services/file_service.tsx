@@ -36,6 +36,7 @@ export const calculateMD5 = async (file: File): Promise<string | null> => {
 export const uploadFile = async (
   file: File,
   setPercentage: (percentage: number) => void,
+  setBuffer: (percentage: number) => void,
   headerData?: any,
 ) => {
   const headers = GetAuthHeaders();
@@ -70,7 +71,7 @@ export const uploadFile = async (
 
   headers.append("Content-Type", "application/json");
   for (let offset = 0; offset < file.size; offset += chunkSize) {
-    await uploadChunk(file, fileId, offset, setPercentage);
+    await uploadChunk(file, fileId, offset, setPercentage, setBuffer);
   }
 
   await verifyFile(fileId);
@@ -83,8 +84,11 @@ export const uploadChunk = async (
   fileId: string,
   offset: number,
   setPercentage: (percentage: number) => void,
+  setBuffer: (percentage: number) => void,
 ) => {
   return await new Promise((resolve, reject) => {
+    setBuffer(Math.floor((offset / file.size) * 100));
+
     const chunk = file.slice(
       offset * chunkSize,
       offset * chunkSize + chunkSize,

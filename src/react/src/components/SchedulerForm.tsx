@@ -1,13 +1,25 @@
 import "react-js-cron/dist/styles.css";
 
-import { Calendar } from "primereact/calendar";
-import { Checkbox } from "primereact/checkbox";
-import { Dropdown } from "primereact/dropdown";
-import { InputNumber } from "primereact/inputnumber";
-import { InputText } from "primereact/inputtext";
-import { MultiSelect } from "primereact/multiselect";
-import { SelectButton } from "primereact/selectbutton";
-import { useEffect, useState } from "react";
+import {
+  Box,
+  Checkbox,
+  FormControlLabel,
+  FormLabel,
+  MenuItem,
+  OutlinedInput,
+  Select,
+  SelectChangeEvent,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from "@mui/material";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { PickerValue } from "@mui/x-date-pickers/internals";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import dayjs from "dayjs";
+import { ChangeEvent, useEffect, useState } from "react";
 import { Cron } from "react-js-cron";
 
 import {
@@ -18,6 +30,7 @@ import {
   Job,
 } from "../models/brewtils-types";
 import { CompareObjects } from "../services/util_service";
+import NumberField from "./EnhancedTable/components/NumberField";
 
 interface SchedulerFormProps {
   scheduledJob: Job | undefined;
@@ -106,94 +119,145 @@ function FileForm({
   }
 
   return (
-    <div>
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="path">Path</label>
-        </div>
-        <div style={{ width: layoutProps.valueWidth }}>
-          <InputText
+    <Box>
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="path"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Path
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: layoutProps.valueWidth }}>
+          <TextField
             id="path"
+            fullWidth
+            size="small"
             value={fileTrigger?.path ?? ""}
             onChange={(e) => {
               setFileTrigger({ ...fileTrigger, ...{ path: e.target.value } });
             }}
-            invalid={
+            error={
               fileTrigger?.path === undefined ||
               fileTrigger?.path === null ||
               fileTrigger?.path === ""
             }
-            pt={{
-              root: {
-                autoComplete: "off",
-              },
-            }}
+            autoComplete="off"
           />
-        </div>
-      </div>
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="pattern">Pattern</label>
-        </div>
-        <div style={{ width: layoutProps.valueWidth }}>
-          <InputText
+        </Box>
+      </Box>
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="pattern"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Pattern
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: layoutProps.valueWidth }}>
+          <TextField
             id="pattern"
-            value={fileTrigger?.pattern}
+            fullWidth
+            size="small"
+            value={fileTrigger?.pattern ?? ""}
             onChange={(e) => {
               setFileTrigger({
                 ...fileTrigger,
                 ...{ pattern: e.target.value },
               });
             }}
-            pt={{
-              root: {
-                autoComplete: "off",
-              },
-            }}
+            autoComplete="off"
           />
-        </div>
-      </div>
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="recursive">Recursive</label>
-        </div>
-        <div style={{ width: layoutProps.valueWidth }}>
-          <Checkbox
-            id="recursive"
-            onChange={(e) => {
-              setFileTrigger({
-                ...fileTrigger,
-                ...{ recursive: e.checked },
-              });
+        </Box>
+      </Box>
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="recursive"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
             }}
-            checked={fileTrigger?.recursive === true}
-            pt={{
-              input: {
-                "aria-label": "Recursive Checkbox",
-              },
-              icon: {
-                role: "img",
-                "aria-label": "Selection for Recursive Checkbox",
-              },
+          >
+            Recursive
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: layoutProps.valueWidth }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                id="recursive"
+                onChange={(e) => {
+                  setFileTrigger({
+                    ...fileTrigger,
+                    ...{ recursive: e.target.checked },
+                  });
+                }}
+                checked={fileTrigger?.recursive === true}
+              />
+            }
+            label=""
+          />
+        </Box>
+      </Box>
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="eventTypes"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
             }}
-          ></Checkbox>
-        </div>
-      </div>
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="eventTypes">Event Types</label>
-        </div>
-        <div style={{ width: layoutProps.valueWidth }}>
-          <MultiSelect
+          >
+            Event Types
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: layoutProps.valueWidth }}>
+          <Select
             id="eventTypes"
+            multiple
             value={selectedTypes}
-            onChange={(e) => setSelectedTypes(e.value)}
-            options={typeOptions}
-            placeholder="Select Event Type"
-          />
-        </div>
-      </div>
-    </div>
+            onChange={(event: SelectChangeEvent<typeof typeOptions | null>) => {
+              const {
+                target: { value },
+              } = event;
+
+              if (value === null) {
+                setSelectedTypes([]);
+              } else {
+                setSelectedTypes(
+                  typeof value === "string" ? value.split(",") : value,
+                );
+              }
+            }}
+            input={<OutlinedInput label="Select Event Type" />}
+            renderValue={(selected) =>
+              selected === null ? "" : selected.join(", ")
+            }
+            size="small"
+            fullWidth
+          >
+            {typeOptions.map((option) => (
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
+            ))}
+          </Select>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
@@ -228,65 +292,70 @@ function DateForm({
   };
 
   return (
-    <div>
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="runDate">Run Date</label>
-        </div>
-        <div style={{ width: layoutProps.valueWidth }}>
-          <Calendar
-            id="runDate"
-            value={runDate}
-            showTime
-            hourFormat="24"
-            onChange={(e: any) => updateRunDate(e.value)}
-            invalid={
-              runDate === undefined || runDate === null || runDate === ""
-            }
-            pt={{
-              input: {
-                root: ({ context }: { context: any }) => {
-                  if (!context.disabled) {
-                    return {
-                      "aria-label": `Run Date`,
-                      "aria-controls": undefined,
-                      "aria-description":
-                        "Select Date and Time, aria-controls removed when popup is not in DOM",
-                    };
-                  }
-                  return {
-                    "aria-label": `Run Date`,
-                    "aria-description": "Select Date and Time",
-                  };
-                },
-              },
+    <Box>
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="runDate"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
             }}
-          />
-        </div>
-      </div>
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="timezone">Timezone</label>
-        </div>
-        <div style={{ width: layoutProps.valueWidth }}>
-          <InputText
+          >
+            Run Date
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: layoutProps.valueWidth }}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              value={dayjs(runDate)}
+              onChange={(newValue: PickerValue) => {
+                if (newValue && newValue.isValid()) {
+                  updateRunDate(newValue);
+                } else {
+                  updateRunDate(undefined);
+                }
+              }}
+              slotProps={{
+                textField: {
+                  id: "runDate",
+                },
+              }}
+            />
+          </LocalizationProvider>
+        </Box>
+      </Box>
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="timezone"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Timezone
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: layoutProps.valueWidth }}>
+          <TextField
             id="timezone"
-            value={dateTrigger?.timezone}
+            fullWidth
+            size="small"
+            value={dateTrigger?.timezone ?? ""}
             onChange={(e) => {
               setDateTrigger({
                 ...dateTrigger,
                 ...{ timezone: e.target.value },
               });
             }}
-            pt={{
-              root: {
-                autoComplete: "off",
-              },
-            }}
+            autoComplete="off"
           />
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
@@ -400,169 +469,157 @@ function IntervalForm({
   ]);
 
   return (
-    <div>
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="intervalNumber">Interval Number</label>
-        </div>
-        <div style={{ width: layoutProps.valueWidth }}>
-          <InputNumber
+    <Box>
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="intervalNumber"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Interval Number
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: layoutProps.valueWidth }}>
+          <NumberField
             id="intervalNumber"
             value={intervalNumber}
-            onChange={(e) => setIntervalNumber(e.value)}
+            onValueChange={(value: number | null) => setIntervalNumber(value)}
             min={1}
-            incrementButtonIcon="pi pi-chevron-up"
-            decrementButtonIcon="pi pi-chevron-down"
-            pt={{
-              input: {
-                root: {
-                  "aria-label": `Interval Number`,
-                  autoComplete: "off",
-                },
-              },
-              incrementButton: {
-                tabIndex: 0,
-                "aria-label": `Increase Interval Number by 1`,
-                "aria-hidden": "false",
-              },
-              decrementButton: {
-                tabIndex: 0,
-                "aria-label": `Decrease Interval Number by 1`,
-                "aria-hidden": "false",
-              },
-              incrementIcon: {
-                role: "img",
-                "aria-label": "Increase Interval Number",
-              },
-              decrementIcon: {
-                role: "img",
-                "aria-label": "Decrease Interval Number",
-              },
-            }}
+            size="small"
           />
-        </div>
-      </div>
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="intervalType">Interval Type</label>
-        </div>
-        <div style={{ width: layoutProps.valueWidth }}>
-          <datalist id={`selectIntervalTypeDropdown`} aria-hidden="true">
-            {typeOptions.map((intervalType: string) => (
-              <option key={intervalType} value={intervalType} />
-            ))}
-          </datalist>
-          <Dropdown
+        </Box>
+      </Box>
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="intervalType"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Interval Type
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: layoutProps.valueWidth }}>
+          <Select
             id="intervalType"
-            options={typeOptions || []}
             value={intervalType}
-            onChange={(e) => setIntervalType(e.value)}
-            pt={{
-              dropdownIcon: {
-                role: "img",
-                "aria-label": `Interval Type Select Icon`,
-              },
-              input: {
-                autoComplete: "off",
-              },
-              select: {
-                autoComplete: "off",
-                "aria-controls": `selectIntervalTypeDropdown`,
-                "aria-label": ` Select Interval Type for Dropdown Select`,
-              },
+            onChange={(event: SelectChangeEvent<string | null>) => {
+              setIntervalType(event.target.value);
             }}
-          />
-        </div>
-      </div>
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="startDate">Start Date</label>
-        </div>
-        <div style={{ width: layoutProps.valueWidth }}>
-          <Calendar
-            id="startDate"
-            value={startDate}
-            showTime
-            hourFormat="24"
-            onChange={(e: any) => setStartDate(e.value)}
-            tooltip={`Scheduler Start Date`}
-            pt={{
-              input: {
-                root: ({ context }: { context: any }) => {
-                  if (!context.disabled) {
-                    return {
-                      "aria-label": `Scheduler Start Date`,
-                      "aria-controls": undefined,
-                      "aria-description":
-                        "Select Date and Time, aria-controls removed when popup is not in DOM",
-                    };
-                  }
-                  return {
-                    "aria-label": `Scheduler Start Date`,
-                    "aria-description": "Select Date and Time",
-                  };
+            size="small"
+            fullWidth
+          >
+            {typeOptions.map((option) => (
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
+            ))}
+          </Select>
+        </Box>
+      </Box>
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="startDate"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Start Date
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: layoutProps.valueWidth }}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              value={dayjs(startDate)}
+              onChange={(newValue: PickerValue) => {
+                if (newValue && newValue.isValid()) {
+                  setStartDate(newValue);
+                } else {
+                  setStartDate(undefined);
+                }
+              }}
+              slotProps={{
+                textField: {
+                  id: "startDate",
                 },
-              },
+              }}
+            />
+          </LocalizationProvider>
+        </Box>
+      </Box>
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="endDate"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
             }}
-          />
-        </div>
-      </div>
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="endDate">End Date</label>
-        </div>
-        <div style={{ width: layoutProps.valueWidth }}>
-          <Calendar
-            id="endDate"
-            value={endDate}
-            showTime
-            hourFormat="24"
-            onChange={(e: any) => setEndDate(e.value)}
-            tooltip={`Scheduler End Date`}
-            pt={{
-              input: {
-                root: ({ context }: { context: any }) => {
-                  if (!context.disabled) {
-                    return {
-                      "aria-label": `Scheduler End Date`,
-                      "aria-controls": undefined,
-                      "aria-description":
-                        "Select Date and Time, aria-controls removed when popup is not in DOM",
-                    };
-                  }
-                  return {
-                    "aria-label": `Scheduler End Date`,
-                    "aria-description": "Select Date and Time",
-                  };
+          >
+            End Date
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: layoutProps.valueWidth }}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              value={dayjs(endDate)}
+              onChange={(newValue: PickerValue) => {
+                if (newValue && newValue.isValid()) {
+                  setEndDate(newValue);
+                } else {
+                  setEndDate(undefined);
+                }
+              }}
+              slotProps={{
+                textField: {
+                  id: "endDate",
                 },
-              },
+              }}
+            />
+          </LocalizationProvider>
+        </Box>
+      </Box>
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="timezone"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
             }}
-          />
-        </div>
-      </div>
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="timezone">Timezone</label>
-        </div>
-        <div style={{ width: layoutProps.valueWidth }}>
-          <InputText
+          >
+            Timezone
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: layoutProps.valueWidth }}>
+          <TextField
             id="timezone"
-            value={intervalTrigger?.timezone}
+            fullWidth
+            size="small"
+            value={intervalTrigger?.timezone ?? ""}
             onChange={(e) => {
               setIntervalTrigger({
                 ...intervalTrigger,
                 ...{ timezone: e.target.value },
               });
             }}
-            pt={{
-              root: {
-                autoComplete: "off",
-              },
-            }}
+            autoComplete="off"
           />
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
@@ -658,151 +715,150 @@ function CronForm({
   }, [cronValue, endDate, startDate, cronTrigger, setCronTrigger]);
 
   return (
-    <div>
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="cron">CRON</label>
-        </div>
-        <div id="cron" style={{ width: layoutProps.valueWidth }}>
+    <Box>
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="cron"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            CRON
+          </FormLabel>
+        </Box>
+        <Box id="cron" sx={{ width: layoutProps.valueWidth }}>
           <Cron
             value={cronValue}
             setValue={setCronValue}
             clockFormat="24-hour-clock"
           />
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="cronJitter">CRON Jitter</label>
-        </div>
-        <div style={{ width: layoutProps.valueWidth }}>
-          <InputNumber
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="cronJitter"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            CRON Jitter
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: layoutProps.valueWidth }}>
+          <NumberField
             id="cronJitter"
             value={cronTrigger?.jitter}
-            onValueChange={(e) => {
-              setCronTrigger({ ...cronTrigger, ...{ jitter: e.target.value } });
+            onValueChange={(value: number | null) => {
+              setCronTrigger({ ...cronTrigger, ...{ jitter: value } });
             }}
             min={0}
-            incrementButtonIcon="pi pi-chevron-up"
-            decrementButtonIcon="pi pi-chevron-down"
-            pt={{
-              input: {
-                root: {
-                  "aria-label": `CRON Jitter`,
-                  autoComplete: "off",
-                },
-              },
-              incrementButton: {
-                tabIndex: 0,
-                "aria-label": `Increase CRON Jitter by 1`,
-                "aria-hidden": "false",
-              },
-
-              decrementButton: {
-                tabIndex: 0,
-                "aria-label": `Decrease CRON Jitter by 1`,
-                "aria-hidden": "false",
-              },
-              incrementIcon: {
-                role: "img",
-                "aria-label": "Increase CRON Jitter",
-              },
-              decrementIcon: {
-                role: "img",
-                "aria-label": "Decrease CRON Jitter",
-              },
-            }}
+            size="small"
           />
-        </div>
-      </div>
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="startDate">Start Date</label>
-        </div>
-        <div style={{ width: layoutProps.valueWidth }}>
-          <Calendar
-            id="startDate"
-            value={startDate}
-            showTime
-            hourFormat="24"
-            onChange={(e: any) => setStartDate(e.value)}
-            pt={{
-              input: {
-                root: ({ context }: { context: any }) => {
-                  if (!context.disabled) {
-                    return {
-                      "aria-label": `CRON Start Date`,
-                      "aria-controls": undefined,
-                      "aria-description":
-                        "Select Date and Time, aria-controls removed when popup is not in DOM",
-                    };
-                  }
-                  return {
-                    "aria-label": `CRON Start Date`,
-                    "aria-description": "Select Date and Time",
-                  };
-                },
-              },
+        </Box>
+      </Box>
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="startDate"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
             }}
-          />
-        </div>
-      </div>
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="endDate">End Date</label>
-        </div>
-        <div style={{ width: layoutProps.valueWidth }}>
-          <Calendar
-            id="endDate"
-            value={endDate}
-            showTime
-            hourFormat="24"
-            onChange={(e: any) => setEndDate(e.value)}
-            pt={{
-              input: {
-                root: ({ context }: { context: any }) => {
-                  if (!context.disabled) {
-                    return {
-                      "aria-label": `CRON End Date`,
-                      "aria-controls": undefined,
-                      "aria-description":
-                        "Select Date and Time, aria-controls removed when popup is not in DOM",
-                    };
-                  }
-                  return {
-                    "aria-label": `CRON End Date`,
-                    "aria-description": "Select Date and Time",
-                  };
+          >
+            Start Date
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: layoutProps.valueWidth }}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              value={dayjs(startDate)}
+              onChange={(newValue: PickerValue) => {
+                if (newValue && newValue.isValid()) {
+                  setStartDate(newValue);
+                } else {
+                  setStartDate(undefined);
+                }
+              }}
+              slotProps={{
+                textField: {
+                  id: "startDate",
                 },
-              },
+              }}
+            />
+          </LocalizationProvider>
+        </Box>
+      </Box>
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="endDate"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
             }}
-          />
-        </div>
-      </div>
-      <div className="flex ml-2 mb-2">
-        <div style={{ width: layoutProps.labelWidth }}>
-          <label htmlFor="timezone">Timezone</label>
-        </div>
-        <div style={{ width: layoutProps.valueWidth }}>
-          <InputText
+          >
+            End Date
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: layoutProps.valueWidth }}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              value={dayjs(endDate)}
+              onChange={(newValue: PickerValue) => {
+                if (newValue && newValue.isValid()) {
+                  setEndDate(newValue);
+                } else {
+                  setEndDate(undefined);
+                }
+              }}
+              slotProps={{
+                textField: {
+                  id: "endDate",
+                },
+              }}
+            />
+          </LocalizationProvider>
+        </Box>
+      </Box>
+      <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+        <Box sx={{ width: layoutProps.labelWidth }}>
+          <FormLabel
+            htmlFor="timezone"
+            sx={{
+              minWidth: "100px",
+              textAlign: "right",
+              fontWeight: "bold",
+            }}
+          >
+            Timezone
+          </FormLabel>
+        </Box>
+        <Box sx={{ width: layoutProps.valueWidth }}>
+          <TextField
             id="timezone"
-            value={cronTrigger?.timezone}
+            fullWidth
+            size="small"
+            value={cronTrigger?.timezone ?? ""}
             onChange={(e) => {
               setCronTrigger({
                 ...cronTrigger,
                 ...{ timezone: e.target.value },
               });
             }}
-            pt={{
-              root: {
-                autoComplete: "off",
-              },
-            }}
+            autoComplete="off"
           />
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 }
 
@@ -811,18 +867,12 @@ function SchedulerForm({
   setScheduledJob,
   setIsJobValid,
 }: SchedulerFormProps) {
-  const jobOptions = ["CRON", "Interval", "Date", "File"];
-  let defaultJobOption = "CRON";
+  const jobOptions = ["cron", "interval", "date", "file"];
   const defaultTimeZone = "UTC";
 
-  if (scheduledJob?.trigger_type === "interval") {
-    defaultJobOption = "Interval";
-  } else if (scheduledJob?.trigger_type === "date") {
-    defaultJobOption = "Date";
-  } else if (scheduledJob?.trigger_type === "file") {
-    defaultJobOption = "File";
-  }
-  const [jobState, setJobState] = useState(defaultJobOption);
+  const [jobState, setJobState] = useState(
+    scheduledJob?.trigger_type ?? "cron",
+  );
 
   const [cronTrigger, setCronTrigger] = useState(
     scheduledJob?.trigger_type === "cron"
@@ -856,7 +906,7 @@ function SchedulerForm({
         valid = false;
       }
       if (
-        jobState === "Date" &&
+        jobState === "date" &&
         (dateTrigger?.run_date === undefined ||
           dateTrigger?.run_date === null ||
           dateTrigger?.run_date === "")
@@ -864,7 +914,7 @@ function SchedulerForm({
         valid = false;
       }
       if (
-        jobState === "File" &&
+        jobState === "file" &&
         (fileTrigger?.path === undefined ||
           fileTrigger?.path === null ||
           fileTrigger?.path === "")
@@ -883,28 +933,28 @@ function SchedulerForm({
       });
       return;
     }
-    if (jobState === "Date") {
+    if (jobState === "date") {
       if (!CompareObjects(scheduledJob?.trigger, dateTrigger)) {
         setScheduledJob({
           ...scheduledJob,
           ...{ trigger_type: "date", trigger: dateTrigger },
         });
       }
-    } else if (jobState === "Interval") {
+    } else if (jobState === "interval") {
       if (!CompareObjects(scheduledJob?.trigger, intervalTrigger)) {
         setScheduledJob({
           ...scheduledJob,
           ...{ trigger_type: "interval", trigger: intervalTrigger },
         });
       }
-    } else if (jobState === "File") {
+    } else if (jobState === "file") {
       if (!CompareObjects(scheduledJob?.trigger, fileTrigger)) {
         setScheduledJob({
           ...scheduledJob,
           ...{ trigger_type: "file", trigger: fileTrigger },
         });
       }
-    } else if (jobState === "CRON") {
+    } else if (jobState === "cron") {
       if (!CompareObjects(scheduledJob?.trigger, cronTrigger)) {
         setScheduledJob({
           ...scheduledJob,
@@ -928,236 +978,115 @@ function SchedulerForm({
   } as LayoutProps;
 
   return (
-    <div>
-      <div className="card flex justify-content-center mb-4">
-        <SelectButton
-          value={jobState}
-          onChange={(e) => e.value && setJobState(e.value)}
-          options={jobOptions}
-        />
-      </div>
+    <Box>
+      <Box sx={{ justifyContent: "center", mb: 4, display: "flex" }}>
+        <ToggleButtonGroup aria-label="Job Type Selection" value={jobState}>
+          {jobOptions.map((option) => (
+            <ToggleButton
+              key={option}
+              value={option}
+              onClick={() => setJobState(option)}
+              aria-label={`Change Job Type ${option}`}
+            >
+              <Typography>{option}</Typography>
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      </Box>
 
-      <div className="card flex justify-content-center ">
-        <div>
-          <div className="flex ml-2 mb-2">
-            <div style={{ width: layoutProps.labelWidth }}>
-              <label htmlFor="jobName">Job Name</label>
-            </div>
-            <div style={{ width: layoutProps.valueWidth }}>
-              <InputText
-                id="jobName"
-                value={scheduledJob?.name ?? ""}
-                onChange={(e) => {
-                  setScheduledJob({
-                    ...scheduledJob,
-                    ...{ name: e.target.value },
-                  });
+      <Box sx={{ display: "flex", justifyContent: "center" }}>
+        <Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <FormLabel
+              htmlFor="jobName"
+              sx={{
+                minWidth: "100px",
+                textAlign: "right",
+                fontWeight: "bold",
+              }}
+            >
+              Job Name
+            </FormLabel>
+            <TextField
+              id="jobName"
+              value={scheduledJob?.name ?? ""}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                setScheduledJob({
+                  ...scheduledJob,
+                  ...{ name: e.target.value },
+                });
+              }}
+              sx={{ ml: 2, mb: 2 }}
+              placeholder="Enter Job Name"
+              size="small"
+            />
+          </Box>
+
+          <Box sx={{ display: "flex", ml: 2, mb: 2, alignItems: "center" }}>
+            <Box sx={{ width: layoutProps.labelWidth }}>
+              <FormLabel
+                htmlFor="coalesce"
+                sx={{
+                  minWidth: "100px",
+                  textAlign: "right",
+                  fontWeight: "bold",
                 }}
-                invalid={
-                  scheduledJob?.name === undefined ||
-                  scheduledJob?.name === null ||
-                  scheduledJob?.name === ""
+              >
+                Coalesce
+              </FormLabel>
+            </Box>
+            <Box sx={{ width: layoutProps.valueWidth }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    id="coalesce"
+                    onChange={(e) => {
+                      setScheduledJob({
+                        ...scheduledJob,
+                        ...{ coalesce: e.target.checked },
+                      });
+                    }}
+                    checked={scheduledJob?.coalesce === true}
+                  />
                 }
-                pt={{
-                  root: {
-                    autoComplete: "off",
-                  },
-                }}
+                label=""
               />
-            </div>
-          </div>
-
-          <div className="flex ml-2 mb-2">
-            <div style={{ width: layoutProps.labelWidth }}>
-              <label htmlFor="coalesce">Coalesce</label>
-            </div>
-            <div style={{ width: layoutProps.valueWidth }}>
-              <Checkbox
-                id="coalesce"
-                onChange={(e) => {
-                  setScheduledJob({
-                    ...scheduledJob,
-                    ...{ coalesce: e.checked },
-                  });
-                }}
-                checked={scheduledJob?.coalesce === true}
-                pt={{
-                  input: {
-                    "aria-label": `Coalesce Requests Checkbox`,
-                  },
-                  icon: {
-                    role: "img",
-                    "aria-label": "Selection for Coalesce Requests Checkbox",
-                  },
-                }}
-              ></Checkbox>
-            </div>
-          </div>
-          <div className="flex ml-2 mb-2">
-            <div style={{ width: layoutProps.labelWidth }}>
-              <label htmlFor="misfireGraceTime">Misfire Grace Time</label>
-            </div>
-            <div style={{ width: layoutProps.valueWidth }}>
-              <InputNumber
-                id="misfireGraceTime"
-                value={scheduledJob?.misfire_grace_time}
-                onValueChange={(e) => {
-                  setScheduledJob({
-                    ...scheduledJob,
-                    ...{ misfire_grace_time: e.value },
-                  });
-                }}
-                showButtons
-                min={0}
-                incrementButtonIcon="pi pi-chevron-up"
-                decrementButtonIcon="pi pi-chevron-down"
-                pt={{
-                  input: {
-                    root: {
-                      "aria-label": `Misfire Grace Time`,
-                      autoComplete: "off",
-                    },
-                  },
-                  incrementButton: {
-                    tabIndex: 0,
-                    "aria-label": `Increase Misfire Grace Time by 1`,
-                    "aria-hidden": "false",
-                  },
-
-                  decrementButton: {
-                    tabIndex: 0,
-                    "aria-label": `Decrease Misfire Grace Time by 1`,
-                    "aria-hidden": "false",
-                  },
-                  incrementIcon: {
-                    role: "img",
-                    "aria-label": "Increase Misfire Grace Time",
-                  },
-                  decrementIcon: {
-                    role: "img",
-                    "aria-label": "Decrease Misfire Grace Time",
-                  },
-                }}
-              />
-            </div>
-          </div>
-          <div className="flex ml-2 mb-2">
-            <div style={{ width: layoutProps.labelWidth }}>
-              <label htmlFor="maxInstances">Max Instances</label>
-            </div>
-            <div style={{ width: layoutProps.valueWidth }}>
-              <InputNumber
-                id="maxInstances"
-                value={scheduledJob?.max_instances}
-                onValueChange={(e) => {
-                  setScheduledJob({
-                    ...scheduledJob,
-                    ...{ max_instances: e.value },
-                  });
-                }}
-                showButtons
-                min={1}
-                incrementButtonIcon="pi pi-chevron-up"
-                decrementButtonIcon="pi pi-chevron-down"
-                pt={{
-                  input: {
-                    root: {
-                      "aria-label": `Max Instances`,
-                      autoComplete: "off",
-                    },
-                  },
-                  incrementButton: {
-                    tabIndex: 0,
-                    "aria-label": `Increase Max Instances by 1`,
-                    "aria-hidden": "false",
-                  },
-                  decrementButton: {
-                    tabIndex: 0,
-                    "aria-label": `Decrease Max Instances by 1`,
-                    "aria-hidden": "false",
-                  },
-                }}
-              />
-            </div>
-          </div>
-          <div className="flex ml-2 mb-2">
-            <div style={{ width: layoutProps.labelWidth }}>
-              <label htmlFor="timeout">Timeout</label>
-            </div>
-            <div style={{ width: layoutProps.valueWidth }}>
-              <InputNumber
-                id="timeout"
-                value={scheduledJob?.timeout}
-                onValueChange={(e) => {
-                  setScheduledJob({ ...scheduledJob, ...{ timeout: e.value } });
-                }}
-                showButtons
-                min={0}
-                incrementButtonIcon="pi pi-chevron-up"
-                decrementButtonIcon="pi pi-chevron-down"
-                pt={{
-                  input: {
-                    root: {
-                      "aria-label": `Timeout`,
-                      autoComplete: "off",
-                      "aria-valuenow": scheduledJob?.timeout ?? undefined,
-                    },
-                  },
-                  incrementButton: {
-                    tabIndex: 0,
-                    "aria-label": `Increase Timeout by 1`,
-                    "aria-hidden": "false",
-                  },
-                  decrementButton: {
-                    tabIndex: 0,
-                    "aria-label": `Decrease Timeout by 1`,
-                    "aria-hidden": "false",
-                  },
-                  incrementIcon: {
-                    role: "img",
-                    "aria-label": "Increase Timeout",
-                  },
-                  decrementIcon: {
-                    role: "img",
-                    "aria-label": "Decrease Timeout",
-                  },
-                }}
-              />
-            </div>
-          </div>
-        </div>
-        <div>
-          {jobState === "CRON" && (
+            </Box>
+          </Box>
+        </Box>
+        <Box>
+          {jobState === "cron" && (
             <CronForm
               cronTrigger={cronTrigger}
               setCronTrigger={setCronTrigger}
               layoutProps={layoutProps}
             />
           )}
-          {jobState === "Interval" && (
+          {jobState === "interval" && (
             <IntervalForm
               intervalTrigger={intervalTrigger}
               setIntervalTrigger={setIntervalTrigger}
               layoutProps={layoutProps}
             />
           )}
-          {jobState === "Date" && (
+          {jobState === "date" && (
             <DateForm
               dateTrigger={dateTrigger}
               setDateTrigger={setDateTrigger}
               layoutProps={layoutProps}
             />
           )}
-          {jobState === "File" && (
+          {jobState === "file" && (
             <FileForm
               fileTrigger={fileTrigger}
               setFileTrigger={setFileTrigger}
               layoutProps={layoutProps}
             />
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 }
+
 export default SchedulerForm;
