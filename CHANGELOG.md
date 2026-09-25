@@ -1,5 +1,14 @@
 # Beer Garden Changelog
 
+# TBD
+TBD
+
+- Adds the feature to route response based operations to Downstream gardens via Garden Request Type.
+  This will auto map over operations targeted at downstream garden if expected response doesn't come
+  back through Events. (#2417)
+
+TODO: Update router logic to check for this release version
+
 # 3.35.1
 9/9/2026
 

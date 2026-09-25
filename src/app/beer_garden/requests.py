@@ -909,6 +909,9 @@ def create_request(request: Request) -> Request:
     if request.target_garden is None:
         request.target_garden = config.get("garden.name")
 
+    if request.command_type == "GARDEN":
+        request.hidden = True
+
     migrate_parent_id(request)
     if request.has_parent or request.parent_id is not None:
         if request.parent_id is None:
