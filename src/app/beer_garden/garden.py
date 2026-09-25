@@ -13,11 +13,13 @@ The garden service is responsible for:
 import copy
 import json
 import logging
+import os
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import List
 
+import psutil
 from brewtils.errors import PluginError
 from brewtils.models import (
     Connection,
@@ -274,6 +276,32 @@ def local_garden(all_systems: bool = False, **kwargs) -> Garden:
     return garden
 
 
+def calculate_garden_statistics():
+
+    cpu_usage = psutil.cpu_percent(interval=1)
+    virtual_mem = psutil.virtual_memory()
+
+    root_pid = os.getppid()
+    if root_pid == 1:
+        root_pid = os.getpid()
+
+    current_process = psutil.Process(os.getpid())
+    mem_info = current_process.memory_info()
+
+    current_process.cpu_percent(interval=None)
+    process_cpu = current_process.cpu_percent(interval=None)
+
+    return {
+        "CPU_USAGE": cpu_usage,
+        "CPU_BG_USAGE": process_cpu,
+        "MEM_TOTAL": round(virtual_mem.total / (1024**3), 2),
+        "MEM_USAGE": round(virtual_mem.used / (1024**3), 2),
+        "MEM_BG_USAGE": round(mem_info.rss / (1024**3), 2),
+        "MEM_AVAILABLE": round(virtual_mem.available / (1024**3), 2),
+        "MEM_FREE": round(virtual_mem.free / (1024**3), 2),
+    }
+
+
 @publish_event(Events.GARDEN_SYNC)
 def publish_garden() -> Garden:
     """Get the local garden, publishing a GARDEN_SYNC event
@@ -284,6 +312,9 @@ def publish_garden() -> Garden:
     garden = local_garden()
     get_children_garden(garden)
     garden.connection_type = None
+
+    # Add snapshot of OS statistics for metric collection
+    garden.metadata = garden.metadata | calculate_garden_statistics()
 
     return garden
 
