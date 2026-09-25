@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import json
-import logging
 from inspect import isawaitable
 from typing import Any, Optional
 
@@ -13,8 +12,6 @@ import beer_garden.config as config
 import beer_garden.router
 from beer_garden.authorization import ModelFilter
 from beer_garden.metrics import CollectMetrics, extract_custom_context
-
-logger = logging.getLogger(__name__)
 
 
 class SerializeHelper(object):
