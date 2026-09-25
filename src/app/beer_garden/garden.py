@@ -282,6 +282,7 @@ def calculate_garden_statistics():
     virtual_mem = psutil.virtual_memory()
 
     root_pid = os.getppid()
+    # If 1 is returned in Linux, the process is orphaned
     if root_pid == 1:
         root_pid = os.getpid()
 
