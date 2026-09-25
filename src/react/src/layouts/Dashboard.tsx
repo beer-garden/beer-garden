@@ -585,7 +585,7 @@ function GardenDashboard({
       <div>
         <div>
           {node.gardenIcon}
-          <Box component="span" title={node.label} sx={{ mx: 1 }}>
+          <Box component="span" sx={{ mx: 1 }}>
             {node.label}
           </Box>
         </div>

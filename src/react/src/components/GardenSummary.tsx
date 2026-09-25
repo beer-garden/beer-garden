@@ -586,17 +586,18 @@ function GardenSummary({
             <Box sx={{ display: "flex", mr: 2 }}>
               <Typography
                 variant="subtitle1"
+                component="h2"
                 sx={{ mr: 2, fontWeight: "bold" }}
               >
                 Version:
               </Typography>
-              <Typography variant="subtitle1">
+              <Typography variant="subtitle1" component="h2">
                 {selectedGarden?.version}
               </Typography>
             </Box>
             <Box sx={{ display: "flex" }}>
               <Typography sx={{ mr: 2, fontWeight: "bold" }}>
-                Systems:{" "}
+                Systems:
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center" }}>
                 {Array.from(systemCounts, ([status, count]) => {
