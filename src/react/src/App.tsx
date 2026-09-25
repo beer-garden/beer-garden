@@ -3,7 +3,7 @@ import { Box, CssBaseline, Grid, Skeleton, Toolbar } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import { ThemeProvider } from "@mui/material/styles";
-import { MouseEvent,useCallback, useEffect, useRef, useState } from "react";
+import { MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { ACTIONS, type EventData, Joyride, STATUS } from "react-joyride";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
