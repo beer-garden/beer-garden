@@ -21,7 +21,6 @@ import beer_garden.api
 import beer_garden.api.entry_point
 import beer_garden.config as config
 import beer_garden.db.api as db
-import beer_garden.db.mongo.legacy_pruner
 import beer_garden.events
 import beer_garden.events.handlers
 import beer_garden.garden
@@ -37,7 +36,11 @@ from beer_garden.events.processors import (
 )
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
-from beer_garden.metrics import PrometheusServer, initialize_elastic_client
+from beer_garden.metrics import (
+    PrometheusServer,
+    initialize_elastic_client,
+    setup_metrics,
+)
 from beer_garden.monitor import MonitorFile
 from beer_garden.plugin import StatusMonitor
 from beer_garden.scheduler import MixedScheduler
@@ -301,6 +304,8 @@ class Application(StoppableThread):
         self.logger.debug("Starting helper threads...")
         for helper_thread in self.helper_threads:
             helper_thread.start()
+
+        setup_metrics()
 
         if config.get("parent.stomp.enabled") or config.get("parent.http.enabled"):
             self.logger.debug("Publishing to Parent that we are online")

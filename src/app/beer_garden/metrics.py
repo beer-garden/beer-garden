@@ -6,13 +6,14 @@ The metrics service manages:
 * Creating default summary views in Prometheus
 * Publishing `Request` metrics
 """
-
 import datetime
 import json
 import logging
 import re
 import sys
+import time
 from http.server import ThreadingHTTPServer
+from threading import Lock
 
 import elasticapm
 from brewtils.models import BaseModel, Event, Operation, Request
@@ -20,8 +21,9 @@ from brewtils.stoppable_thread import StoppableThread
 from elasticapm import Client
 from elasticapm.metrics.base_metrics import MetricSet
 from prometheus_client import Counter, Gauge, Summary
+from prometheus_client.core import REGISTRY, GaugeMetricFamily
 from prometheus_client.exposition import MetricsHandler
-from prometheus_client.registry import REGISTRY
+from prometheus_client.registry import Collector
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -91,6 +93,181 @@ in_progress_request_gauge = Gauge(
     "Number of requests IN_PROGRESS",
     ["system", "instance_name", "system_version"],
 )
+
+
+class TimeWindowCollector(Collector):
+    def __init__(self, collector, name, description=None, labels=None):
+        # Initialize the last scrape timestamp (Could be last 15 minutes if we wanted)
+        self._last_scrape_time = time.time()
+        self._lock = Lock()
+        self._name = name
+        self._description = description
+        self._labels = [] if labels is None else labels
+        self._collector = collector
+
+    def collect(self):
+        # 1. Capture the exact current time of the incoming query
+        current_scrape_time = time.time()
+
+        with self._lock:
+            # 2. Calculate the elapsed time window (in seconds)
+            # time_window = current_scrape_time - self._last_scrape_time
+
+            # 3. Execute Query
+            values = self._collector()  # TODO (time_window)
+            # Update state for the next scrape iteration
+            self._last_scrape_time = current_scrape_time
+
+        # 4. Create your metrics using the calculated delta window
+        gauge = GaugeMetricFamily(
+            self._name,
+            self._description,
+            labels=self._labels,
+        )
+
+        # 5. Apply Values
+        for value in values:
+            labels = []
+            for label_key in self._labels:
+                labels.append(value[label_key])
+
+            gauge.add_metric(labels, value["count"])
+        yield gauge
+
+
+def request_garden_status_metrics(interval: int = 15):
+    pipeline = [
+        {
+            "$match": {
+                "status": "SUCCESS",
+                "updated_at": {
+                    "$gte": datetime.datetime.now(datetime.timezone.utc)
+                    - datetime.timedelta(minutes=interval)
+                },
+            }
+        },
+        {
+            "$group": {
+                "_id": {
+                    "namespace": "$namespace",
+                    "system": "$system",
+                    "system_version": "$system_version",
+                    "instance_name": "$instance_name",
+                },
+                "count": {"$sum": 1},
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "namespace": "$_id.namespace",
+                "system": "$_id.system",
+                "system_version": "$_id.system_version",
+                "instance_name": "$_id.instance_name",
+                "count": "$count",
+            }
+        },
+    ]
+
+    # Expect list and empty list ok
+    result = db.aggregation(Request, pipeline=pipeline)
+
+    return result
+
+
+def request_garden_send_latency_metrics(target_garden: str, interval: int = 15):
+    # Calculated the average trip down to a Target Garden from this Garden
+
+    local_garden = config.get("garden.name")
+    pipeline = [
+        # Stage 1: Filter by source_garden, target_garden, status, updated_at,
+        # and metadata fields
+        {
+            "$match": {
+                "source_garden": local_garden,
+                "target_garden": target_garden,
+                "status": "SUCCESS",
+                "updated_at": {
+                    "$gte": datetime.datetime.now(datetime.timezone.utc)
+                    - datetime.timedelta(minutes=interval)
+                },
+                f"metadata.CREATED_{local_garden}": {"$exists": True, "$ne": None},
+                f"metadata.CREATED_{target_garden}": {"$exists": True, "$ne": None},
+            }
+        },
+        # Stage 2: Calculate the delta for CREATED to traverse from Local to Target garden
+        {
+            "$addFields": {
+                "delta": {
+                    "$subtract": [
+                        f"$metadata.CREATED_{local_garden}",
+                        f"$metadata.CREATED_{target_garden}",
+                    ]
+                }
+            }
+        },
+        # Stage 3: Calculate the average of all deltas
+        {"$group": {"_id": None, "average_delta": {"$avg": "$delta"}}},
+    ]
+    result = db.aggregation(Request, pipeline=pipeline)
+    if result:
+        return result[0]["average_delta"]
+
+    # Can't find a result
+    return None
+
+
+def request_garden_return_latency_metrics(target_garden: str, interval: int = 15):
+    # Calcualted the average trip from a Target Garden to this Garden
+
+    local_garden = config.get("garden.name")
+    pipeline = [
+        # Stage 1: Filter by target_garden, status, updated_at, and metadata fields
+        {
+            "$match": {
+                "target_garden": target_garden,
+                "status": "SUCCESS",
+                "updated_at": {
+                    "$gte": datetime.datetime.now(datetime.timezone.utc)
+                    - datetime.timedelta(minutes=interval)
+                },
+                f"metadata.SUCCESS_{local_garden}": {"$exists": True, "$ne": None},
+                f"metadata.SUCCESS_{target_garden}": {"$exists": True, "$ne": None},
+            }
+        },
+        # Stage 2: Calculate the delta for SUCCESS to traverse from Target to Local garden
+        {
+            "$addFields": {
+                "delta": {
+                    "$subtract": [
+                        f"$metadata.SUCCESS_{target_garden}"
+                        f"$metadata.SUCCESS_{local_garden}",
+                    ]
+                }
+            }
+        },
+        # Stage 3: Calculate the average of all deltas
+        {"$group": {"_id": None, "average_delta": {"$avg": "$delta"}}},
+    ]
+    result = db.aggregation(Request, pipeline=pipeline)
+
+    # TODO: Apply prometheus measurements
+    if result:
+        return result[0]["average_delta"]
+
+    # Can't find a result
+    return None
+
+
+def setup_metrics():
+    REGISTRY.register(
+        TimeWindowCollector(
+            request_garden_status_metrics,
+            name="bg_success_requests",
+            description="Number of success requests",
+            labels=["namespace", "system", "system_version", "instance_name"],
+        )
+    )
 
 
 def request_latency(start_time):
