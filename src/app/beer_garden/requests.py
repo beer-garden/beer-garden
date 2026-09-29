@@ -48,7 +48,6 @@ import beer_garden.queue.api as queue
 from beer_garden.db.mongo.models import RawFile
 from beer_garden.errors import NotUniqueException, ShutdownError
 from beer_garden.events import publish, publish_event
-from beer_garden.metrics import request_completed
 
 logger = logging.getLogger(__name__)
 
@@ -1054,9 +1053,6 @@ def complete_request(
     request.error_class = error_class
 
     request = db.update(request)
-
-    # Metrics
-    request_completed(request)
 
     return request
 
