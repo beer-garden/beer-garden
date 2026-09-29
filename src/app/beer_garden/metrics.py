@@ -12,6 +12,7 @@ import logging
 import re
 import sys
 import time
+from functools import partial
 from http.server import ThreadingHTTPServer
 from threading import Lock
 
@@ -20,7 +21,7 @@ from brewtils.models import BaseModel, Event, Operation, Request
 from brewtils.stoppable_thread import StoppableThread
 from elasticapm import Client
 from elasticapm.metrics.base_metrics import MetricSet
-from prometheus_client import Counter, Gauge, Summary
+from prometheus_client import Summary
 from prometheus_client.core import REGISTRY, GaugeMetricFamily
 from prometheus_client.exposition import MetricsHandler
 from prometheus_client.registry import Collector
@@ -51,8 +52,8 @@ class PrometheusServer(StoppableThread):
         )
 
     def run(self):
-        self.logger.debug("Initializing metric counts")
-        initialize_counts()
+        # self.logger.debug("Initializing metric counts")
+        # initialize_counts()
 
         self.logger.info(f"Starting {self.display_name} on {self._host}:{self._port}")
         self.httpd.serve_forever()
@@ -71,28 +72,58 @@ plugin_command_latency = Summary(
 )
 
 # Counters:
-completed_request_counter = Counter(
-    "bg_completed_requests_total",
-    "Number of completed requests.",
-    ["system", "instance_name", "system_version", "command", "status"],
-)
-request_counter_total = Counter(
-    "bg_requests_total",
-    "Number of requests.",
-    ["system", "instance_name", "system_version", "command"],
-)
+# completed_request_counter = Counter(
+#     "bg_completed_requests_total",
+#     "Number of completed requests.",
+#     ["system", "instance_name", "system_version", "command", "status"],
+# )
+# request_counter_total = Counter(
+#     "bg_requests_total",
+#     "Number of requests.",
+#     ["system", "instance_name", "system_version", "command"],
+# )
 
 # Gauges:
-queued_request_gauge = Gauge(
-    "bg_queued_requests",
-    "Number of requests waiting to be processed.",
-    ["system", "instance_name", "system_version"],
-)
-in_progress_request_gauge = Gauge(
-    "bg_in_progress_requests",
-    "Number of requests IN_PROGRESS",
-    ["system", "instance_name", "system_version"],
-)
+# queued_request_gauge = Gauge(
+#     "bg_queued_requests",
+#     "Number of requests waiting to be processed.",
+#     ["system", "instance_name", "system_version"],
+# )
+# in_progress_request_gauge = Gauge(
+#     "bg_in_progress_requests",
+#     "Number of requests IN_PROGRESS",
+#     ["system", "instance_name", "system_version"],
+# )
+
+
+class CumulativeCollector(Collector):
+    def __init__(self, collector, name, description=None, labels=None):
+        self._lock = Lock()
+        self._name = name
+        self._description = description
+        self._labels = [] if labels is None else labels
+        self._collector = collector
+
+    def collect(self):
+        with self._lock:
+            # 1. Execute Query
+            values = self._collector()
+
+        # 2. Create your metrics using the calculated delta window
+        gauge = GaugeMetricFamily(
+            self._name,
+            self._description,
+            labels=self._labels,
+        )
+
+        # 4. Apply Values
+        for value in values:
+            labels = []
+            for label_key in self._labels:
+                labels.append(value[label_key])
+
+            gauge.add_metric(labels, value["count"])
+        yield gauge
 
 
 class TimeWindowCollector(Collector):
@@ -111,10 +142,10 @@ class TimeWindowCollector(Collector):
 
         with self._lock:
             # 2. Calculate the elapsed time window (in seconds)
-            # time_window = current_scrape_time - self._last_scrape_time
+            time_window = current_scrape_time - self._last_scrape_time
 
             # 3. Execute Query
-            values = self._collector()  # TODO (time_window)
+            values = self._collector(time_window)
             # Update state for the next scrape iteration
             self._last_scrape_time = current_scrape_time
 
@@ -135,14 +166,85 @@ class TimeWindowCollector(Collector):
         yield gauge
 
 
-def request_garden_status_metrics(interval: int = 15):
+def request_garden_totals():
+    pipeline = [
+        {
+            "$group": {
+                "_id": {
+                    "namespace": "$namespace",
+                    "system": "$system",
+                    "system_version": "$system_version",
+                    "instance_name": "$instance_name",
+                },
+                "count": {"$sum": 1},
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "namespace": "$_id.namespace",
+                "system": "$_id.system",
+                "system_version": "$_id.system_version",
+                "instance_name": "$_id.instance_name",
+                "count": "$count",
+            }
+        },
+    ]
+
+    result = db.aggregation(Request, pipeline=pipeline)
+
+    return result
+
+
+def request_garden_completed_totals():
     pipeline = [
         {
             "$match": {
-                "status": "SUCCESS",
+                "status": {"$in": ["CANCELED", "SUCCESS", "ERROR", "INVALID"]},
+            }
+        },
+        {
+            "$group": {
+                "_id": {
+                    "namespace": "$namespace",
+                    "system": "$system",
+                    "system_version": "$system_version",
+                    "instance_name": "$instance_name",
+                    "status": "$status",
+                },
+                "count": {"$sum": 1},
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "namespace": "$_id.namespace",
+                "system": "$_id.system",
+                "system_version": "$_id.system_version",
+                "instance_name": "$_id.instance_name",
+                "status": "$_id.status",
+                "count": "$count",
+            }
+        },
+    ]
+
+    result = db.aggregation(Request, pipeline=pipeline)
+
+    return result
+
+
+def request_garden_status_metrics(statusList: list[str], time_window: int = 900):
+    # Must provide at least one status
+    if len(statusList) < 1:
+        return []
+
+    pipeline = [
+        {
+            "$match": {
+                "status": {"$in": statusList},
                 "updated_at": {
                     "$gte": datetime.datetime.now(datetime.timezone.utc)
-                    - datetime.timedelta(minutes=interval)
+                    - datetime.timedelta(seconds=time_window)
                 },
             }
         },
@@ -262,10 +364,80 @@ def request_garden_return_latency_metrics(target_garden: str, interval: int = 15
 def setup_metrics():
     REGISTRY.register(
         TimeWindowCollector(
-            request_garden_status_metrics,
-            name="bg_success_requests",
-            description="Number of success requests",
+            partial(request_garden_status_metrics, ["CREATED"]),
+            name="bg_queued_requests",
+            description="Number of CREATED requests",
             labels=["namespace", "system", "system_version", "instance_name"],
+        )
+    )
+    REGISTRY.register(
+        TimeWindowCollector(
+            partial(request_garden_status_metrics, ["IN_PROGRESS"]),
+            name="bg_in_progress_requests",
+            description="Number of IN_PROGRESS requests",
+            labels=["namespace", "system", "system_version", "instance_name"],
+        )
+    )
+    REGISTRY.register(
+        TimeWindowCollector(
+            partial(request_garden_status_metrics, ["SUCCESS"]),
+            name="bg_success_requests",
+            description="Number of SUCCESS requests",
+            labels=["namespace", "system", "system_version", "instance_name"],
+        )
+    )
+    REGISTRY.register(
+        TimeWindowCollector(
+            partial(request_garden_status_metrics, ["ERROR"]),
+            name="bg_error_requests",
+            description="Number of ERROR requests",
+            labels=["namespace", "system", "system_version", "instance_name"],
+        )
+    )
+    REGISTRY.register(
+        TimeWindowCollector(
+            partial(
+                request_garden_status_metrics,
+                ["CANCELED", "SUCCESS", "ERROR", "INVALID"],
+            ),
+            name="bg_completed_requests",
+            description="Number of completed requests",
+            labels=["namespace", "system", "system_version", "instance_name"],
+        )
+    )
+    REGISTRY.register(
+        TimeWindowCollector(
+            partial(
+                request_garden_status_metrics,
+                [
+                    "CREATED",
+                    "RECEIVED",
+                    "IN_PROGRESS",
+                    "CANCELED",
+                    "SUCCESS",
+                    "ERROR",
+                    "INVALID",
+                ],
+            ),
+            name="bg_requests",
+            description="Number of requests",
+            labels=["namespace", "system", "system_version", "instance_name"],
+        )
+    )
+    REGISTRY.register(
+        CumulativeCollector(
+            partial(request_garden_totals),
+            name="bg_requests_total",
+            description="Total number of requests",
+            labels=["namespace", "system", "system_version", "instance_name"],
+        )
+    )
+    REGISTRY.register(
+        CumulativeCollector(
+            partial(request_garden_completed_totals),
+            name="bg_completed_requests_total",
+            description="Total number of completed requests",
+            labels=["namespace", "system", "system_version", "instance_name", "status"],
         )
     )
 
@@ -275,51 +447,51 @@ def request_latency(start_time):
     return (datetime.datetime.now(datetime.timezone.utc) - start_time).total_seconds()
 
 
-def initialize_counts():
-    requests = db.query(
-        Request, filter_params={"status__in": ["CREATED", "IN_PROGRESS"]}
-    )
-    for request in requests:
-        label_args = {
-            "system": request.system,
-            "system_version": request.system_version,
-            "instance_name": request.instance_name,
-        }
+# def initialize_counts():
+#     requests = db.query(
+#         Request, filter_params={"status__in": ["CREATED", "IN_PROGRESS"]}
+#     )
+#     for request in requests:
+#         label_args = {
+#             "system": request.system,
+#             "system_version": request.system_version,
+#             "instance_name": request.instance_name,
+#         }
 
-        if request.status == "CREATED":
-            queued_request_gauge.labels(**label_args).inc()
-        elif request.status == "IN_PROGRESS":
-            in_progress_request_gauge.labels(**label_args).inc()
-
-
-def request_created(request):
-    queued_request_gauge.labels(
-        system=request.system,
-        system_version=request.system_version,
-        instance_name=request.instance_name,
-    ).inc()
-    request_counter_total.labels(
-        system=request.system,
-        system_version=request.system_version,
-        instance_name=request.instance_name,
-        command=request.command,
-    ).inc()
+#         # if request.status == "CREATED":
+#         #     queued_request_gauge.labels(**label_args).inc()
+#         # elif request.status == "IN_PROGRESS":
+#         #     in_progress_request_gauge.labels(**label_args).inc()
 
 
-def request_started(request):
-    """Update metrics associated with a Request update
+# def request_created(request):
+#     # queued_request_gauge.labels(
+#     #     system=request.system,
+#     #     system_version=request.system_version,
+#     #     instance_name=request.instance_name,
+#     # ).inc()
+#     # request_counter_total.labels(
+#     #     system=request.system,
+#     #     system_version=request.system_version,
+#     #     instance_name=request.instance_name,
+#     #     command=request.command,
+#     # ).inc()
 
-    This call should happen after the save to the database.
 
-    """
-    labels = {
-        "system": request.system,
-        "system_version": request.system_version,
-        "instance_name": request.instance_name,
-    }
+# def request_started(request):
+#     """Update metrics associated with a Request update
 
-    queued_request_gauge.labels(**labels).dec()
-    in_progress_request_gauge.labels(**labels).inc()
+#     This call should happen after the save to the database.
+
+#     """
+#     labels = {
+#         "system": request.system,
+#         "system_version": request.system_version,
+#         "instance_name": request.instance_name,
+#     }
+
+#     # queued_request_gauge.labels(**labels).dec()
+#     # in_progress_request_gauge.labels(**labels).inc()
 
 
 def request_completed(request):
@@ -334,13 +506,13 @@ def request_completed(request):
         "instance_name": request.instance_name,
     }
 
-    in_progress_request_gauge.labels(**labels).dec()
+    # in_progress_request_gauge.labels(**labels).dec()
 
     latency = request_latency(request.created_at)
     labels["command"] = request.command
     labels["status"] = request.status
 
-    completed_request_counter.labels(**labels).inc()
+    # completed_request_counter.labels(**labels).inc()
     plugin_command_latency.labels(**labels).observe(latency)
 
 
