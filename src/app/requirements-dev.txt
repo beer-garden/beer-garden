@@ -178,6 +178,7 @@ wrapt==2.0.1
     # via
     #   -c requirements.txt
     #   brewtils
+    #   testcontainers
 yapconf==0.5.0
     # via
     #   -c requirements.txt
