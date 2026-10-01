@@ -28,6 +28,7 @@ from prometheus_client.registry import Collector
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.events
+from beer_garden.garden import get_gardens
 
 logger = logging.getLogger(__name__)
 
@@ -364,96 +365,121 @@ def request_garden_plugin_command_latency_metrics(interval: int = 15):
         return result
 
     # Can't find a result
-    return None
+    return []
 
 
-def request_garden_send_latency_metrics(target_garden: str, interval: int = 15):
-    # Calculated the average trip down to a Target Garden from this Garden
+def request_garden_send_latency_metrics(interval: int = 15):
+    # Calculated the average trip down to a Target Garden from this Garden in seconds
 
     local_garden = config.get("garden.name")
-    pipeline = [
-        # Stage 1: Filter by source_garden, target_garden, status, updated_at,
-        # and metadata fields
-        {
-            "$match": {
-                "source_garden": local_garden,
-                "target_garden": target_garden,
-                "status": "SUCCESS",
-                "updated_at": {
-                    "$gte": datetime.datetime.now(datetime.timezone.utc)
-                    - datetime.timedelta(minutes=interval)
-                },
-                f"metadata.CREATED_{local_garden}": {"$exists": True, "$ne": None},
-                f"metadata.CREATED_{target_garden}": {"$exists": True, "$ne": None},
-            }
-        },
-        # Stage 2: Calculate the delta for CREATED to traverse from Local to Target garden
-        {
-            "$addFields": {
-                "delta": {
-                    "$subtract": [
-                        f"$metadata.CREATED_{local_garden}",
-                        f"$metadata.CREATED_{target_garden}",
-                    ]
-                }
-            }
-        },
-        # Stage 3: Calculate the average of all deltas
-        {
-            "$group": {
-                "_id": None,
-                "count": {"$sum": 1},
-                "sum_value": {"$sum": "$delta"},
-            }
-        },
-    ]
-    result = db.aggregation(Request, pipeline=pipeline)
-    if result:
-        return result[0]["average_delta"]
+    gardens = get_gardens(include_local=False)
 
-    # Can't find a result
-    return None
+    total = []
+    for garden in gardens:
+        pipeline = [
+            # Stage 1: Filter by source_garden, target_garden, status, updated_at,
+            # and metadata fields
+            {
+                "$match": {
+                    "source_garden": local_garden,
+                    "target_garden": garden.name,
+                    "status": "SUCCESS",
+                    "updated_at": {
+                        "$gte": datetime.datetime.now(datetime.timezone.utc)
+                        - datetime.timedelta(minutes=interval)
+                    },
+                    f"metadata.CREATED_{local_garden}": {"$exists": True, "$ne": None},
+                    f"metadata.CREATED_{garden.name}": {"$exists": True, "$ne": None},
+                }
+            },
+            # Stage 2: Calculate the delta for CREATED to traverse from Local to Target garden
+            {
+                "$addFields": {
+                    "delta": {
+                        "$subtract": [
+                            f"$metadata.CREATED_{garden.name}",
+                            f"$metadata.CREATED_{local_garden}",
+                        ]
+                    }
+                }
+            },
+            # Stage 3: Calculate the average of all deltas
+            {
+                "$group": {
+                    "_id": None,
+                    "count": {"$sum": 1},
+                    "sum_value": {"$avg": {"$divide": ["$delta", 1000]}},
+                }
+            },
+        ]
+        result = db.aggregation(Request, pipeline=pipeline)
+
+        if result is not None and len(result) > 0:
+            total.append(
+                {
+                    "target_garden": garden.name,
+                    "count": result[0]["count"],
+                    "sum_value": result[0]["sum_value"],
+                }
+            )
+
+    return total
 
 
 def request_garden_return_latency_metrics(target_garden: str, interval: int = 15):
-    # Calcualted the average trip from a Target Garden to this Garden
+    # Calcualted the average trip from a Target Garden to this Garden is seconds
 
     local_garden = config.get("garden.name")
-    pipeline = [
-        # Stage 1: Filter by target_garden, status, updated_at, and metadata fields
-        {
-            "$match": {
-                "target_garden": target_garden,
-                "status": "SUCCESS",
-                "updated_at": {
-                    "$gte": datetime.datetime.now(datetime.timezone.utc)
-                    - datetime.timedelta(minutes=interval)
-                },
-                f"metadata.SUCCESS_{local_garden}": {"$exists": True, "$ne": None},
-                f"metadata.SUCCESS_{target_garden}": {"$exists": True, "$ne": None},
-            }
-        },
-        # Stage 2: Calculate the delta for SUCCESS to traverse from Target to Local garden
-        {
-            "$addFields": {
-                "delta": {
-                    "$subtract": [
-                        f"$metadata.SUCCESS_{target_garden}"
-                        f"$metadata.SUCCESS_{local_garden}",
-                    ]
+    gardens = get_gardens(include_local=False)
+
+    total = []
+    for garden in gardens:
+        pipeline = [
+            # Stage 1: Filter by target_garden, status, updated_at, and metadata fields
+            {
+                "$match": {
+                    "target_garden": garden.name,
+                    "status": "SUCCESS",
+                    "updated_at": {
+                        "$gte": datetime.datetime.now(datetime.timezone.utc)
+                        - datetime.timedelta(minutes=interval)
+                    },
+                    f"metadata.SUCCESS_{local_garden}": {"$exists": True, "$ne": None},
+                    f"metadata.SUCCESS_{garden.name}": {"$exists": True, "$ne": None},
                 }
-            }
-        },
-        # Stage 3: Calculate the average of all deltas
-        {"$group": {"_id": None, "average_delta": {"$avg": "$delta"}}},
-    ]
-    result = db.aggregation(Request, pipeline=pipeline)
+            },
+            # Stage 2: Calculate the delta for SUCCESS to traverse from Target to Local garden
+            {
+                "$addFields": {
+                    "delta": {
+                        "$subtract": [
+                            f"$metadata.SUCCESS_{local_garden}",
+                            f"$metadata.SUCCESS_{garden.name}",
+                        ]
+                    }
+                }
+            },
+            # Stage 3: Calculate the average of all deltas
+            {
+                "$group": {
+                    "_id": None,
+                    "count": {"$sum": 1},
+                    "sum_value": {"$avg": {"$divide": ["$delta", 1000]}},
+                }
+            },
+        ]
+        result = db.aggregation(Request, pipeline=pipeline)
 
-    if result:
-        return result[0]["average_delta"]
+        if result is not None and len(result) > 0:
+            total.append(
+                {
+                    "target_garden": garden.name,
+                    "count": result[0]["count"],
+                    "sum_value": result[0]["sum_value"],
+                }
+            )
 
-    # Can't find a result
-    return None
+    return total
 
 
 def setup_metrics():
@@ -539,6 +565,22 @@ def setup_metrics():
             name="bg_completed_requests_total",
             description="Total number of completed requests",
             labels=["namespace", "system", "system_version", "instance_name", "status"],
+        )
+    )
+    REGISTRY.register(
+        SummaryCollector(
+            partial(request_garden_send_latency_metrics),
+            name="bg_garden_send_latency",
+            description="Total number of seconds garden is taking to send",
+            labels=["target_garden"],
+        )
+    )
+    REGISTRY.register(
+        SummaryCollector(
+            partial(request_garden_return_latency_metrics, "downstream"),
+            name="bg_garden_return_latency",
+            description="Total number of seconds each garden is taking to receive",
+            labels=["target_garden"],
         )
     )
     REGISTRY.register(
