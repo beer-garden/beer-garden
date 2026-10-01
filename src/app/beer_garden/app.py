@@ -40,7 +40,6 @@ from beer_garden.log import load_plugin_log_config
 from beer_garden.metrics import (
     PrometheusServer,
     initialize_elastic_client,
-    setup_metrics,
 )
 from beer_garden.monitor import MonitorFile
 from beer_garden.plugin import StatusMonitor
@@ -305,8 +304,6 @@ class Application(StoppableThread):
         self.logger.debug("Starting helper threads...")
         for helper_thread in self.helper_threads:
             helper_thread.start()
-
-        setup_metrics()
 
         if config.get("parent.stomp.enabled") or config.get("parent.http.enabled"):
             self.logger.debug("Publishing to Parent that we are online")

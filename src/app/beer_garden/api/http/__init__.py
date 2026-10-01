@@ -62,7 +62,7 @@ from beer_garden.api.http.schemas.v1.token import (
 )
 from beer_garden.api.http.schemas.v1.user import UserPasswordChangeSchema
 from beer_garden.events import publish
-from beer_garden.metrics import initialize_elastic_client
+from beer_garden.metrics import initialize_elastic_client, setup_metrics
 
 io_loop: IOLoop = None
 server: HTTPServer
@@ -289,6 +289,10 @@ def _setup_application():
 
     tornado_app = _setup_tornado_app()
     initialize_elastic_client("http")
+
+    if config.get("metrics.prometheus.enabled"):
+        logger.info("Setting Up Prometheus Metrics Collection")
+        setup_metrics()
 
     server_ssl, client_ssl = _setup_ssl_context()
 
