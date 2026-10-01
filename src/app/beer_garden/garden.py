@@ -315,7 +315,7 @@ def publish_garden() -> Garden:
     garden.connection_type = None
 
     # Add snapshot of OS statistics for metric collection
-    garden.metadata = garden.metadata | calculate_garden_statistics()
+    garden.metadata |= calculate_garden_statistics()
 
     return garden
 
