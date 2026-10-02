@@ -5,7 +5,7 @@ TBD
 
 - Fixed scheduled jobs bug when scheduled against downstream Garden did not update success count and
   would hit the max concurrent. Only occurs when the source Garden does not have an upstream Garden 
-  defined. (#)
+  defined. (#2452)
 
 # 3.35.1
 9/9/2026
