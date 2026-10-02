@@ -311,6 +311,7 @@ function CommandFormField({
         <Autocomplete
           sx={{ width: "100%" }}
           id={parameter.key}
+          freeSolo
           aria-describedby={
             parameter.error
               ? `${parameter.key}-helper-text ${parameter.key}-error-text`
@@ -343,7 +344,11 @@ function CommandFormField({
                 !parameter.optional &&
                 (parameter.value === undefined ||
                   parameter.value === null ||
-                  parameter.value === "")
+                  parameter.value === "" ||
+                  parameter.options === undefined ||
+                  !parameter.options.some(
+                    (option) => option.value === parameter.value,
+                  ))
               }
               autoComplete="off"
             />
