@@ -1,4 +1,10 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
@@ -45,6 +51,41 @@ describe("Navigation", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("user-login")).toBeInTheDocument();
+    });
+  });
+
+  test("ctrl+HOME moves focus to the navbar", async () => {
+    vi.mocked(tokenService.GetToken).mockReturnValue(null);
+
+    render(
+      <BrowserRouter basename="/">
+        <SnackbarProvider>
+          <Navigation
+            listeners={{}}
+            config={{
+              auth_enabled: false,
+            }}
+            runReloadUI={() => {}}
+            toggleRunTour={() => {}}
+            tourStepsRef={mockTourSteps()}
+            addRequestItem={() => {}}
+          />
+        </SnackbarProvider>
+      </BrowserRouter>,
+    );
+
+    await waitFor(() => {
+      expect(document.getElementById("navbar")).not.toBeNull();
+    });
+
+    const navbar = document.getElementById("navbar");
+    expect(navbar).not.toBeNull();
+    expect(navbar).not.toHaveFocus();
+
+    fireEvent.keyDown(window, { key: "Home", ctrlKey: true, bubbles: true });
+
+    await waitFor(() => {
+      expect(navbar).toHaveFocus();
     });
   });
 

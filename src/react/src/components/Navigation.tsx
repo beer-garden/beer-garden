@@ -16,7 +16,7 @@ import {
 } from "@mui/material";
 import Fade from "@mui/material/Fade";
 import Popper from "@mui/material/Popper";
-import { RefObject, useEffect, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 import React from "react";
 import { NavLink } from "react-router-dom";
 
@@ -64,6 +64,7 @@ function NavigationMenu({
   tourStepsRef: RefObject<Array<TourStepProps>>;
 }) {
   const showSnackbar = useSnackbar();
+  const navbarRef = useRef<HTMLElement>(null);
   const [iconDefault, setIconDefault] = useState<string>(
     config?.icon_default ?? "beer-mug-empty",
   );
@@ -478,6 +479,23 @@ function NavigationMenu({
   };
 
   useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === "Home") {
+        e.preventDefault();
+        navbarRef.current?.focus();
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleGlobalKeyDown);
+    };
+  }, []);
+
+  useEffect(() => {
     if (config?.icon_default && config.icon_default !== iconDefault) {
       setIconDefault(config.icon_default);
     }
@@ -549,7 +567,13 @@ function NavigationMenu({
   }, []);
 
   return (
-    <AppBar id="navbar" position="fixed" sx={{ bgcolor: "primary.main" }}>
+    <AppBar
+      id="navbar"
+      ref={navbarRef}
+      tabIndex={-1}
+      position="fixed"
+      sx={{ bgcolor: "primary.main" }}
+    >
       <Container maxWidth={false}>
         <Toolbar
           disableGutters
