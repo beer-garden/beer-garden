@@ -588,24 +588,33 @@ def run_job(job_id, request_template, **kwargs):
 
         # Wait for the request to complete
         timeout = db_job.timeout or None
-        if not wait_event.wait(timeout=timeout):
-            logger.warning(f"Execution of job {db_job} timed out.")
-            return
-
-        request = get_request(
-            request.id, parent_depth=0, children_depth=0, include_fields=["status"]
-        )
-
         updates = {}
-        if request.status == "ERROR":
+
+        if not wait_event.wait(timeout=timeout):
             updates["inc__error_count"] = 1
-            logger.debug(f"{db_job!r} request completed with {request.status} status")
-        elif request.status == "CANCELED":
-            updates["inc__canceled_count"] = 1
-            logger.debug(f"{db_job!r} request completed with {request.status} status")
-        elif request.status == "SUCCESS":
-            logger.debug(f"{db_job!r} request completed with SUCCESS status")
-            updates["inc__success_count"] = 1
+            logger.warning(f"Execution of job {db_job} timed out.")
+
+        else:
+            request = get_request(
+                request.id, parent_depth=0, children_depth=0, include_fields=["status"]
+            )
+
+            if (
+                request.status == "ERROR"
+                or request.status not in Request.COMPLETED_STATUSES
+            ):
+                updates["inc__error_count"] = 1
+                logger.debug(
+                    f"{db_job!r} request completed with {request.status} status"
+                )
+            elif request.status == "CANCELED":
+                updates["inc__canceled_count"] = 1
+                logger.debug(
+                    f"{db_job!r} request completed with {request.status} status"
+                )
+            elif request.status == "SUCCESS":
+                logger.debug(f"{db_job!r} request completed with SUCCESS status")
+                updates["inc__success_count"] = 1
 
         if updates != {}:
             db.modify(db_job, **updates)
