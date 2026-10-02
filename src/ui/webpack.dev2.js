@@ -29,7 +29,7 @@ module.exports = merge(common, {
 
     proxy: [
       {
-        context: ['/api', '/config', '/login', '/logout', '/version'],
+        context: ['/api', '/config', '/login', '/logout', '/version', '/metrics'],
         target: `http://${proxyHost}:${proxyPort}/`,
       },
       {

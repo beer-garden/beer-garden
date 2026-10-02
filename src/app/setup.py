@@ -44,7 +44,7 @@ setup(
         "pyrabbit2<2", # Latest 1.0.7
         "pyjwt>=2.4.0", # Latest 2.10.1
         "passlib<1.8", # Latest 1.7.4
-        "prometheus-client<1", # Latest 0.23.1
+        "prometheus-client<1", # Latest 0.26.0
         "pyyaml<7", # Latest 6.0.3
         "stomp.py>=7,<9", # Latest 8.2.0
         "tornado<7", # Latest 6.5.2

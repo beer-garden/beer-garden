@@ -6,26 +6,29 @@ The metrics service manages:
 * Creating default summary views in Prometheus
 * Publishing `Request` metrics
 """
-
 import datetime
 import json
 import logging
 import re
 import sys
+import time
+from functools import partial
 from http.server import ThreadingHTTPServer
+from threading import Lock
 
 import elasticapm
 from brewtils.models import BaseModel, Event, Operation, Request
 from brewtils.stoppable_thread import StoppableThread
 from elasticapm import Client
 from elasticapm.metrics.base_metrics import MetricSet
-from prometheus_client import Counter, Gauge, Summary
+from prometheus_client.core import REGISTRY, GaugeMetricFamily, SummaryMetricFamily
 from prometheus_client.exposition import MetricsHandler
-from prometheus_client.registry import REGISTRY
+from prometheus_client.registry import Collector
 
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.events
+from beer_garden.garden import get_gardens
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +52,8 @@ class PrometheusServer(StoppableThread):
         )
 
     def run(self):
-        self.logger.debug("Initializing metric counts")
-        initialize_counts()
+        # self.logger.debug("Initializing metric counts")
+        # initialize_counts()
 
         self.logger.info(f"Starting {self.display_name} on {self._host}:{self._port}")
         self.httpd.serve_forever()
@@ -62,35 +65,551 @@ class PrometheusServer(StoppableThread):
 
 
 # Summaries:
-plugin_command_latency = Summary(
-    "bg_plugin_command_latency_seconds",
-    "Total time taken for a command to complete in seconds.",
-    ["system", "instance_name", "system_version", "command", "status"],
-)
+# plugin_command_latency = Summary(
+#     "bg_plugin_command_latency_seconds",
+#     "Total time taken for a command to complete in seconds.",
+#     ["system", "instance_name", "system_version", "command", "status"],
+# )
 
 # Counters:
-completed_request_counter = Counter(
-    "bg_completed_requests_total",
-    "Number of completed requests.",
-    ["system", "instance_name", "system_version", "command", "status"],
-)
-request_counter_total = Counter(
-    "bg_requests_total",
-    "Number of requests.",
-    ["system", "instance_name", "system_version", "command"],
-)
+# completed_request_counter = Counter(
+#     "bg_completed_requests_total",
+#     "Number of completed requests.",
+#     ["system", "instance_name", "system_version", "command", "status"],
+# )
+# request_counter_total = Counter(
+#     "bg_requests_total",
+#     "Number of requests.",
+#     ["system", "instance_name", "system_version", "command"],
+# )
 
 # Gauges:
-queued_request_gauge = Gauge(
-    "bg_queued_requests",
-    "Number of requests waiting to be processed.",
-    ["system", "instance_name", "system_version"],
-)
-in_progress_request_gauge = Gauge(
-    "bg_in_progress_requests",
-    "Number of requests IN_PROGRESS",
-    ["system", "instance_name", "system_version"],
-)
+# queued_request_gauge = Gauge(
+#     "bg_queued_requests",
+#     "Number of requests waiting to be processed.",
+#     ["system", "instance_name", "system_version"],
+# )
+# in_progress_request_gauge = Gauge(
+#     "bg_in_progress_requests",
+#     "Number of requests IN_PROGRESS",
+#     ["system", "instance_name", "system_version"],
+# )
+
+
+class SummaryCollector(Collector):
+    def __init__(self, collector, name, description=None, labels=None):
+        self._lock = Lock()
+        self._name = name
+        self._description = description
+        self._labels = [] if labels is None else labels
+        self._collector = collector
+
+    def collect(self):
+        with self._lock:
+            # 1. Execute Query
+            values = self._collector()
+
+        summary = SummaryMetricFamily(
+            self._name,
+            self._description,
+            labels=self._labels,
+        )
+
+        # 4. Apply Values
+        for value in values:
+            labels = []
+            for label_key in self._labels:
+                labels.append(value[label_key])
+
+            summary.add_metric(labels, value["count"], value["sum_value"])
+        yield summary
+
+
+class CumulativeCollector(Collector):
+    def __init__(self, collector, name, description=None, labels=None):
+        self._lock = Lock()
+        self._name = name
+        self._description = description
+        self._labels = [] if labels is None else labels
+        self._collector = collector
+
+    def collect(self):
+        with self._lock:
+            # 1. Execute Query
+            values = self._collector()
+
+        # 2. Create your metrics using the calculated delta window
+        gauge = GaugeMetricFamily(
+            self._name,
+            self._description,
+            labels=self._labels,
+        )
+
+        # 4. Apply Values
+        for value in values:
+            labels = []
+            for label_key in self._labels:
+                labels.append(value[label_key])
+
+            gauge.add_metric(labels, value["count"])
+        yield gauge
+
+
+class TimeWindowCollector(Collector):
+    def __init__(self, collector, name, description=None, labels=None):
+        # Initialize the last scrape timestamp (Could be last 15 minutes if we wanted)
+        self._last_scrape_time = time.time()
+        self._lock = Lock()
+        self._name = name
+        self._description = description
+        self._labels = [] if labels is None else labels
+        self._collector = collector
+
+    def collect(self):
+        # 1. Capture the exact current time of the incoming query
+        current_scrape_time = time.time()
+
+        with self._lock:
+            # 2. Calculate the elapsed time window (in seconds)
+            time_window = current_scrape_time - self._last_scrape_time
+
+            # 3. Execute Query
+            values = self._collector(time_window)
+            # Update state for the next scrape iteration
+            self._last_scrape_time = current_scrape_time
+
+        # 4. Create your metrics using the calculated delta window
+        gauge = GaugeMetricFamily(
+            self._name,
+            self._description,
+            labels=self._labels,
+        )
+
+        # 5. Apply Values
+        for value in values:
+            labels = []
+            for label_key in self._labels:
+                labels.append(value[label_key])
+
+            gauge.add_metric(labels, value["count"])
+        yield gauge
+
+
+def request_garden_totals():
+    pipeline = [
+        {
+            "$group": {
+                "_id": {
+                    "namespace": "$namespace",
+                    "system": "$system",
+                    "system_version": "$system_version",
+                    "instance_name": "$instance_name",
+                    "command": "$command",
+                },
+                "count": {"$sum": 1},
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "namespace": "$_id.namespace",
+                "system": "$_id.system",
+                "system_version": "$_id.system_version",
+                "instance_name": "$_id.instance_name",
+                "command": "$_id.command",
+                "count": "$count",
+            }
+        },
+    ]
+
+    result = db.aggregation(Request, pipeline=pipeline)
+
+    return result
+
+
+def request_garden_completed_totals():
+    pipeline = [
+        {
+            "$match": {
+                "status": {"$in": ["CANCELED", "SUCCESS", "ERROR", "INVALID"]},
+            }
+        },
+        {
+            "$group": {
+                "_id": {
+                    "namespace": "$namespace",
+                    "system": "$system",
+                    "system_version": "$system_version",
+                    "instance_name": "$instance_name",
+                    "status": "$status",
+                },
+                "count": {"$sum": 1},
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "namespace": "$_id.namespace",
+                "system": "$_id.system",
+                "system_version": "$_id.system_version",
+                "instance_name": "$_id.instance_name",
+                "status": "$_id.status",
+                "count": "$count",
+            }
+        },
+    ]
+
+    result = db.aggregation(Request, pipeline=pipeline)
+
+    return result
+
+
+def request_garden_status_metrics(statusList: list[str], time_window: int = 900):
+    # Must provide at least one status
+    if len(statusList) < 1:
+        return []
+
+    pipeline = [
+        {
+            "$match": {
+                "status": {"$in": statusList},
+                "updated_at": {
+                    "$gte": datetime.datetime.now(datetime.timezone.utc)
+                    - datetime.timedelta(seconds=time_window)
+                },
+            }
+        },
+        {
+            "$group": {
+                "_id": {
+                    "namespace": "$namespace",
+                    "system": "$system",
+                    "system_version": "$system_version",
+                    "instance_name": "$instance_name",
+                },
+                "count": {"$sum": 1},
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "namespace": "$_id.namespace",
+                "system": "$_id.system",
+                "system_version": "$_id.system_version",
+                "instance_name": "$_id.instance_name",
+                "count": "$count",
+            }
+        },
+    ]
+
+    # Expect list and empty list ok
+    result = db.aggregation(Request, pipeline=pipeline)
+
+    return result
+
+
+def request_garden_plugin_command_latency_metrics(interval: int = 15):
+    # Calculates the avg latency for a plugin
+
+    pipeline = [
+        # Stage 1: Filter by completed status
+        {
+            "$match": {
+                "status": "SUCCESS",
+            }
+        },
+        # Stage 2: Calculate the delta for CREATED to COMPLETED
+        {
+            "$addFields": {
+                "delta": {
+                    "$dateDiff": {
+                        "startDate": "$created_at",
+                        "endDate": "$status_updated_at",
+                        "unit": "second",
+                    }
+                }
+            }
+        },
+        # Stage 3: Calculate the average of all deltas
+        {
+            "$group": {
+                "_id": {
+                    "namespace": "$namespace",
+                    "system": "$system",
+                    "system_version": "$system_version",
+                    "instance_name": "$instance_name",
+                    "command": "$command",
+                    "status": "$status",
+                },
+                "count": {"$sum": 1},
+                "sum_value": {"$sum": "$delta"},
+            }
+        },
+        {
+            "$project": {
+                "_id": 0,
+                "namespace": "$_id.namespace",
+                "system": "$_id.system",
+                "system_version": "$_id.system_version",
+                "instance_name": "$_id.instance_name",
+                "command": "$_id.command",
+                "status": "$_id.status",
+                "count": "$count",
+                "sum_value": "$sum_value",
+            }
+        },
+    ]
+    result = db.aggregation(Request, pipeline=pipeline)
+
+    if result is not None:
+        return result
+
+    # Can't find a result
+    return []
+
+
+def request_garden_send_latency_metrics(interval: int = 15):
+    # Calculated the average trip down to a Target Garden from this Garden in seconds
+
+    local_garden = config.get("garden.name")
+    gardens = get_gardens(include_local=False)
+
+    total = []
+    for garden in gardens:
+        pipeline = [
+            # Stage 1: Filter by source_garden, target_garden, status, updated_at,
+            # and metadata fields
+            {
+                "$match": {
+                    "source_garden": local_garden,
+                    "target_garden": garden.name,
+                    "status": "SUCCESS",
+                    "updated_at": {
+                        "$gte": datetime.datetime.now(datetime.timezone.utc)
+                        - datetime.timedelta(minutes=interval)
+                    },
+                    f"metadata.CREATED_{local_garden}": {"$exists": True, "$ne": None},
+                    f"metadata.CREATED_{garden.name}": {"$exists": True, "$ne": None},
+                    "$expr": {
+                        "$gt": [
+                            f"$metadata.CREATED_{garden.name}",
+                            f"$metadata.CREATED_{local_garden}",
+                        ]
+                    },
+                }
+            },
+            # Stage 2: Calculate the delta for CREATED to traverse from Local to Target garden
+            {
+                "$addFields": {
+                    "delta": {
+                        "$subtract": [
+                            f"$metadata.CREATED_{garden.name}",
+                            f"$metadata.CREATED_{local_garden}",
+                        ]
+                    }
+                }
+            },
+            # Stage 3: Calculate the average of all deltas
+            {
+                "$group": {
+                    "_id": None,
+                    "count": {"$sum": 1},
+                    "sum_value": {"$avg": {"$divide": ["$delta", 1000]}},
+                }
+            },
+        ]
+        result = db.aggregation(Request, pipeline=pipeline)
+
+        if result is not None and len(result) > 0:
+            total.append(
+                {
+                    "target_garden": garden.name,
+                    "count": result[0]["count"],
+                    "sum_value": result[0]["sum_value"],
+                }
+            )
+
+    return total
+
+
+def request_garden_return_latency_metrics(target_garden: str, interval: int = 15):
+    # Calcualted the average trip from a Target Garden to this Garden is seconds
+
+    local_garden = config.get("garden.name")
+    gardens = get_gardens(include_local=False)
+
+    total = []
+    for garden in gardens:
+        pipeline = [
+            # Stage 1: Filter by target_garden, status, updated_at, and metadata fields
+            {
+                "$match": {
+                    "target_garden": garden.name,
+                    "status": "SUCCESS",
+                    "updated_at": {
+                        "$gte": datetime.datetime.now(datetime.timezone.utc)
+                        - datetime.timedelta(minutes=interval)
+                    },
+                    f"metadata.SUCCESS_{local_garden}": {"$exists": True, "$ne": None},
+                    f"metadata.SUCCESS_{garden.name}": {"$exists": True, "$ne": None},
+                    "$expr": {
+                        "$gt": [
+                            f"$metadata.SUCCESS_{local_garden}",
+                            f"$metadata.SUCCESS_{garden.name}",
+                        ]
+                    },
+                }
+            },
+            # Stage 2: Calculate the delta for SUCCESS to traverse from Target to Local garden
+            {
+                "$addFields": {
+                    "delta": {
+                        "$subtract": [
+                            f"$metadata.SUCCESS_{local_garden}",
+                            f"$metadata.SUCCESS_{garden.name}",
+                        ]
+                    }
+                }
+            },
+            # Stage 3: Calculate the average of all deltas
+            {
+                "$group": {
+                    "_id": None,
+                    "count": {"$sum": 1},
+                    "sum_value": {"$avg": {"$divide": ["$delta", 1000]}},
+                }
+            },
+        ]
+        result = db.aggregation(Request, pipeline=pipeline)
+
+        if result is not None and len(result) > 0:
+            total.append(
+                {
+                    "target_garden": garden.name,
+                    "count": result[0]["count"],
+                    "sum_value": result[0]["sum_value"],
+                }
+            )
+
+    return total
+
+
+def setup_metrics():
+    REGISTRY.register(
+        TimeWindowCollector(
+            partial(request_garden_status_metrics, ["CREATED"]),
+            name="bg_queued_requests",
+            description="Number of CREATED requests",
+            labels=["namespace", "system", "system_version", "instance_name"],
+        )
+    )
+    REGISTRY.register(
+        TimeWindowCollector(
+            partial(request_garden_status_metrics, ["IN_PROGRESS"]),
+            name="bg_in_progress_requests",
+            description="Number of IN_PROGRESS requests",
+            labels=["namespace", "system", "system_version", "instance_name"],
+        )
+    )
+    REGISTRY.register(
+        TimeWindowCollector(
+            partial(request_garden_status_metrics, ["SUCCESS"]),
+            name="bg_success_requests",
+            description="Number of SUCCESS requests",
+            labels=["namespace", "system", "system_version", "instance_name"],
+        )
+    )
+    REGISTRY.register(
+        TimeWindowCollector(
+            partial(request_garden_status_metrics, ["ERROR"]),
+            name="bg_error_requests",
+            description="Number of ERROR requests",
+            labels=["namespace", "system", "system_version", "instance_name"],
+        )
+    )
+    REGISTRY.register(
+        TimeWindowCollector(
+            partial(
+                request_garden_status_metrics,
+                ["CANCELED", "SUCCESS", "ERROR", "INVALID"],
+            ),
+            name="bg_completed_requests",
+            description="Number of completed requests",
+            labels=["namespace", "system", "system_version", "instance_name"],
+        )
+    )
+    REGISTRY.register(
+        TimeWindowCollector(
+            partial(
+                request_garden_status_metrics,
+                [
+                    "CREATED",
+                    "RECEIVED",
+                    "IN_PROGRESS",
+                    "CANCELED",
+                    "SUCCESS",
+                    "ERROR",
+                    "INVALID",
+                ],
+            ),
+            name="bg_requests",
+            description="Number of requests",
+            labels=["namespace", "system", "system_version", "instance_name"],
+        )
+    )
+    REGISTRY.register(
+        CumulativeCollector(
+            partial(request_garden_totals),
+            name="bg_requests_total",
+            description="Total number of requests",
+            labels=[
+                "namespace",
+                "system",
+                "system_version",
+                "instance_name",
+                "command",
+            ],
+        )
+    )
+    REGISTRY.register(
+        CumulativeCollector(
+            partial(request_garden_completed_totals),
+            name="bg_completed_requests_total",
+            description="Total number of completed requests",
+            labels=["namespace", "system", "system_version", "instance_name", "status"],
+        )
+    )
+    REGISTRY.register(
+        SummaryCollector(
+            partial(request_garden_send_latency_metrics),
+            name="bg_garden_send_latency",
+            description="Total number of seconds garden is taking to send",
+            labels=["target_garden"],
+        )
+    )
+    REGISTRY.register(
+        SummaryCollector(
+            partial(request_garden_return_latency_metrics, "downstream"),
+            name="bg_garden_return_latency",
+            description="Total number of seconds each garden is taking to receive",
+            labels=["target_garden"],
+        )
+    )
+    REGISTRY.register(
+        SummaryCollector(
+            partial(request_garden_plugin_command_latency_metrics),
+            name="bg_plugin_command_latency_seconds",
+            description="Plugin command latency in seconds",
+            labels=[
+                "namespace",
+                "system",
+                "instance_name",
+                "system_version",
+                "command",
+                "status",
+            ],
+        )
+    )
 
 
 def request_latency(start_time):
@@ -98,73 +617,73 @@ def request_latency(start_time):
     return (datetime.datetime.now(datetime.timezone.utc) - start_time).total_seconds()
 
 
-def initialize_counts():
-    requests = db.query(
-        Request, filter_params={"status__in": ["CREATED", "IN_PROGRESS"]}
-    )
-    for request in requests:
-        label_args = {
-            "system": request.system,
-            "system_version": request.system_version,
-            "instance_name": request.instance_name,
-        }
+# def initialize_counts():
+#     requests = db.query(
+#         Request, filter_params={"status__in": ["CREATED", "IN_PROGRESS"]}
+#     )
+#     for request in requests:
+#         label_args = {
+#             "system": request.system,
+#             "system_version": request.system_version,
+#             "instance_name": request.instance_name,
+#         }
 
-        if request.status == "CREATED":
-            queued_request_gauge.labels(**label_args).inc()
-        elif request.status == "IN_PROGRESS":
-            in_progress_request_gauge.labels(**label_args).inc()
-
-
-def request_created(request):
-    queued_request_gauge.labels(
-        system=request.system,
-        system_version=request.system_version,
-        instance_name=request.instance_name,
-    ).inc()
-    request_counter_total.labels(
-        system=request.system,
-        system_version=request.system_version,
-        instance_name=request.instance_name,
-        command=request.command,
-    ).inc()
+#         # if request.status == "CREATED":
+#         #     queued_request_gauge.labels(**label_args).inc()
+#         # elif request.status == "IN_PROGRESS":
+#         #     in_progress_request_gauge.labels(**label_args).inc()
 
 
-def request_started(request):
-    """Update metrics associated with a Request update
-
-    This call should happen after the save to the database.
-
-    """
-    labels = {
-        "system": request.system,
-        "system_version": request.system_version,
-        "instance_name": request.instance_name,
-    }
-
-    queued_request_gauge.labels(**labels).dec()
-    in_progress_request_gauge.labels(**labels).inc()
+# def request_created(request):
+#     # queued_request_gauge.labels(
+#     #     system=request.system,
+#     #     system_version=request.system_version,
+#     #     instance_name=request.instance_name,
+#     # ).inc()
+#     # request_counter_total.labels(
+#     #     system=request.system,
+#     #     system_version=request.system_version,
+#     #     instance_name=request.instance_name,
+#     #     command=request.command,
+#     # ).inc()
 
 
-def request_completed(request):
-    """Update metrics associated with a Request update
+# def request_started(request):
+#     """Update metrics associated with a Request update
 
-    This call should happen after the save to the database.
+#     This call should happen after the save to the database.
 
-    """
-    labels = {
-        "system": request.system,
-        "system_version": request.system_version,
-        "instance_name": request.instance_name,
-    }
+#     """
+#     labels = {
+#         "system": request.system,
+#         "system_version": request.system_version,
+#         "instance_name": request.instance_name,
+#     }
 
-    in_progress_request_gauge.labels(**labels).dec()
+#     # queued_request_gauge.labels(**labels).dec()
+#     # in_progress_request_gauge.labels(**labels).inc()
 
-    latency = request_latency(request.created_at)
-    labels["command"] = request.command
-    labels["status"] = request.status
 
-    completed_request_counter.labels(**labels).inc()
-    plugin_command_latency.labels(**labels).observe(latency)
+# def request_completed(request):
+#     """Update metrics associated with a Request update
+
+#     This call should happen after the save to the database.
+
+#     """
+#     labels = {
+#         "system": request.system,
+#         "system_version": request.system_version,
+#         "instance_name": request.instance_name,
+#     }
+
+# in_progress_request_gauge.labels(**labels).dec()
+
+# latency = request_latency(request.created_at)
+# labels["command"] = request.command
+# labels["status"] = request.status
+
+# completed_request_counter.labels(**labels).inc()
+# plugin_command_latency.labels(**labels).observe(latency)
 
 
 def initialize_elastic_client(label: str):

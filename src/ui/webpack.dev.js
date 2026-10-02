@@ -36,7 +36,7 @@ module.exports = merge(common, {
     proxy: [
 // Switch comment lines for target to enable SSL
       {
-        context: ['/api', '/config', '/login', '/logout', '/version'],
+        context: ['/api', '/config', '/login', '/logout', '/version', '/metrics'],
         target: `http://${proxyHost}:${proxyPort}/`,
         // Uncomment below for SSL
         //Secure is set to false if using self signed certs
