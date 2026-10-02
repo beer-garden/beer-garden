@@ -6,6 +6,7 @@ import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
 import InputLabel from "@mui/material/InputLabel";
 import OutlinedInput from "@mui/material/OutlinedInput";
+import Tooltip from "@mui/material/Tooltip";
 import * as React from "react";
 
 /**
@@ -28,12 +29,14 @@ export default React.forwardRef(function NumberField(
     helperText,
     error,
     size = "medium",
+    title,
     ...other
   }: BaseNumberField.Root.Props & {
     label?: React.ReactNode;
     helperText?: string;
     size?: "small" | "medium";
     error?: boolean;
+    title?: React.ReactNode;
   },
   ref: React.Ref<any>,
 ) {
@@ -46,16 +49,18 @@ export default React.forwardRef(function NumberField(
       {...other}
       ref={ref}
       render={(props, state) => (
-        <FormControl
-          size={size}
-          ref={props.ref}
-          disabled={state.disabled}
-          required={state.required}
-          error={error}
-          variant="outlined"
-        >
-          {props.children}
-        </FormControl>
+        <Tooltip title={title} disableHoverListener={!title}>
+          <FormControl
+            size={size}
+            ref={props.ref}
+            disabled={state.disabled}
+            required={state.required}
+            error={error}
+            variant="outlined"
+          >
+            {props.children}
+          </FormControl>
+        </Tooltip>
       )}
     >
       <SSRInitialFilled {...other} />
