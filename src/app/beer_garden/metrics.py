@@ -390,6 +390,12 @@ def request_garden_send_latency_metrics(interval: int = 15):
                     },
                     f"metadata.CREATED_{local_garden}": {"$exists": True, "$ne": None},
                     f"metadata.CREATED_{garden.name}": {"$exists": True, "$ne": None},
+                    "$expr": {
+                        "$gt": [
+                            f"$metadata.CREATED_{garden.name}",
+                            f"$metadata.CREATED_{local_garden}",
+                        ]
+                    },
                 }
             },
             # Stage 2: Calculate the delta for CREATED to traverse from Local to Target garden
@@ -446,6 +452,12 @@ def request_garden_return_latency_metrics(target_garden: str, interval: int = 15
                     },
                     f"metadata.SUCCESS_{local_garden}": {"$exists": True, "$ne": None},
                     f"metadata.SUCCESS_{garden.name}": {"$exists": True, "$ne": None},
+                    "$expr": {
+                        "$gt": [
+                            f"$metadata.SUCCESS_{local_garden}",
+                            f"$metadata.SUCCESS_{garden.name}",
+                        ]
+                    },
                 }
             },
             # Stage 2: Calculate the delta for SUCCESS to traverse from Target to Local garden
