@@ -1,5 +1,10 @@
 # Beer Garden Changelog
 
+# TBD
+TBD
+
+- Fixed Request Metadata for Creating timestamp on Source Garden (#)
+
 # 3.35.1
 9/9/2026
 
