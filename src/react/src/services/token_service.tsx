@@ -144,11 +144,8 @@ const SetToken = (token: string) => {
   localStorage.setItem("token", token);
 
   const decode = jwtDecode<CustomJwtPayload>(token);
-  if (decode.preferences && typeof decode.preferences.theme === "string") {
-    localStorage.setItem("theme_color", decode.preferences.theme);
-  }
   if (decode.preferences && typeof decode.preferences.dark_mode === "boolean") {
-    localStorage.setItem("theme_dark", decode.preferences.dark_mode.toString());
+    localStorage.setItem("user_theme", decode.preferences.dark_mode.toString());
   }
   ChangeTheme();
 
@@ -209,7 +206,7 @@ export const LogoutCurrentUser = async () => {
   // Remove Gardens and Systems cached
   sessionStorage.clear();
 
-  // Resets to default Blue/Light Mode
+  // Resets to default Light Mode
   ClearThemes();
 
   // Reset Advance User Setting

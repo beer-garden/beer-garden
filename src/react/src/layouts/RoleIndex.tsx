@@ -1,14 +1,13 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Column } from "primereact/column";
-import { DataTable, SortOrder } from "primereact/datatable";
-import { Message } from "primereact/message";
+import { Alert, Box, ButtonGroup, Typography } from "@mui/material";
 import { RefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import AccessButton from "../components/AccessButton";
+import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import RoleCard from "../components/RoleCard";
 import { Role } from "../models/brewtils-types";
 import { Config, TourStepProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { checkPermission } from "../services/permission_service";
 import { DeleteRole, GetRoles, Rescan } from "../services/role_service";
 import {
@@ -16,7 +15,7 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { PaginatorTemplate } from "../services/util_service";
+import { FAIcon } from "../services/util_service";
 
 function RoleIndex({
   config,
@@ -25,13 +24,9 @@ function RoleIndex({
   config: Config;
   tourStepsRef: RefObject<Array<TourStepProps>>;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const [roles, setRoles] = useState<Array<Role>>([]);
   const [loading, setLoading] = useState(false);
-  const [first, setFirst] = useState<number>(0);
-  const [rows, setRows] = useState<number>(10);
-  const [sortField, setSortField] = useState<string | undefined>(undefined);
-  const [sortOrder, setSortOrder] = useState<SortOrder>(undefined);
 
   const [dialogVisible, setDialogVisible] = useState(false);
   const roleId = useRef<string | undefined>(undefined);
@@ -100,7 +95,7 @@ function RoleIndex({
       })
       .catch((error) => {
         setLoading(false);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching roles: ${error}`,
@@ -131,37 +126,53 @@ function RoleIndex({
     };
   }, [roles]);
 
-  function RoleHeader() {
-    function handleRescan() {
-      Rescan()
-        .then(() => {
-          loadRoles();
-          showToast({
-            severity: "info",
-            summary: "Confirmation",
-            detail: "Rescan complete",
-            life: 3000,
-          });
-        })
-        .catch((error) => {
-          showToast({
-            severity: "error",
-            summary: "Error",
-            detail: `Error rescanning roles: ${error}`,
-            life: 3000,
-          });
+  function handleRescan() {
+    Rescan()
+      .then(() => {
+        loadRoles();
+        showSnackbar({
+          severity: "info",
+          summary: "Confirmation",
+          detail: "Rescan complete",
+          life: 3000,
         });
-    }
-    function openRoleDialog() {
-      setDialogVisible(true);
-    }
+      })
+      .catch((error) => {
+        showSnackbar({
+          severity: "error",
+          summary: "Error",
+          detail: `Error rescanning roles: ${error}`,
+          life: 3000,
+        });
+      });
+  }
 
-    return (
-      <div className="flex items-end ml-2 page-header">
-        <h1 className="flex-1">Role Management</h1>
+  function openRoleDialog() {
+    roleId.current = undefined;
+    isEdit.current = false;
+    setDialogVisible(true);
+  }
 
-        <div>
+  const buttonStyle = { m: 1 };
+
+  const header = (
+    <div>
+      <Box
+        sx={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
+        }}
+      >
+        <Typography variant="h2" component="h1">
+          Role Management
+        </Typography>
+
+        <Box sx={{ display: "flex" }}>
           <AccessButton
+            sx={buttonStyle}
             onClick={handleRescan}
             label="Rescan Roles"
             data-testid="rescan-btn"
@@ -169,8 +180,11 @@ function RoleIndex({
             config={config}
             permission="GARDEN_ADMIN"
             isGlobal={true}
-          />
+          >
+            Rescan Roles
+          </AccessButton>
           <AccessButton
+            sx={buttonStyle}
             onClick={openRoleDialog}
             label="Create Role"
             data-testid="create-btn"
@@ -178,11 +192,22 @@ function RoleIndex({
             config={config}
             permission="GARDEN_ADMIN"
             isGlobal={true}
-          />
-        </div>
+          >
+            Create Role
+          </AccessButton>
+        </Box>
+      </Box>
+      <div>
+        {config?.auth_enabled == false && (
+          <Alert sx={{ mx: 1, mb: 1 }} severity="error">
+            Warning - Beergarden authorization is currently disabled. Changes
+            made here will be persisted, but permissions will not be enforced.
+            Contact your administator to enable this feature.
+          </Alert>
+        )}
       </div>
-    );
-  }
+    </div>
+  );
 
   function RoleTable() {
     function handleDeleteRole(role: Role) {
@@ -192,7 +217,7 @@ function RoleIndex({
             setRoles((currentRoles) => {
               return currentRoles.filter((r) => r.id !== role.id);
             });
-            showToast({
+            showSnackbar({
               severity: "info",
               summary: "Role Deleted",
               detail: `Deleted role: ${role.name}`,
@@ -200,7 +225,7 @@ function RoleIndex({
             });
           })
           .catch((error) => {
-            showToast({
+            showSnackbar({
               severity: "error",
               summary: "Error",
               detail: `Error deleting the role: ${error}`,
@@ -219,36 +244,42 @@ function RoleIndex({
     function roleNameTemplate(role: Role) {
       if (role.protected) {
         return (
-          <div className="flex">
-            <FontAwesomeIcon
+          <Box sx={{ display: "flex" }}>
+            <FAIcon
               icon="user-shield"
               title="Protected Role"
-              className="mr-1"
+              role="img"
+              aria-label="Protected Role"
+              sx={{ mr: 1 }}
             />
             {role.name}
-          </div>
+          </Box>
         );
       } else if (role.file_generated) {
         return (
-          <div className="flex">
-            <FontAwesomeIcon
+          <Box sx={{ display: "flex" }}>
+            <FAIcon
               icon="user-tag"
-              title="File Generated Role"
-              className="mr-1"
+              title="Generated Role"
+              role="img"
+              aria-label="File Generated Role"
+              sx={{ mr: 1 }}
             />
             {role.name}
-          </div>
+          </Box>
         );
       } else {
         return (
-          <div className="flex">
-            <FontAwesomeIcon
+          <Box sx={{ display: "flex" }}>
+            <FAIcon
               icon="user-gear"
               title="Unprotected Role"
-              className="mr-1"
+              role="img"
+              aria-label="Unprotected Role"
+              sx={{ mr: 1 }}
             />
             {role.name}
-          </div>
+          </Box>
         );
       }
     }
@@ -259,97 +290,134 @@ function RoleIndex({
         return <></>;
       }
       return (
-        <div className="flex">
-          <AccessButton
-            data-testid={`duplicate-btn-${role.name}`}
-            aria-label={`Duplicate ${role.name}`}
-            tooltip={`Duplicate ${role.name}`}
-            onClick={() => handleLoadRole(role, true)}
-            {...GenerateTourProps(duplicateRoleTourStep)}
-          >
-            <FontAwesomeIcon icon="clone" />
-          </AccessButton>
-          {!role.file_generated && !role.protected && (
+        <Box sx={{ display: "flex" }}>
+          <ButtonGroup>
             <AccessButton
-              data-testid={`edit-btn-${role.name}`}
-              aria-label={`Edit ${role.name}`}
-              tooltip={`Edit ${role.name}`}
-              onClick={() => handleLoadRole(role, false)}
-              {...GenerateTourProps(editRoleTourStep)}
+              data-testid={`duplicate-btn-${role.name}`}
+              aria-label={`Duplicate ${role.name}`}
+              tooltip={`Duplicate ${role.name}`}
+              onClick={() => handleLoadRole(role, true)}
+              {...GenerateTourProps(duplicateRoleTourStep)}
             >
-              <FontAwesomeIcon icon="pencil" />
+              <FontAwesomeIcon icon="clone" />
             </AccessButton>
-          )}
-          {!role.file_generated && !role.protected && (
-            <AccessButton
-              data-testid={`delete-btn-${role.name}`}
-              aria-label={`Delete ${role.name}`}
-              tooltip={`Delete ${role.name}`}
-              onClick={() => handleDeleteRole(role)}
-              {...GenerateTourProps(deleteRoleTourStep)}
-            >
-              <FontAwesomeIcon icon="trash-can" />
-            </AccessButton>
-          )}
-        </div>
+            {!role.file_generated && !role.protected && (
+              <AccessButton
+                data-testid={`edit-btn-${role.name}`}
+                aria-label={`Edit ${role.name}`}
+                tooltip={`Edit ${role.name}`}
+                onClick={() => handleLoadRole(role, false)}
+                {...GenerateTourProps(editRoleTourStep)}
+              >
+                <FontAwesomeIcon icon="pencil" />
+              </AccessButton>
+            )}
+            {!role.file_generated && !role.protected && (
+              <AccessButton
+                data-testid={`delete-btn-${role.name}`}
+                aria-label={`Delete ${role.name}`}
+                tooltip={`Delete ${role.name}`}
+                onClick={() => handleDeleteRole(role)}
+                {...GenerateTourProps(deleteRoleTourStep)}
+              >
+                <FontAwesomeIcon icon="trash-can" />
+              </AccessButton>
+            )}
+          </ButtonGroup>
+        </Box>
       );
     }
 
     return (
       <div>
-        {config?.auth_enabled == false && (
-          <Message
-            className="mx-2 mb-2"
-            severity="error"
-            text="Warning - Beergarden authorization is currently disabled. Changes made here
-            will be persisted, but permissions will not be enforced. Contact your
-            administator to enable this feature."
-            pt={{
-              icon: {
-                role: "img",
-                "aria-label": "Close Alert Message",
-                style: { color: "var(--danger-color)" },
-              },
-            }}
-            style={{
-              backgroundColor: "var(--danger-background-color)",
-              color: "var(--danger-color)",
-            }}
-          />
-        )}
-        <DataTable
+        <EnhancedTable
           data-testid="role-datatable"
-          value={roles}
-          loading={loading}
-          paginator
-          rows={rows}
-          first={first}
-          sortField={sortField}
-          sortOrder={sortOrder}
-          rowsPerPageOptions={[10, 25, 50]}
-          paginatorTemplate={PaginatorTemplate}
-          onPage={(e: any) => {
-            setFirst(e.first);
-            setRows(e.rows);
-          }}
-          onSort={(e: any) => {
-            setSortField(e.sortField);
-            setSortOrder(e.sortOrder);
-            setFirst(0);
-          }}
-          dataKey="id"
-        >
-          <Column field="name" sortable header="Role" body={roleNameTemplate} />
-          <Column field="permission" sortable header="Permission" />
-          <Column field="description" sortable header="Description" />
-          <Column field="scope_gardens" sortable header="Garden Scope" />
-          <Column field="scope_namespaces" sortable header="Namespace Scope" />
-          <Column field="scope_systems" sortable header="System Scope" />
-          <Column field="scope_versions" sortable header="Version Scope" />
-          <Column field="scope_instances" sortable header="Instance Scope" />
-          <Column field="scope_commands" sortable header="Command Scope" />
-          <Column header="" body={roleButtonTemplate} />
-        </DataTable>
+          data={roles}
+          isLoading={loading}
+          columns={[
+            {
+              id: "name",
+              field: "name",
+              label: "Role",
+              sortable: true,
+              filterable: true,
+              isString: true,
+              template: roleNameTemplate,
+            },
+            {
+              id: "permission",
+              field: "permission",
+              label: "Permission",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+            {
+              id: "description",
+              field: "description",
+              label: "Description",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+            {
+              id: "scope_gardens",
+              field: "scope_gardens",
+              label: "Garden Scope",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+            {
+              id: "scope_namespaces",
+              field: "scope_namespaces",
+              label: "Namespace Scope",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+            {
+              id: "scope_systems",
+              field: "scope_systems",
+              label: "System Scope",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+            {
+              id: "scope_versions",
+              field: "scope_versions",
+              label: "Version Scope",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+            {
+              id: "scope_instances",
+              field: "scope_instances",
+              label: "Instance Scope",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+            {
+              id: "scope_commands",
+              field: "scope_commands",
+              label: "Command Scope",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+            {
+              id: "action",
+              label: "",
+              template: roleButtonTemplate,
+            },
+          ]}
+          header={header}
+          defaultOrderBy="name"
+          defaultOrder="desc"
+        />
       </div>
     );
   }
@@ -372,6 +440,7 @@ function RoleIndex({
         <RoleCard
           isEdit={isEdit.current}
           roleId={roleId.current}
+          dialogVisible={dialogVisible}
           updateRoles={updateRoles}
           onClose={() => {
             setDialogVisible(false);
@@ -379,7 +448,6 @@ function RoleIndex({
           }}
         />
       )}
-      <RoleHeader />
       <RoleTable />
     </div>
   );
