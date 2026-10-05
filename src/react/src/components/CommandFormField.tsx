@@ -593,38 +593,34 @@ function CommandFormField({
                 key={`${parameter.key}-${index}`}
                 sx={inputDisplayItemStyling}
               >
-                <Tooltip
+                <NumberField
+                  id={`${parameter.key}-${index}`}
+                  value={
+                    getMultiValue(parameter.key, index) ?? parameter.default
+                  }
                   title={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                >
-                  <Box component="span" aria-label={undefined}>
-                    <NumberField
-                      id={`${parameter.key}-${index}`}
-                      value={
-                        getMultiValue(parameter.key, index) ?? parameter.default
-                      }
-                      helperText={parameter.description}
-                      disabled={disabled}
-                      onValueChange={(value) =>
-                        handleMultiChange(parameter.key, value, index)
-                      }
-                      error={
-                        !disabled &&
-                        !parameter.optional &&
-                        (item === undefined || item === null || item === "")
-                      }
-                      max={
-                        parameter.maximum !== undefined
-                          ? parameter.maximum
-                          : undefined
-                      }
-                      min={
-                        parameter.minimum !== undefined
-                          ? parameter.minimum
-                          : undefined
-                      }
-                    />
-                  </Box>
-                </Tooltip>
+                  helperText={parameter.description}
+                  disabled={disabled}
+                  onValueChange={(value) =>
+                    handleMultiChange(parameter.key, value, index)
+                  }
+                  error={
+                    !disabled &&
+                    !parameter.optional &&
+                    (item === undefined || item === null || item === "")
+                  }
+                  max={
+                    parameter.maximum !== undefined
+                      ? parameter.maximum
+                      : undefined
+                  }
+                  min={
+                    parameter.minimum !== undefined
+                      ? parameter.minimum
+                      : undefined
+                  }
+                />
+
                 <Tooltip title={removeInputAriaLabel}>
                   <Box component="span" aria-label={undefined}>
                     <IconButton
@@ -655,36 +651,27 @@ function CommandFormField({
       }
       return (
         <Box key={parameter.key} sx={inputDisplayStyling}>
-          <Tooltip
+          <NumberField
+            id={parameter.key}
+            value={parameter.value}
             title={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-          >
-            <Box component="span" aria-label={undefined}>
-              <NumberField
-                id={parameter.key}
-                value={parameter.value}
-                helperText={parameter.description}
-                disabled={disabled}
-                onValueChange={(value) => handleChange(parameter.key, value)}
-                error={
-                  !disabled &&
-                  !parameter.optional &&
-                  (parameter.value === undefined ||
-                    parameter.value === null ||
-                    parameter.value === "")
-                }
-                max={
-                  parameter.maximum !== undefined
-                    ? parameter.maximum
-                    : undefined
-                }
-                min={
-                  parameter.minimum !== undefined
-                    ? parameter.minimum
-                    : undefined
-                }
-              />
-            </Box>
-          </Tooltip>
+            helperText={parameter.description}
+            disabled={disabled}
+            onValueChange={(value) => handleChange(parameter.key, value)}
+            error={
+              !disabled &&
+              !parameter.optional &&
+              (parameter.value === undefined ||
+                parameter.value === null ||
+                parameter.value === "")
+            }
+            max={
+              parameter.maximum !== undefined ? parameter.maximum : undefined
+            }
+            min={
+              parameter.minimum !== undefined ? parameter.minimum : undefined
+            }
+          />
         </Box>
       );
     }
@@ -701,39 +688,35 @@ function CommandFormField({
                 key={`${parameter.key}-${index}`}
                 sx={inputDisplayItemStyling}
               >
-                <Tooltip
+                <NumberField
+                  id={`${parameter.key}-${index}`}
+                  value={
+                    getMultiValue(parameter.key, index) ?? parameter.default
+                  }
+                  helperText={parameter.description}
+                  disabled={disabled}
                   title={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                >
-                  <Box component="span" aria-label={undefined}>
-                    <NumberField
-                      id={`${parameter.key}-${index}`}
-                      value={
-                        getMultiValue(parameter.key, index) ?? parameter.default
-                      }
-                      helperText={parameter.description}
-                      disabled={disabled}
-                      onValueChange={(value) =>
-                        handleMultiChange(parameter.key, value, index)
-                      }
-                      error={
-                        !disabled &&
-                        !parameter.optional &&
-                        (item === undefined || item === null || item === "")
-                      }
-                      max={
-                        parameter.maximum !== undefined
-                          ? parameter.maximum
-                          : undefined
-                      }
-                      min={
-                        parameter.minimum !== undefined
-                          ? parameter.minimum
-                          : undefined
-                      }
-                      step={0.01}
-                    />
-                  </Box>
-                </Tooltip>
+                  onValueChange={(value) =>
+                    handleMultiChange(parameter.key, value, index)
+                  }
+                  error={
+                    !disabled &&
+                    !parameter.optional &&
+                    (item === undefined || item === null || item === "")
+                  }
+                  max={
+                    parameter.maximum !== undefined
+                      ? parameter.maximum
+                      : undefined
+                  }
+                  min={
+                    parameter.minimum !== undefined
+                      ? parameter.minimum
+                      : undefined
+                  }
+                  step={0.01}
+                />
+
                 <Tooltip title={removeInputAriaLabel}>
                   <Box component="span" aria-label={undefined}>
                     <IconButton
@@ -764,37 +747,28 @@ function CommandFormField({
       }
       return (
         <Box key={parameter.key} sx={inputDisplayStyling}>
-          <Tooltip
+          <NumberField
+            id={parameter.key}
+            value={parameter.value}
+            helperText={parameter.description}
+            disabled={disabled}
             title={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-          >
-            <Box component="span" aria-label={undefined}>
-              <NumberField
-                id={parameter.key}
-                value={parameter.value}
-                helperText={parameter.description}
-                disabled={disabled}
-                onValueChange={(value) => handleChange(parameter.key, value)}
-                error={
-                  !disabled &&
-                  !parameter.optional &&
-                  (parameter.value === undefined ||
-                    parameter.value === null ||
-                    parameter.value === "")
-                }
-                max={
-                  parameter.maximum !== undefined
-                    ? parameter.maximum
-                    : undefined
-                }
-                min={
-                  parameter.minimum !== undefined
-                    ? parameter.minimum
-                    : undefined
-                }
-                step={0.01}
-              />
-            </Box>
-          </Tooltip>
+            onValueChange={(value) => handleChange(parameter.key, value)}
+            error={
+              !disabled &&
+              !parameter.optional &&
+              (parameter.value === undefined ||
+                parameter.value === null ||
+                parameter.value === "")
+            }
+            max={
+              parameter.maximum !== undefined ? parameter.maximum : undefined
+            }
+            min={
+              parameter.minimum !== undefined ? parameter.minimum : undefined
+            }
+            step={0.01}
+          />
         </Box>
       );
     }
