@@ -23,6 +23,7 @@ const lightPalette = {
   text: {
     primary: grey[900],
     secondary: grey[800],
+    disabled: grey[700],
   },
   action: {
     active: grey[100],
