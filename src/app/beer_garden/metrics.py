@@ -241,6 +241,7 @@ def request_garden_completed_totals():
                     "system": "$system",
                     "system_version": "$system_version",
                     "instance_name": "$instance_name",
+                    "command": "$command",
                     "status": "$status",
                 },
                 "count": {"$sum": 1},
@@ -253,6 +254,7 @@ def request_garden_completed_totals():
                 "system": "$_id.system",
                 "system_version": "$_id.system_version",
                 "instance_name": "$_id.instance_name",
+                "command": "$_id.command",
                 "status": "$_id.status",
                 "count": "$count",
             }
@@ -576,7 +578,14 @@ def setup_metrics():
             partial(request_garden_completed_totals),
             name="bg_completed_requests_total",
             description="Total number of completed requests",
-            labels=["namespace", "system", "system_version", "instance_name", "status"],
+            labels=[
+                "namespace",
+                "system",
+                "system_version",
+                "instance_name",
+                "command",
+                "status",
+            ],
         )
     )
     REGISTRY.register(
