@@ -312,7 +312,7 @@ function RequestCreateCard({
               onChange={(e) => updateToggleScheduleJob(e.target.checked)}
               sx={{ alignSelf: "center" }}
               slotProps={{
-                input: { "aria-label": "Toggle for creating Scheduled Job" },
+                input: { "aria-label": "Toggle for creating Scheduled Job", "aria-checked": toggleScheduleJob },
               }}
             />
           </Box>
