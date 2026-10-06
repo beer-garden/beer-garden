@@ -330,30 +330,40 @@ function CommandFormField({
           onChange={(_event: any, newValue: any) => {
             handleChange(parameter.key, newValue);
           }}
+          getOptionLabel={(option) =>
+            typeof option === "object" ? String(option.label) : String(option)
+          }
           disabled={disabled}
           multiple={parameter?.multi === true}
           renderInput={(params) => (
-            <TextField
-              {...params}
-              variant="outlined"
-              placeholder={parameter.display_name}
-              label={parameter.display_name ?? parameter.key}
-              aria-label={inputAreaAriaLabel}
-              error={
-                !disabled &&
-                !parameter.optional &&
-                (parameter.value === undefined ||
-                  parameter.value === null ||
-                  parameter.value === "" ||
-                  parameter.options === undefined ||
-                  !parameter.options.some(
-                    (option) => option.value === parameter.value,
-                  ))
-              }
-              autoComplete="off"
-            />
+            <Tooltip
+              title={`${inputAreaAriaLabel}: Typeahead, start typing input and press enter after typing to reload options`}
+            >
+              <Box component="span" aria-label={undefined}>
+                <TextField
+                  {...params}
+                  variant="outlined"
+                  placeholder={parameter.display_name}
+                  label={parameter.display_name ?? parameter.key}
+                  aria-label={inputAreaAriaLabel}
+                  error={
+                    !disabled &&
+                    !parameter.optional &&
+                    (parameter.value === undefined ||
+                      parameter.value === null ||
+                      parameter.value === "" ||
+                      parameter.options === undefined ||
+                      !parameter.options.some(
+                        (option) => option.value === parameter.value,
+                      ))
+                  }
+                  autoComplete="off"
+                />
+              </Box>
+            </Tooltip>
           )}
         />
+
         <FormHelperText id={`${parameter.key}-helper-text`}>
           {parameter.description}
         </FormHelperText>
