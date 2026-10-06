@@ -601,7 +601,6 @@ function CommandForm({
           });
         } else {
           if (
-            parameter.options === undefined ||
             !parameter.options.some(
               (option) => parameter.value === option.value,
             )
