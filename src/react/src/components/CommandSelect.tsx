@@ -385,6 +385,7 @@ function CommandSelect({
         justifyContent: "center",
       }}
     >
+      {/* Aria-Controls appear when dropdown opened */}
       <Autocomplete
         sx={{ width: "100%", m: 2 }}
         id={`select-namespace`}

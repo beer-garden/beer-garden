@@ -101,6 +101,24 @@ export const theme = createTheme({
         }),
       },
     },
+    MuiFormHelperText: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          color: theme.palette.primary.contrastText,
+          "&.Mui-error": {
+            color: theme.palette.error.dark,
+          },
+        }),
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          // Changes the text color globally
+          color: theme.palette.primary.contrastText,
+        }),
+      },
+    },
     MuiToggleButton: {
       styleOverrides: {
         root: ({ theme }) => ({
