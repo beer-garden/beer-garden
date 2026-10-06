@@ -598,14 +598,25 @@ function CommandForm({
             valid = false;
           }
         } else {
-          parameter.value.map((value: any) => {
+          if (Array.isArray(parameter.value)) {
+            parameter.value.map((value: any) => {
+              if (
+                parameter.options === undefined ||
+                !parameter.options.some((option) => value === option.value)
+              ) {
+                valid = false;
+              }
+            });
+          } else {
             if (
               parameter.options === undefined ||
-              !parameter.options.some((option) => value === option.value)
+              !parameter.options.some(
+                (option) => parameter.value === option.value,
+              )
             ) {
               valid = false;
             }
-          });
+          }
         }
       }
     }
