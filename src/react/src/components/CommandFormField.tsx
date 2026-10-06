@@ -393,36 +393,40 @@ function CommandFormField({
                 sx={inputDisplayItemStyling}
               >
                 <Tooltip title={`${inputAreaAriaLabel} Index ${index}: String`}>
-                  <TextField
-                    id={`${parameter.key}-${index}`}
-                    helperText={parameter.description}
-                    value={item}
-                    variant="outlined"
-                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                      handleMultiChange(
-                        parameter.key,
-                        event.target.value,
-                        index,
-                      );
-                    }}
-                    fullWidth
-                    disabled={disabled}
-                    error={
-                      !disabled &&
-                      !parameter.optional &&
-                      (item === undefined || item === null || item === "")
-                    }
-                    autoComplete="off"
-                  />
+                  <Box component="span" aria-label={undefined}>
+                    <TextField
+                      id={`${parameter.key}-${index}`}
+                      helperText={parameter.description}
+                      value={item}
+                      variant="outlined"
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                        handleMultiChange(
+                          parameter.key,
+                          event.target.value,
+                          index,
+                        );
+                      }}
+                      fullWidth
+                      disabled={disabled}
+                      error={
+                        !disabled &&
+                        !parameter.optional &&
+                        (item === undefined || item === null || item === "")
+                      }
+                      autoComplete="off"
+                    />
+                  </Box>
                 </Tooltip>
                 <Tooltip title={removeInputAriaLabel}>
-                  <IconButton
-                    onClick={() => removeMultiItem(parameter.key, index)}
-                    disabled={disabled}
-                    aria-label={removeInputAriaLabel}
-                  >
-                    <FAIcon icon="xmark" />
-                  </IconButton>
+                  <Box component="span" aria-label={undefined}>
+                    <IconButton
+                      onClick={() => removeMultiItem(parameter.key, index)}
+                      disabled={disabled}
+                      aria-label={removeInputAriaLabel}
+                    >
+                      <FAIcon icon="xmark" />
+                    </IconButton>
+                  </Box>
                 </Tooltip>
               </Box>
             ))}
@@ -444,25 +448,27 @@ function CommandFormField({
       return (
         <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: String`}>
-            <TextField
-              id={parameter.key}
-              value={parameter.value}
-              helperText={parameter.description}
-              variant="outlined"
-              onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                handleChange(parameter.key, event.target.value);
-              }}
-              fullWidth
-              disabled={disabled}
-              error={
-                !disabled &&
-                !parameter.optional &&
-                (parameter.value === undefined ||
-                  parameter.value === null ||
-                  parameter.value === "")
-              }
-              autoComplete="off"
-            />
+            <Box component="span" aria-label={undefined}>
+              <TextField
+                id={parameter.key}
+                value={parameter.value}
+                helperText={parameter.description}
+                variant="outlined"
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                  handleChange(parameter.key, event.target.value);
+                }}
+                fullWidth
+                disabled={disabled}
+                error={
+                  !disabled &&
+                  !parameter.optional &&
+                  (parameter.value === undefined ||
+                    parameter.value === null ||
+                    parameter.value === "")
+                }
+                autoComplete="off"
+              />
+            </Box>
           </Tooltip>
         </Box>
       );
@@ -491,41 +497,45 @@ function CommandFormField({
                 <Tooltip
                   title={`${inputAreaAriaLabel} Index ${index}: Dictionary`}
                 >
-                  <TextField
-                    id={`${parameter.key}-${index}`}
-                    value={item}
-                    helperText={parameter.description}
-                    variant="outlined"
-                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                      handleMultiChange(
-                        parameter.key,
-                        event.target.value,
-                        index,
-                      );
-                    }}
-                    fullWidth
-                    multiline
-                    disabled={disabled}
-                    error={
-                      !disabled &&
-                      !parameter.optional &&
-                      (item === undefined ||
-                        item === null ||
-                        item === "" ||
-                        item === "null" ||
-                        !canParseJSON(item))
-                    }
-                    autoComplete="off"
-                  />
+                  <Box component="span" aria-label={undefined}>
+                    <TextField
+                      id={`${parameter.key}-${index}`}
+                      value={item}
+                      helperText={parameter.description}
+                      variant="outlined"
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                        handleMultiChange(
+                          parameter.key,
+                          event.target.value,
+                          index,
+                        );
+                      }}
+                      fullWidth
+                      multiline
+                      disabled={disabled}
+                      error={
+                        !disabled &&
+                        !parameter.optional &&
+                        (item === undefined ||
+                          item === null ||
+                          item === "" ||
+                          item === "null" ||
+                          !canParseJSON(item))
+                      }
+                      autoComplete="off"
+                    />
+                  </Box>
                 </Tooltip>
                 <Tooltip title={removeInputAriaLabel}>
-                  <IconButton
-                    onClick={() => removeMultiItem(parameter.key, index)}
-                    disabled={disabled}
-                    aria-label={removeInputAriaLabel}
-                  >
-                    <FAIcon icon="xmark" />
-                  </IconButton>
+                  <Box component="span" aria-label={undefined}>
+                    <IconButton
+                      onClick={() => removeMultiItem(parameter.key, index)}
+                      disabled={disabled}
+                      aria-label={removeInputAriaLabel}
+                    >
+                      <FAIcon icon="xmark" />
+                    </IconButton>
+                  </Box>
                 </Tooltip>
               </Box>
             ))}
@@ -547,28 +557,30 @@ function CommandFormField({
       return (
         <Box key={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: Dictionary`}>
-            <TextField
-              id={parameter.key}
-              value={parameter.value}
-              helperText={parameter.description}
-              variant="outlined"
-              onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                handleChange(parameter.key, event.target.value);
-              }}
-              fullWidth
-              disabled={disabled}
-              multiline
-              error={
-                !disabled &&
-                !parameter.optional &&
-                (parameter.value === undefined ||
-                  parameter.value === null ||
-                  parameter.value === "" ||
-                  parameter.value === "null" ||
-                  !canParseJSON(parameter.value))
-              }
-              autoComplete="off"
-            />
+            <Box component="span" aria-label={undefined}>
+              <TextField
+                id={parameter.key}
+                value={parameter.value}
+                helperText={parameter.description}
+                variant="outlined"
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                  handleChange(parameter.key, event.target.value);
+                }}
+                fullWidth
+                disabled={disabled}
+                multiline
+                error={
+                  !disabled &&
+                  !parameter.optional &&
+                  (parameter.value === undefined ||
+                    parameter.value === null ||
+                    parameter.value === "" ||
+                    parameter.value === "null" ||
+                    !canParseJSON(parameter.value))
+                }
+                autoComplete="off"
+              />
+            </Box>
           </Tooltip>
         </Box>
       );
@@ -615,13 +627,15 @@ function CommandFormField({
                 />
 
                 <Tooltip title={removeInputAriaLabel}>
-                  <IconButton
-                    onClick={() => removeMultiItem(parameter.key, index)}
-                    disabled={disabled}
-                    aria-label={removeInputAriaLabel}
-                  >
-                    <FAIcon icon="xmark" />
-                  </IconButton>
+                  <Box component="span" aria-label={undefined}>
+                    <IconButton
+                      onClick={() => removeMultiItem(parameter.key, index)}
+                      disabled={disabled}
+                      aria-label={removeInputAriaLabel}
+                    >
+                      <FAIcon icon="xmark" />
+                    </IconButton>
+                  </Box>
                 </Tooltip>
               </Box>
             ))}
@@ -709,13 +723,15 @@ function CommandFormField({
                 />
 
                 <Tooltip title={removeInputAriaLabel}>
-                  <IconButton
-                    onClick={() => removeMultiItem(parameter.key, index)}
-                    disabled={disabled}
-                    aria-label={removeInputAriaLabel}
-                  >
-                    <FAIcon icon="xmark" />
-                  </IconButton>
+                  <Box component="span" aria-label={undefined}>
+                    <IconButton
+                      onClick={() => removeMultiItem(parameter.key, index)}
+                      disabled={disabled}
+                      aria-label={removeInputAriaLabel}
+                    >
+                      <FAIcon icon="xmark" />
+                    </IconButton>
+                  </Box>
                 </Tooltip>
               </Box>
             ))}
@@ -808,13 +824,15 @@ function CommandFormField({
                   </Box>
                 </Tooltip>
                 <Tooltip title={removeInputAriaLabel}>
-                  <IconButton
-                    onClick={() => removeMultiItem(parameter.key, index)}
-                    disabled={disabled}
-                    aria-label={removeInputAriaLabel}
-                  >
-                    <FAIcon icon="xmark" />
-                  </IconButton>
+                  <Box component="span" aria-label={undefined}>
+                    <IconButton
+                      onClick={() => removeMultiItem(parameter.key, index)}
+                      disabled={disabled}
+                      aria-label={removeInputAriaLabel}
+                    >
+                      <FAIcon icon="xmark" />
+                    </IconButton>
+                  </Box>
                 </Tooltip>
               </Box>
             ))}
@@ -911,13 +929,15 @@ function CommandFormField({
                   </Box>
                 </Tooltip>
                 <Tooltip title={removeInputAriaLabel}>
-                  <IconButton
-                    onClick={() => removeMultiItem(parameter.key, index)}
-                    disabled={disabled}
-                    aria-label={removeInputAriaLabel}
-                  >
-                    <FAIcon icon="xmark" />
-                  </IconButton>
+                  <Box component="span" aria-label={undefined}>
+                    <IconButton
+                      onClick={() => removeMultiItem(parameter.key, index)}
+                      disabled={disabled}
+                      aria-label={removeInputAriaLabel}
+                    >
+                      <FAIcon icon="xmark" />
+                    </IconButton>
+                  </Box>
                 </Tooltip>
               </Box>
             ))}
@@ -1025,13 +1045,15 @@ function CommandFormField({
                   </Box>
                 </Tooltip>
                 <Tooltip title={removeInputAriaLabel}>
-                  <IconButton
-                    onClick={() => removeMultiItem(parameter.key, index)}
-                    disabled={disabled}
-                    aria-label={removeInputAriaLabel}
-                  >
-                    <FAIcon icon="xmark" />
-                  </IconButton>
+                  <Box component="span" aria-label={undefined}>
+                    <IconButton
+                      onClick={() => removeMultiItem(parameter.key, index)}
+                      disabled={disabled}
+                      aria-label={removeInputAriaLabel}
+                    >
+                      <FAIcon icon="xmark" />
+                    </IconButton>
+                  </Box>
                 </Tooltip>
               </Box>
             ))}
