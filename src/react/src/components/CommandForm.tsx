@@ -860,7 +860,11 @@ function CommandForm({
 
   const renderInputLabel = (parameter: InputParam) => {
     return (
-      <FormLabel htmlFor={parameter.key} sx={{ fontWeight: "bold" }}>
+      <FormLabel
+        id={`${parameter.key}-label`}
+        htmlFor={parameter.key}
+        sx={{ fontWeight: "bold" }}
+      >
         {parameter.key}
       </FormLabel>
     );
