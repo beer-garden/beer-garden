@@ -589,33 +589,24 @@ function CommandForm({
       if (parameter?.options) {
         if (parameter.options.length === 0) {
           valid = false;
-        } else if (typeof parameter.value === "string") {
+        }
+        if (Array.isArray(parameter.value)) {
+          parameter.value.map((value: any) => {
+            if (
+              parameter.options === undefined ||
+              !parameter.options.some((option) => value === option.value)
+            ) {
+              valid = false;
+            }
+          });
+        } else {
           if (
+            parameter.options === undefined ||
             !parameter.options.some(
               (option) => parameter.value === option.value,
             )
           ) {
             valid = false;
-          }
-        } else {
-          if (Array.isArray(parameter.value)) {
-            parameter.value.map((value: any) => {
-              if (
-                parameter.options === undefined ||
-                !parameter.options.some((option) => value === option.value)
-              ) {
-                valid = false;
-              }
-            });
-          } else {
-            if (
-              parameter.options === undefined ||
-              !parameter.options.some(
-                (option) => parameter.value === option.value,
-              )
-            ) {
-              valid = false;
-            }
           }
         }
       }
