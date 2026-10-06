@@ -396,7 +396,7 @@ function CommandSelect({
         }}
         renderInput={(params) => (
           <Tooltip title={`Select Namespace`}>
-            <Box component="span" aria-label={undefined}>
+            <Box aria-label={undefined}>
               <TextField {...params} label="Namespace" />
             </Box>
           </Tooltip>
@@ -413,7 +413,7 @@ function CommandSelect({
         }}
         renderInput={(params) => (
           <Tooltip title={`Select System`}>
-            <Box component="span" aria-label={undefined}>
+            <Box aria-label={undefined}>
               <TextField {...params} label="System" />
             </Box>
           </Tooltip>
@@ -430,7 +430,7 @@ function CommandSelect({
         disabled={versions && versions.length === 0}
         renderInput={(params) => (
           <Tooltip title={`Select Version`}>
-            <Box component="span" aria-label={undefined}>
+            <Box aria-label={undefined}>
               <TextField {...params} label="Version" />
             </Box>
           </Tooltip>
@@ -447,7 +447,7 @@ function CommandSelect({
         disabled={instances && instances.length === 0}
         renderInput={(params) => (
           <Tooltip title={`Select Instance`}>
-            <Box component="span" aria-label={undefined}>
+            <Box aria-label={undefined}>
               <TextField {...params} label="Instance" />
             </Box>
           </Tooltip>
@@ -464,7 +464,7 @@ function CommandSelect({
         disabled={commands && commands.length === 0}
         renderInput={(params) => (
           <Tooltip title={`Select Command`}>
-            <Box component="span" aria-label={undefined}>
+            <Box aria-label={undefined}>
               <TextField {...params} label="Command" />
             </Box>
           </Tooltip>
