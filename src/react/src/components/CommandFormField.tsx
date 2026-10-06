@@ -339,7 +339,7 @@ function CommandFormField({
             <Tooltip
               title={`${inputAreaAriaLabel}: Typeahead, start typing input and press enter after typing to reload options`}
             >
-              <Box component="span" aria-label={undefined}>
+              <Box aria-label={undefined}>
                 <TextField
                   {...params}
                   variant="outlined"
