@@ -232,7 +232,15 @@ function CommandForm({
           | Array<{ text: string; value: string } | string>
           | { [key: string]: Array<{ text: string; value: string } | string> },
       )
-        .then((options) => resolveOptions(options))
+        .then((options) => {
+          resolveOptions(options);
+          showSnackbar({
+            severity: "info",
+            summary: "Request Dynamic Choices",
+            detail: `Dynamic Choices loaded for ${parameter.key} with ${options.length} choices`,
+            life: 3000,
+          });
+        })
         .catch((error) => {
           console.error("Error fetching choices:", error);
           showSnackbar({
@@ -248,13 +256,18 @@ function CommandForm({
     const parameterArgs = {} as any;
 
     parameter?.choices?.details?.args?.forEach((arg) => {
-      const paramField =
-        lookupParameters.find((p) => p.key === arg[1])?.value || null;
-      if (paramField !== null && paramField !== undefined) {
-        parameterArgs[arg[0]] = paramField;
+      const paramField = lookupParameters.find((p) => p.key === arg[1]);
+
+      if (paramField !== undefined) {
+        if (paramField?.value && paramField.value !== null) {
+          parameterArgs[arg[0]] = paramField.value;
+        } else {
+          parameterArgs[arg[0]] = undefined;
+        }
       }
     });
 
+    // Need to verify that a single length diff isn't
     if (
       parameter?.choices?.details?.args &&
       Object.keys(parameterArgs).length !==
@@ -291,7 +304,15 @@ function CommandForm({
         })
         .then((data) => {
           mapChoices(data)
-            .then((choices) => resolveOptions(choices))
+            .then((choices) => {
+              resolveOptions(choices);
+              showSnackbar({
+                severity: "info",
+                summary: "Request Dynamic Choices",
+                detail: `Dynamic Choices loaded for ${parameter.key} with ${choices.length} choices`,
+                life: 3000,
+              });
+            })
             .catch((error) => {
               console.error("Error fetching choices:", error);
               showSnackbar({
@@ -359,8 +380,17 @@ function CommandForm({
         .then((response) => {
           if (response.output) {
             const parsedOutput = JSON.parse(response.output);
+
             mapChoices(parsedOutput)
-              .then((choices) => resolveOptions(choices))
+              .then((choices) => {
+                resolveOptions(choices);
+                showSnackbar({
+                  severity: "info",
+                  summary: "Request Dynamic Choices",
+                  detail: `Dynamic Choices loaded for ${parameter.key} with ${choices.length} choices`,
+                  life: 3000,
+                });
+              })
               .catch((error) => {
                 console.error("Error fetching choices:", error);
                 showSnackbar({
@@ -373,6 +403,12 @@ function CommandForm({
               });
           } else {
             resolveOptions([]);
+            showSnackbar({
+              severity: "info",
+              summary: "Request Dynamic Choices",
+              detail: `Dynamic Choices loaded for ${parameter.key} with 0 choices`,
+              life: 3000,
+            });
           }
         })
         .catch((error) => {
@@ -548,6 +584,28 @@ function CommandForm({
             valid = false;
             break;
           }
+        }
+      }
+      if (parameter?.options) {
+        if (parameter.options.length === 0) {
+          valid = false;
+        } else if (typeof parameter.value === "string") {
+          if (
+            !parameter.options.some(
+              (option) => parameter.value === option.value,
+            )
+          ) {
+            valid = false;
+          }
+        } else {
+          parameter.value.map((value: any) => {
+            if (
+              parameter.options === undefined ||
+              !parameter.options.some((option) => value === option.value)
+            ) {
+              valid = false;
+            }
+          });
         }
       }
     }
