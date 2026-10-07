@@ -205,6 +205,7 @@ def request_garden_totals():
                     "system_version": "$system_version",
                     "instance_name": "$instance_name",
                     "command": "$command",
+                    "target_garden": "$target_garden",
                 },
                 "count": {"$sum": 1},
             }
@@ -217,6 +218,7 @@ def request_garden_totals():
                 "system_version": "$_id.system_version",
                 "instance_name": "$_id.instance_name",
                 "command": "$_id.command",
+                "target_garden": "$_id.target_garden",
                 "count": "$count",
             }
         },
@@ -243,6 +245,7 @@ def request_garden_completed_totals():
                     "instance_name": "$instance_name",
                     "command": "$command",
                     "status": "$status",
+                    "target_garden": "$target_garden",
                 },
                 "count": {"$sum": 1},
             }
@@ -256,6 +259,7 @@ def request_garden_completed_totals():
                 "instance_name": "$_id.instance_name",
                 "command": "$_id.command",
                 "status": "$_id.status",
+                "target_garden": "$_id.target_garden",
                 "count": "$count",
             }
         },
@@ -288,6 +292,7 @@ def request_garden_status_metrics(statusList: list[str], time_window: int = 900)
                     "system": "$system",
                     "system_version": "$system_version",
                     "instance_name": "$instance_name",
+                    "target_garden": "$target_garden",
                 },
                 "count": {"$sum": 1},
             }
@@ -299,6 +304,7 @@ def request_garden_status_metrics(statusList: list[str], time_window: int = 900)
                 "system": "$_id.system",
                 "system_version": "$_id.system_version",
                 "instance_name": "$_id.instance_name",
+                "target_garden": "$_id.target_garden",
                 "count": "$count",
             }
         },
@@ -342,6 +348,7 @@ def request_garden_plugin_command_latency_metrics(interval: int = 15):
                     "instance_name": "$instance_name",
                     "command": "$command",
                     "status": "$status",
+                    "target_garden": "$target_garden",
                 },
                 "count": {"$sum": 1},
                 "sum_value": {"$sum": "$delta"},
@@ -356,6 +363,7 @@ def request_garden_plugin_command_latency_metrics(interval: int = 15):
                 "instance_name": "$_id.instance_name",
                 "command": "$_id.command",
                 "status": "$_id.status",
+                "target_garden": "$_id.target_garden",
                 "count": "$count",
                 "sum_value": "$sum_value",
             }
@@ -502,7 +510,13 @@ def setup_metrics():
             partial(request_garden_status_metrics, ["CREATED"]),
             name="bg_queued_requests",
             description="Number of CREATED requests",
-            labels=["namespace", "system", "system_version", "instance_name"],
+            labels=[
+                "namespace",
+                "system",
+                "system_version",
+                "instance_name",
+                "target_garden",
+            ],
         )
     )
     REGISTRY.register(
@@ -510,7 +524,13 @@ def setup_metrics():
             partial(request_garden_status_metrics, ["IN_PROGRESS"]),
             name="bg_in_progress_requests",
             description="Number of IN_PROGRESS requests",
-            labels=["namespace", "system", "system_version", "instance_name"],
+            labels=[
+                "namespace",
+                "system",
+                "system_version",
+                "instance_name",
+                "target_garden",
+            ],
         )
     )
     REGISTRY.register(
@@ -518,7 +538,13 @@ def setup_metrics():
             partial(request_garden_status_metrics, ["SUCCESS"]),
             name="bg_success_requests",
             description="Number of SUCCESS requests",
-            labels=["namespace", "system", "system_version", "instance_name"],
+            labels=[
+                "namespace",
+                "system",
+                "system_version",
+                "instance_name",
+                "target_garden",
+            ],
         )
     )
     REGISTRY.register(
@@ -526,7 +552,13 @@ def setup_metrics():
             partial(request_garden_status_metrics, ["ERROR"]),
             name="bg_error_requests",
             description="Number of ERROR requests",
-            labels=["namespace", "system", "system_version", "instance_name"],
+            labels=[
+                "namespace",
+                "system",
+                "system_version",
+                "instance_name",
+                "target_garden",
+            ],
         )
     )
     REGISTRY.register(
@@ -537,7 +569,13 @@ def setup_metrics():
             ),
             name="bg_completed_requests",
             description="Number of completed requests",
-            labels=["namespace", "system", "system_version", "instance_name"],
+            labels=[
+                "namespace",
+                "system",
+                "system_version",
+                "instance_name",
+                "target_garden",
+            ],
         )
     )
     REGISTRY.register(
@@ -556,7 +594,13 @@ def setup_metrics():
             ),
             name="bg_requests",
             description="Number of requests",
-            labels=["namespace", "system", "system_version", "instance_name"],
+            labels=[
+                "namespace",
+                "system",
+                "system_version",
+                "instance_name",
+                "target_garden",
+            ],
         )
     )
     REGISTRY.register(
@@ -570,6 +614,7 @@ def setup_metrics():
                 "system_version",
                 "instance_name",
                 "command",
+                "target_garden",
             ],
         )
     )
@@ -585,6 +630,7 @@ def setup_metrics():
                 "instance_name",
                 "command",
                 "status",
+                "target_garden",
             ],
         )
     )
@@ -616,6 +662,7 @@ def setup_metrics():
                 "system_version",
                 "command",
                 "status",
+                "target_garden",
             ],
         )
     )
