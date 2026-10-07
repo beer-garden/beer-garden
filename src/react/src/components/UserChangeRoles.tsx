@@ -1,14 +1,24 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
-import { Dialog } from "primereact/dialog";
-import { useEffect, useState } from "react";
+import {
+  Box,
+  Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from "@mui/material";
+import React, { useEffect, useState } from "react";
 
 import { Role, User } from "../models/brewtils-types";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetRoles } from "../services/role_service";
 import { UpdateUserRoles } from "../services/user_service";
+import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
+import EnhancedTable from "./EnhancedTable/components/EnhancedTable";
+
+interface SelectedRole extends Role {
+  selected: boolean;
+}
 
 function UserChangeRoles({
   user,
@@ -21,43 +31,80 @@ function UserChangeRoles({
   setShowRolesDialog: (show: boolean) => void;
   callback?: () => void;
 }) {
-  const showToast = useToast();
-  const [roles, setRoles] = useState<Array<Role> | undefined>(undefined);
-  const [selectedRoles, setSelectedRoles] = useState<Array<Role>>([]);
+  const showSnackbar = useSnackbar();
+  const [roles, setRoles] = useState<Array<SelectedRole> | undefined>(
+    undefined,
+  );
+  const [isLoading, setIsLoading] = useState(false);
+
+  function selectRole(roleName: string, selected: boolean) {
+    setRoles(
+      roles?.map((role) => {
+        if (role.name === roleName) {
+          return { ...role, selected: selected };
+        }
+        return role;
+      }),
+    );
+  }
+
+  function roleSelectionTemplate(role: SelectedRole) {
+    return (
+      <Checkbox
+        checked={role.selected}
+        slotProps={{
+          input: {
+            "aria-label": `Row ${role.selected ? "Unselected" : "Selected"} ${role.id}`,
+          },
+        }}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          if (role.name) {
+            selectRole(role.name, event.target.checked);
+          }
+        }}
+      />
+    );
+  }
 
   function roleNameTemplate(role: Role) {
     if (role.protected) {
       return (
-        <div className="flex">
-          <FontAwesomeIcon
+        <Box sx={{ display: "flex" }}>
+          <FAIcon
             icon="user-shield"
             title="Protected Role"
-            className="mr-1"
+            role="img"
+            aria-label="Protected Role"
+            sx={{ mr: 1 }}
           />
           {role.name}
-        </div>
+        </Box>
       );
     } else if (role.file_generated) {
       return (
-        <div className="flex">
-          <FontAwesomeIcon
+        <Box sx={{ display: "flex" }}>
+          <FAIcon
             icon="user-tag"
             title="File Generated Role"
-            className="mr-1"
+            role="img"
+            aria-label="File Generated Role"
+            sx={{ mr: 1 }}
           />
           {role.name}
-        </div>
+        </Box>
       );
     } else {
       return (
-        <div className="flex">
-          <FontAwesomeIcon
+        <Box sx={{ display: "flex" }}>
+          <FAIcon
             icon="user-gear"
             title="Unprotected Role"
-            className="mr-1"
+            role="img"
+            aria-label="Unprotected Role"
+            sx={{ mr: 1 }}
           />
           {role.name}
-        </div>
+        </Box>
       );
     }
   }
@@ -67,10 +114,10 @@ function UserChangeRoles({
   }
 
   function updateRoles() {
-    if (user.username && selectedRoles) {
+    if (user.username && roles) {
       const selectedRoleNames = [] as Array<string>;
-      for (const role of selectedRoles) {
-        if (role.name) {
+      for (const role of roles) {
+        if (role.name && role.selected) {
           selectedRoleNames.push(role.name);
         }
       }
@@ -83,7 +130,7 @@ function UserChangeRoles({
         })
         .catch((error) => {
           console.error("Error updating user roles:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Failed to update roles for user ${user.username}`,
@@ -95,67 +142,160 @@ function UserChangeRoles({
 
   useEffect(() => {
     if (roles === undefined) {
+      setIsLoading(true);
       GetRoles()
         .then((data) => {
-          setRoles(data);
+          setRoles(
+            data.map((role: Role) => {
+              return {
+                ...role,
+                selected: user.local_roles?.some(
+                  (local_role) => local_role.name === role.name,
+                ),
+              } as SelectedRole;
+            }),
+          );
+          setIsLoading(false);
         })
         .catch((error) => {
           console.error("Error fetching roles:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching roles: ${error}`,
             life: 3000,
           });
           setRoles([]);
+          setIsLoading(false);
         });
-    }
-    if (user.local_roles) {
-      setSelectedRoles(user.local_roles);
     }
   }, [user]);
 
   return (
     <Dialog
       data-testid="change-roles-dialog"
-      header={`Add/Remove Roles for ${user.username}`}
-      footer={
-        <>
-          <AccessButton onClick={handleUserRolesDialogClose} label="Close" />
-          <AccessButton
-            data-testid={`submit-btn-dialog`}
-            severity="danger"
-            onClick={updateRoles}
-            label="Submit"
-          />
-        </>
-      }
-      visible={showRolesDialog}
-      onHide={() => {
+      open={showRolesDialog}
+      onClose={() => {
         handleUserRolesDialogClose();
       }}
+      maxWidth={false}
+      aria-labelledby="change-roles-dialog-title"
     >
-      <DataTable
-        value={roles}
-        selectionMode={"checkbox"}
-        selection={selectedRoles}
-        onSelectionChange={(e) => setSelectedRoles(e.value)}
-        dataKey="id"
-      >
-        <Column
-          selectionMode="multiple"
-          headerStyle={{ width: "3rem" }}
-        ></Column>
-        <Column field="name" sortable header="Role" body={roleNameTemplate} />
-        <Column field="permission" sortable header="Permission" />
-        <Column field="description" sortable header="Description" />
-        <Column field="scope_gardens" sortable header="Garden Scope" />
-        <Column field="scope_namespaces" sortable header="Namespace Scope" />
-        <Column field="scope_systems" sortable header="System Scope" />
-        <Column field="scope_versions" sortable header="Version Scope" />
-        <Column field="scope_instances" sortable header="Instance Scope" />
-        <Column field="scope_commands" sortable header="Command Scope" />
-      </DataTable>
+      <DialogTitle id="change-roles-dialog-title">{`Add/Remove Roles for ${user.username}`}</DialogTitle>
+      <DialogContent>
+        <EnhancedTable
+          data={roles ?? []}
+          defaultOrderBy="name"
+          columns={[
+            {
+              id: "selected",
+              field: "selected",
+              label: (
+                <Checkbox
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                    setRoles(
+                      roles?.map((role) => {
+                        return { ...role, selected: event.target.checked };
+                      }),
+                    );
+                  }}
+                />
+              ),
+              template: roleSelectionTemplate,
+              sortable: true,
+              filterable: true,
+              isBoolean: true,
+            },
+            {
+              id: "name",
+              label: "Role",
+              field: "name",
+              sortable: true,
+              filterable: true,
+              isString: true,
+              template: roleNameTemplate,
+            },
+            {
+              id: "permission",
+              label: "Permission",
+              field: "permission",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+            {
+              id: "description",
+              label: "Description",
+              field: "description",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+            {
+              id: "scope_gardens",
+              label: "Garden Scope",
+              field: "scope_gardens",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+            {
+              id: "scope_namespaces",
+              label: "Namespace Scope",
+              field: "scope_namespaces",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+            {
+              id: "scope_systems",
+              label: "System Scope",
+              field: "scope_systems",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+            {
+              id: "scope_versions",
+              label: "Version Scope",
+              field: "scope_versions",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+            {
+              id: "scope_instances",
+              label: "Instance Scope",
+              field: "scope_instances",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+            {
+              id: "scope_commands",
+              label: "Command Scope",
+              field: "scope_commands",
+              sortable: true,
+              filterable: true,
+              isString: true,
+            },
+          ]}
+          isLoading={isLoading}
+        />
+      </DialogContent>
+      <DialogActions>
+        <AccessButton onClick={handleUserRolesDialogClose} label="Close">
+          Close
+        </AccessButton>
+        <AccessButton
+          data-testid={`submit-btn-dialog`}
+          color="error"
+          onClick={updateRoles}
+          label="Submit"
+        >
+          Submit
+        </AccessButton>
+      </DialogActions>
     </Dialog>
   );
 }

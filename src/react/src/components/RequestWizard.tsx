@@ -1,11 +1,18 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { BreadCrumb } from "primereact/breadcrumb";
-import { Card } from "primereact/card";
-import { InputSwitch } from "primereact/inputswitch";
-import { Skeleton } from "primereact/skeleton";
-import { Stepper, StepperChangeEvent } from "primereact/stepper";
-import { StepperPanel } from "primereact/stepperpanel";
-import { useEffect, useRef, useState } from "react";
+import {
+  Box,
+  Card,
+  CardContent,
+  Grid,
+  Skeleton,
+  Step,
+  StepButton,
+  Stepper,
+  Switch,
+  Typography,
+} from "@mui/material";
+import { grey } from "@mui/material/colors";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import {
   Command,
@@ -15,12 +22,12 @@ import {
   System,
 } from "../models/brewtils-types";
 import { Config, RequestCommand, RequestItem } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
 import { GetRequest } from "../services/request_service";
 import { PostRequest } from "../services/request_service";
 import { GetSystemList } from "../services/system_service";
-import { GetBaseURL } from "../services/util_service";
+import { FAIcon, GetBaseURL } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import CodeExample from "./CodeExample";
 import CommandForm from "./CommandForm";
@@ -31,26 +38,16 @@ import SystemList from "./SystemList";
 function RequestWizard({
   requestItem,
   updateRequestItem,
-  removeItem,
-  isDialog,
   config,
 }: {
   requestItem: RequestItem;
   updateRequestItem: (item: RequestItem) => void;
-  removeItem: (id: string) => void;
-  isDialog: boolean;
   config: Config;
 }) {
-  const showToast = useToast();
-  const stepperRef = useRef<Stepper>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const stepperPanelOptions: any = {
-    className: "p-stepper-header p-stepper-header-right p-disabled",
-  };
-  const [stepperPanel1Options, setStepperPanel1Options] =
-    useState<any>(stepperPanelOptions);
-  const [stepperPanel2Options, setStepperPanel2Options] =
-    useState<any>(stepperPanelOptions);
+  const showSnackbar = useSnackbar();
+  const [activeIndex, setActiveIndex] = useState<number>(0);
+
+  const [_searchParams, setSearchParams] = useSearchParams();
 
   const [selectedSystem, setSelectedSystem] = useState<System | undefined>(
     undefined,
@@ -72,6 +69,8 @@ function RequestWizard({
     (requestItem?.requestId === undefined || requestItem?.requestId === null) &&
       (requestItem?.jobId === undefined || requestItem?.jobId === null),
   );
+
+  const [showScheduleJob, setShowScheduleJob] = useState<boolean>(false);
 
   const [showStepper, setShowStepper] = useState<boolean>(false);
 
@@ -132,7 +131,7 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error creating request:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error creating request: ${error}`,
@@ -153,7 +152,7 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error creating request:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error creating request: ${error}`,
@@ -178,7 +177,7 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error creating job:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error creating request: ${error}`,
@@ -203,7 +202,7 @@ function RequestWizard({
         })
         .catch((error) => {
           console.error("Error updating job:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error updating job: ${error}`,
@@ -213,16 +212,18 @@ function RequestWizard({
     }
   };
 
-  const [showScheduleJob, setShowScheduleJob] = useState(
+  const [toggleScheduleJob, setToggleScheduleJob] = useState(
     requestItem?.showSchedule ||
       (requestItem?.jobId !== undefined && requestItem?.jobId !== null),
   );
-  const updateShowScheduleJob = (showSchedule: boolean) => {
+  const updateToggleScheduleJob = (showSchedule: boolean) => {
+    setToggleScheduleJob(showSchedule);
     setShowScheduleJob(showSchedule);
-
+    setJob(showSchedule ? {} : undefined);
     updateRequestItem({
       ...requestItem,
       showSchedule: showSchedule,
+      job: showSchedule ? {} : undefined,
     });
   };
 
@@ -253,39 +254,66 @@ function RequestWizard({
         setSelectedSystem(chosenSystem);
         updateRequestValue({
           ...request,
+          namespace: namespace,
+          system: system,
+          system_version: system_version,
+          instance_name: instance_name,
+          command: command,
           target_garden: chosenSystem?.garden_name,
           source_garden: config.garden_name,
         });
-        if (instance_name) {
-          if (chosenSystem?.instances?.find((i) => i.name == instance_name)) {
-            setSelectedInstance({
-              name: instance_name,
-              label: instance_name,
-            });
-          }
+        if (chosenSystem) {
+          setActiveIndex(1);
+          if (instance_name) {
+            if (chosenSystem?.instances?.find((i) => i.name == instance_name)) {
+              setSelectedInstance({
+                name: instance_name,
+                label: instance_name,
+              });
 
-          if (command || command_display_name) {
-            setSelectedCommand(
-              chosenSystem?.commands?.find(
-                (c) =>
-                  (command && c.name == command) ||
-                  (command_display_name &&
-                    c.display_name == command_display_name),
-              ),
-            );
-            setActiveIndex(2);
-            setShowCreateRequest(true);
-          } else {
-            setActiveIndex(1);
+              if (command || command_display_name) {
+                const chosenCommand = chosenSystem?.commands?.find(
+                  (c) =>
+                    (command && c.name == command) ||
+                    (command_display_name &&
+                      c.display_name == command_display_name),
+                );
+                if (chosenCommand) {
+                  setSelectedCommand(chosenCommand);
+                  setActiveIndex(2);
+                  setShowCreateRequest(true);
+                } else {
+                  showSnackbar({
+                    severity: "error",
+                    summary: "Error",
+                    detail: `Invalid commmand: ${command_display_name ?? command}`,
+                    life: 3000,
+                  });
+                }
+              }
+            } else {
+              showSnackbar({
+                severity: "error",
+                summary: "Error",
+                detail: `Invalid instance name: ${instance_name}`,
+                life: 3000,
+              });
+            }
           }
         } else {
+          showSnackbar({
+            severity: "error",
+            summary: "Error",
+            detail: `Unable to find system: ${namespace ?? ""} ${system ?? ""} ${system_version ?? ""}`,
+            life: 3000,
+          });
           setActiveIndex(0);
         }
         setShowStepper(true);
       })
       .catch((error) => {
         console.error("Error fetching systems:", error);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching systems: ${error}`,
@@ -299,6 +327,10 @@ function RequestWizard({
     updateRequestValue({
       ...request,
       instance_name: instance?.name,
+    });
+    setSearchParams((params) => {
+      params.set("instance", instance.name);
+      return params;
     });
   };
 
@@ -337,6 +369,27 @@ function RequestWizard({
   }, [selectedInstance, setSelectedInstance]);
 
   useEffect(() => {
+    if (requestItem) {
+      setSearchParams((params) => {
+        if (requestItem.requestCommandInput?.namespace) {
+          params.set("namespace", requestItem.requestCommandInput.namespace);
+        }
+        if (requestItem.requestCommandInput?.systemName) {
+          params.set("system", requestItem.requestCommandInput.systemName);
+        }
+        if (requestItem.requestCommandInput?.version) {
+          params.set("version", requestItem.requestCommandInput.version);
+        }
+        if (requestItem.requestCommandInput?.instance) {
+          params.set("instance", requestItem.requestCommandInput.instance);
+        }
+        if (requestItem.requestCommandInput?.command) {
+          params.set("command", requestItem.requestCommandInput.command);
+        }
+        return params;
+      });
+    }
+
     if (
       requestItem?.requestId !== null &&
       requestItem?.requestId !== undefined &&
@@ -375,10 +428,11 @@ function RequestWizard({
             instance: responseRequest?.instance_name ?? undefined,
             command: responseRequest?.command ?? undefined,
           });
+          setShowScheduleJob(true);
         })
         .catch((error) => {
           console.error("Error fetching request:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching request: ${error}`,
@@ -420,10 +474,11 @@ function RequestWizard({
             instance: responseJob?.request_template?.instance_name ?? undefined,
             command: responseJob?.request_template?.command ?? undefined,
           });
+          setShowScheduleJob(true);
         })
         .catch((error) => {
           console.error("Error fetching job:", error);
-          showToast({
+          showSnackbar({
             severity: "error",
             summary: "Error",
             detail: `Error fetching job: ${error}`,
@@ -462,6 +517,7 @@ function RequestWizard({
         instance: job.request_template?.instance_name ?? undefined,
         command: job.request_template?.command ?? undefined,
       });
+      setShowScheduleJob(true);
     } else if (requestItem?.requestCommandInput !== undefined) {
       findSelectedSystem(
         requestItem.requestCommandInput.namespace,
@@ -470,6 +526,7 @@ function RequestWizard({
         requestItem.requestCommandInput.instance,
         requestItem.requestCommandInput.command,
       );
+      setShowScheduleJob(true);
     } else if (requestItem?.request !== undefined) {
       findSelectedSystem(
         requestItem.request.namespace,
@@ -485,87 +542,52 @@ function RequestWizard({
         instance: requestItem.request?.instance_name ?? undefined,
         command: requestItem.request?.command ?? undefined,
       });
+      setShowScheduleJob(true);
     } else {
       setActiveIndex(0);
       setShowStepper(true);
+      setShowScheduleJob(true);
     }
   }, []);
 
+  const steps = ["Pick System", "Pick command", "Form"];
+
+  const handleStep = (step: number) => () => {
+    setActiveIndex(step);
+  };
+
   const systemListButtonClick = (system: System) => {
     setSelectedSystem(system);
+    setSearchParams({
+      namespace: system.namespace!,
+      system: system.name!,
+      version: system.version!,
+    });
     updateRequestValue({
       ...request,
       target_garden: selectedSystem?.garden_name,
       source_garden: config.garden_name,
     });
-    stepperRef.current?.nextCallback();
+    setActiveIndex((index) => index + 1);
   };
 
   const commandListButtonClick = (command: Command) => {
     setSelectedCommand(command);
+    if (request) {
+      setSearchParams({
+        namespace: request.namespace!,
+        system: request.system!,
+        version: request.system_version!,
+        instance: request.instance_name!,
+        command: command.name!,
+      });
+    }
     updateRequestValue({
       ...request,
       command: command?.name,
     });
-    stepperRef.current?.nextCallback();
+    setActiveIndex((index) => index + 1);
   };
-
-  const iconItemTemplate = (item: any, options: any) => {
-    if (item.icon) {
-      return (
-        <span className={options.className}>
-          <FontAwesomeIcon icon={item.icon} />
-        </span>
-      );
-    }
-    return <span className={options.className}>{item.label}</span>;
-  };
-
-  const breadcrumbs = [
-    {
-      icon: "file-lines",
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedSystem?.namespace,
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedSystem?.name,
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedSystem?.version,
-      template: iconItemTemplate,
-    },
-  ];
-
-  const commandBreadcrumbs = [
-    {
-      icon: "file-lines",
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedSystem?.namespace,
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedSystem?.name,
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedSystem?.version,
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedInstance?.name,
-      template: iconItemTemplate,
-    },
-    {
-      label: selectedCommand?.name,
-      template: iconItemTemplate,
-    },
-  ];
 
   const cleanForm = () => {
     const newRequest = { ...request, command_type: "" };
@@ -574,340 +596,269 @@ function RequestWizard({
     updateRequestValue(newRequest);
   };
 
-  const handleChangeStep = (e: StepperChangeEvent) => {
-    setActiveIndex(e.index);
-    if (e.index == 1) {
-      // Enable panel 1 & disable 2
-      setStepperPanel1Options({});
-      setStepperPanel2Options(stepperPanelOptions);
-      cleanForm();
-    } else if (e.index == 2) {
-      // Enable panel 1 & 2
-      setStepperPanel1Options({});
-      setStepperPanel2Options({});
-    } else {
-      // Disable panel 1 & 2
-      setStepperPanel1Options(stepperPanelOptions);
-      setStepperPanel2Options(stepperPanelOptions);
-      if (selectedInstance) {
-        setSelectedInstance(undefined);
-      }
+  const getStepperPanel = () => {
+    if (activeIndex == 0) {
+      return <SystemList systemListButtonClick={systemListButtonClick} />;
+    }
+    if (activeIndex == 1) {
+      return (
+        <>
+          <CommandList
+            selectedSystem={selectedSystem}
+            commandListButtonClick={commandListButtonClick}
+            instances={
+              instances
+                ? instances.map((instance) => ({
+                    name: instance.name,
+                    label: instance.name,
+                  }))
+                : []
+            }
+            selectedInstance={selectedInstance}
+            setSelectedInstance={updateSelectedInstance}
+          />
+          <Box sx={{ display: "flex", pt: 4, justifyContent: "space-between" }}>
+            <AccessButton
+              label="Back"
+              color="secondary"
+              onClick={() => {
+                setSelectedInstance(undefined);
+                setActiveIndex((index) => index - 1);
+                setSearchParams();
+              }}
+            >
+              Back
+            </AccessButton>
+          </Box>
+        </>
+      );
+    }
+    if (activeIndex == 2) {
+      return (
+        <>
+          <Box sx={{ display: "flex", ml: 4 }}>
+            <Typography sx={{ mr: 2, alignSelf: "center" }}>
+              Scheduled
+            </Typography>
+            <Switch
+              checked={toggleScheduleJob}
+              onChange={(e) => updateToggleScheduleJob(e.target.checked)}
+              slotProps={{
+                input: { "aria-label": "Toggle for creating Scheduled Job" },
+              }}
+            />
+          </Box>
+          {toggleScheduleJob && showScheduleJob && (
+            <SchedulerForm
+              scheduledJob={job}
+              setScheduledJob={updateJobValue}
+              setIsJobValid={setIsJobValid}
+            />
+          )}
+          <CommandForm
+            command={selectedCommand}
+            disabled={false}
+            request={request}
+            setRequest={updateRequestValue}
+            resetForm={resetForm}
+            setResetForm={setResetForm}
+            setIsFormValid={setIsFormValid}
+          />
+          <Box sx={{ display: "flex", pt: 4, justifyContent: "space-between" }}>
+            <AccessButton
+              label="Back"
+              color="secondary"
+              onClick={() => {
+                cleanForm();
+                setActiveIndex((index) => index - 1);
+                if (request) {
+                  setSearchParams({
+                    namespace: request.namespace!,
+                    system: request.system!,
+                    version: request.system_version!,
+                  });
+                }
+              }}
+            >
+              Back
+            </AccessButton>
+            <AccessButton
+              label="Reset Form"
+              color="warning"
+              onClick={() => setResetForm(true)}
+              sx={{ ml: 2 }}
+            >
+              Reset Form
+            </AccessButton>
+            <Box>
+              <CodeExample
+                visibleCodeExample={visibleCodeExample}
+                setVisibleCodeExample={setVisibleCodeExample}
+                request={request}
+              />
+              <AccessButton
+                label="Code Examples"
+                color="info"
+                onClick={() => setVisibleCodeExample(true)}
+                sx={{ mr: 2 }}
+              >
+                Code Examples
+              </AccessButton>
+            </Box>
+            {showCreateRequest && !toggleScheduleJob && (
+              <AccessButton
+                label="Submit"
+                disabled={!isFormValid}
+                onMouseDown={(event: any) => {
+                  if (event.type === "mousedown" && event.button === 1) {
+                    submitRequestAndOpen();
+                  }
+                }}
+                onClick={submitRequest}
+                config={config}
+                permission="OPERATOR"
+                hasNamespace={requestItem.requestCommandInput?.namespace}
+                hasSystemName={requestItem.requestCommandInput?.systemName}
+                hasSystemVersion={requestItem.requestCommandInput?.version}
+                hasInstanceName={requestItem.requestCommandInput?.instance}
+                hasCommandName={requestItem.requestCommandInput?.command}
+              >
+                Submit
+                <FAIcon icon="arrow-right" sx={{ ml: 2 }} />
+              </AccessButton>
+            )}
+            {showCreateRequest && toggleScheduleJob && !requestItem?.jobId && (
+              <AccessButton
+                label="Submit Job"
+                color="success"
+                disabled={!(isJobValid && isFormValid)}
+                onClick={submitJob}
+                config={config}
+                permission="OPERATOR"
+                hasNamespace={requestItem.requestCommandInput?.namespace}
+                hasSystemName={requestItem.requestCommandInput?.systemName}
+                hasSystemVersion={requestItem.requestCommandInput?.version}
+                hasInstanceName={requestItem.requestCommandInput?.instance}
+                hasCommandName={requestItem.requestCommandInput?.command}
+              >
+                Submit Job
+                <FAIcon icon="arrow-right" sx={{ ml: 2 }} />
+              </AccessButton>
+            )}
+            {showCreateRequest && toggleScheduleJob && requestItem?.jobId && (
+              <AccessButton
+                label="Update Job"
+                color="success"
+                disabled={!(isJobValid && isFormValid)}
+                onClick={updateJob}
+                config={config}
+                permission="OPERATOR"
+                hasNamespace={requestItem.requestCommandInput?.namespace}
+                hasSystemName={requestItem.requestCommandInput?.systemName}
+                hasSystemVersion={requestItem.requestCommandInput?.version}
+                hasInstanceName={requestItem.requestCommandInput?.instance}
+                hasCommandName={requestItem.requestCommandInput?.command}
+              >
+                Update Job
+                <FAIcon icon="arrow-right" sx={{ ml: 2 }} />
+              </AccessButton>
+            )}
+          </Box>
+        </>
+      );
     }
   };
 
   return (
-    <Card
-      className="justify-content-center"
-      unstyled={isDialog}
-      header={
-        !isDialog && (
-          <div className="flex">
-            <AccessButton
-              onClick={() => {
-                removeItem(requestItem.itemId);
-              }}
-              tooltip={`Close Request Creation for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
-            >
-              <FontAwesomeIcon icon="xmark" />
-            </AccessButton>
-          </div>
-        )
-      }
-      key={requestItem.itemId}
-    >
-      {!showStepper && <Skeleton width="100%" height="150px"></Skeleton>}
-      {showStepper && (
-        <Stepper
-          ref={stepperRef}
-          activeStep={activeIndex}
-          style={{ flexBasis: "50rem" }}
-          pt={{
-            nav: {
-              "aria-label":
-                "Three step process of finding and executing create request",
-              "aria-description":
-                "Step 1: Pick System, Step 2: Pick Command, Step 3: Populate Create Request Form. Framework utilizes <ul> to generate breadcrumbs, this could confuses screen readers",
-              role: "tablist",
-            },
-            root: {
-              role: undefined,
-            },
-          }}
-          onChangeStep={handleChangeStep}
-        >
-          <StepperPanel
-            header="Pick System"
-            pt={{
-              action: ({ context }: { context: any }) => {
-                return {
-                  id: `${requestItem.itemId}_tab_1`,
-                  "aria-controls": context.active
-                    ? `${requestItem.itemId}_stepper_1`
-                    : undefined,
-                  "aria-label": `${requestItem.itemId} Pick System Step`,
-                  "aria-description": context.active
-                    ? "First step in creating a request where you select the system for your request."
-                    : "First step in creating a request where you select the system for your request, currently inactive.",
-                };
-              },
-              content: {
-                id: `${requestItem.itemId}_stepper_1`,
-                role: "tabpanel",
-                "aria-labelledby": `${requestItem.itemId}_tab_1`,
-              },
-              number: {
-                style: {
-                  color: "var(--info-color)",
-                  backgroundColor: "var(--info-background-color)",
-                },
-              },
-              separator: {
-                "aria-hidden": undefined,
-                tabIndex: -1,
-                style: {
-                  color: "var(--info-background-color)",
-                },
-              },
-            }}
-          >
-            <SystemList systemListButtonClick={systemListButtonClick} />
-          </StepperPanel>
-          <StepperPanel
-            header="Pick Command"
-            pt={{
-              action: ({ context }: { context: any }) => {
-                return {
-                  id: `${requestItem.itemId}_tab_2`,
-                  "aria-controls": context.active
-                    ? `${requestItem.itemId}_stepper_2`
-                    : undefined,
-                  "aria-label": `${requestItem.itemId} Pick Command Step`,
-                  "aria-description": context.active
-                    ? "Second step in creating a request where you select the command for your request."
-                    : "Second step in creating a request where you select the command for your request, currently inactive.",
-                };
-              },
-              content: {
-                id: `${requestItem.itemId}_stepper_2`,
-                role: "tabpanel",
-                "aria-labelledby": `${requestItem.itemId}_tab_2`,
-              },
-              number: {
-                style: {
-                  color: "var(--info-color)",
-                  backgroundColor: "var(--info-background-color)",
-                },
-              },
-              separator: {
-                "aria-hidden": undefined,
-                tabIndex: -1,
-                style: {
-                  color: "var(--info-background-color)",
-                },
-              },
-              header: stepperPanel1Options,
-            }}
-          >
-            <BreadCrumb
-              model={breadcrumbs}
-              className="mb-2"
-              aria-label="test"
-              pt={{
-                menu: {
-                  "aria-description":
-                    "Breadcrumb navigation for system and instance selection steps of request creation. Items in list has CSS injected list-style-type:none causing screen testers to fail",
-                },
-              }}
-            />
-            <CommandList
-              selectedSystem={selectedSystem}
-              commandListButtonClick={commandListButtonClick}
-              instances={
-                instances
-                  ? instances.map((instance) => ({
-                      name: instance.name,
-                      label: instance.name,
-                    }))
-                  : []
-              }
-              selectedInstance={selectedInstance}
-              setSelectedInstance={updateSelectedInstance}
-            />
-            <div className="flex pt-4 justify-content-between">
-              <AccessButton
-                label="Back"
-                severity="secondary"
-                onClick={() => {
-                  setSelectedInstance(undefined);
-                  stepperRef.current?.prevCallback();
+    <Card sx={{ overflow: "scroll" }} key={requestItem.itemId}>
+      <CardContent>
+        {!showStepper && <Skeleton width="100%" height="150px"></Skeleton>}
+        {showStepper && (
+          <>
+            <Stepper nonLinear activeStep={activeIndex} sx={{ mb: 2 }}>
+              {steps.map((label, index) => (
+                <Step key={label} disabled={activeIndex < index}>
+                  <StepButton color="inherit" onClick={handleStep(index)}>
+                    {label}
+                  </StepButton>
+                </Step>
+              ))}
+            </Stepper>
+            {activeIndex > 0 && (
+              <Box
+                sx={{
+                  p: 2,
+                  border: "1px solid",
+                  borderColor: grey[300],
+                  borderRadius: 2,
+                  mb: 2,
                 }}
-              />
-            </div>
-          </StepperPanel>
-          <StepperPanel
-            header="Form"
-            pt={{
-              action: ({ context }: { context: any }) => {
-                return {
-                  id: `${requestItem.itemId}_tab_3`,
-                  "aria-controls": context.active
-                    ? `${requestItem.itemId}_stepper_3`
-                    : undefined,
-                  "aria-label": `${requestItem.itemId} Populate Create Request Form Step`,
-                  "aria-description": context.active
-                    ? "Third step in creating a request where you populate the form for your request."
-                    : "Third step in creating a request where you populate the form for your request, currently inactive.",
-                };
-              },
-              content: {
-                id: `${requestItem.itemId}_stepper_3`,
-                role: "tabpanel",
-                "aria-labelledby": `${requestItem.itemId}_tab_3`,
-              },
-              number: {
-                style: {
-                  color: "var(--info-color)",
-                  backgroundColor: "var(--info-background-color)",
-                },
-              },
-              separator: {
-                "aria-hidden": undefined,
-                tabIndex: -1,
-                style: {
-                  color: "var(--info-background-color)",
-                },
-              },
-              header: stepperPanel2Options,
-            }}
-          >
-            <BreadCrumb
-              model={commandBreadcrumbs}
-              className="mb-2"
-              pt={{
-                menu: {
-                  "aria-description":
-                    "Breadcrumb navigation for command selection step of request creation. Items in list has CSS injected list-style-type:none causing screen testers to fail",
-                },
-              }}
-            />
-            <div className="flex ml-4">
-              <span className="mr-2 align-self-center">Scheduled</span>
-              <InputSwitch
-                checked={showScheduleJob}
-                onChange={(e) => updateShowScheduleJob(e.value)}
-                pt={{
-                  root: {
-                    role: undefined,
-                    "aria-checked": undefined,
-                  },
-                  input: {
-                    "aria-label": "Toggle for creating Scheduled Job",
-                  },
-                }}
-              />
-            </div>
-            {showScheduleJob && (
-              <SchedulerForm
-                scheduledJob={job}
-                setScheduledJob={updateJobValue}
-                setIsJobValid={setIsJobValid}
-              />
+              >
+                <Grid container spacing={2}>
+                  <Grid size={2}>
+                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                      Namespace
+                    </Typography>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ overflowWrap: "break-word" }}
+                    >
+                      {selectedSystem?.namespace}
+                    </Typography>
+                  </Grid>
+                  <Grid size={2}>
+                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                      System
+                    </Typography>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ overflowWrap: "break-word" }}
+                    >
+                      {selectedSystem?.name}
+                    </Typography>
+                  </Grid>
+                  <Grid size={2}>
+                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                      Version
+                    </Typography>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ overflowWrap: "break-word" }}
+                    >
+                      {selectedSystem?.version}
+                    </Typography>
+                  </Grid>
+                  <Grid size={2}>
+                    <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                      Instance
+                    </Typography>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ overflowWrap: "break-word" }}
+                    >
+                      {selectedInstance?.name}
+                    </Typography>
+                  </Grid>
+                  {activeIndex > 1 && (
+                    <Grid size={4}>
+                      <Typography variant="body1" sx={{ fontWeight: "bold" }}>
+                        Command
+                      </Typography>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ overflowWrap: "break-word" }}
+                      >
+                        {selectedCommand?.name}
+                      </Typography>
+                    </Grid>
+                  )}
+                </Grid>
+              </Box>
             )}
-            <CommandForm
-              command={selectedCommand}
-              disabled={false}
-              request={request}
-              setRequest={updateRequestValue}
-              resetForm={resetForm}
-              setResetForm={setResetForm}
-              setIsFormValid={setIsFormValid}
-            />
-            <div className="flex pt-4 justify-content-between">
-              <AccessButton
-                label="Back"
-                severity="secondary"
-                onClick={() => {
-                  cleanForm();
-                  stepperRef.current?.prevCallback();
-                }}
-              />
-              <AccessButton
-                label="Reset Form"
-                severity="warning"
-                onClick={() => setResetForm(true)}
-                className="ml-2"
-              />
-              <div>
-                <CodeExample
-                  visibleCodeExample={visibleCodeExample}
-                  setVisibleCodeExample={setVisibleCodeExample}
-                  request={request}
-                />
-                <AccessButton
-                  label="Code Examples"
-                  severity="info"
-                  onClick={() => setVisibleCodeExample(true)}
-                  className="mr-2"
-                />
-              </div>
-              {showCreateRequest && !showScheduleJob && (
-                <AccessButton
-                  label="Submit"
-                  icon="pi pi-arrow-right"
-                  disabled={!isFormValid}
-                  onMouseDown={(event: any) => {
-                    if (event.type === "mousedown" && event.button === 1) {
-                      submitRequestAndOpen();
-                    }
-                  }}
-                  onClick={submitRequest}
-                  config={config}
-                  permission="OPERATOR"
-                  hasNamespace={requestItem.requestCommandInput?.namespace}
-                  hasSystemName={requestItem.requestCommandInput?.systemName}
-                  hasSystemVersion={requestItem.requestCommandInput?.version}
-                  hasInstanceName={requestItem.requestCommandInput?.instance}
-                  hasCommandName={requestItem.requestCommandInput?.command}
-                />
-              )}
-              {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
-                <AccessButton
-                  label="Submit Job"
-                  severity="success"
-                  icon="pi pi-arrow-right"
-                  disabled={!(isJobValid && isFormValid)}
-                  iconPos="right"
-                  onClick={submitJob}
-                  config={config}
-                  permission="OPERATOR"
-                  hasNamespace={requestItem.requestCommandInput?.namespace}
-                  hasSystemName={requestItem.requestCommandInput?.systemName}
-                  hasSystemVersion={requestItem.requestCommandInput?.version}
-                  hasInstanceName={requestItem.requestCommandInput?.instance}
-                  hasCommandName={requestItem.requestCommandInput?.command}
-                />
-              )}
-              {showCreateRequest && showScheduleJob && requestItem?.jobId && (
-                <AccessButton
-                  label="Update Job"
-                  severity="success"
-                  icon="pi pi-arrow-right"
-                  disabled={!(isJobValid && isFormValid)}
-                  iconPos="right"
-                  onClick={updateJob}
-                  config={config}
-                  permission="OPERATOR"
-                  hasNamespace={requestItem.requestCommandInput?.namespace}
-                  hasSystemName={requestItem.requestCommandInput?.systemName}
-                  hasSystemVersion={requestItem.requestCommandInput?.version}
-                  hasInstanceName={requestItem.requestCommandInput?.instance}
-                  hasCommandName={requestItem.requestCommandInput?.command}
-                />
-              )}
-            </div>
-          </StepperPanel>
-        </Stepper>
-      )}
+            <Box>{getStepperPanel()}</Box>
+          </>
+        )}
+      </CardContent>
     </Card>
   );
 }

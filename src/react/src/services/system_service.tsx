@@ -261,3 +261,34 @@ export const DetermineLatestSystemVersion = (
       return latestSystem;
     });
 };
+
+export const CompareVersions = (versionA: string, versionB: string): number => {
+  const validVersionA = validate(versionA)
+    ? versionA
+    : validate(versionA.replace(".dev", "-dev"))
+      ? versionA.replace(".dev", "-dev")
+      : undefined;
+  const validVersionB = validate(versionB)
+    ? versionB
+    : validate(versionB.replace(".dev", "-dev"))
+      ? versionB.replace(".dev", "-dev")
+      : undefined;
+
+  if (validVersionA === undefined && validVersionB === undefined) {
+    if (versionA.localeCompare(versionB) > 0) {
+      return 1;
+    } else {
+      return -1;
+    }
+  }
+
+  if (validVersionA === undefined) {
+    return -1;
+  }
+
+  if (validVersionB === undefined) {
+    return 1;
+  }
+
+  return compare(validVersionA, validVersionB, ">") ? 1 : -1;
+};

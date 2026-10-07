@@ -5,12 +5,12 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { ConfirmDialog } from "primereact/confirmdialog";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { User } from "../models/brewtils-types";
 import { Config, TourStepProps } from "../models/models";
-import { ToastProvider } from "../providers/ToastProvider";
+import { ConfirmDialogProvider } from "../providers/ConfirmDialogProvider";
+import { SnackbarProvider } from "../providers/SnackbarProvider";
 import * as permissionService from "../services/permission_service";
 import * as tokenService from "../services/token_service";
 import * as userService from "../services/user_service";
@@ -65,9 +65,11 @@ describe("UserIndex", () => {
 
   test("should render user management page", async () => {
     render(
-      <ToastProvider>
-        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      <SnackbarProvider>
+        <ConfirmDialogProvider>
+          <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+        </ConfirmDialogProvider>
+      </SnackbarProvider>,
     );
     expect(screen.getByText("User Management")).toBeInTheDocument();
     await waitFor(() => {
@@ -77,9 +79,11 @@ describe("UserIndex", () => {
 
   test("should load users on mount", async () => {
     render(
-      <ToastProvider>
-        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      <SnackbarProvider>
+        <ConfirmDialogProvider>
+          <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+        </ConfirmDialogProvider>
+      </SnackbarProvider>,
     );
     await waitFor(() => {
       expect(userService.GetUsers).toHaveBeenCalled();
@@ -88,9 +92,11 @@ describe("UserIndex", () => {
 
   test("should display users in datatable", async () => {
     render(
-      <ToastProvider>
-        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      <SnackbarProvider>
+        <ConfirmDialogProvider>
+          <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+        </ConfirmDialogProvider>
+      </SnackbarProvider>,
     );
     await waitFor(() => {
       expect(screen.getByText("admin")).toBeInTheDocument();
@@ -100,27 +106,33 @@ describe("UserIndex", () => {
 
   test("should show rescan button", () => {
     render(
-      <ToastProvider>
-        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      <SnackbarProvider>
+        <ConfirmDialogProvider>
+          <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+        </ConfirmDialogProvider>
+      </SnackbarProvider>,
     );
     expect(screen.getByTestId("rescan-btn")).toBeInTheDocument();
   });
 
   test("should show create user button", () => {
     render(
-      <ToastProvider>
-        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      <SnackbarProvider>
+        <ConfirmDialogProvider>
+          <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+        </ConfirmDialogProvider>
+      </SnackbarProvider>,
     );
     expect(screen.getByTestId("create-btn")).toBeInTheDocument();
   });
 
   test("should handle rescan users", async () => {
     render(
-      <ToastProvider>
-        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      <SnackbarProvider>
+        <ConfirmDialogProvider>
+          <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+        </ConfirmDialogProvider>
+      </SnackbarProvider>,
     );
     const rescanBtn = screen.getByTestId("rescan-btn");
     fireEvent.click(rescanBtn);
@@ -131,9 +143,11 @@ describe("UserIndex", () => {
 
   test("should revoke user token", async () => {
     render(
-      <ToastProvider>
-        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      <SnackbarProvider>
+        <ConfirmDialogProvider>
+          <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+        </ConfirmDialogProvider>
+      </SnackbarProvider>,
     );
     await waitFor(() => {
       expect(
@@ -154,9 +168,11 @@ describe("UserIndex", () => {
 
   test("should not show roles button for protected user", async () => {
     render(
-      <ToastProvider>
-        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      <SnackbarProvider>
+        <ConfirmDialogProvider>
+          <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+        </ConfirmDialogProvider>
+      </SnackbarProvider>,
     );
     await waitFor(() => {
       expect(screen.queryByTestId("roles-user-1")).not.toBeInTheDocument();
@@ -165,9 +181,11 @@ describe("UserIndex", () => {
 
   test("should show roles button for non-protected user", async () => {
     render(
-      <ToastProvider>
-        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      <SnackbarProvider>
+        <ConfirmDialogProvider>
+          <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+        </ConfirmDialogProvider>
+      </SnackbarProvider>,
     );
     await waitFor(() => {
       expect(screen.getByTestId("roles-user-2")).toBeInTheDocument();
@@ -178,10 +196,11 @@ describe("UserIndex", () => {
     // Simulate ConfirmDialog in parent (i.e. App.tsx)
     render(
       <>
-        <ToastProvider>
-          <ConfirmDialog />
-          <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
-        </ToastProvider>
+        <SnackbarProvider>
+          <ConfirmDialogProvider>
+            <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+          </ConfirmDialogProvider>
+        </SnackbarProvider>
       </>,
     );
     const userTwo = mockUsers[1];
@@ -194,7 +213,7 @@ describe("UserIndex", () => {
 
     fireEvent.click(screen.getByTestId(`delete-user-${userTwo.id}`));
     // Click Yes on modal
-    fireEvent.click(screen.getByRole("button", { name: /yes/i }));
+    fireEvent.click(screen.getByRole("button", { name: /accept/i }));
 
     await waitFor(() => {
       expect(userService.DeleteUser).toHaveBeenCalled();
@@ -205,9 +224,11 @@ describe("UserIndex", () => {
   test("should display auth disabled warning when auth is disabled", () => {
     const disabledConfig: Config = { auth_enabled: false } as Config;
     render(
-      <ToastProvider>
-        <UserIndex config={disabledConfig} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      <SnackbarProvider>
+        <ConfirmDialogProvider>
+          <UserIndex config={disabledConfig} tourStepsRef={mockTourSteps()} />
+        </ConfirmDialogProvider>
+      </SnackbarProvider>,
     );
     expect(
       screen.getByText(/authorization is currently disabled/i),
@@ -216,9 +237,11 @@ describe("UserIndex", () => {
 
   test("should show active tag for users with token", async () => {
     render(
-      <ToastProvider>
-        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      <SnackbarProvider>
+        <ConfirmDialogProvider>
+          <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+        </ConfirmDialogProvider>
+      </SnackbarProvider>,
     );
     await waitFor(() => {
       const activeTags = screen.getAllByText("Active");
@@ -228,9 +251,11 @@ describe("UserIndex", () => {
 
   test("should show inactive tag for users without token", async () => {
     render(
-      <ToastProvider>
-        <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      <SnackbarProvider>
+        <ConfirmDialogProvider>
+          <UserIndex config={mockConfig} tourStepsRef={mockTourSteps()} />
+        </ConfirmDialogProvider>
+      </SnackbarProvider>,
     );
     await waitFor(() => {
       const inactiveTags = screen.getAllByText("Inactive");
