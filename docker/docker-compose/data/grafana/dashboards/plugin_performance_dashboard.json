@@ -95,7 +95,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -165,7 +165,7 @@
       "targets": [
         {
           "expr": "sum(rate(bg_plugin_command_latency_seconds_sum{system=\"$system\", system_version=~\"$system_version\", instance_name=~\"$instance_name\", command=~\"$command\"}[5m])) /\nsum(rate(bg_plugin_command_latency_seconds_count{system=\"$system\", system_version=~\"$system_version\", instance_name=~\"$instance_name\", command=~\"$command\"}[5m]))",
-          "format": "time_series",
+          "format": "table",
           "instant": false,
           "intervalFactor": 1,
           "refId": "A"
@@ -676,7 +676,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -746,7 +746,7 @@
       "targets": [
         {
           "expr": "sum(bg_plugin_command_latency_seconds_sum{system=\"$system\", system_version=~\"$system_version\", instance_name=~\"$instance_name\", command=~\"$command\"}) /\nsum(bg_plugin_command_latency_seconds_count{system=\"$system\", system_version=~\"$system_version\", instance_name=~\"$instance_name\", command=~\"$command\"})",
-          "format": "time_series",
+          "format": "table",
           "instant": false,
           "intervalFactor": 1,
           "refId": "A"
