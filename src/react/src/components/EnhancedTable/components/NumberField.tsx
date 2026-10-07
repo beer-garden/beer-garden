@@ -66,53 +66,56 @@ export default React.forwardRef(function NumberField(
       <SSRInitialFilled {...other} />
       <InputLabel htmlFor={id}>{label}</InputLabel>
       <BaseNumberField.Input
-        id={id}
-        render={(props, state) => (
-          <OutlinedInput
-            aria-describedby={`${id}-helper-text`}
-            label={label}
-            inputRef={props.ref}
-            value={state.inputValue}
-            onBlur={props.onBlur}
-            onChange={props.onChange}
-            onKeyUp={props.onKeyUp}
-            onKeyDown={props.onKeyDown}
-            onFocus={props.onFocus}
-            slotProps={{
-              input: props,
-            }}
-            endAdornment={
-              <InputAdornment
-                position="end"
-                sx={{
-                  flexDirection: "column",
-                  maxHeight: "unset",
-                  alignSelf: "stretch",
-                  borderLeft: "1px solid",
-                  borderColor: "divider",
-                  ml: 0,
-                  "& button": {
-                    py: 0,
-                    flex: 1,
-                    borderRadius: 0.5,
-                  },
-                }}
-              >
-                <BaseNumberField.Increment
-                  render={<IconButton size={size} aria-label="Increase" />}
+        render={(props, state) => {
+          const { id: _, ...inputProps } = props;
+          return (
+            <OutlinedInput
+              aria-describedby={`${id}-helper-text`}
+              id={id}
+              label={label}
+              inputRef={props.ref}
+              value={state.inputValue}
+              onBlur={props.onBlur}
+              onChange={props.onChange}
+              onKeyUp={props.onKeyUp}
+              onKeyDown={props.onKeyDown}
+              onFocus={props.onFocus}
+              slotProps={{
+                input: inputProps,
+              }}
+              endAdornment={
+                <InputAdornment
+                  position="end"
+                  sx={{
+                    flexDirection: "column",
+                    maxHeight: "unset",
+                    alignSelf: "stretch",
+                    borderLeft: "1px solid",
+                    borderColor: "divider",
+                    ml: 0,
+                    "& button": {
+                      py: 0,
+                      flex: 1,
+                      borderRadius: 0.5,
+                    },
+                  }}
                 >
-                  <FontAwesomeIcon icon="angle-up" />
-                </BaseNumberField.Increment>
-                <BaseNumberField.Decrement
-                  render={<IconButton size={size} aria-label="Decrease" />}
-                >
-                  <FontAwesomeIcon icon="angle-down" />
-                </BaseNumberField.Decrement>
-              </InputAdornment>
-            }
-            sx={{ pr: 0 }}
-          />
-        )}
+                  <BaseNumberField.Increment
+                    render={<IconButton size={size} aria-label="Increase" />}
+                  >
+                    <FontAwesomeIcon icon="angle-up" />
+                  </BaseNumberField.Increment>
+                  <BaseNumberField.Decrement
+                    render={<IconButton size={size} aria-label="Decrease" />}
+                  >
+                    <FontAwesomeIcon icon="angle-down" />
+                  </BaseNumberField.Decrement>
+                </InputAdornment>
+              }
+              sx={{ pr: 0 }}
+            />
+          );
+        }}
       />
       <FormHelperText
         id={`${id}-helper-text`}

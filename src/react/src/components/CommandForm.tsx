@@ -861,7 +861,11 @@ function CommandForm({
 
   const renderInputLabel = (parameter: InputParam) => {
     return (
-      <FormLabel htmlFor={parameter.key} sx={{ fontWeight: "bold" }}>
+      <FormLabel
+        id={`${parameter.key}-label`}
+        htmlFor={parameter.key}
+        sx={{ fontWeight: "bold" }}
+      >
         {parameter.key}
       </FormLabel>
     );
@@ -912,6 +916,7 @@ function CommandForm({
                   disabled={disabled}
                   size="small"
                   sx={inputDisplayStyling}
+                  autoComplete="off"
                 >
                   {["ACTION", "INFO", "TEMP"].map((status: any) => (
                     <MenuItem key={status} value={status}>

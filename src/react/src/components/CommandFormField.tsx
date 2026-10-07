@@ -445,7 +445,7 @@ function CommandFormField({
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-                aria-label={addInputAriaLabel}
+                aria-label={`Add ${parameter.display_name ?? parameter.key}`}
               >
                 <Typography variant="button">
                   Add {parameter.display_name ?? parameter.key}
@@ -554,7 +554,7 @@ function CommandFormField({
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-                aria-label={addInputAriaLabel}
+                aria-label={`Add ${parameter.display_name ?? parameter.key}`}
               >
                 <Typography variant="button">
                   Add {parameter.display_name ?? parameter.key}
@@ -654,7 +654,7 @@ function CommandFormField({
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-                aria-label={addInputAriaLabel}
+                aria-label={`Add ${parameter.display_name ?? parameter.key}`}
               >
                 <Typography variant="button">
                   Add {parameter.display_name ?? parameter.key}
@@ -750,7 +750,7 @@ function CommandFormField({
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-                aria-label={addInputAriaLabel}
+                aria-label={`Add ${parameter.display_name ?? parameter.key}`}
               >
                 <Typography variant="button">
                   Add {parameter.display_name ?? parameter.key}
@@ -809,7 +809,6 @@ function CommandFormField({
                       checked={item}
                       slotProps={{
                         input: {
-                          "aria-label": `Parameter ${parameter.display_name ?? parameter.key} option ${index}`,
                           "aria-describedby": `${parameter.key}-${index}-helper-text`,
                         },
                       }}
@@ -852,7 +851,7 @@ function CommandFormField({
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-                aria-label={addInputAriaLabel}
+                aria-label={`Add ${parameter.display_name ?? parameter.key}`}
               >
                 <Typography variant="button">
                   Add {parameter.display_name ?? parameter.key}
@@ -871,7 +870,6 @@ function CommandFormField({
                 checked={parameter.value}
                 slotProps={{
                   input: {
-                    "aria-label": `Parameter ${parameter.display_name ?? parameter.key}`,
                     "aria-describedby": `${parameter.key}-helper-text`,
                   },
                 }}
@@ -924,7 +922,7 @@ function CommandFormField({
                         }}
                         slotProps={{
                           textField: {
-                            id: parameter.key,
+                            id: `${parameter.key}-text`,
                             error:
                               !disabled &&
                               !parameter.optional &&
@@ -958,7 +956,7 @@ function CommandFormField({
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-                aria-label={addInputAriaLabel}
+                aria-label={`Add ${parameter.display_name ?? parameter.key}`}
               >
                 <Typography variant="button">
                   Add {parameter.display_name ?? parameter.key}
@@ -1040,7 +1038,7 @@ function CommandFormField({
                         }}
                         slotProps={{
                           textField: {
-                            id: `${parameter.key}_${index}_input`,
+                            id: `${parameter.key}_${index}`,
                             error:
                               !disabled &&
                               !parameter.optional &&
@@ -1074,7 +1072,7 @@ function CommandFormField({
                 onClick={() => addMultiItem(parameter.key, parameter.default)}
                 disabled={disabled}
                 tooltip={addInputAriaLabel}
-                aria-label={addInputAriaLabel}
+                aria-label={`Add ${parameter.display_name ?? parameter.key}`}
               >
                 <Typography variant="button">
                   Add {parameter.display_name ?? parameter.key}
@@ -1102,7 +1100,7 @@ function CommandFormField({
                   }}
                   slotProps={{
                     textField: {
-                      id: `${parameter.key}_input`,
+                      id: parameter.key,
                       error:
                         !disabled &&
                         !parameter.optional &&
@@ -1165,6 +1163,7 @@ function CommandFormField({
                 tabIndex={-1}
                 startIcon={<FAIcon icon="upload" />}
                 aria-describedby={`${parameter.key}-helper-text`}
+                id={parameter?.key}
               >
                 Upload Bytes
                 <VisuallyHiddenInput
@@ -1236,6 +1235,7 @@ function CommandFormField({
                 tabIndex={-1}
                 startIcon={<FAIcon icon="upload" />}
                 aria-describedby={`${parameter.key}-helper-text`}
+                id={parameter?.key}
               >
                 <VisuallyHiddenInput
                   type="file"
