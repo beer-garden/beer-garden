@@ -1444,18 +1444,8 @@ _METRICS_SPEC = {
             "items": {
                 "enabled": {
                     "type": "bool",
-                    "description": "Enable prometheus server",
+                    "description": "Enable prometheus metrics",
                     "default": False,
-                },
-                "host": {
-                    "type": "str",
-                    "default": "0.0.0.0",
-                    "description": "Host to bind the prometheus server to",
-                },
-                "port": {
-                    "type": "int",
-                    "description": "Port for prometheus server to listen on.",
-                    "default": 2338,
                 },
                 "url": {
                     "type": "str",
