@@ -66,12 +66,12 @@ export default React.forwardRef(function NumberField(
       <SSRInitialFilled {...other} />
       <InputLabel htmlFor={id}>{label}</InputLabel>
       <BaseNumberField.Input
-        id={id}
         render={(props, state) => {
           const { id: _, ...inputProps } = props;
           return (
             <OutlinedInput
               aria-describedby={`${id}-helper-text`}
+              id={id}
               label={label}
               inputRef={props.ref}
               value={state.inputValue}

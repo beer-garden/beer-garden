@@ -98,6 +98,9 @@ export const theme = createTheme({
             borderColor: theme.palette.text.primary,
             color: theme.palette.text.primary,
           }),
+          "&.Mui-disabled": {
+            color: theme.palette.text.primary,
+          },
         }),
       },
     },

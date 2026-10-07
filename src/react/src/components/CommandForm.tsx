@@ -916,6 +916,7 @@ function CommandForm({
                   disabled={disabled}
                   size="small"
                   sx={inputDisplayStyling}
+                  autoComplete="off"
                 >
                   {["ACTION", "INFO", "TEMP"].map((status: any) => (
                     <MenuItem key={status} value={status}>
