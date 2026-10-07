@@ -42,6 +42,7 @@ from tornado.ioloop import IOLoop
 from tornado.web import Application, RedirectHandler, RequestHandler
 
 import beer_garden
+import beer_garden.api.http.handlers.metrics as metrics
 import beer_garden.api.http.handlers.misc as misc
 import beer_garden.api.http.handlers.v1 as v1
 import beer_garden.api.http.handlers.vbeta as vbeta
@@ -61,7 +62,7 @@ from beer_garden.api.http.schemas.v1.token import (
 )
 from beer_garden.api.http.schemas.v1.user import UserPasswordChangeSchema
 from beer_garden.events import publish
-from beer_garden.metrics import initialize_elastic_client
+from beer_garden.metrics import initialize_elastic_client, setup_metrics
 
 io_loop: IOLoop = None
 server: HTTPServer
@@ -160,6 +161,8 @@ def _get_unpublished_url_specs(
         (rf"{prefix}version/?", misc.VersionHandler),
         (rf"{prefix}config/?", misc.ConfigHandler),
         (rf"{prefix}config/swagger/?", misc.SwaggerConfigHandler),
+        # Metrics
+        (rf"{prefix}metrics/?", metrics.MetricsHandler),
         # Not sure if this is really necessary
         (rf"{prefix[:-1]}", RedirectHandler, {"url": prefix}),
     ]
@@ -286,6 +289,10 @@ def _setup_application():
 
     tornado_app = _setup_tornado_app()
     initialize_elastic_client("http")
+
+    if config.get("metrics.prometheus.enabled"):
+        logger.info("Setting Up Prometheus Metrics Collection")
+        setup_metrics()
 
     server_ssl, client_ssl = _setup_ssl_context()
 
