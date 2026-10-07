@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Tooltip } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import TextField from "@mui/material/TextField";
 import { validate as validateVersion } from "compare-versions";
@@ -395,7 +395,13 @@ function CommandSelect({
         onChange={(_event: any, newValue: string | null) => {
           setSelectedNamespace(newValue === null ? undefined : newValue);
         }}
-        renderInput={(params) => <TextField {...params} label="Namespace" />}
+        renderInput={(params) => (
+          <Tooltip title={`Select Namespace`}>
+            <Box aria-label={undefined}>
+              <TextField {...params} label="Namespace" />
+            </Box>
+          </Tooltip>
+        )}
       />
       <Autocomplete
         sx={{ width: "100%", m: 2 }}
@@ -406,7 +412,13 @@ function CommandSelect({
         onChange={(_event: any, newValue: string | null) => {
           setSelectedSystemName(newValue === null ? undefined : newValue);
         }}
-        renderInput={(params) => <TextField {...params} label="System" />}
+        renderInput={(params) => (
+          <Tooltip title={`Select System`}>
+            <Box aria-label={undefined}>
+              <TextField {...params} label="System" />
+            </Box>
+          </Tooltip>
+        )}
       />
       <Autocomplete
         sx={{ width: "100%", m: 2 }}
@@ -417,7 +429,13 @@ function CommandSelect({
           setSelectedVersion(newValue === null ? undefined : newValue);
         }}
         disabled={versions && versions.length === 0}
-        renderInput={(params) => <TextField {...params} label="Version" />}
+        renderInput={(params) => (
+          <Tooltip title={`Select Version`}>
+            <Box aria-label={undefined}>
+              <TextField {...params} label="Version" />
+            </Box>
+          </Tooltip>
+        )}
       />
       <Autocomplete
         sx={{ width: "100%", m: 2 }}
@@ -428,7 +446,13 @@ function CommandSelect({
           setSelectedInstance(newValue === null ? undefined : newValue);
         }}
         disabled={instances && instances.length === 0}
-        renderInput={(params) => <TextField {...params} label="Instance" />}
+        renderInput={(params) => (
+          <Tooltip title={`Select Instance`}>
+            <Box aria-label={undefined}>
+              <TextField {...params} label="Instance" />
+            </Box>
+          </Tooltip>
+        )}
       />
       <Autocomplete
         sx={{ width: "100%", m: 2 }}
@@ -439,7 +463,13 @@ function CommandSelect({
           setSelectedCommand(newValue === null ? undefined : newValue);
         }}
         disabled={commands && commands.length === 0}
-        renderInput={(params) => <TextField {...params} label="Command" />}
+        renderInput={(params) => (
+          <Tooltip title={`Select Command`}>
+            <Box aria-label={undefined}>
+              <TextField {...params} label="Command" />
+            </Box>
+          </Tooltip>
+        )}
       />
     </Box>
   );

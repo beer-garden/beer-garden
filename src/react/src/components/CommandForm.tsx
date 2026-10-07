@@ -589,15 +589,8 @@ function CommandForm({
       if (parameter?.options) {
         if (parameter.options.length === 0) {
           valid = false;
-        } else if (typeof parameter.value === "string") {
-          if (
-            !parameter.options.some(
-              (option) => parameter.value === option.value,
-            )
-          ) {
-            valid = false;
-          }
-        } else {
+        }
+        if (Array.isArray(parameter.value)) {
           parameter.value.map((value: any) => {
             if (
               parameter.options === undefined ||
@@ -606,6 +599,14 @@ function CommandForm({
               valid = false;
             }
           });
+        } else {
+          if (
+            !parameter.options.some(
+              (option) => parameter.value === option.value,
+            )
+          ) {
+            valid = false;
+          }
         }
       }
     }
