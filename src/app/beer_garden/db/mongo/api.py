@@ -295,6 +295,18 @@ def query_unique(
         return None
 
 
+def aggregation(model_class: ModelType, pipeline: list = None) -> list:
+
+    query_set = _model_map[model_class].objects
+    cursor = query_set.aggregate(pipeline)
+
+    results = []
+
+    for document in cursor:
+        results.append(document)
+    return results
+
+
 def query(
     model_class: ModelType, q_filter: Union[Q, QCombination, None] = None, **kwargs
 ) -> List[ModelItem]:
