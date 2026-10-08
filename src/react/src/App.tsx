@@ -83,6 +83,21 @@ function App() {
     setTourSteps(ConvertToTourStepProps(tourStepsRef.current));
     setRunTour(runTourRef.current);
   };
+
+  useEffect(() => {
+    if (runTour) {
+      // Give Joyride a brief moment to mount the beacon into the DOM,
+      // then open the tour
+      setTimeout(() => {
+        const beacon = document.querySelector(
+          ".react-joyride__beacon",
+        ) as HTMLElement;
+        if (beacon) {
+          beacon.click();
+        }
+      }, 0);
+    }
+  }, [runTour]);
   const rootGardenRef = useRef<Garden | undefined>(undefined);
   const [gardenState, setGardenState] = useState<number>(0);
 
@@ -598,6 +613,11 @@ function App() {
                     steps={tourSteps}
                     options={{
                       zIndex: 1200,
+                    }}
+                    styles={{
+                      beacon:{
+                        opacity: 0,
+                      }
                     }}
                   />
                   <div role="navigation">
