@@ -210,7 +210,7 @@ function CommandFormField({
     });
   };
 
-  const inputAreaAriaLabel = `${parameter.optional ? "Optional " : ""}Parameter Input ${parameter.display_name ?? parameter.key}`;
+  const inputAreaAriaLabel = `${parameter.optional ? "Optional: " : ""}Parameter Input ${parameter.display_name ?? parameter.key}`;
 
   const addInputAriaLabel = `Add new value to List for Parameter ${parameter.display_name ?? parameter.key}`;
 
@@ -311,8 +311,8 @@ function CommandFormField({
                 error={error}
               >
                 {errorMessage
-                  ? `${parameter.description}: ${errorMessage}`
-                  : parameter.description}
+                  ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${errorMessage}`
+                  : `${parameter.optional ? "Optional: " : ""}${parameter.description}`}
               </FormHelperText>
             </Box>
           </Tooltip>
@@ -376,8 +376,8 @@ function CommandFormField({
               error={error}
             >
               {errorMessage
-                ? `${parameter.description}: ${errorMessage}`
-                : parameter.description}
+                ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${errorMessage}`
+                : `${parameter.optional ? "Optional: " : ""}${parameter.description}`}
             </FormHelperText>
           </Box>
         </Tooltip>
@@ -455,8 +455,8 @@ function CommandFormField({
           error={error}
         >
           {errorMessage
-            ? `${parameter.description}: ${errorMessage}`
-            : parameter.description}
+            ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${errorMessage}`
+            : `${parameter.optional ? "Optional: " : ""}${parameter.description}`}
         </FormHelperText>
         {loadingChoices &&
           loadingChoices.some((loading) => loading.key === parameter.key) && (
@@ -954,8 +954,8 @@ function CommandFormField({
           sx={inputDisplayStyling}
         >
           {errorMessage
-            ? `${parameter.description}: ${errorMessage}`
-            : parameter.description}
+            ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${errorMessage}`
+            : `${parameter.optional ? "Optional: " : ""}${parameter.description}`}
         </FormHelperText>
         <Box sx={inputAddButtonStyling}>
           <AccessButton
@@ -1036,8 +1036,8 @@ function CommandFormField({
             error={error}
           >
             {errorMessage
-              ? `${parameter.description}: ${errorMessage}`
-              : parameter.description}
+              ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${errorMessage}`
+              : `${parameter.optional ? "Optional: " : ""}${parameter.description}`}
           </FormHelperText>
         </Box>
       </Box>
