@@ -5,7 +5,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import { ThemeProvider } from "@mui/material/styles";
 import { MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { ACTIONS, type EventData, Joyride, STATUS } from "react-joyride";
+import { ACTIONS, type EventData, Joyride, STATUS, Step } from "react-joyride";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
@@ -74,11 +74,13 @@ function App() {
   };
 
   const tourStepsRef = useRef<Array<TourStepProps>>([]);
+  const [tourSteps, setTourSteps] = useState<Step[]>([]);
 
   const [runTour, setRunTour] = useState(false);
   const runTourRef = useRef(runTour);
   const toggleRunTour = () => {
     runTourRef.current = !runTourRef.current;
+    setTourSteps(ConvertToTourStepProps(tourStepsRef.current));
     setRunTour(runTourRef.current);
   };
   const rootGardenRef = useRef<Garden | undefined>(undefined);
@@ -588,14 +590,16 @@ function App() {
               <div key={reloadUI}>
                 <BrowserRouter basename={baseURL}>
                   <AppParams addRequestItem={addRequestItem} />
-                  {runTour && (
-                    <Joyride
-                      onEvent={handleJoyrideEvent}
-                      continuous
-                      run={true}
-                      steps={ConvertToTourStepProps(tourStepsRef.current)}
-                    />
-                  )}
+                  <Joyride
+                    onEvent={handleJoyrideEvent}
+                    continuous
+                    run={runTour}
+                    initialStepIndex={0}
+                    steps={tourSteps}
+                    options={{
+                      zIndex: 1200,
+                    }}
+                  />
                   <div role="navigation">
                     <NavigationMenu
                       listeners={listeners.current}
