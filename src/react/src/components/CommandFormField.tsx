@@ -82,6 +82,7 @@ function CommandFormField({
     if (disabled || parameter.optional) {
       setError(false);
       setErrorMessage(undefined);
+      return;
     }
 
     const isList = Array.isArray(parameter.value);
@@ -209,7 +210,7 @@ function CommandFormField({
     });
   };
 
-  const inputAreaAriaLabel = `Parameter Input ${parameter.display_name ?? parameter.key}`;
+  const inputAreaAriaLabel = `${parameter.optional ? "Optional " : ""}Parameter Input ${parameter.display_name ?? parameter.key}`;
 
   const addInputAriaLabel = `Add new value to List for Parameter ${parameter.display_name ?? parameter.key}`;
 
@@ -998,7 +999,7 @@ function CommandFormField({
             </IconButton>
           )}
           <Tooltip title={`${inputAreaAriaLabel}: ${parameter?.type}`}>
-            <Box component="span" aria-label={undefined}>
+            <Box aria-label={undefined}>
               {(parameter.type === undefined ||
                 parameter?.type === "String") && (
                 <SingleString parameter={parameter} />

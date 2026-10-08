@@ -615,9 +615,9 @@ function App() {
                       zIndex: 1200,
                     }}
                     styles={{
-                      beacon:{
+                      beacon: {
                         opacity: 0,
-                      }
+                      },
                     }}
                   />
                   <div role="navigation">
