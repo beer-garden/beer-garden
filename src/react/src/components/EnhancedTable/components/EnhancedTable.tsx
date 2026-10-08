@@ -623,6 +623,14 @@ const EnhancedTable = ({
                         active={orderBy === column.field}
                         direction={orderBy === column.field ? order : "asc"}
                         onClick={createSortHandler(column.field)}
+                        sx={{
+                          "&.Mui-focusVisible": {
+                            backgroundColor: "action.focus",
+                          },
+                          "&.Mui-focusVisible .MuiTableSortLabel-icon": {
+                            opacity: 1,
+                          },
+                        }}
                         aria-label={`Toggle Sort ${orderBy === column.field ? order : "asc"} Column ${typeof column?.label === "string" ? column.label : column.field}`}
                       >
                         {orderBy === column.field ? (
