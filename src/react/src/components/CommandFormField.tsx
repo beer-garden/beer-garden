@@ -268,7 +268,6 @@ function CommandFormField({
           <Tooltip title={`${inputAreaAriaLabel}: Multi Select`}>
             <Box component="span" aria-label={undefined}>
               <Select
-                key={parameter.key}
                 id={parameter.key}
                 value={parameter.value}
                 aria-describedby={
@@ -347,7 +346,6 @@ function CommandFormField({
         <Tooltip title={`${inputAreaAriaLabel}: Dropdown Select`}>
           <Box component="span" aria-label={undefined}>
             <Select
-              key={parameter.key}
               id={parameter.key}
               value={parameter.value}
               aria-describedby={
@@ -410,10 +408,9 @@ function CommandFormField({
     );
   } else if (parameter.choices && parameter.choices?.display === "typeahead") {
     return (
-      <Box key={parameter.key} id={parameter.key}sx={inputDisplayStyling}>
+      <Box key={parameter.key} id={parameter.key} sx={inputDisplayStyling}>
         <Autocomplete
           sx={{ width: "100%" }}
-          key={parameter.key}
           id={parameter.key}
           freeSolo
           aria-describedby={
@@ -487,324 +484,6 @@ function CommandFormField({
     );
   }
 
-  const MultiString = ({
-    parameter,
-    item,
-    index,
-  }: {
-    parameter: InputParam;
-    item: any;
-    index: number;
-  }) => (
-    <TextField
-      key={`${parameter.key}-${index}-input-key`}
-      id={`${parameter.key}-${index}-input-id`}
-      value={item}
-      variant="outlined"
-      onChange={(event: ChangeEvent<HTMLInputElement>) => {
-        handleMultiChange(parameter.key, event.target.value, index);
-      }}
-      fullWidth
-      disabled={disabled}
-      error={error && errorIndex && errorIndex.includes(index)}
-      autoComplete="off"
-    />
-  );
-
-  const SingleString = ({ parameter }: { parameter: InputParam }) => (
-    <TextField
-      key={`${parameter.key}-input-key`}
-      id={`${parameter.key}-input-id`}
-      value={parameter.value}
-      variant="outlined"
-      onChange={(event: ChangeEvent<HTMLInputElement>) => {
-        handleChange(parameter.key, event.target.value);
-      }}
-      fullWidth
-      disabled={disabled}
-      error={error}
-      autoComplete="off"
-    />
-  );
-
-  const MultiDictionary = ({
-    parameter,
-    item,
-    index,
-  }: {
-    parameter: InputParam;
-    item: any;
-    index: number;
-  }) => (
-    <TextField
-      key={`${parameter.key}-${index}-input-key`}
-      id={`${parameter.key}-${index}-input-id`}
-      value={item}
-      variant="outlined"
-      onChange={(event: ChangeEvent<HTMLInputElement>) => {
-        handleMultiChange(parameter.key, event.target.value, index);
-      }}
-      fullWidth
-      multiline
-      disabled={disabled}
-      error={error && errorIndex && errorIndex.includes(index)}
-      autoComplete="off"
-    />
-  );
-
-  const SingleDictionary = ({ parameter }: { parameter: InputParam }) => (
-    <TextField
-      key={`${parameter.key}-input-key`}
-      id={`${parameter.key}-input-id`}
-      value={parameter.value}
-      variant="outlined"
-      onChange={(event: ChangeEvent<HTMLInputElement>) => {
-        handleChange(parameter.key, event.target.value);
-      }}
-      fullWidth
-      disabled={disabled}
-      multiline
-      error={error}
-      autoComplete="off"
-    />
-  );
-
-  const MultiInteger = ({
-    parameter,
-    item,
-    index,
-  }: {
-    parameter: InputParam;
-    item: any;
-    index: number;
-  }) => (
-    <NumberField
-      key={`${parameter.key}-${index}-input-key`}
-      id={`${parameter.key}-${index}-input-id`}
-      value={item ?? parameter.default}
-      title={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-      disabled={disabled}
-      onValueChange={(value) => handleMultiChange(parameter.key, value, index)}
-      error={error && errorIndex && errorIndex.includes(index)}
-      max={parameter.maximum !== undefined ? parameter.maximum : undefined}
-      min={parameter.minimum !== undefined ? parameter.minimum : undefined}
-    />
-  );
-
-  const SingleInteger = ({ parameter }: { parameter: InputParam }) => (
-    <NumberField
-      key={`${parameter.key}-input-key`}
-      id={`${parameter.key}-input-id`}
-      value={parameter.value}
-      title={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-      disabled={disabled}
-      onValueChange={(value) => handleChange(parameter.key, value)}
-      error={error}
-      max={parameter.maximum !== undefined ? parameter.maximum : undefined}
-      min={parameter.minimum !== undefined ? parameter.minimum : undefined}
-    />
-  );
-
-  const MultiFloat = ({
-    parameter,
-    item,
-    index,
-  }: {
-    parameter: InputParam;
-    item: any;
-    index: number;
-  }) => (
-    <NumberField
-      key={`${parameter.key}-${index}-input-key`}
-      id={`${parameter.key}-${index}-input-id`}
-      value={item ?? parameter.default}
-      disabled={disabled}
-      title={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-      onValueChange={(value) => handleMultiChange(parameter.key, value, index)}
-      error={error && errorIndex && errorIndex.includes(index)}
-      max={parameter.maximum !== undefined ? parameter.maximum : undefined}
-      min={parameter.minimum !== undefined ? parameter.minimum : undefined}
-      step={0.01}
-    />
-  );
-
-  const SingleFloat = ({ parameter }: { parameter: InputParam }) => (
-    <NumberField
-      key={`${parameter.key}-input-key`}
-      id={`${parameter.key}-input-id`}
-      value={parameter.value}
-      disabled={disabled}
-      title={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-      onValueChange={(value) => handleChange(parameter.key, value)}
-      error={error}
-      max={parameter.maximum !== undefined ? parameter.maximum : undefined}
-      min={parameter.minimum !== undefined ? parameter.minimum : undefined}
-      step={0.01}
-    />
-  );
-
-  const MultiBoolean = ({
-    parameter,
-    item,
-    index,
-  }: {
-    parameter: InputParam;
-    item: any;
-    index: number;
-  }) => (
-    <Checkbox
-      key={`${parameter.key}-${index}-key`}
-      id={`${parameter.key}-${index}-id`}
-      checked={item}
-      slotProps={{
-        input: {
-          "aria-label": `Parameter ${parameter.display_name ?? parameter.key} option ${index}`,
-          "aria-describedby": `${parameter.key}-${index}-helper-text`,
-        },
-      }}
-      indeterminate={
-        item === undefined ? parameter.nullable || parameter.optional : false
-      }
-      onChange={(e) =>
-        handleMultiChange(parameter.key, e.target.checked, index)
-      }
-      disabled={disabled}
-    />
-  );
-
-  const SingleBoolean = ({ parameter }: { parameter: InputParam }) => (
-    <Checkbox
-      key={`${parameter.key}-input-key`}
-      id={`${parameter.key}-input-id`}
-      checked={parameter.value}
-      slotProps={{
-        input: {
-          "aria-label": `Parameter ${parameter.display_name ?? parameter.key}`,
-          "aria-describedby": `${parameter.key}-helper-text`,
-        },
-      }}
-      indeterminate={
-        parameter.value === undefined
-          ? parameter.nullable || parameter.optional
-          : false
-      }
-      onChange={(e) => handleChange(parameter.key, e.target.checked)}
-      disabled={disabled}
-    />
-  );
-
-  const MultiDate = ({
-    parameter,
-    item,
-    index,
-  }: {
-    parameter: InputParam;
-    item: any;
-    index: number;
-  }) => (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <DatePicker
-        disabled={disabled}
-        value={item ? dayjs(item) : null}
-        aria-describedby={`${parameter.key}-helper-text`}
-        onChange={(newValue: PickerValue) => {
-          if (newValue && newValue.isValid()) {
-            handleMultiChange(parameter.key, newValue.valueOf(), index);
-          } else {
-            handleMultiChange(parameter.key, undefined, index);
-          }
-        }}
-        slotProps={{
-          textField: {
-            key:`${parameter.key}-${index}-input-key`,
-            id:`${parameter.key}-${index}-input-id`,
-            error: error && errorIndex && errorIndex.includes(index),
-          },
-        }}
-      />
-    </LocalizationProvider>
-  );
-
-  const SingleDate = ({ parameter }: { parameter: InputParam }) => (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <DatePicker
-        disabled={disabled}
-        value={parameter?.value ? dayjs(parameter.value) : null}
-        aria-describedby={`${parameter.key}-helper-text`}
-        onChange={(newValue: PickerValue) => {
-          if (newValue && newValue.isValid()) {
-            handleChange(parameter.key, newValue.valueOf());
-          } else {
-            handleChange(parameter.key, undefined);
-          }
-        }}
-        slotProps={{
-          textField: {
-            key:`${parameter.key}-input-key`,
-            id:`${parameter.key}-input-id`,
-            error: error,
-          },
-        }}
-      />
-    </LocalizationProvider>
-  );
-
-  const MultiDateTime = ({
-    parameter,
-    item,
-    index,
-  }: {
-    parameter: InputParam;
-    item: any;
-    index: number;
-  }) => (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <DateTimePicker
-        disabled={disabled}
-        value={item ? dayjs(item) : null}
-        aria-describedby={`${parameter.key}-helper-text`}
-        onChange={(newValue: PickerValue) => {
-          if (newValue && newValue.isValid()) {
-            handleMultiChange(parameter.key, newValue.valueOf(), index);
-          } else {
-            handleMultiChange(parameter.key, undefined, index);
-          }
-        }}
-        slotProps={{
-          textField: {
-            key:`${parameter.key}-${index}-input-key`,
-            id:`${parameter.key}-${index}-input-id`,
-            error: error && errorIndex && errorIndex.includes(index),
-          },
-        }}
-      />
-    </LocalizationProvider>
-  );
-
-  const SingleDateTime = ({ parameter }: { parameter: InputParam }) => (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <DateTimePicker
-        disabled={disabled}
-        value={parameter?.value ? dayjs(parameter.value) : null}
-        aria-describedby={`${parameter.key}-helper-text`}
-        onChange={(newValue: PickerValue) => {
-          if (newValue && newValue.isValid()) {
-            handleChange(parameter.key, newValue.valueOf());
-          } else {
-            handleChange(parameter.key, undefined);
-          }
-        }}
-        slotProps={{
-          textField: {
-            key:`${parameter.key}-input-key`,
-            id:`${parameter.key}-input-id`,
-            error: error,
-          },
-        }}
-      />
-    </LocalizationProvider>
-  );
-
   const customBytesUploader = (event: any) => {
     if (event.target.files.length === 1) {
       const file = event.target.files[0];
@@ -825,21 +504,6 @@ function CommandFormField({
     width: 1,
   });
 
-  const SingleBytes = ({ parameter }: { parameter: InputParam }) => (
-    <Button
-      component="label"
-      role={undefined}
-      disabled={disabled || parameter?.value?.name !== undefined}
-      variant="contained"
-      tabIndex={-1}
-      startIcon={<FAIcon icon="upload" />}
-      aria-describedby={`${parameter.key}-helper-text`}
-    >
-      Upload Bytes
-      <VisuallyHiddenInput type="file" onChange={customBytesUploader} />
-    </Button>
-  );
-
   const customBase64Uploader = async (event: any) => {
     const file = event.target.files[0];
 
@@ -859,34 +523,6 @@ function CommandFormField({
     setUploadPercentage(0);
     setUploadPercentageBuffer(0);
   };
-  const SingleBase64 = ({ parameter }: { parameter: InputParam }) => (
-    <Button
-      component="label"
-      role={undefined}
-      variant="contained"
-      disabled={disabled || uploadPercentage > 0}
-      tabIndex={-1}
-      startIcon={<FAIcon icon="upload" />}
-      aria-describedby={`${parameter.key}-helper-text`}
-    >
-      <VisuallyHiddenInput type="file" onChange={customBase64Uploader} />
-      <Stack>
-        <Stack>Upload Base64</Stack>
-        <Stack>
-          {uploadPercentage > 0 && (
-            <LinearProgress
-              variant="buffer"
-              color="secondary"
-              value={uploadPercentage}
-              valueBuffer={uploadPercentageBuffer}
-              aria-label="Uploading File..."
-              sx={{ width: "100%" }}
-            />
-          )}
-        </Stack>
-      </Stack>
-    </Button>
-  );
 
   if (parameter.multi) {
     return (
@@ -909,49 +545,173 @@ function CommandFormField({
               <Box component="span" aria-label={undefined}>
                 {(parameter.type === undefined ||
                   parameter?.type === "String") && (
-                  <MultiString
-                    parameter={parameter}
-                    item={item}
-                    index={index}
+                  <TextField
+                    id={`${parameter.key}-${index}-input-id`}
+                    value={item}
+                    variant="outlined"
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                      handleMultiChange(
+                        parameter.key,
+                        event.target.value,
+                        index,
+                      );
+                    }}
+                    fullWidth
+                    disabled={disabled}
+                    error={error && errorIndex && errorIndex.includes(index)}
+                    autoComplete="off"
                   />
                 )}
+
                 {parameter?.type === "Dictionary" && (
-                  <MultiDictionary
-                    parameter={parameter}
-                    item={item}
-                    index={index}
+                  <TextField
+                    id={`${parameter.key}-${index}-input-id`}
+                    value={item}
+                    variant="outlined"
+                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                      handleMultiChange(
+                        parameter.key,
+                        event.target.value,
+                        index,
+                      );
+                    }}
+                    fullWidth
+                    multiline
+                    disabled={disabled}
+                    error={error && errorIndex && errorIndex.includes(index)}
+                    autoComplete="off"
                   />
                 )}
+
                 {parameter?.type === "Integer" && (
-                  <MultiInteger
-                    parameter={parameter}
-                    item={item}
-                    index={index}
+                  <NumberField
+                    id={`${parameter.key}-${index}-input-id`}
+                    value={item ?? parameter.default}
+                    title={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                    disabled={disabled}
+                    onValueChange={(value) =>
+                      handleMultiChange(parameter.key, value, index)
+                    }
+                    error={error && errorIndex && errorIndex.includes(index)}
+                    max={
+                      parameter.maximum !== undefined
+                        ? parameter.maximum
+                        : undefined
+                    }
+                    min={
+                      parameter.minimum !== undefined
+                        ? parameter.minimum
+                        : undefined
+                    }
                   />
                 )}
+
                 {parameter?.type === "Float" && (
-                  <MultiFloat parameter={parameter} item={item} index={index} />
+                  <NumberField
+                    id={`${parameter.key}-${index}-input-id`}
+                    value={item ?? parameter.default}
+                    disabled={disabled}
+                    title={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                    onValueChange={(value) =>
+                      handleMultiChange(parameter.key, value, index)
+                    }
+                    error={error && errorIndex && errorIndex.includes(index)}
+                    max={
+                      parameter.maximum !== undefined
+                        ? parameter.maximum
+                        : undefined
+                    }
+                    min={
+                      parameter.minimum !== undefined
+                        ? parameter.minimum
+                        : undefined
+                    }
+                    step={0.01}
+                  />
                 )}
+
                 {parameter?.type === "Boolean" && (
-                  <MultiBoolean
-                    parameter={parameter}
-                    item={item}
-                    index={index}
+                  <Checkbox
+                    id={`${parameter.key}-${index}-id`}
+                    checked={item}
+                    slotProps={{
+                      input: {
+                        "aria-label": `Parameter ${parameter.display_name ?? parameter.key} option ${index}`,
+                        "aria-describedby": `${parameter.key}-${index}-helper-text`,
+                      },
+                    }}
+                    indeterminate={
+                      item === undefined
+                        ? parameter.nullable || parameter.optional
+                        : false
+                    }
+                    onChange={(e) =>
+                      handleMultiChange(parameter.key, e.target.checked, index)
+                    }
+                    disabled={disabled}
                   />
                 )}
+
                 {parameter?.type === "Date" && (
-                  <MultiDate parameter={parameter} item={item} index={index} />
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DatePicker
+                      disabled={disabled}
+                      value={item ? dayjs(item) : null}
+                      aria-describedby={`${parameter.key}-helper-text`}
+                      onChange={(newValue: PickerValue) => {
+                        if (newValue && newValue.isValid()) {
+                          handleMultiChange(
+                            parameter.key,
+                            newValue.valueOf(),
+                            index,
+                          );
+                        } else {
+                          handleMultiChange(parameter.key, undefined, index);
+                        }
+                      }}
+                      slotProps={{
+                        textField: {
+                          id: `${parameter.key}-${index}-input-id`,
+                          error:
+                            error && errorIndex && errorIndex.includes(index),
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
                 )}
+
                 {parameter?.type === "DateTime" && (
-                  <MultiDateTime
-                    parameter={parameter}
-                    item={item}
-                    index={index}
-                  />
+                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <DateTimePicker
+                      disabled={disabled}
+                      value={item ? dayjs(item) : null}
+                      aria-describedby={`${parameter.key}-helper-text`}
+                      onChange={(newValue: PickerValue) => {
+                        if (newValue && newValue.isValid()) {
+                          handleMultiChange(
+                            parameter.key,
+                            newValue.valueOf(),
+                            index,
+                          );
+                        } else {
+                          handleMultiChange(parameter.key, undefined, index);
+                        }
+                      }}
+                      slotProps={{
+                        textField: {
+                          id: `${parameter.key}-${index}-input-id`,
+                          error:
+                            error && errorIndex && errorIndex.includes(index),
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
                 )}
+
                 {parameter?.type === "Bytes" && (
                   <Typography>Multi-File Upload Not Supported</Typography>
                 )}
+
                 {parameter?.type === "Base64" && (
                   <Typography>Multi-File Upload Not Supported</Typography>
                 )}
@@ -1032,31 +792,195 @@ function CommandFormField({
             <Box aria-label={undefined}>
               {(parameter.type === undefined ||
                 parameter?.type === "String") && (
-                <SingleString parameter={parameter} />
+                <TextField
+                  id={`${parameter.key}-input-id`}
+                  value={parameter.value}
+                  variant="outlined"
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    handleChange(parameter.key, event.target.value);
+                  }}
+                  fullWidth
+                  disabled={disabled}
+                  error={error}
+                  autoComplete="off"
+                />
               )}
+
               {parameter?.type === "Dictionary" && (
-                <SingleDictionary parameter={parameter} />
+                <TextField
+                  id={`${parameter.key}-input-id`}
+                  value={parameter.value}
+                  variant="outlined"
+                  onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    handleChange(parameter.key, event.target.value);
+                  }}
+                  fullWidth
+                  disabled={disabled}
+                  multiline
+                  error={error}
+                  autoComplete="off"
+                />
               )}
+
               {parameter?.type === "Integer" && (
-                <SingleInteger parameter={parameter} />
+                <NumberField
+                  id={`${parameter.key}-input-id`}
+                  value={parameter.value}
+                  title={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                  disabled={disabled}
+                  onValueChange={(value) => handleChange(parameter.key, value)}
+                  error={error}
+                  max={
+                    parameter.maximum !== undefined
+                      ? parameter.maximum
+                      : undefined
+                  }
+                  min={
+                    parameter.minimum !== undefined
+                      ? parameter.minimum
+                      : undefined
+                  }
+                />
               )}
+
               {parameter?.type === "Float" && (
-                <SingleFloat parameter={parameter} />
+                <NumberField
+                  id={`${parameter.key}-input-id`}
+                  value={parameter.value}
+                  disabled={disabled}
+                  title={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                  onValueChange={(value) => handleChange(parameter.key, value)}
+                  error={error}
+                  max={
+                    parameter.maximum !== undefined
+                      ? parameter.maximum
+                      : undefined
+                  }
+                  min={
+                    parameter.minimum !== undefined
+                      ? parameter.minimum
+                      : undefined
+                  }
+                  step={0.01}
+                />
               )}
+
               {parameter?.type === "Boolean" && (
-                <SingleBoolean parameter={parameter} />
+                <Checkbox
+                  id={`${parameter.key}-input-id`}
+                  checked={parameter.value}
+                  slotProps={{
+                    input: {
+                      "aria-label": `Parameter ${parameter.display_name ?? parameter.key}`,
+                      "aria-describedby": `${parameter.key}-helper-text`,
+                    },
+                  }}
+                  indeterminate={
+                    parameter.value === undefined
+                      ? parameter.nullable || parameter.optional
+                      : false
+                  }
+                  onChange={(e) =>
+                    handleChange(parameter.key, e.target.checked)
+                  }
+                  disabled={disabled}
+                />
               )}
+
               {parameter?.type === "Date" && (
-                <SingleDate parameter={parameter} />
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DatePicker
+                    disabled={disabled}
+                    value={parameter?.value ? dayjs(parameter.value) : null}
+                    aria-describedby={`${parameter.key}-helper-text`}
+                    onChange={(newValue: PickerValue) => {
+                      if (newValue && newValue.isValid()) {
+                        handleChange(parameter.key, newValue.valueOf());
+                      } else {
+                        handleChange(parameter.key, undefined);
+                      }
+                    }}
+                    slotProps={{
+                      textField: {
+                        id: `${parameter.key}-input-id`,
+                        error: error,
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
               )}
+
               {parameter?.type === "DateTime" && (
-                <SingleDateTime parameter={parameter} />
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <DateTimePicker
+                    disabled={disabled}
+                    value={parameter?.value ? dayjs(parameter.value) : null}
+                    aria-describedby={`${parameter.key}-helper-text`}
+                    onChange={(newValue: PickerValue) => {
+                      if (newValue && newValue.isValid()) {
+                        handleChange(parameter.key, newValue.valueOf());
+                      } else {
+                        handleChange(parameter.key, undefined);
+                      }
+                    }}
+                    slotProps={{
+                      textField: {
+                        id: `${parameter.key}-input-id`,
+                        error: error,
+                      },
+                    }}
+                  />
+                </LocalizationProvider>
               )}
+
               {parameter?.type === "Bytes" && (
-                <SingleBytes parameter={parameter} />
+                <Button
+                  component="label"
+                  role={undefined}
+                  disabled={disabled || parameter?.value?.name !== undefined}
+                  variant="contained"
+                  tabIndex={-1}
+                  startIcon={<FAIcon icon="upload" />}
+                  aria-describedby={`${parameter.key}-helper-text`}
+                >
+                  Upload Bytes
+                  <VisuallyHiddenInput
+                    type="file"
+                    onChange={customBytesUploader}
+                  />
+                </Button>
               )}
+
               {parameter?.type === "Base64" && (
-                <SingleBase64 parameter={parameter} />
+                <Button
+                  component="label"
+                  role={undefined}
+                  variant="contained"
+                  disabled={disabled || uploadPercentage > 0}
+                  tabIndex={-1}
+                  startIcon={<FAIcon icon="upload" />}
+                  aria-describedby={`${parameter.key}-helper-text`}
+                >
+                  <VisuallyHiddenInput
+                    type="file"
+                    onChange={customBase64Uploader}
+                  />
+                  <Stack>
+                    <Stack>Upload Base64</Stack>
+                    <Stack>
+                      {uploadPercentage > 0 && (
+                        <LinearProgress
+                          variant="buffer"
+                          color="secondary"
+                          value={uploadPercentage}
+                          valueBuffer={uploadPercentageBuffer}
+                          aria-label="Uploading File..."
+                          sx={{ width: "100%" }}
+                        />
+                      )}
+                    </Stack>
+                  </Stack>
+                </Button>
               )}
             </Box>
           </Tooltip>
