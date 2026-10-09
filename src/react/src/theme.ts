@@ -37,7 +37,7 @@ const darkPalette = {
   mode: "dark" as const,
   primary: { main: teal[900], contrastText: grey[50] },
   secondary: { main: red[900], contrastText: grey[50] },
-  error: { main: red[900], contrastText: grey[50]},
+  error: { main: red[900], contrastText: grey[50] },
   info: { main: blue[900], contrastText: grey[50] },
   success: { main: lightGreen[900], contrastText: grey[50] },
   warning: { main: deepOrange[900], contrastText: grey[50] },

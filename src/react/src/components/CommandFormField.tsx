@@ -54,6 +54,7 @@ function CommandFormField({
   const [uploadPercentageBuffer, setUploadPercentageBuffer] = useState(0);
 
   const [error, setError] = useState(false);
+  const [errorIndex, setErrorIndex] = useState<number[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined,
   );
@@ -88,6 +89,7 @@ function CommandFormField({
     const isList = Array.isArray(parameter.value);
 
     let updatedErrorMessage = undefined as string | undefined;
+    const updatedInvalidIndexes = [] as number[];
 
     if (
       parameter.value === undefined ||
@@ -131,8 +133,10 @@ function CommandFormField({
                 value === "null"
               ) {
                 invalidIndexes.push(`Index ${index} Missing`);
+                updatedInvalidIndexes.push(index);
               } else if (!canParseJSON(value)) {
                 invalidIndexes.push(`Index ${index} Invalid JSON`);
+                updatedInvalidIndexes.push(index);
               }
             });
             updatedErrorMessage = `Invalid Values: ${invalidIndexes.join(", ")}`;
@@ -159,6 +163,7 @@ function CommandFormField({
         parameter?.value.map((value: any, index: number) => {
           if (value === undefined || value === null || value === "") {
             invalidIndexes.push(`Index ${index} Missing`);
+            updatedInvalidIndexes.push(index);
           }
         });
         updatedErrorMessage = `Invalid Values: ${invalidIndexes.join(", ")}`;
@@ -167,6 +172,7 @@ function CommandFormField({
 
     setError(updatedErrorMessage !== undefined);
     setErrorMessage(updatedErrorMessage);
+    setErrorIndex(updatedInvalidIndexes);
   };
 
   const handleMultiChange = (key: any, value: any, index?: number) => {
@@ -496,7 +502,7 @@ function CommandFormField({
       }}
       fullWidth
       disabled={disabled}
-      error={error}
+      error={error && errorIndex && errorIndex.includes(index)}
       autoComplete="off"
     />
   );
@@ -535,7 +541,7 @@ function CommandFormField({
       fullWidth
       multiline
       disabled={disabled}
-      error={error}
+      error={error && errorIndex && errorIndex.includes(index)}
       autoComplete="off"
     />
   );
@@ -571,7 +577,7 @@ function CommandFormField({
       title={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
       disabled={disabled}
       onValueChange={(value) => handleMultiChange(parameter.key, value, index)}
-      error={error}
+      error={error && errorIndex && errorIndex.includes(index)}
       max={parameter.maximum !== undefined ? parameter.maximum : undefined}
       min={parameter.minimum !== undefined ? parameter.minimum : undefined}
     />
@@ -605,7 +611,7 @@ function CommandFormField({
       disabled={disabled}
       title={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
       onValueChange={(value) => handleMultiChange(parameter.key, value, index)}
-      error={error}
+      error={error && errorIndex && errorIndex.includes(index)}
       max={parameter.maximum !== undefined ? parameter.maximum : undefined}
       min={parameter.minimum !== undefined ? parameter.minimum : undefined}
       step={0.01}
@@ -619,13 +625,7 @@ function CommandFormField({
       disabled={disabled}
       title={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
       onValueChange={(value) => handleChange(parameter.key, value)}
-      error={
-        !disabled &&
-        !parameter.optional &&
-        (parameter.value === undefined ||
-          parameter.value === null ||
-          parameter.value === "")
-      }
+      error={error}
       max={parameter.maximum !== undefined ? parameter.maximum : undefined}
       min={parameter.minimum !== undefined ? parameter.minimum : undefined}
       step={0.01}
@@ -704,7 +704,7 @@ function CommandFormField({
         slotProps={{
           textField: {
             id: parameter.key,
-            error: error,
+            error: error && errorIndex && errorIndex.includes(index),
           },
         }}
       />
@@ -758,7 +758,7 @@ function CommandFormField({
         slotProps={{
           textField: {
             id: `${parameter.key}_${index}_input`,
-            error: error,
+            error: error && errorIndex && errorIndex.includes(index),
           },
         }}
       />
