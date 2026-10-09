@@ -882,6 +882,12 @@ function CommandFormField({
           <Box key={`${parameter.key}-${index}`} sx={inputDisplayItemStyling}>
             <Tooltip
               title={`${inputAreaAriaLabel} Index ${index}: ${parameter?.type}`}
+              open={
+                parameter?.type &&
+                ["Float", "Integer"].includes(parameter?.type)
+                  ? false
+                  : undefined
+              }
             >
               <Box component="span" aria-label={undefined}>
                 {(parameter.type === undefined ||
@@ -998,7 +1004,14 @@ function CommandFormField({
               <FAIcon icon="xmark" sx={{ ml: 1 }} />
             </IconButton>
           )}
-          <Tooltip title={`${inputAreaAriaLabel}: ${parameter?.type}`}>
+          <Tooltip
+            title={`${inputAreaAriaLabel}: ${parameter?.type}`}
+            open={
+              parameter?.type && ["Float", "Integer"].includes(parameter?.type)
+                ? false
+                : undefined
+            }
+          >
             <Box aria-label={undefined}>
               {(parameter.type === undefined ||
                 parameter?.type === "String") && (
