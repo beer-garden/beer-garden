@@ -55,9 +55,13 @@ function CommandFormField({
 
   const [error, setError] = useState(false);
   const [errorIndex, setErrorIndex] = useState<number[]>([]);
+
   const [errorMessage, setErrorMessage] = useState<string | undefined>(
     undefined,
   );
+  const [errorIndexMessage, setErrorIndexMessage] = useState<
+    { index: number; msg: string }[]
+  >([]);
 
   // Bytes and Base64 Triggers
   useEffect(() => {
@@ -90,6 +94,7 @@ function CommandFormField({
 
     let updatedErrorMessage = undefined as string | undefined;
     const updatedInvalidIndexes = [] as number[];
+    const updatedErrorIndexMessage = [] as { index: number; msg: string }[];
 
     if (
       parameter.value === undefined ||
@@ -134,9 +139,14 @@ function CommandFormField({
               ) {
                 invalidIndexes.push(`Index ${index} Missing`);
                 updatedInvalidIndexes.push(index);
+                updatedErrorIndexMessage.push({ index: index, msg: "Missing" });
               } else if (!canParseJSON(value)) {
                 invalidIndexes.push(`Index ${index} Invalid JSON`);
                 updatedInvalidIndexes.push(index);
+                updatedErrorIndexMessage.push({
+                  index: index,
+                  msg: "Invalid JSON",
+                });
               }
             });
             updatedErrorMessage = `Invalid Values: ${invalidIndexes.join(", ")}`;
@@ -164,6 +174,7 @@ function CommandFormField({
           if (value === undefined || value === null || value === "") {
             invalidIndexes.push(`Index ${index} Missing`);
             updatedInvalidIndexes.push(index);
+            updatedErrorIndexMessage.push({ index: index, msg: "Missing" });
           }
         });
         updatedErrorMessage = `Invalid Values: ${invalidIndexes.join(", ")}`;
@@ -173,6 +184,7 @@ function CommandFormField({
     setError(updatedErrorMessage !== undefined);
     setErrorMessage(updatedErrorMessage);
     setErrorIndex(updatedInvalidIndexes);
+    setErrorIndexMessage(updatedErrorIndexMessage);
   };
 
   const handleMultiChange = (key: any, value: any, index?: number) => {
@@ -221,22 +233,6 @@ function CommandFormField({
   const addInputAriaLabel = `Add new value to List for Parameter ${parameter.display_name ?? parameter.key}`;
 
   const removeInputAriaLabel = `Remove value from List for Parameter ${parameter.display_name ?? parameter.key}`;
-
-  // Multi Item Formatting
-  const inputDisplayContainerStyling = {
-    mx: 1,
-  };
-
-  const inputDisplayItemStyling = {
-    display: "flex",
-    justifyContent: "flex-end",
-    my: 1,
-  };
-
-  const inputAddButtonStyling = {
-    display: "flex",
-    justifyContent: "flex-end",
-  };
 
   if (!parameter.key) return null;
 
@@ -526,221 +522,237 @@ function CommandFormField({
 
   if (parameter.multi) {
     return (
-      <Container
-        key={parameter.key}
-        id={parameter.key}
-        sx={inputDisplayContainerStyling}
-      >
+      <Container key={parameter.key} id={parameter.key} sx={{ mx: 1 }}>
         {parameter.value?.map((item: any, index: any) => (
-          <Box key={`${parameter.key}-${index}`} sx={inputDisplayItemStyling}>
-            <Tooltip
-              title={`${inputAreaAriaLabel} Index ${index}: ${parameter?.type}`}
-              open={
-                parameter?.type &&
-                ["Float", "Integer"].includes(parameter?.type)
-                  ? false
-                  : undefined
-              }
+          <Box
+            key={`${parameter.key}-${index}`}
+            sx={{ justifyContent: "flex-end", my: 1 }}
+          >
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+              }}
             >
-              <Box component="span" aria-label={undefined}>
-                {(parameter.type === undefined ||
-                  parameter?.type === "String") && (
-                  <TextField
-                    id={`${parameter.key}-${index}-input-id`}
-                    value={item}
-                    variant="outlined"
-                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                      handleMultiChange(
-                        parameter.key,
-                        event.target.value,
-                        index,
-                      );
-                    }}
-                    fullWidth
-                    disabled={disabled}
-                    error={error && errorIndex && errorIndex.includes(index)}
-                    autoComplete="off"
-                  />
-                )}
-
-                {parameter?.type === "Dictionary" && (
-                  <TextField
-                    id={`${parameter.key}-${index}-input-id`}
-                    value={item}
-                    variant="outlined"
-                    onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                      handleMultiChange(
-                        parameter.key,
-                        event.target.value,
-                        index,
-                      );
-                    }}
-                    fullWidth
-                    multiline
-                    disabled={disabled}
-                    error={error && errorIndex && errorIndex.includes(index)}
-                    autoComplete="off"
-                  />
-                )}
-
-                {parameter?.type === "Integer" && (
-                  <NumberField
-                    id={`${parameter.key}-${index}-input-id`}
-                    value={item ?? parameter.default}
-                    title={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                    disabled={disabled}
-                    onValueChange={(value) =>
-                      handleMultiChange(parameter.key, value, index)
-                    }
-                    error={error && errorIndex && errorIndex.includes(index)}
-                    max={
-                      parameter.maximum !== undefined
-                        ? parameter.maximum
-                        : undefined
-                    }
-                    min={
-                      parameter.minimum !== undefined
-                        ? parameter.minimum
-                        : undefined
-                    }
-                  />
-                )}
-
-                {parameter?.type === "Float" && (
-                  <NumberField
-                    id={`${parameter.key}-${index}-input-id`}
-                    value={item ?? parameter.default}
-                    disabled={disabled}
-                    title={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
-                    onValueChange={(value) =>
-                      handleMultiChange(parameter.key, value, index)
-                    }
-                    error={error && errorIndex && errorIndex.includes(index)}
-                    max={
-                      parameter.maximum !== undefined
-                        ? parameter.maximum
-                        : undefined
-                    }
-                    min={
-                      parameter.minimum !== undefined
-                        ? parameter.minimum
-                        : undefined
-                    }
-                    step={0.01}
-                  />
-                )}
-
-                {parameter?.type === "Boolean" && (
-                  <Checkbox
-                    id={`${parameter.key}-${index}-id`}
-                    checked={item}
-                    slotProps={{
-                      input: {
-                        "aria-label": `Parameter ${parameter.display_name ?? parameter.key} option ${index}`,
-                        "aria-describedby": `${parameter.key}-${index}-helper-text`,
-                      },
-                    }}
-                    indeterminate={
-                      item === undefined
-                        ? parameter.nullable || parameter.optional
-                        : false
-                    }
-                    onChange={(e) =>
-                      handleMultiChange(parameter.key, e.target.checked, index)
-                    }
-                    disabled={disabled}
-                  />
-                )}
-
-                {parameter?.type === "Date" && (
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DatePicker
-                      disabled={disabled}
-                      value={item ? dayjs(item) : null}
-                      aria-describedby={`${parameter.key}-helper-text`}
-                      onChange={(newValue: PickerValue) => {
-                        if (newValue && newValue.isValid()) {
-                          handleMultiChange(
-                            parameter.key,
-                            newValue.valueOf(),
-                            index,
-                          );
-                        } else {
-                          handleMultiChange(parameter.key, undefined, index);
-                        }
+              <Tooltip
+                title={`${inputAreaAriaLabel} Index ${index}: ${parameter?.type}`}
+                open={
+                  parameter?.type &&
+                  ["Float", "Integer"].includes(parameter?.type)
+                    ? false
+                    : undefined
+                }
+              >
+                <Box component="span" aria-label={undefined}>
+                  {(parameter.type === undefined ||
+                    parameter?.type === "String") && (
+                    <TextField
+                      id={`${parameter.key}-${index}-input-id`}
+                      value={item}
+                      variant="outlined"
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                        handleMultiChange(
+                          parameter.key,
+                          event.target.value,
+                          index,
+                        );
                       }}
+                      fullWidth
+                      disabled={disabled}
+                      error={error && errorIndex && errorIndex.includes(index)}
+                      autoComplete="off"
+                    />
+                  )}
+
+                  {parameter?.type === "Dictionary" && (
+                    <TextField
+                      id={`${parameter.key}-${index}-input-id`}
+                      value={item}
+                      variant="outlined"
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                        handleMultiChange(
+                          parameter.key,
+                          event.target.value,
+                          index,
+                        );
+                      }}
+                      fullWidth
+                      multiline
+                      disabled={disabled}
+                      error={error && errorIndex && errorIndex.includes(index)}
+                      autoComplete="off"
+                    />
+                  )}
+
+                  {parameter?.type === "Integer" && (
+                    <NumberField
+                      id={`${parameter.key}-${index}-input-id`}
+                      value={item}
+                      title={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                      disabled={disabled}
+                      onValueChange={(value) =>
+                        handleMultiChange(parameter.key, value, index)
+                      }
+                      error={error && errorIndex && errorIndex.includes(index)}
+                      max={
+                        parameter.maximum !== undefined
+                          ? parameter.maximum
+                          : undefined
+                      }
+                      min={
+                        parameter.minimum !== undefined
+                          ? parameter.minimum
+                          : undefined
+                      }
+                    />
+                  )}
+
+                  {parameter?.type === "Float" && (
+                    <NumberField
+                      id={`${parameter.key}-${index}-input-id`}
+                      value={item}
+                      disabled={disabled}
+                      title={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
+                      onValueChange={(value) =>
+                        handleMultiChange(parameter.key, value, index)
+                      }
+                      error={error && errorIndex && errorIndex.includes(index)}
+                      max={
+                        parameter.maximum !== undefined
+                          ? parameter.maximum
+                          : undefined
+                      }
+                      min={
+                        parameter.minimum !== undefined
+                          ? parameter.minimum
+                          : undefined
+                      }
+                      step={0.01}
+                    />
+                  )}
+
+                  {parameter?.type === "Boolean" && (
+                    <Checkbox
+                      id={`${parameter.key}-${index}-id`}
+                      checked={item}
                       slotProps={{
-                        textField: {
-                          id: `${parameter.key}-${index}-input-id`,
-                          error:
-                            error && errorIndex && errorIndex.includes(index),
+                        input: {
+                          "aria-label": `Parameter ${parameter.display_name ?? parameter.key} option ${index}`,
+                          "aria-describedby": `${parameter.key}-${index}-helper-text`,
                         },
                       }}
-                    />
-                  </LocalizationProvider>
-                )}
-
-                {parameter?.type === "DateTime" && (
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DateTimePicker
+                      indeterminate={
+                        item === undefined
+                          ? parameter.nullable || parameter.optional
+                          : false
+                      }
+                      onChange={(e) =>
+                        handleMultiChange(
+                          parameter.key,
+                          e.target.checked,
+                          index,
+                        )
+                      }
                       disabled={disabled}
-                      value={item ? dayjs(item) : null}
-                      aria-describedby={`${parameter.key}-helper-text`}
-                      onChange={(newValue: PickerValue) => {
-                        if (newValue && newValue.isValid()) {
-                          handleMultiChange(
-                            parameter.key,
-                            newValue.valueOf(),
-                            index,
-                          );
-                        } else {
-                          handleMultiChange(parameter.key, undefined, index);
-                        }
-                      }}
-                      slotProps={{
-                        textField: {
-                          id: `${parameter.key}-${index}-input-id`,
-                          error:
-                            error && errorIndex && errorIndex.includes(index),
-                        },
-                      }}
                     />
-                  </LocalizationProvider>
-                )}
+                  )}
 
-                {parameter?.type === "Bytes" && (
-                  <Typography>Multi-File Upload Not Supported</Typography>
-                )}
+                  {parameter?.type === "Date" && (
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        disabled={disabled}
+                        value={item ? dayjs(item) : null}
+                        aria-describedby={`${parameter.key}-helper-text`}
+                        onChange={(newValue: PickerValue) => {
+                          if (newValue && newValue.isValid()) {
+                            handleMultiChange(
+                              parameter.key,
+                              newValue.valueOf(),
+                              index,
+                            );
+                          } else {
+                            handleMultiChange(parameter.key, undefined, index);
+                          }
+                        }}
+                        slotProps={{
+                          textField: {
+                            id: `${parameter.key}-${index}-input-id`,
+                            error:
+                              error && errorIndex && errorIndex.includes(index),
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  )}
 
-                {parameter?.type === "Base64" && (
-                  <Typography>Multi-File Upload Not Supported</Typography>
-                )}
-              </Box>
-            </Tooltip>
-            <Tooltip title={removeInputAriaLabel}>
-              <Box component="span" aria-label={undefined}>
-                <IconButton
-                  onClick={() => removeMultiItem(parameter.key, index)}
-                  disabled={disabled}
-                  aria-label={removeInputAriaLabel}
-                >
-                  <FAIcon icon="xmark" />
-                </IconButton>
-              </Box>
-            </Tooltip>
+                  {parameter?.type === "DateTime" && (
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DateTimePicker
+                        disabled={disabled}
+                        value={item ? dayjs(item) : null}
+                        aria-describedby={`${parameter.key}-helper-text`}
+                        onChange={(newValue: PickerValue) => {
+                          if (newValue && newValue.isValid()) {
+                            handleMultiChange(
+                              parameter.key,
+                              newValue.valueOf(),
+                              index,
+                            );
+                          } else {
+                            handleMultiChange(parameter.key, undefined, index);
+                          }
+                        }}
+                        slotProps={{
+                          textField: {
+                            id: `${parameter.key}-${index}-input-id`,
+                            error:
+                              error && errorIndex && errorIndex.includes(index),
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  )}
+
+                  {parameter?.type === "Bytes" && (
+                    <Typography>Multi-File Upload Not Supported</Typography>
+                  )}
+
+                  {parameter?.type === "Base64" && (
+                    <Typography>Multi-File Upload Not Supported</Typography>
+                  )}
+                </Box>
+              </Tooltip>
+              <Tooltip title={removeInputAriaLabel}>
+                <Box component="span" aria-label={undefined}>
+                  <IconButton
+                    onClick={() => removeMultiItem(parameter.key, index)}
+                    disabled={disabled}
+                    aria-label={removeInputAriaLabel}
+                  >
+                    <FAIcon icon="xmark" />
+                  </IconButton>
+                </Box>
+              </Tooltip>
+            </Box>
+            <FormHelperText
+              key={`${parameter.key}-helper-text`}
+              aria-live="polite"
+              error={error}
+              sx={inputDisplayStyling}
+            >
+              {error && errorIndex && errorIndex.includes(index)
+                ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${errorIndexMessage.find((value) => value.index === index)?.msg}`
+                : `${parameter.optional ? "Optional: " : ""}${parameter.description}`}
+            </FormHelperText>
           </Box>
         ))}
-        <FormHelperText
-          key={`${parameter.key}-helper-text`}
-          aria-live="polite"
-          error={error}
-          sx={inputDisplayStyling}
+
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-end",
+          }}
         >
-          {errorMessage
-            ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${errorMessage}`
-            : `${parameter.optional ? "Optional: " : ""}${parameter.description}`}
-        </FormHelperText>
-        <Box sx={inputAddButtonStyling}>
           <AccessButton
             onClick={() => addMultiItem(parameter.key, parameter.default)}
             disabled={disabled}
