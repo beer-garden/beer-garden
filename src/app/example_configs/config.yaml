@@ -100,8 +100,6 @@ metrics:
     url: http://localhost:8200
   prometheus:
     enabled: false
-    host: 0.0.0.0
-    port: 2339
     url: http://localhost:3000
 mq:
   admin_queue_expiry: 3600000
