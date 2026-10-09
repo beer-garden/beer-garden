@@ -106,7 +106,7 @@ export const theme = createTheme({
         root: ({ theme }) => ({
           color: theme.palette.primary.contrastText,
           "&.Mui-error": {
-            color: theme.palette.error.dark,
+            color: theme.palette.error.contrastText,
           },
         }),
       },

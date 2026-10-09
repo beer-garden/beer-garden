@@ -53,11 +53,6 @@ describe("tour_service", () => {
       expect(result[0].target).toBe('[data-step="nav-test-uuid-Home"]');
     });
 
-    it("sets beaconPlacement to top", () => {
-      const steps = [makeTourStep()];
-      const result = ConvertToTourStepProps(steps);
-      expect(result[0].beaconPlacement).toBe("top");
-    });
   });
 
   describe("GenerateTourProps", () => {

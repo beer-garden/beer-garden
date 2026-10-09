@@ -22,6 +22,20 @@ function SSRInitialFilled(_: BaseNumberField.Root.Props) {
 }
 SSRInitialFilled.muiName = "Input";
 
+interface CustomInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  tooltipTitle?: string;
+}
+
+const TooltippedInput = React.forwardRef<HTMLInputElement, CustomInputProps>(
+  ({ tooltipTitle, ...props }, ref) => {
+    return (
+      <Tooltip title={tooltipTitle} disableHoverListener={!tooltipTitle}>
+        <input ref={ref} {...props} />
+      </Tooltip>
+    );
+  },
+);
+
 export default React.forwardRef(function NumberField(
   {
     id: idProp,
@@ -44,23 +58,22 @@ export default React.forwardRef(function NumberField(
   if (idProp) {
     id = idProp;
   }
+
   return (
     <BaseNumberField.Root
       {...other}
       ref={ref}
       render={(props, state) => (
-        <Tooltip title={title} disableHoverListener={!title}>
-          <FormControl
-            size={size}
-            ref={props.ref}
-            disabled={state.disabled}
-            required={state.required}
-            error={error}
-            variant="outlined"
-          >
-            {props.children}
-          </FormControl>
-        </Tooltip>
+        <FormControl
+          size={size}
+          ref={props.ref}
+          disabled={state.disabled}
+          required={state.required}
+          error={error}
+          variant="outlined"
+        >
+          {props.children}
+        </FormControl>
       )}
     >
       <SSRInitialFilled {...other} />
@@ -81,6 +94,8 @@ export default React.forwardRef(function NumberField(
             slotProps={{
               input: props,
             }}
+            inputProps={{ tooltipTitle: title }}
+            inputComponent={TooltippedInput as any}
             endAdornment={
               <InputAdornment
                 position="end"
@@ -98,16 +113,30 @@ export default React.forwardRef(function NumberField(
                   },
                 }}
               >
-                <BaseNumberField.Increment
-                  render={<IconButton size={size} aria-label="Increase" />}
-                >
-                  <FontAwesomeIcon icon="angle-up" />
-                </BaseNumberField.Increment>
-                <BaseNumberField.Decrement
-                  render={<IconButton size={size} aria-label="Decrease" />}
-                >
-                  <FontAwesomeIcon icon="angle-down" />
-                </BaseNumberField.Decrement>
+                <Tooltip title={`Increase ${title}`}>
+                  <BaseNumberField.Increment
+                    render={
+                      <IconButton
+                        size={size}
+                        aria-label={`Increase ${title}`}
+                      />
+                    }
+                  >
+                    <FontAwesomeIcon icon="angle-up" />
+                  </BaseNumberField.Increment>
+                </Tooltip>
+                <Tooltip title={`Decrease ${title}`}>
+                  <BaseNumberField.Decrement
+                    render={
+                      <IconButton
+                        size={size}
+                        aria-label={`Decrease ${title}`}
+                      />
+                    }
+                  >
+                    <FontAwesomeIcon icon="angle-down" />
+                  </BaseNumberField.Decrement>
+                </Tooltip>
               </InputAdornment>
             }
             sx={{ pr: 0 }}
