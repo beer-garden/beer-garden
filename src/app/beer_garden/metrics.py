@@ -376,7 +376,7 @@ def request_garden_send_latency_metrics(interval: int = 15):
     return total
 
 
-def request_garden_return_latency_metrics(target_garden: str, interval: int = 15):
+def request_garden_return_latency_metrics(interval: int = 15):
     # Calcualted the average trip from a Target Garden to this Garden is seconds
 
     local_garden = config.get("garden.name")
@@ -578,7 +578,7 @@ def setup_metrics():
     )
     REGISTRY.register(
         SummaryCollector(
-            partial(request_garden_return_latency_metrics, "downstream"),
+            partial(request_garden_return_latency_metrics),
             name="bg_garden_return_latency",
             description="Total number of seconds each garden is taking to receive",
             labels=["target_garden"],
