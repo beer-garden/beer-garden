@@ -264,10 +264,11 @@ function CommandFormField({
   ) {
     if (parameter.multi) {
       return (
-        <Box key={parameter.key} sx={inputDisplayStyling}>
+        <Box key={parameter.key} id={parameter.key} sx={inputDisplayStyling}>
           <Tooltip title={`${inputAreaAriaLabel}: Multi Select`}>
             <Box component="span" aria-label={undefined}>
               <Select
+                key={parameter.key}
                 id={parameter.key}
                 value={parameter.value}
                 aria-describedby={
@@ -312,7 +313,7 @@ function CommandFormField({
                 ))}
               </Select>
               <FormHelperText
-                id={`${parameter.key}-helper-text`}
+                key={`${parameter.key}-helper-text`}
                 aria-live="polite"
                 error={error}
               >
@@ -335,17 +336,18 @@ function CommandFormField({
               title={parameter.errorMsg ?? "ERROR"}
               aria-label={parameter.errorMsg ?? "ERROR"}
               role="img"
-              id={`${parameter.key}-error-text`}
+              key={`${parameter.key}-error-text`}
             />
           )}
         </Box>
       );
     }
     return (
-      <Box key={parameter.key} sx={inputDisplayStyling}>
+      <Box key={parameter.key} id={parameter.key} sx={inputDisplayStyling}>
         <Tooltip title={`${inputAreaAriaLabel}: Dropdown Select`}>
           <Box component="span" aria-label={undefined}>
             <Select
+              key={parameter.key}
               id={parameter.key}
               value={parameter.value}
               aria-describedby={
@@ -377,7 +379,7 @@ function CommandFormField({
               ))}
             </Select>
             <FormHelperText
-              id={`${parameter.key}-helper-text`}
+              key={`${parameter.key}-helper-text`}
               aria-live="polite"
               error={error}
             >
@@ -401,16 +403,17 @@ function CommandFormField({
             title={parameter.errorMsg ?? "ERROR"}
             aria-label={parameter.errorMsg ?? "ERROR"}
             role="img"
-            id={`${parameter.key}-error-text`}
+            key={`${parameter.key}-error-text`}
           />
         )}
       </Box>
     );
   } else if (parameter.choices && parameter.choices?.display === "typeahead") {
     return (
-      <Box key={parameter.key} sx={inputDisplayStyling}>
+      <Box key={parameter.key} id={parameter.key}sx={inputDisplayStyling}>
         <Autocomplete
           sx={{ width: "100%" }}
+          key={parameter.key}
           id={parameter.key}
           freeSolo
           aria-describedby={
@@ -456,7 +459,7 @@ function CommandFormField({
         />
 
         <FormHelperText
-          id={`${parameter.key}-helper-text`}
+          key={`${parameter.key}-helper-text`}
           aria-live="polite"
           error={error}
         >
@@ -477,7 +480,7 @@ function CommandFormField({
             title={parameter.errorMsg ?? "ERROR"}
             aria-label={parameter.errorMsg ?? "ERROR"}
             role="img"
-            id={`${parameter.key}-error-text`}
+            key={`${parameter.key}-error-text`}
           />
         )}
       </Box>
@@ -494,7 +497,8 @@ function CommandFormField({
     index: number;
   }) => (
     <TextField
-      id={`${parameter.key}-${index}`}
+      key={`${parameter.key}-${index}-input-key`}
+      id={`${parameter.key}-${index}-input-id`}
       value={item}
       variant="outlined"
       onChange={(event: ChangeEvent<HTMLInputElement>) => {
@@ -509,7 +513,8 @@ function CommandFormField({
 
   const SingleString = ({ parameter }: { parameter: InputParam }) => (
     <TextField
-      id={parameter.key}
+      key={`${parameter.key}-input-key`}
+      id={`${parameter.key}-input-id`}
       value={parameter.value}
       variant="outlined"
       onChange={(event: ChangeEvent<HTMLInputElement>) => {
@@ -532,7 +537,8 @@ function CommandFormField({
     index: number;
   }) => (
     <TextField
-      id={`${parameter.key}-${index}`}
+      key={`${parameter.key}-${index}-input-key`}
+      id={`${parameter.key}-${index}-input-id`}
       value={item}
       variant="outlined"
       onChange={(event: ChangeEvent<HTMLInputElement>) => {
@@ -548,7 +554,8 @@ function CommandFormField({
 
   const SingleDictionary = ({ parameter }: { parameter: InputParam }) => (
     <TextField
-      id={parameter.key}
+      key={`${parameter.key}-input-key`}
+      id={`${parameter.key}-input-id`}
       value={parameter.value}
       variant="outlined"
       onChange={(event: ChangeEvent<HTMLInputElement>) => {
@@ -572,7 +579,8 @@ function CommandFormField({
     index: number;
   }) => (
     <NumberField
-      id={`${parameter.key}-${index}`}
+      key={`${parameter.key}-${index}-input-key`}
+      id={`${parameter.key}-${index}-input-id`}
       value={item ?? parameter.default}
       title={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
       disabled={disabled}
@@ -585,7 +593,8 @@ function CommandFormField({
 
   const SingleInteger = ({ parameter }: { parameter: InputParam }) => (
     <NumberField
-      id={parameter.key}
+      key={`${parameter.key}-input-key`}
+      id={`${parameter.key}-input-id`}
       value={parameter.value}
       title={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
       disabled={disabled}
@@ -606,7 +615,8 @@ function CommandFormField({
     index: number;
   }) => (
     <NumberField
-      id={`${parameter.key}-${index}`}
+      key={`${parameter.key}-${index}-input-key`}
+      id={`${parameter.key}-${index}-input-id`}
       value={item ?? parameter.default}
       disabled={disabled}
       title={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
@@ -620,7 +630,8 @@ function CommandFormField({
 
   const SingleFloat = ({ parameter }: { parameter: InputParam }) => (
     <NumberField
-      id={parameter.key}
+      key={`${parameter.key}-input-key`}
+      id={`${parameter.key}-input-id`}
       value={parameter.value}
       disabled={disabled}
       title={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
@@ -642,7 +653,8 @@ function CommandFormField({
     index: number;
   }) => (
     <Checkbox
-      id={`${parameter.key}-${index}`}
+      key={`${parameter.key}-${index}-key`}
+      id={`${parameter.key}-${index}-id`}
       checked={item}
       slotProps={{
         input: {
@@ -662,7 +674,8 @@ function CommandFormField({
 
   const SingleBoolean = ({ parameter }: { parameter: InputParam }) => (
     <Checkbox
-      id={parameter.key}
+      key={`${parameter.key}-input-key`}
+      id={`${parameter.key}-input-id`}
       checked={parameter.value}
       slotProps={{
         input: {
@@ -703,7 +716,8 @@ function CommandFormField({
         }}
         slotProps={{
           textField: {
-            id: parameter.key,
+            key:`${parameter.key}-${index}-input-key`,
+            id:`${parameter.key}-${index}-input-id`,
             error: error && errorIndex && errorIndex.includes(index),
           },
         }}
@@ -726,7 +740,8 @@ function CommandFormField({
         }}
         slotProps={{
           textField: {
-            id: parameter.key,
+            key:`${parameter.key}-input-key`,
+            id:`${parameter.key}-input-id`,
             error: error,
           },
         }}
@@ -757,7 +772,8 @@ function CommandFormField({
         }}
         slotProps={{
           textField: {
-            id: `${parameter.key}_${index}_input`,
+            key:`${parameter.key}-${index}-input-key`,
+            id:`${parameter.key}-${index}-input-id`,
             error: error && errorIndex && errorIndex.includes(index),
           },
         }}
@@ -780,7 +796,8 @@ function CommandFormField({
         }}
         slotProps={{
           textField: {
-            id: `${parameter.key}_input`,
+            key:`${parameter.key}-input-key`,
+            id:`${parameter.key}-input-id`,
             error: error,
           },
         }}
@@ -874,8 +891,8 @@ function CommandFormField({
   if (parameter.multi) {
     return (
       <Container
-        id={parameter.key}
         key={parameter.key}
+        id={parameter.key}
         sx={inputDisplayContainerStyling}
       >
         {parameter.value?.map((item: any, index: any) => (
@@ -954,7 +971,7 @@ function CommandFormField({
           </Box>
         ))}
         <FormHelperText
-          id={`${parameter.key}-helper-text`}
+          key={`${parameter.key}-helper-text`}
           aria-live="polite"
           error={error}
           sx={inputDisplayStyling}
@@ -979,7 +996,7 @@ function CommandFormField({
     );
   } else {
     return (
-      <Box key={parameter.key} sx={inputDisplayStyling}>
+      <Box key={parameter.key} id={parameter.key} sx={inputDisplayStyling}>
         <Box>
           {parameter?.type === "Bytes" && parameter?.value?.name && (
             <IconButton
@@ -1044,7 +1061,7 @@ function CommandFormField({
             </Box>
           </Tooltip>
           <FormHelperText
-            id={`${parameter.key}-helper-text`}
+            key={`${parameter.key}-helper-text`}
             aria-live="polite"
             error={error}
           >
