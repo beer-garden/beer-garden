@@ -52,7 +52,6 @@ describe("tour_service", () => {
       const result = ConvertToTourStepProps(steps);
       expect(result[0].target).toBe('[data-step="nav-test-uuid-Home"]');
     });
-
   });
 
   describe("GenerateTourProps", () => {
