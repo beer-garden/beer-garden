@@ -626,6 +626,7 @@ const EnhancedTable = ({
                         sx={{
                           "&.Mui-focusVisible": {
                             backgroundColor: "action.focus",
+                            borderRadius: "50%",
                           },
                           "&.Mui-focusVisible .MuiTableSortLabel-icon": {
                             opacity: 1,
