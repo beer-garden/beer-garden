@@ -53,139 +53,12 @@ function CommandFormField({
   const [uploadPercentage, setUploadPercentage] = useState(0);
   const [uploadPercentageBuffer, setUploadPercentageBuffer] = useState(0);
 
-  const [error, setError] = useState(false);
-  const [errorIndex, setErrorIndex] = useState<number[]>([]);
-
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(
-    undefined,
-  );
-  const [errorIndexMessage, setErrorIndexMessage] = useState<
-    { index: number; msg: string }[]
-  >([]);
-
   // Bytes and Base64 Triggers
   useEffect(() => {
     if (uploadPercentage !== 0) {
       setUploadPercentage(0);
     }
   }, [resetForm]);
-
-  useEffect(() => {
-    updateError();
-  }, [parameter]);
-
-  const canParseJSON = (str: string) => {
-    try {
-      JSON.parse(str);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const updateError = () => {
-    if (disabled || parameter.optional) {
-      setError(false);
-      setErrorMessage(undefined);
-      return;
-    }
-
-    const isList = Array.isArray(parameter.value);
-
-    let updatedErrorMessage = undefined as string | undefined;
-    const updatedInvalidIndexes = [] as number[];
-    const updatedErrorIndexMessage = [] as { index: number; msg: string }[];
-
-    if (
-      parameter.value === undefined ||
-      parameter.value === null ||
-      parameter.value === ""
-    ) {
-      updatedErrorMessage = "Missing Value";
-    }
-
-    if (updatedErrorMessage === undefined) {
-      if (
-        parameter.choices &&
-        (parameter.choices.display === undefined ||
-          parameter.choices.display === "select")
-      ) {
-        // skip
-      } else if (
-        parameter.choices &&
-        parameter.choices?.display === "typeahead"
-      ) {
-        if (parameter.options === undefined) {
-          updatedErrorMessage = "Missing Options";
-        } else if (
-          !parameter.options.some((option) => option.value === parameter.value)
-        ) {
-          updatedErrorMessage = "Mismatch value from valid Options";
-        }
-      } else if (parameter.type === "Dictionary") {
-        if (isList) {
-          if (
-            parameter?.value.some(
-              (item: any) => item === "null" || !canParseJSON(item),
-            )
-          ) {
-            const invalidIndexes = [] as string[];
-            parameter?.value.map((value: any, index: number) => {
-              if (
-                value === undefined ||
-                value === null ||
-                value === "" ||
-                value === "null"
-              ) {
-                invalidIndexes.push(`Index ${index} Missing`);
-                updatedInvalidIndexes.push(index);
-                updatedErrorIndexMessage.push({ index: index, msg: "Missing" });
-              } else if (!canParseJSON(value)) {
-                invalidIndexes.push(`Index ${index} Invalid JSON`);
-                updatedInvalidIndexes.push(index);
-                updatedErrorIndexMessage.push({
-                  index: index,
-                  msg: "Invalid JSON",
-                });
-              }
-            });
-            updatedErrorMessage = `Invalid Values: ${invalidIndexes.join(", ")}`;
-          }
-        } else {
-          if (parameter.value === "null") {
-            updatedErrorMessage = "Missing Value";
-          } else if (!canParseJSON(parameter.value)) {
-            updatedErrorMessage = "Invalid JSON";
-          }
-        }
-      }
-    }
-
-    if (isList && updatedErrorMessage === undefined) {
-      if (parameter.value.length === 0) {
-        updatedErrorMessage = "Missing Value";
-      } else if (
-        parameter.value.some(
-          (value: any) => value === undefined || value === null || value === "",
-        )
-      ) {
-        const invalidIndexes = [] as string[];
-        parameter?.value.map((value: any, index: number) => {
-          if (value === undefined || value === null || value === "") {
-            invalidIndexes.push(`Index ${index} Missing`);
-            updatedInvalidIndexes.push(index);
-            updatedErrorIndexMessage.push({ index: index, msg: "Missing" });
-          }
-        });
-        updatedErrorMessage = `Invalid Values: ${invalidIndexes.join(", ")}`;
-      }
-    }
-
-    setError(updatedErrorMessage !== undefined);
-    setErrorMessage(updatedErrorMessage);
-    setErrorIndex(updatedInvalidIndexes);
-    setErrorIndexMessage(updatedErrorIndexMessage);
-  };
 
   const handleMultiChange = (key: any, value: any, index?: number) => {
     parametersFields.forEach((param: InputParam) => {
@@ -222,17 +95,32 @@ function CommandFormField({
         param.value.forEach((param_value: any) => {
           newItems.push(param_value);
         });
-        newItems.push(param_default || null);
+        if (Array.isArray(param_default)) {
+          if (param.default.length === 1) {
+            newItems.push(param.default[0]);
+          } else {
+            newItems.push(null);
+          }
+        } else {
+          newItems.push(param_default || null);
+        }
         handleChange(key, newItems);
       }
     });
   };
 
-  const inputAreaAriaLabel = `${parameter.optional ? "Optional: " : ""}Parameter Input ${parameter.display_name ?? parameter.key}`;
+  const parameterDisplayName =
+    parameter.display_name === null ||
+    parameter.display_name === undefined ||
+    parameter.display_name.length === 0
+      ? parameter.display_name
+      : parameter.key;
 
-  const addInputAriaLabel = `Add new value to List for Parameter ${parameter.display_name ?? parameter.key}`;
+  const inputAreaAriaLabel = `${parameter.optional ? "Optional: " : ""}Parameter Input ${parameterDisplayName}`;
 
-  const removeInputAriaLabel = `Remove value from List for Parameter ${parameter.display_name ?? parameter.key}`;
+  const addInputAriaLabel = `Add new value to List for Parameter ${parameterDisplayName}`;
+
+  const removeInputAriaLabel = `Remove value from List for Parameter ${parameterDisplayName}`;
 
   if (!parameter.key) return null;
 
@@ -281,7 +169,7 @@ function CommandFormField({
                   ) ||
                   parameter.error
                 }
-                error={error}
+                error={parameter.error}
                 inputProps={{
                   "aria-label": inputAreaAriaLabel,
                 }}
@@ -310,11 +198,11 @@ function CommandFormField({
               <FormHelperText
                 key={`${parameter.key}-helper-text`}
                 aria-live="polite"
-                error={error}
+                error={parameter.error}
               >
-                {errorMessage
-                  ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${errorMessage}`
-                  : `${parameter.optional ? "Optional: " : ""}${parameter.description}`}
+                {parameter.errorMsg
+                  ? `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : parameterDisplayName}: ${parameter.errorMsg}`
+                  : `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : parameterDisplayName}`}
               </FormHelperText>
             </Box>
           </Tooltip>
@@ -358,7 +246,7 @@ function CommandFormField({
                 ) ||
                 parameter.error
               }
-              error={error}
+              error={parameter.error}
               inputProps={{
                 "aria-label": inputAreaAriaLabel,
               }}
@@ -375,10 +263,10 @@ function CommandFormField({
             <FormHelperText
               key={`${parameter.key}-helper-text`}
               aria-live="polite"
-              error={error}
+              error={parameter.error}
             >
-              {errorMessage
-                ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${errorMessage}`
+              {parameter.errorMsg
+                ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${parameter.errorMsg}`
                 : `${parameter.optional ? "Optional: " : ""}${parameter.description}`}
             </FormHelperText>
           </Box>
@@ -443,7 +331,7 @@ function CommandFormField({
                   placeholder={parameter.display_name}
                   label={parameter.display_name ?? parameter.key}
                   aria-label={inputAreaAriaLabel}
-                  error={error}
+                  error={parameter.error}
                   autoComplete="off"
                 />
               </Box>
@@ -454,10 +342,10 @@ function CommandFormField({
         <FormHelperText
           key={`${parameter.key}-helper-text`}
           aria-live="polite"
-          error={error}
+          error={parameter.error}
         >
-          {errorMessage
-            ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${errorMessage}`
+          {parameter.errorMsg
+            ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${parameter.errorMsg}`
             : `${parameter.optional ? "Optional: " : ""}${parameter.description}`}
         </FormHelperText>
         {loadingChoices &&
@@ -559,7 +447,11 @@ function CommandFormField({
                       }}
                       fullWidth
                       disabled={disabled}
-                      error={error && errorIndex && errorIndex.includes(index)}
+                      error={
+                        parameter.error &&
+                        parameter.errorIndex &&
+                        parameter.errorIndex.includes(index)
+                      }
                       autoComplete="off"
                     />
                   )}
@@ -579,7 +471,11 @@ function CommandFormField({
                       fullWidth
                       multiline
                       disabled={disabled}
-                      error={error && errorIndex && errorIndex.includes(index)}
+                      error={
+                        parameter.error &&
+                        parameter.errorIndex &&
+                        parameter.errorIndex.includes(index)
+                      }
                       autoComplete="off"
                     />
                   )}
@@ -593,7 +489,11 @@ function CommandFormField({
                       onValueChange={(value) =>
                         handleMultiChange(parameter.key, value, index)
                       }
-                      error={error && errorIndex && errorIndex.includes(index)}
+                      error={
+                        parameter.error &&
+                        parameter.errorIndex &&
+                        parameter.errorIndex.includes(index)
+                      }
                       max={
                         parameter.maximum !== undefined
                           ? parameter.maximum
@@ -616,7 +516,11 @@ function CommandFormField({
                       onValueChange={(value) =>
                         handleMultiChange(parameter.key, value, index)
                       }
-                      error={error && errorIndex && errorIndex.includes(index)}
+                      error={
+                        parameter.error &&
+                        parameter.errorIndex &&
+                        parameter.errorIndex.includes(index)
+                      }
                       max={
                         parameter.maximum !== undefined
                           ? parameter.maximum
@@ -678,7 +582,9 @@ function CommandFormField({
                           textField: {
                             id: `${parameter.key}-${index}-input-id`,
                             error:
-                              error && errorIndex && errorIndex.includes(index),
+                              parameter.error &&
+                              parameter.errorIndex &&
+                              parameter.errorIndex.includes(index),
                           },
                         }}
                       />
@@ -706,7 +612,9 @@ function CommandFormField({
                           textField: {
                             id: `${parameter.key}-${index}-input-id`,
                             error:
-                              error && errorIndex && errorIndex.includes(index),
+                              parameter.error &&
+                              parameter.errorIndex &&
+                              parameter.errorIndex.includes(index),
                           },
                         }}
                       />
@@ -737,12 +645,14 @@ function CommandFormField({
             <FormHelperText
               key={`${parameter.key}-helper-text`}
               aria-live="polite"
-              error={error}
+              error={parameter.error}
               sx={inputDisplayStyling}
             >
-              {error && errorIndex && errorIndex.includes(index)
-                ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${errorIndexMessage.find((value) => value.index === index)?.msg}`
-                : `${parameter.optional ? "Optional: " : ""}${parameter.description}`}
+              {parameter.error &&
+              parameter.errorIndex &&
+              parameter.errorIndex.includes(index)
+                ? `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : parameterDisplayName}: ${parameter.errorIndexMessage?.find((value) => value.index === index)?.msg}`
+                : `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : parameterDisplayName}`}
             </FormHelperText>
           </Box>
         ))}
@@ -813,7 +723,7 @@ function CommandFormField({
                   }}
                   fullWidth
                   disabled={disabled}
-                  error={error}
+                  error={parameter.error}
                   autoComplete="off"
                 />
               )}
@@ -829,7 +739,7 @@ function CommandFormField({
                   fullWidth
                   disabled={disabled}
                   multiline
-                  error={error}
+                  error={parameter.error}
                   autoComplete="off"
                 />
               )}
@@ -841,7 +751,7 @@ function CommandFormField({
                   title={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                   disabled={disabled}
                   onValueChange={(value) => handleChange(parameter.key, value)}
-                  error={error}
+                  error={parameter.error}
                   max={
                     parameter.maximum !== undefined
                       ? parameter.maximum
@@ -862,7 +772,7 @@ function CommandFormField({
                   disabled={disabled}
                   title={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                   onValueChange={(value) => handleChange(parameter.key, value)}
-                  error={error}
+                  error={parameter.error}
                   max={
                     parameter.maximum !== undefined
                       ? parameter.maximum
@@ -915,7 +825,7 @@ function CommandFormField({
                     slotProps={{
                       textField: {
                         id: `${parameter.key}-input-id`,
-                        error: error,
+                        error: parameter.error,
                       },
                     }}
                   />
@@ -938,7 +848,7 @@ function CommandFormField({
                     slotProps={{
                       textField: {
                         id: `${parameter.key}-input-id`,
-                        error: error,
+                        error: parameter.error,
                       },
                     }}
                   />
@@ -999,10 +909,10 @@ function CommandFormField({
           <FormHelperText
             key={`${parameter.key}-helper-text`}
             aria-live="polite"
-            error={error}
+            error={parameter.error}
           >
-            {errorMessage
-              ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${errorMessage}`
+            {parameter.errorMsg
+              ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${parameter.errorMsg}`
               : `${parameter.optional ? "Optional: " : ""}${parameter.description}`}
           </FormHelperText>
         </Box>
