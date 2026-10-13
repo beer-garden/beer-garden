@@ -1,5 +1,9 @@
 # Beer Garden Changelog
 
+# TBD
+
+- Fixed migration script for 3.35.0 to only pull in Parent field for Request migration (#)
+
 # 3.35.1
 9/9/2026
 
