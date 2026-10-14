@@ -245,6 +245,7 @@ function UserChangeAccountMapping({
           data={gardenAccounts}
           displayAll
           keyField="garden_name"
+          aria-label="Update Alias Garden Mapping Table"
           columns={[
             {
               id: "garden_name",

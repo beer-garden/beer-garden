@@ -186,6 +186,7 @@ function UserChangeRoles({
         <EnhancedTable
           data={roles ?? []}
           defaultOrderBy="name"
+          aria-label="Select Roles Table"
           columns={[
             {
               id: "selected",

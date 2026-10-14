@@ -129,6 +129,7 @@ function CommandList({
       <EnhancedTable
         key={buttonsDisabled.current}
         data={commands}
+        aria-label="Select Command Table"
         columns={[
           {
             id: "name",

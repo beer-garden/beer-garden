@@ -334,6 +334,7 @@ function RoleIndex({
           data-testid="role-datatable"
           data={roles}
           isLoading={loading}
+          aria-label="Roles Table"
           columns={[
             {
               id: "name",

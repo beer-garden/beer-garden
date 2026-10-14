@@ -231,6 +231,7 @@ function RequestTimeline({ request }: { request: Request }) {
             </Typography>
 
             <EnhancedTable
+              aria-label="Request Timeline Table"
               data={timeline}
               columns={displayColumns}
               displayAll={true}

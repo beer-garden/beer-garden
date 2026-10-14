@@ -379,6 +379,7 @@ function CurrentRequestsTemplate({
                   data={currentRequests}
                   header={header}
                   footer={footer}
+                  aria-label="Current Running Requests Table"
                   columns={[
                     {
                       id: "command",

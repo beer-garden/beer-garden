@@ -687,6 +687,7 @@ function SchedulerViewCard({
           <Grid size="grow">
             <EnhancedTable
               data={requests}
+              aria-label="Scheduler Associated Requests Table"
               columns={[
                 {
                   id: "command",

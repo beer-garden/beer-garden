@@ -126,6 +126,7 @@ function InstanceManageQueueDialog({
         <EnhancedTable
           data={queues}
           displayAll={true}
+          aria-label="Instance Queues Table"
           header={
             <Box sx={{ m: 2 }}>
               <Typography variant="body1" sx={{ fontWeight: "bold" }}>
