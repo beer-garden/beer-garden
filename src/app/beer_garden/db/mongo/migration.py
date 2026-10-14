@@ -247,7 +247,9 @@ def ensure_v3_35_model_migration():
         )
         request_updates = []
         request_collection = db.get_collection("request")
-        for legacy_request in request_collection.find({"parent": {"$exists": True}}):
+        for legacy_request in request_collection.find(
+            {"parent": {"$exists": True}}, {"parent": 1}
+        ):
             if legacy_request:
                 if "parent" in legacy_request and isinstance(
                     legacy_request["parent"], DBRef
