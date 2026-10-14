@@ -63,3 +63,13 @@ async def update_one(
 
     """
     return await async_db[collection].update_one(filter=filter, update=update)
+
+
+async def aggregation(collection: str = None, pipeline: list = None) -> list:
+    cursor = await async_db[collection].aggregate(pipeline)
+
+    results = []
+
+    async for document in cursor:
+        results.append(document)
+    return results
