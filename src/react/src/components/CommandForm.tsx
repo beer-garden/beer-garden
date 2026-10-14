@@ -772,11 +772,25 @@ function CommandForm({
       let parameterValue = inputParameter.value;
 
       if (inputParameter.type === "Dictionary") {
-        try {
-          parameterValue = JSON.parse(inputParameter.value);
-        } catch {
-          parameterValue = undefined;
-          console.log("Failed Parsing JSON");
+        if (inputParameter.multi) {
+          const inputParameterArray: Array<Record<string, string>> = [];
+          for (const val of inputParameter.value) {
+            try {
+              parameterValue = JSON.parse(val);
+            } catch {
+              parameterValue = undefined;
+            }
+            if (parameterValue) {
+              inputParameterArray.push(parameterValue);
+            }
+          }
+          parameterValue = inputParameterArray;
+        } else {
+          try {
+            parameterValue = JSON.parse(inputParameter.value);
+          } catch {
+            parameterValue = undefined;
+          }
         }
       }
 
@@ -854,9 +868,139 @@ function CommandForm({
 
   const handleChange = (name: any, value: any) => {
     altParametersFields.current = altParametersFields.current.map((param) =>
-      param.key === name ? { ...param, value: value } : param,
+      param.key === name ? updateError({ ...param, value: value }) : param,
     );
     setParameterFields([...altParametersFields.current]);
+  };
+
+  const updateError = (param: InputParam) => {
+    if (disabled || param.optional) {
+      param.error = false;
+      param.errorMsg = undefined;
+      param.errorIndex = undefined;
+      param.errorIndexMessage = undefined;
+    } else {
+      const isList = Array.isArray(param.value);
+
+      let updatedErrorMessage = undefined as string | undefined;
+      const updatedInvalidIndexes = [] as number[];
+      const updatedErrorIndexMessage = [] as { index: number; msg: string }[];
+
+      const canParseJSON = (str: string) => {
+        try {
+          JSON.parse(str);
+          return true;
+        } catch {
+          return false;
+        }
+      };
+
+      if (
+        param.value === undefined ||
+        param.value === null ||
+        param.value === "" ||
+        (Array.isArray(param.value) && param.value.length === 0)
+      ) {
+        updatedErrorMessage = "Missing Value";
+      }
+
+      if (updatedErrorMessage === undefined) {
+        if (
+          param.choices &&
+          (param.choices.display === undefined ||
+            param.choices.display === "select")
+        ) {
+          // skip
+        } else if (param.choices && param.choices?.display === "typeahead") {
+          if (param.options === undefined) {
+            updatedErrorMessage = "Missing Options";
+          } else if (
+            !param.options.some((option) => option.value === param.value)
+          ) {
+            updatedErrorMessage = "Mismatch value from valid Options";
+          }
+        } else if (param.type === "Dictionary") {
+          if (isList) {
+            if (
+              param?.value.some(
+                (item: any) => item === "null" || !canParseJSON(item),
+              )
+            ) {
+              const invalidIndexes = [] as string[];
+              param?.value.map((value: any, index: number) => {
+                if (
+                  value === undefined ||
+                  value === null ||
+                  value === "" ||
+                  value === "null" ||
+                  (Array.isArray(value) && value.length === 0)
+                ) {
+                  invalidIndexes.push(`Index ${index} Missing Value`);
+                  updatedInvalidIndexes.push(index);
+                  updatedErrorIndexMessage.push({
+                    index: index,
+                    msg: "Missing Value",
+                  });
+                } else if (!canParseJSON(value)) {
+                  invalidIndexes.push(`Index ${index} Invalid JSON`);
+                  updatedInvalidIndexes.push(index);
+                  updatedErrorIndexMessage.push({
+                    index: index,
+                    msg: "Invalid JSON",
+                  });
+                }
+              });
+              updatedErrorMessage = `Invalid Values: ${invalidIndexes.join(", ")}`;
+            }
+          } else {
+            if (param.value === "null") {
+              updatedErrorMessage = "Missing Value";
+            } else if (!canParseJSON(param.value)) {
+              updatedErrorMessage = "Invalid JSON";
+            }
+          }
+        }
+      }
+
+      if (isList && updatedErrorMessage === undefined) {
+        if (param.value.length === 0) {
+          updatedErrorMessage = "Missing Value";
+        } else if (
+          param.value.some(
+            (value: any) =>
+              value === undefined ||
+              value === null ||
+              value === "" ||
+              (Array.isArray(value) && value.length === 0),
+          )
+        ) {
+          const invalidIndexes = [] as string[];
+          param?.value.map((value: any, index: number) => {
+            if (
+              value === undefined ||
+              value === null ||
+              value === "" ||
+              (Array.isArray(value) && value.length === 0)
+            ) {
+              invalidIndexes.push(`Index ${index} Missing`);
+              updatedInvalidIndexes.push(index);
+              updatedErrorIndexMessage.push({
+                index: index,
+                msg: "Missing Value",
+              });
+            }
+          });
+          updatedErrorMessage = `Invalid Values: ${invalidIndexes.join(", ")}`;
+        }
+      }
+
+      param.error = updatedErrorMessage !== undefined;
+      param.errorMsg = updatedErrorMessage;
+      param.errorIndex = updatedInvalidIndexes;
+      param.errorIndexMessage = updatedErrorIndexMessage;
+    }
+
+    return param;
   };
 
   const renderInputLabel = (parameter: InputParam) => {

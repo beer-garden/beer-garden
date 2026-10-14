@@ -5,7 +5,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import { ThemeProvider } from "@mui/material/styles";
 import { MouseEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { ACTIONS, type EventData, Joyride, STATUS } from "react-joyride";
+import { ACTIONS, type EventData, Joyride, STATUS, Step } from "react-joyride";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 
@@ -74,13 +74,30 @@ function App() {
   };
 
   const tourStepsRef = useRef<Array<TourStepProps>>([]);
+  const [tourSteps, setTourSteps] = useState<Step[]>([]);
 
   const [runTour, setRunTour] = useState(false);
   const runTourRef = useRef(runTour);
   const toggleRunTour = () => {
     runTourRef.current = !runTourRef.current;
+    setTourSteps(ConvertToTourStepProps(tourStepsRef.current));
     setRunTour(runTourRef.current);
   };
+
+  useEffect(() => {
+    if (runTour) {
+      // Give Joyride a brief moment to mount the beacon into the DOM,
+      // then open the tour
+      setTimeout(() => {
+        const beacon = document.querySelector(
+          ".react-joyride__beacon",
+        ) as HTMLElement;
+        if (beacon) {
+          beacon.click();
+        }
+      }, 0);
+    }
+  }, [runTour]);
   const rootGardenRef = useRef<Garden | undefined>(undefined);
   const [gardenState, setGardenState] = useState<number>(0);
 
@@ -588,14 +605,21 @@ function App() {
               <div key={reloadUI}>
                 <BrowserRouter basename={baseURL}>
                   <AppParams addRequestItem={addRequestItem} />
-                  {runTour && (
-                    <Joyride
-                      onEvent={handleJoyrideEvent}
-                      continuous
-                      run={true}
-                      steps={ConvertToTourStepProps(tourStepsRef.current)}
-                    />
-                  )}
+                  <Joyride
+                    onEvent={handleJoyrideEvent}
+                    continuous
+                    run={runTour}
+                    initialStepIndex={0}
+                    steps={tourSteps}
+                    options={{
+                      zIndex: 1200,
+                    }}
+                    styles={{
+                      beacon: {
+                        opacity: 0,
+                      },
+                    }}
+                  />
                   <div role="navigation">
                     <NavigationMenu
                       listeners={listeners.current}

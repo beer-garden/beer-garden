@@ -584,6 +584,12 @@ function NavigationMenu({
             component={NavLink}
             to="/"
             {...GenerateTourProps(homeLinkTourStep)}
+            onKeyDown={(e) => {
+              if (e.key === " ") {
+                e.preventDefault();
+                e.currentTarget.click();
+              }
+            }}
           >
             <FAIcon
               icon={iconDefault as IconProp}
