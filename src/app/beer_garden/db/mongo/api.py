@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import json
 import logging
 from typing import List, Optional, Type, Union
 
 import brewtils.models
+import gridfs
 from box import Box
 from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
@@ -14,6 +16,7 @@ from mongoengine import (
     connect,
     register_connection,
 )
+from mongoengine.connection import get_db
 from mongoengine.queryset.visitor import Q, QCombination
 from pymongo import InsertOne, ReplaceOne, UpdateOne
 
@@ -593,3 +596,54 @@ def reload(obj: ModelItem) -> ModelItem:
 
 def distinct(brewtils_clazz: ModelItem, field: str) -> List:
     return _model_map[brewtils_clazz].objects.distinct(field)
+
+
+def gridfs_create(model: dict, **kwargs) -> str:
+    db = get_db()
+    fs = gridfs.GridFS(db)
+
+    file_id = fs.put(json.dumps(model), encoding="utf-8", **kwargs)
+
+    return file_id
+
+
+def gridfs_update_metadata(filter: dict, metadata_updates: dict):
+
+    get_db()["fs.files"].update_one(
+        filter,
+        {"$set": metadata_updates},
+    )
+    get_db()["fs.chunks"].update_many(
+        filter,
+        {"$set": metadata_updates},
+    )
+
+
+def gridfs_delete(filter: dict):
+    db = get_db()
+    fs = gridfs.GridFS(db)
+
+    for grid_out in fs.find(filter):
+        fs.delete(grid_out._id)
+
+
+def gridfs_read(filter: dict):
+    db = get_db()
+    fs = gridfs.GridFS(db)
+    file_doc = fs.find_one(filter)
+
+    if file_doc:
+        return json.loads(file_doc.read().decode("utf-8"))
+
+    return None
+
+
+def gridfs_exists(filter: dict) -> bool:
+    db = get_db()
+    fs = gridfs.GridFS(db)
+    file_doc = fs.find_one(filter)
+
+    if file_doc:
+        return True
+
+    return False

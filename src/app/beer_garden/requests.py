@@ -6,13 +6,13 @@ The request service is responsible for:
 * Validating requests
 * Request completion notification
 """
-
 import base64
 import datetime
 import gzip
 import json
 import logging
 import re
+import sys
 import threading
 import time
 from asyncio import Future
@@ -38,8 +38,8 @@ from brewtils.models import (
     System,
 )
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
-from mongoengine import DoesNotExist
-from pymongo.errors import BulkWriteError
+from mongoengine.errors import DoesNotExist, OperationError
+from pymongo.errors import BulkWriteError, DocumentTooLarge
 from requests import Session
 
 import beer_garden.config as config
@@ -947,6 +947,174 @@ def create_request(request: Request) -> Request:
         )
 
     return db.create(request)
+
+
+REQUEST_MAX_PARAM_SIZE = 5 * 1_000_000
+
+
+def save_request(request: Request, validation: bool = True) -> Request:
+
+    if validation:
+        if request.status not in Request.STATUS_LIST:
+            raise ModelValidationError(
+                f"Can not save Request {request}: Invalid status '{request.status}'"
+            )
+
+        if (
+            request.command_type is not None
+            and request.command_type not in Request.COMMAND_TYPES
+        ):
+            raise ModelValidationError(
+                f"Can not save Request {request}: Invalid command type"
+                f" '{request.command_type}'"
+            )
+
+        if (
+            request.output_type is not None
+            and request.output_type not in Request.OUTPUT_TYPES
+        ):
+            raise ModelValidationError(
+                f"Can not save Request {request}: Invalid output type '{request.output_type}'"
+            )
+
+    # Pre Serialize
+    request.updated_at = datetime.datetime.now(tz=datetime.timezone.utc)
+    if not request.metadata:
+        request.metadata = {}
+
+    if not request.command_display_name:
+        request.command_display_name = request.command
+
+    status_key = f"{request.status}_{config.get('garden.name')}"
+    if status_key not in request.metadata:
+        request.metadata[status_key] = int(
+            datetime.datetime.now(tz=datetime.timezone.utc).timestamp() * 1000
+        )
+
+    if request.parent is not None and request.parent_id is None:
+        request.parent_id = request.parent.id
+
+    if request.source_garden is None:
+        request.source_garden = config.get("garden.name")
+
+    if request.target_garden is None:
+        request.target_garden = config.get("garden.name")
+
+    if request.has_parent or request.parent_id is not None:
+
+        if request.parent_id is None:
+            if request.parent is not None:
+                request.parent_id = request.parent.id
+            else:
+                request.has_parent = False
+        elif db.count(Request, id=request.parent_id) == 0:
+            # Request is an Orphan, removing parent
+            request.has_parent = False
+            request.parent_id = None
+
+    if request.root_command_type is None:
+        if request.command_type == "TEMP":
+            request.root_command_type = "TEMP"
+        elif not request.has_parent or request.parent_id is None:
+            request.root_command_type = request.command_type
+
+        else:
+            # If this is a child request, we need to set the root_command_type
+            # to the same as the parent request
+            try:
+                parent_request = db.query_unique(
+                    Request,
+                    raise_missing=True,
+                    id=request.parent_id,
+                    include_fields=["root_command_type"],
+                )
+                request.root_command_type = parent_request.root_command_type
+            except DoesNotExist:
+                # Parent request was deleted, so we need to set the root_command_type
+                # to the same as this request
+                request.root_command_type = request.command_type
+
+    # Checkout Output Size
+    if (
+        request.output
+        and sys.getsizeof(request.output) > REQUEST_MAX_PARAM_SIZE
+        and not db.gridfs_exists({"request_id": request.id, "output": True})
+    ):
+        large_output = deepcopy(request.output)
+        request.output = None
+
+    # Save Request
+
+    if request.id is None or db.count(Request, id=request.id) == 0:
+        remove_bytes_parameter_base64(request)
+
+        try:
+            db.create_direct(request)
+        except (DocumentTooLarge, OperationError):
+            large_parameters = deepcopy(request.parameters)
+            request.parameters = None
+            db.create_direct(request)
+    else:
+        # Migrate Metadata
+
+        # Check status transition
+        old_status = db.query_unique(
+            Request,
+            raise_missing=True,
+            id=request.id,
+            include_fields=["status"],
+        ).status
+
+        if request.status != old_status:
+            if old_status in Request.COMPLETED_STATUSES:
+                raise RequestStatusTransitionError(
+                    "Status for a request cannot be updated once it has been "
+                    f"completed. Current: {old_status}, "
+                    f"Requested: {request.status}"
+                )
+
+            if (
+                old_status == "IN_PROGRESS"
+                and request.status not in Request.COMPLETED_STATUSES
+            ):
+                raise RequestStatusTransitionError(
+                    "Request status can only transition from IN_PROGRESS to a "
+                    f"completed status. Requested: {request.status}, completed statuses "
+                    f"are {Request.COMPLETED_STATUSES}."
+                )
+
+        db.update_direct(request)
+
+    if large_output:
+        db.gridfs_create(model=large_output, request_id=request.id, output=True)
+    if large_parameters:
+        db.gridfs_create(model=large_parameters, request_id=request.id, parameters=True)
+
+    # Post Save
+    db.gridfs_update_metadata(
+        {"request_id": request.id, "parameters": True},
+        {
+            "status": request.status,
+            "updated_at": request.updated_at,
+            "root_command_type": request.root_command_type,
+        },
+    )
+
+    db.gridfs_update_metadata(
+        {"request_id": request.id, "output": True},
+        {
+            "status": request.status,
+            "updated_at": request.updated_at,
+            "root_command_type": request.root_command_type,
+        },
+    )
+
+    # Required for read functions
+    # if request.parameters is None:
+    #     request.parameters = db.gridfs_read({"request_id":request.id, "parameters": True})
+
+    # if request.status in Request.COMPLETED_STATUSES and request.output is None:
+    #     request.output = db.gridfs_read({"request_id":request.id, "output": True})
 
 
 def remove_bytes_parameter_base64(
