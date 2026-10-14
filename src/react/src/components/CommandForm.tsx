@@ -1003,16 +1003,10 @@ function CommandForm({
   };
 
   const renderInputLabel = (parameter: InputParam) => {
-    let parameter_key = `${parameter.key}-input-id`;
-    // if (parameter.type == "DateTime") {
-    //   parameter_key = `${parameter.key}_input`;
-    // }
-    if (parameter.multi) {
-      parameter_key = `${parameter.key}-0-input-id`;
-    }
-    // if (parameter.type == "DateTime" && parameter.multi) {
-    //   parameter_key = `${parameter.key}_0_input`;
-    // }
+    const parameter_key = parameter.multi
+      ? `${parameter.key}-0-input-id`
+      : `${parameter.key}-input-id`;
+
     return (
       <FormLabel htmlFor={parameter_key} sx={{ fontWeight: "bold" }}>
         {parameter.key}
