@@ -60,7 +60,9 @@ class SummaryCollector(Collector):
 
 
 class CumulativeCollector(Collector):
-    def __init__(self, collector, name, description=None, labels=None, metric_keys=None):
+    def __init__(
+        self, collector, name, description=None, labels=None, metric_keys=None
+    ):
         self._lock = Lock()
         self._name = name
         self._description = description
