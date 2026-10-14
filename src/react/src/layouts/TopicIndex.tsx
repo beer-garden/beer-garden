@@ -560,13 +560,12 @@ function TopicIndex({
         );
 
       return (
-        <Grid container>
-          <Grid size="grow">
-            <Typography sx={{ wordBreak: "break-word" }}>
-              {topic.name}
-            </Typography>
-          </Grid>
-          <Grid sx={{ justifyContent: "flex-end" }}>
+        <Box sx={{ display: "flex", width: "100%" }}>
+          <Box>
+            <Typography>{topic.name}</Typography>
+          </Box>
+          <Box sx={{ flexGrow: 1 }} />
+          <Box sx={{ justifyContent: "flex-end" }}>
             <ButtonGroup sx={{ ml: 1 }}>
               <AccessButton
                 basic
@@ -613,8 +612,8 @@ function TopicIndex({
                 <FontAwesomeIcon icon="trash" />
               </AccessButton>
             </ButtonGroup>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       );
     }
 
