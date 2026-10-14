@@ -6,7 +6,6 @@ import {
   FormControl,
   FormLabel,
   Grid,
-  InputLabel,
   MenuItem,
   Select,
   Stack,
@@ -860,15 +859,15 @@ function CommandForm({
   };
 
   const renderInputLabel = (parameter: InputParam) => {
-    let parameter_key = parameter.key
+    let parameter_key = parameter.key;
     if (parameter.type == "DateTime") {
-      parameter_key = `${parameter.key}_input`
+      parameter_key = `${parameter.key}_input`;
     }
     if (parameter.multi) {
-      parameter_key = `${parameter.key}-0`
+      parameter_key = `${parameter.key}-0`;
     }
     if (parameter.type == "DateTime" && parameter.multi) {
-      parameter_key = `${parameter.key}_0_input`
+      parameter_key = `${parameter.key}_0_input`;
     }
     return (
       <FormLabel htmlFor={parameter_key} sx={{ fontWeight: "bold" }}>
