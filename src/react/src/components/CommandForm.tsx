@@ -898,7 +898,6 @@ function CommandForm({
             <Grid size={{ xs: 4 }}>
               <FormLabel
                 id="command-type-label"
-                component="label"
                 htmlFor="COMMAND_TYPE"
                 sx={{ fontWeight: "bold" }}
               >
