@@ -924,7 +924,7 @@ function CommandFormField({
                         }}
                         slotProps={{
                           textField: {
-                            id: parameter.key,
+                            id: `${parameter.key}-${index}`,
                             error:
                               !disabled &&
                               !parameter.optional &&

@@ -860,8 +860,18 @@ function CommandForm({
   };
 
   const renderInputLabel = (parameter: InputParam) => {
+    let parameter_key = parameter.key
+    if (parameter.type == "DateTime") {
+      parameter_key = `${parameter.key}_input`
+    }
+    if (parameter.multi) {
+      parameter_key = `${parameter.key}-0`
+    }
+    if (parameter.type == "DateTime" && parameter.multi) {
+      parameter_key = `${parameter.key}_0_input`
+    }
     return (
-      <FormLabel htmlFor={parameter.key} sx={{ fontWeight: "bold" }}>
+      <FormLabel htmlFor={parameter_key} sx={{ fontWeight: "bold" }}>
         {parameter.key}
       </FormLabel>
     );
@@ -889,6 +899,7 @@ function CommandForm({
             <Grid size={{ xs: 4 }}>
               <FormLabel
                 id="command-type-label"
+                component="label"
                 htmlFor="COMMAND_TYPE"
                 sx={{ fontWeight: "bold" }}
               >
@@ -898,13 +909,9 @@ function CommandForm({
 
             <Grid size="grow">
               <FormControl fullWidth>
-                <InputLabel id="command-type-label-select">
-                  Command Type
-                </InputLabel>
                 <Select
-                  labelId="command-type-label-select"
+                  labelId="command-type-label"
                   id="COMMAND_TYPE"
-                  label="Command Type"
                   value={request?.command_type}
                   onChange={(e) =>
                     setRequest({ ...request, command_type: e.target.value })
