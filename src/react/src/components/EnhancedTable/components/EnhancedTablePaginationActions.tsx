@@ -44,7 +44,7 @@ export function EnhancedTablePaginationActions(
   };
 
   return (
-    <Box sx={{ display: "flex", m: 2.5 }}>
+    <Box sx={{ display: "flex", m: 2.5, overflow: "hidden" }}>
       <IconButton
         onClick={handleFirstPageButtonClick}
         disabled={page === 0}
