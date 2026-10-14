@@ -16,7 +16,7 @@ from functools import partial
 from threading import Lock
 
 import elasticapm
-from brewtils.models import BaseModel, Event, Operation, Request
+from brewtils.models import BaseModel, Event, Garden, Operation, Request
 from elasticapm import Client
 from elasticapm.metrics.base_metrics import MetricSet
 from prometheus_client.core import REGISTRY, GaugeMetricFamily, SummaryMetricFamily
@@ -25,7 +25,7 @@ from prometheus_client.registry import Collector
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.events
-from beer_garden.garden import get_gardens
+from beer_garden.garden import calculate_garden_statistics
 
 logger = logging.getLogger(__name__)
 
@@ -60,12 +60,15 @@ class SummaryCollector(Collector):
 
 
 class CumulativeCollector(Collector):
-    def __init__(self, collector, name, description=None, labels=None):
+    def __init__(
+        self, collector, name, description=None, labels=None, metric_keys=None
+    ):
         self._lock = Lock()
         self._name = name
         self._description = description
         self._labels = [] if labels is None else labels
         self._collector = collector
+        self._metric_keys = metric_keys
 
     def collect(self):
         with self._lock:
@@ -76,16 +79,29 @@ class CumulativeCollector(Collector):
         gauge = GaugeMetricFamily(
             self._name,
             self._description,
-            labels=self._labels,
+            labels=(
+                self._labels
+                if self._metric_keys is None
+                else (self._labels + ["METRIC"])
+            ),
         )
 
         # 4. Apply Values
         for value in values:
-            labels = []
-            for label_key in self._labels:
-                labels.append(value[label_key])
 
-            gauge.add_metric(labels, value["count"])
+            if self._metric_keys is None:
+                labels = []
+                for label_key in self._labels:
+                    labels.append(value[label_key])
+                gauge.add_metric(labels, value["count"])
+            else:
+                for metric_key in self._metric_keys:
+                    if metric_key in value:
+                        labels = []
+                        for label_key in self._labels:
+                            labels.append(value[label_key])
+                        labels.append(metric_key)
+                        gauge.add_metric(labels, value[metric_key])
         yield gauge
 
 
@@ -316,7 +332,9 @@ def request_garden_send_latency_metrics(interval: int = 15):
     # Calculated the average trip down to a Target Garden from this Garden in seconds
 
     local_garden = config.get("garden.name")
-    gardens = get_gardens(include_local=False)
+    gardens = db.query(
+        Garden, include_fields=["name"], filter_params={"name__ne": local_garden}
+    )
 
     total = []
     for garden in gardens:
@@ -380,7 +398,9 @@ def request_garden_return_latency_metrics(interval: int = 15):
     # Calcualted the average trip from a Target Garden to this Garden is seconds
 
     local_garden = config.get("garden.name")
-    gardens = get_gardens(include_local=False)
+    gardens = gardens = db.query(
+        Garden, include_fields=["name"], filter_params={"name__ne": local_garden}
+    )
 
     total = []
     for garden in gardens:
@@ -434,6 +454,44 @@ def request_garden_return_latency_metrics(interval: int = 15):
                     "sum_value": result[0]["sum_value"],
                 }
             )
+
+    return total
+
+
+def garden_os_metrics():
+    # Collect the OS CPU/MEM metrics provided by Garden Metadata
+
+    local_garden = config.get("garden.name")
+    gardens = db.query(
+        Garden,
+        include_fields=["metadata", "name"],
+        filter_params={"name__ne": local_garden},
+    )
+
+    total = []
+
+    total.append(calculate_garden_statistics() | {"GARDEN_NAME": local_garden})
+
+    keys = [
+        "CPU_USAGE",
+        "CPU_BG_USAGE",
+        "MEM_TOTAL",
+        "MEM_USAGE",
+        "MEM_BG_USAGE",
+        "MEM_AVAILABLE",
+        "MEM_FREE",
+    ]
+
+    for garden in gardens:
+        mapped_keys = {}
+
+        for key in keys:
+            if key in garden.metadata:
+                mapped_keys[key] = garden.metadata[key]
+
+        if len(mapped_keys) > 0:
+            mapped_keys["GARDEN_NAME"] = garden.name
+            total.append(mapped_keys)
 
     return total
 
@@ -582,6 +640,23 @@ def setup_metrics():
             name="bg_garden_return_latency",
             description="Total number of seconds each garden is taking to receive",
             labels=["target_garden"],
+        )
+    )
+    REGISTRY.register(
+        CumulativeCollector(
+            partial(garden_os_metrics),
+            name="bg_garden_os_metrics",
+            description="Garden OS Metrics CPU/MEM",
+            labels=["GARDEN_NAME"],
+            metric_keys=[
+                "CPU_USAGE",
+                "CPU_BG_USAGE",
+                "MEM_TOTAL",
+                "MEM_USAGE",
+                "MEM_BG_USAGE",
+                "MEM_AVAILABLE",
+                "MEM_FREE",
+            ],
         )
     )
     REGISTRY.register(

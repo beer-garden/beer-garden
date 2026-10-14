@@ -41,6 +41,7 @@ setup(
         "wrapt", # Latest 1.17.3      
         "elastic-apm", # Latest 6.24.0
         "ldap3>=2.9.1", # Latest 2.9.1
+        "psutil", # Latest 7.2.2
         "pyrabbit2<2", # Latest 1.0.7
         "pyjwt>=2.4.0", # Latest 2.10.1
         "passlib<1.8", # Latest 1.7.4
