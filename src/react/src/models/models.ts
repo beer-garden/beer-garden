@@ -67,7 +67,9 @@ export interface InputParam extends Parameter {
   isInvalid: boolean;
   options: Array<{ label: string; value: any }> | undefined;
   error: boolean;
+  errorIndex?: number[];
   errorMsg?: string;
+  errorIndexMessage?: { index: number; msg: string }[];
 }
 
 export interface SystemForceDeleteDialogProps {

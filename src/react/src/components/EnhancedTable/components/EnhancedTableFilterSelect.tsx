@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Grid } from "@mui/material";
+import { Box, Grid } from "@mui/material";
 import Button from "@mui/material/Button";
 import Divider from "@mui/material/Divider";
 import Popover from "@mui/material/Popover";
@@ -72,7 +72,26 @@ export const EnhancedTableFilterSelect = ({
         horizontal: "left",
       }}
     >
-      <Typography sx={{ p: 2 }}>Filter</Typography>
+      <Grid container>
+        <Grid size="grow">
+          <Box sx={{ display: "flex" }}>
+            <Typography sx={{ p: 2 }}>Filter</Typography>
+          </Box>
+        </Grid>
+        <Grid>
+          <Button
+            onClick={() => {
+              setShowFilter(false);
+            }}
+            aria-label="Close Table Filter"
+            sx={{ m: 2 }}
+            color="info"
+            variant="contained"
+          >
+            <FontAwesomeIcon icon="xmark" />
+          </Button>
+        </Grid>
+      </Grid>
 
       <Grid container sx={{}}>
         <Grid size="grow" sx={{ ml: 2 }}>
