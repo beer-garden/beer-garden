@@ -772,11 +772,25 @@ function CommandForm({
       let parameterValue = inputParameter.value;
 
       if (inputParameter.type === "Dictionary") {
-        try {
-          parameterValue = JSON.parse(inputParameter.value);
-        } catch {
-          parameterValue = undefined;
-          console.log("Failed Parsing JSON");
+        if (inputParameter.multi) {
+          const inputParameterArray: Array<Record<string, string>> = [];
+          for (const val of inputParameter.value) {
+            try {
+              parameterValue = JSON.parse(val);
+            } catch {
+              parameterValue = undefined;
+            }
+            if (parameterValue) {
+              inputParameterArray.push(parameterValue);
+            }
+          }
+          parameterValue = inputParameterArray;
+        } else {
+          try {
+            parameterValue = JSON.parse(inputParameter.value);
+          } catch {
+            parameterValue = undefined;
+          }
         }
       }
 
