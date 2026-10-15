@@ -79,6 +79,7 @@ function SystemList({ systemListButtonClick }: { systemListButtonClick: any }) {
     <EnhancedTable
       data={systems}
       isLoading={loading}
+      aria-label="Select System Table"
       columns={[
         {
           id: "namespace",

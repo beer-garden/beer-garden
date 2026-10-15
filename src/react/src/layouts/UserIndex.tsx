@@ -733,6 +733,7 @@ function UserIndex({
         data-testid="user-datatable"
         data={users}
         isLoading={loading}
+        aria-label="Users Table"
         columns={[
           {
             id: "username",

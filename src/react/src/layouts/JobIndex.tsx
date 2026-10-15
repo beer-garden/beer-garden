@@ -516,6 +516,7 @@ function JobIndex({
     <div>
       <EnhancedTable
         data={jobs}
+        aria-label="Jobs Table"
         columns={[
           {
             id: "action",

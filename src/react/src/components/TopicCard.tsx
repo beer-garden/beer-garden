@@ -315,6 +315,7 @@ function TopicCard({
           {topic && topic.subscribers && topic.subscribers.length > 0 && (
             <EnhancedTable
               data={topic.subscribers}
+              aria-label="Topic Subscribers Table"
               header={
                 <Box sx={{ m: 2 }}>
                   <Typography sx={{ fontWeight: "bold" }}>
@@ -400,6 +401,7 @@ function TopicCard({
 
           <EnhancedTable
             data={requests}
+            aria-label="topic Associated Requests Table"
             columns={[
               {
                 id: "command",

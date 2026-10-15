@@ -442,6 +442,7 @@ function InstanceCancelDeleteRequestsDialog({
         <EnhancedTable
           data={countsDataModels}
           displayAll={true}
+          aria-label="Instance Request Counts Table"
           header={
             <Box sx={{ m: 2 }}>
               <Typography variant="body1" sx={{ fontWeight: "bold" }}>

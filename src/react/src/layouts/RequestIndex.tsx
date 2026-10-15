@@ -600,6 +600,7 @@ function RequestIndex({
         defaultOrder="desc"
         isLoading={loading}
         defaultRowsPerPageOptions={25}
+        aria-label="Requests Table"
       />
     </div>
   );

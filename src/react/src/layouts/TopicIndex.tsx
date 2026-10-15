@@ -753,6 +753,7 @@ function TopicIndex({
         defaultOrder="desc"
         isLoading={loading}
         defaultRowsPerPageOptions={25}
+        aria-label="Topics Table"
       />
     );
   }

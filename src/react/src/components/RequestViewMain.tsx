@@ -323,6 +323,7 @@ function RequestViewMain({
         </Grid>
       )}
       <EnhancedTable
+        aria-label="Current Request Table"
         data={[request]}
         columns={buildColumns()}
         displayAll={true}

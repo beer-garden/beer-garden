@@ -916,6 +916,7 @@ function GardenSummary({
                 size="small"
                 displayAll={true}
                 columns={getConnectionColumns()}
+                aria-label="Downstream Garden Connections Table"
               />
             )}
           </Box>
