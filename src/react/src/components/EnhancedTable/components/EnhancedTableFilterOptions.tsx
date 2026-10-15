@@ -453,7 +453,15 @@ export const EnhancedTableFilterOptions = ({
                 {columns
                   .filter((tableColumns) => tableColumns.filterable === true)
                   .map((tableColumns) => (
-                    <MenuItem key={tableColumns.id} value={tableColumns.field}>
+                    <MenuItem
+                      key={tableColumns.id}
+                      value={tableColumns.field}
+                      aria-label={`Select ${tableColumns.field} filter ${
+                        typeof tableColumns.label === "string"
+                          ? tableColumns.label
+                          : tableColumns.id
+                      }`}
+                    >
                       {typeof tableColumns.label === "string"
                         ? tableColumns.label
                         : tableColumns.id}
@@ -668,7 +676,11 @@ export const EnhancedTableFilterOptions = ({
               >
                 {options &&
                   options.map((option) => (
-                    <MenuItem key={option} value={option}>
+                    <MenuItem
+                      key={option}
+                      value={option}
+                      aria-label={`Select ${filterColumn} Modifier ${option}`}
+                    >
                       {option}
                     </MenuItem>
                   ))}

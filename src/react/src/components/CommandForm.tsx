@@ -1058,7 +1058,11 @@ function CommandForm({
                   sx={inputDisplayStyling}
                 >
                   {["ACTION", "INFO", "TEMP"].map((status: any) => (
-                    <MenuItem key={status} value={status}>
+                    <MenuItem
+                      key={status}
+                      value={status}
+                      aria-label={`Select Command Type ${status}`}
+                    >
                       {status}
                     </MenuItem>
                   ))}

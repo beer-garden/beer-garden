@@ -190,7 +190,11 @@ function CommandFormField({
                 }}
               >
                 {parameter.options?.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
+                  <MenuItem
+                    key={option.value}
+                    value={option.value}
+                    aria-label={`Select ${parameter.key} value ${option.value}`}
+                  >
                     {option.label}
                   </MenuItem>
                 ))}
@@ -255,7 +259,11 @@ function CommandFormField({
               }}
             >
               {parameter.options?.map((option) => (
-                <MenuItem key={option.value} value={option.value}>
+                <MenuItem
+                  key={option.value}
+                  value={option.value}
+                  aria-label={`Select ${parameter.key} value ${option.value}`}
+                >
                   {option.label}
                 </MenuItem>
               ))}

@@ -250,7 +250,11 @@ function FileForm({
             fullWidth
           >
             {typeOptions.map((option) => (
-              <MenuItem key={option} value={option}>
+              <MenuItem
+                key={option}
+                value={option}
+                aria-label={`Select Event Type ${option}`}
+              >
                 {option}
               </MenuItem>
             ))}
@@ -517,7 +521,11 @@ function IntervalForm({
             fullWidth
           >
             {typeOptions.map((option) => (
-              <MenuItem key={option} value={option}>
+              <MenuItem
+                key={option}
+                value={option}
+                aria-label={`Select Interval Type ${option}`}
+              >
                 {option}
               </MenuItem>
             ))}
