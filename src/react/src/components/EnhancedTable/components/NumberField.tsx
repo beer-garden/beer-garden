@@ -1,5 +1,6 @@
 import { NumberField as BaseNumberField } from "@base-ui/react/number-field";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Box } from "@mui/material";
 import FormControl from "@mui/material/FormControl";
 import FormHelperText from "@mui/material/FormHelperText";
 import IconButton from "@mui/material/IconButton";
@@ -7,8 +8,8 @@ import InputAdornment from "@mui/material/InputAdornment";
 import InputLabel from "@mui/material/InputLabel";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import Tooltip from "@mui/material/Tooltip";
+import { visuallyHidden } from "@mui/utils";
 import * as React from "react";
-
 /**
  * This is a near copy of the base example provided by MUI Number Field
  * Modifications are to use Font Awsome and provide helper text
@@ -59,6 +60,46 @@ export default React.forwardRef(function NumberField(
     id = idProp;
   }
 
+  const [hiddenAlertMessage, setHiddenAlertMessage] = React.useState<
+    string | undefined
+  >(undefined);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    // Clear previous announcement to trigger a re-read if the same error repeats
+    setHiddenAlertMessage(undefined);
+    // Allow control keys (Backspace, Delete, Arrow keys, Tab, etc.)
+    const isControlKey = [
+      "Backspace",
+      "Delete",
+      "Tab",
+      "Escape",
+      "Enter",
+      "ArrowLeft",
+      "ArrowRight",
+      "ArrowUp",
+      "ArrowDown",
+      "Home",
+      "End",
+    ].includes(event.key);
+
+    // Allow numeric digits
+    function isNumeric(str: string) {
+      return (
+        typeof str === "string" && str.trim() !== "" && Number.isFinite(+str)
+      );
+    }
+
+    if (!isControlKey && !isNumeric(event.key)) {
+      // Prevent the invalid character from being inputted
+      event.preventDefault();
+
+      // Update state to announce the error immediately
+      setHiddenAlertMessage(
+        `Invalid key: ${event.key}. Only numbers are allowed.`,
+      );
+    }
+  };
+
   return (
     <BaseNumberField.Root
       {...other}
@@ -76,6 +117,16 @@ export default React.forwardRef(function NumberField(
         </FormControl>
       )}
     >
+      {hiddenAlertMessage && (
+        <Box
+          sx={visuallyHidden}
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
+          {hiddenAlertMessage}
+        </Box>
+      )}
       <SSRInitialFilled {...other} />
       <InputLabel htmlFor={id}>{label}</InputLabel>
       <BaseNumberField.Input
@@ -92,7 +143,7 @@ export default React.forwardRef(function NumberField(
             onKeyDown={props.onKeyDown}
             onFocus={props.onFocus}
             slotProps={{
-              input: props,
+              input: { ...props, onKeyDown: handleKeyDown },
             }}
             inputProps={{ tooltipTitle: title }}
             inputComponent={TooltippedInput as any}
