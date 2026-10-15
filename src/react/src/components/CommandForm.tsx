@@ -13,6 +13,7 @@ import {
   TextField,
   Tooltip,
 } from "@mui/material";
+import { visuallyHidden } from "@mui/utils";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
 
 import {
@@ -64,6 +65,9 @@ function CommandForm({
       severity: "error" | "info" | "success" | "warning";
     }>
   >([]);
+  const [hiddenAlertMessage, setHiddenAlertMessage] = useState<
+    string | undefined
+  >(undefined);
 
   const clearMessages = () => setErrorMessages([]);
   const addMessage = (msg: {
@@ -240,6 +244,9 @@ function CommandForm({
             detail: `Dynamic Choices loaded for ${parameter.key} with ${options.length} choices`,
             life: 3000,
           });
+          setHiddenAlertMessage(
+            `Dynamic Choices loaded for ${parameter.key} with ${options.length} choices`,
+          );
         })
         .catch((error) => {
           console.error("Error fetching choices:", error);
@@ -249,6 +256,7 @@ function CommandForm({
             detail: `Error fetching choices: ${error}`,
             life: 3000,
           });
+          setHiddenAlertMessage(`Error fetching choices: ${error}`);
           resolveOptions([], `Error fetching choices: ${error}`);
         });
     }
@@ -312,6 +320,9 @@ function CommandForm({
                 detail: `Dynamic Choices loaded for ${parameter.key} with ${choices.length} choices`,
                 life: 3000,
               });
+              setHiddenAlertMessage(
+                `Dynamic Choices loaded for ${parameter.key} with ${choices.length} choices`,
+              );
             })
             .catch((error) => {
               console.error("Error fetching choices:", error);
@@ -321,6 +332,7 @@ function CommandForm({
                 detail: `Error fetching choices: ${error}`,
                 life: 3000,
               });
+              setHiddenAlertMessage(`Error fetching choices: ${error}`);
               resolveOptions([], `Error fetching choices: ${error}`);
             });
         })
@@ -332,6 +344,7 @@ function CommandForm({
             detail: `Error fetching choices: ${error}`,
             life: 3000,
           });
+          setHiddenAlertMessage(`Error fetching choices: ${error}`);
           resolveOptions([], `Error fetching choices: ${error}`);
         });
     } else if (
@@ -390,6 +403,9 @@ function CommandForm({
                   detail: `Dynamic Choices loaded for ${parameter.key} with ${choices.length} choices`,
                   life: 3000,
                 });
+                setHiddenAlertMessage(
+                  `Dynamic Choices loaded for ${parameter.key} with ${choices.length} choices`,
+                );
               })
               .catch((error) => {
                 console.error("Error fetching choices:", error);
@@ -399,6 +415,7 @@ function CommandForm({
                   detail: `Error fetching choices: ${error}`,
                   life: 3000,
                 });
+                setHiddenAlertMessage(`Error fetching choices: ${error}`);
                 resolveOptions([], `Error fetching choices: ${error}`);
               });
           } else {
@@ -409,6 +426,9 @@ function CommandForm({
               detail: `Dynamic Choices loaded for ${parameter.key} with 0 choices`,
               life: 3000,
             });
+            setHiddenAlertMessage(
+              `Dynamic Choices loaded for ${parameter.key} with 0 choices`,
+            );
           }
         })
         .catch((error) => {
@@ -419,6 +439,7 @@ function CommandForm({
             detail: `Error fetching choices: ${error}`,
             life: 3000,
           });
+          setHiddenAlertMessage(`Error fetching choices: ${error}`);
           resolveOptions([], `Error fetching choices: ${error}`);
         });
     }
@@ -1023,6 +1044,14 @@ function CommandForm({
             {msg.detail}
           </Alert>
         ))}
+      </Box>
+      <Box
+        sx={visuallyHidden}
+        role="alert"
+        aria-live="assertive"
+        aria-atomic="true"
+      >
+        {hiddenAlertMessage}
       </Box>
       <Stack divider={<Divider flexItem />} spacing={1}>
         {request && request.command_type && (
