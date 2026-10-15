@@ -676,7 +676,11 @@ function GardenDashboard({
                     const statusSeverity = GetSeverity(option);
 
                     return (
-                      <MenuItem key={option} value={option}>
+                      <MenuItem
+                        key={option}
+                        value={option}
+                        aria-label={`Select Instance Status ${option}`}
+                      >
                         <Chip label={option} color={statusSeverity} />
                       </MenuItem>
                     );

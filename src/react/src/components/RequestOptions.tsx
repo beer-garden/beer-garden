@@ -220,15 +220,7 @@ function RequestOptions({
   };
 
   const commandTemplate = (requestCommand: RequestCommand) => {
-    return (
-      <span>
-        {requestCommand?.namespace === request.namespace
-          ? null
-          : `${requestCommand?.namespace} / `}{" "}
-        {requestCommand?.systemName} / {requestCommand?.version} /{" "}
-        {requestCommand?.instance} / {requestCommand?.command}
-      </span>
-    );
+    return `${requestCommand?.namespace === request.namespace ? "" : `${requestCommand?.namespace} / `}${requestCommand?.systemName} / ${requestCommand?.version} / ${requestCommand?.instance} / ${requestCommand?.command}`;
   };
 
   return (
@@ -379,8 +371,9 @@ function RequestOptions({
                       requestProjectionSelectedRef.current = requestProjection;
                       setRequestProjectionSelectedIndex(index);
                     }}
+                    aria-label={`Select Request Projection ${commandTemplate(requestProjection)}`}
                   >
-                    {commandTemplate(requestProjection)}
+                    <span>{commandTemplate(requestProjection)}</span>
                   </MenuItem>
                 ))}
               </Select>

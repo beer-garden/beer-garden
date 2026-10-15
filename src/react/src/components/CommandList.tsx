@@ -122,7 +122,12 @@ function CommandList({
           }}
         >
           {sortedInstances.map((i) => (
-            <MenuItem value={i.name}>{i.label}</MenuItem>
+            <MenuItem
+              value={i.name}
+              aria-label={`Select System Instance ${i.label}`}
+            >
+              {i.label}
+            </MenuItem>
           ))}
         </Select>
       </FormControl>
