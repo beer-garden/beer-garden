@@ -1,11 +1,16 @@
-import { Dialog } from "primereact/dialog";
-import { InputText } from "primereact/inputtext";
-import { Messages } from "primereact/messages";
-import { Password } from "primereact/password";
-import { classNames } from "primereact/utils";
-import { useRef, useState } from "react";
+import {
+  Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+} from "@mui/material";
+import TextField from "@mui/material/TextField";
+import { useState } from "react";
 
 import { UserLogin } from "../services/token_service";
+import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
 
 const LoginDialog = ({
@@ -19,10 +24,11 @@ const LoginDialog = ({
 }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const msgs = useRef<Messages>(null);
+
+  const [showFailedLogin, setShowFailedLogin] = useState(false);
 
   const handleLogin = () => {
-    msgs.current?.clear();
+    setShowFailedLogin(false);
     UserLogin(username, password)
       .then(() => {
         setVisible(false);
@@ -32,58 +38,58 @@ const LoginDialog = ({
       })
       .catch((error) => {
         console.error(`Error Logging in ${error}`);
-        msgs.current?.show({
-          severity: "error",
-          detail: "Incorrect username or password",
-          sticky: true,
-        });
+        setShowFailedLogin(true);
       });
   };
 
-  const dialogFooter = (
-    <div>
-      <AccessButton
-        label="Cancel"
-        icon="pi pi-times"
-        onClick={() => setVisible(false)}
-        className="p-button-text"
-      />
-      <AccessButton label="Login" icon="pi pi-check" onClick={handleLogin} />
-    </div>
-  );
-
   return (
     <Dialog
-      header="Login"
-      visible={visible}
-      style={{ width: "50vw" }}
-      breakpoints={{ "960px": "75vw", "640px": "100vw" }}
-      onHide={() => setVisible(false)}
-      footer={dialogFooter}
+      open={visible}
+      onClose={() => setVisible(false)}
+      aria-labelledby="login-dialog-title"
     >
-      <Messages ref={msgs} />
-      <div className="flex flex-column gap-3 p-input-filled">
-        <div className="flex flex-column gap-2">
-          <label htmlFor="username">Username</label>
-          <InputText
+      <DialogTitle id="login-dialog-title">Login</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2}>
+          {showFailedLogin && (
+            <Alert severity="error">Incorrect username or password</Alert>
+          )}
+          <TextField
             id="username"
+            label="Username"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className={classNames({ "p-invalid": !username && visible })}
-            aria-describedby="username-help"
+            required
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setUsername(event.target.value);
+            }}
           />
-        </div>
-        <div className="flex flex-column gap-2">
-          <label htmlFor="password">Password</label>
-          <Password
+          <TextField
             id="password"
+            label="Password"
+            type="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            toggleMask
-            feedback={false}
+            autoComplete="current-password"
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setPassword(event.target.value);
+            }}
           />
-        </div>
-      </div>
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ justifyContent: "center" }}>
+        <AccessButton
+          label="Cancel"
+          onClick={() => setVisible(false)}
+          sx={{ mr: 1 }}
+          text
+        >
+          <FAIcon icon="xmark" sx={{ mr: 1 }} />
+          Cancel
+        </AccessButton>
+        <AccessButton label="Login" onClick={handleLogin} sx={{ mr: 1 }}>
+          <FAIcon icon="check" sx={{ mr: 1 }} />
+          Login
+        </AccessButton>
+      </DialogActions>
     </Dialog>
   );
 };

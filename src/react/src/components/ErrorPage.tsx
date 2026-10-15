@@ -1,4 +1,4 @@
-import { Panel } from "primereact/panel";
+import { Box, Divider, Typography } from "@mui/material";
 
 function ErrorPage({
   errorCode,
@@ -26,21 +26,28 @@ function ErrorPage({
 
   return (
     <div>
-      {!isCard && <h1 className="flex m-2">{errorType(errorCode)}</h1>}
-      <div className="flex">
-        <Panel
-          header={isCard ? errorType(errorCode) : "Details"}
-          className="m-2 flex-1"
-        >
-          {errorMsg ? (
-            <p className="al">{errorMsg}</p>
-          ) : (
-            <p className="al">
-              This page isn't available. Please try something else.
-            </p>
-          )}
-        </Panel>
-      </div>
+      {!isCard && (
+        <Typography variant="h2" component="h1" sx={{ m: 2 }}>
+          {errorType(errorCode)}
+        </Typography>
+      )}
+      <Box sx={{ border: "1px solid grey", m: 2, borderRadius: 2 }}>
+        <Box sx={{ bgcolor: "warning.light" }}>
+          <Typography
+            variant="h2"
+            component="h2"
+            sx={{ mx: 2, color: "warning.contrastText" }}
+          >
+            {isCard ? errorType(errorCode) : "Details"}
+          </Typography>
+        </Box>
+        <Divider />
+        <Box>
+          <Typography sx={{ m: 2 }} variant="body1">
+            {errorMsg ?? "This page isn't available. Please try something else"}
+          </Typography>
+        </Box>
+      </Box>
     </div>
   );
 }

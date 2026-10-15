@@ -1,15 +1,17 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { AutoComplete } from "primereact/autocomplete";
-import { Card } from "primereact/card";
-import React, { useEffect, useRef, useState } from "react";
-
 import {
-  Command,
-  Instance,
-  Subscriber,
-  System,
-} from "../models/brewtils-types";
-import { useToast } from "../providers/ToastProvider";
+  Autocomplete,
+  Box,
+  FilterOptionsState,
+  Stack,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { grey } from "@mui/material/colors";
+import React, { useEffect, useRef } from "react";
+
+import { Subscriber, System } from "../models/brewtils-types";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetSystemList } from "../services/system_service";
 import AccessButton from "./AccessButton";
 
@@ -26,88 +28,16 @@ function SubscriberItem({
 }: SubscriberItemProps) {
   const allSystems = useRef<Array<System>>([]);
 
-  const [filteredGardenItems, setFilteredGardenItems] = useState(
-    [] as Array<string>,
-  );
-  const [filteredNamespaceItems, setFilteredNamespaceItems] = useState(
-    [] as Array<string>,
-  );
-  const [filteredSystemItems, setFilteredSystemItems] = useState(
-    [] as Array<string>,
-  );
-  const [filteredVersionItems, setFilteredVersionItems] = useState(
-    [] as Array<string>,
-  );
-  const [filteredInstanceItems, setFilteredInstanceItems] = useState(
-    [] as Array<string>,
-  );
-  const [filteredCommandItems, setFilteredCommandItems] = useState(
-    [] as Array<string>,
-  );
-  const gardenItems = useRef<Array<string>>([]);
-  const namespaceItems = useRef<Array<string>>([]);
-  const systemItems = useRef<Array<string>>([]);
-  const versionItems = useRef<Array<string>>([]);
-  const instanceItems = useRef<Array<string>>([]);
-  const commandItems = useRef<Array<string>>([]);
-
-  const selectedGardenName = useRef<string | undefined>(undefined);
-  const selectedNamespaceName = useRef<string | undefined>(undefined);
-  const selectedSystemName = useRef<string | undefined>(undefined);
-
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   useEffect(() => {
     GetSystemList()
       .then((data) => {
         allSystems.current = data;
-        //Gardens
-        const gardens = new Set(
-          data
-            .map((system) => system.garden_name)
-            .filter((item) => item !== undefined),
-        );
-        gardenItems.current = Array.from(gardens);
-        //Namespaces
-        const namespaces = new Set(
-          data
-            .map((system) => system.namespace)
-            .filter((item) => item !== undefined),
-        );
-        namespaceItems.current = Array.from(namespaces);
-        //Systems
-        const systems = new Set(
-          data
-            .map((system) => system.name)
-            .filter((item) => item !== undefined),
-        );
-        systemItems.current = Array.from(systems);
-        //Versions
-        const versions = new Set(
-          data
-            .map((system) => system.version)
-            .filter((item) => item !== undefined),
-        );
-        versionItems.current = Array.from(versions);
-        //Instance
-        const instances = new Set(
-          data
-            .map((system) => system.instances?.map((i) => i?.name))
-            .flat()
-            .filter((item) => item !== undefined),
-        );
-        instanceItems.current = Array.from(instances);
-        const commands = new Set(
-          data
-            .map((system) => system.commands?.map((i) => i?.name))
-            .flat()
-            .filter((item) => item !== undefined),
-        );
-        commandItems.current = Array.from(commands);
       })
       .catch((error) => {
         console.error("Error fetching system list:", error);
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching system list: ${error}`,
@@ -115,19 +45,6 @@ function SubscriberItem({
         });
       });
   }, []);
-
-  function header(index: number) {
-    return (
-      <div className="flex justify-content-between p-3 pb-0 items-end">
-        <div className="flex flex-1"></div>
-        {!isEdit && (
-          <AccessButton tooltip="Remove" onClick={() => handleClose(index)}>
-            <FontAwesomeIcon icon="close" />
-          </AccessButton>
-        )}
-      </div>
-    );
-  }
 
   function handleClose(indexToRemove: number) {
     setSubscriberList((currentList) => {
@@ -170,11 +87,9 @@ function SubscriberItem({
             subscriber[inputKey] = inputValue;
             if (inputKey == "garden") {
               subscriber["namespace"] = "";
-              selectedNamespaceName.current = undefined;
             }
             if (inputKey == "garden" || inputKey == "namespace") {
               subscriber["system"] = "";
-              selectedSystemName.current = undefined;
             }
             if (
               inputKey == "garden" ||
@@ -193,399 +108,393 @@ function SubscriberItem({
     }
   }
 
-  const searchGardenItems = (event: any) => {
-    if (gardenItems.current) {
-      const query = event.query.toLowerCase();
-      const filtered = gardenItems.current.filter((item) =>
-        item.toLowerCase().includes(query),
-      );
-      setFilteredGardenItems(
-        filtered.sort((a: string, b: string) => a.localeCompare(b)),
-      );
-    }
-  };
+  const escapeRegExp = (patternString: string) => {
+    // 1. Escape special regex characters except the dot and star
+    const escaped = patternString.replace(/[-/\\^$+[\]{}()|?]/g, "\\$&");
 
-  const searchNamespaceItems = (event: any) => {
-    if (namespaceItems.current) {
-      const query = event.query.toLowerCase();
-      let gardenNamespaceList: Array<string> = [];
+    // 2. Un-escape the '.*' combination specifically so it stays active
+    const regexString = escaped.replace(/\\\.\\\*/g, ".*");
 
-      // Show only systems with a matching namespace if selected Namespace
-      if (selectedGardenName.current) {
-        allSystems.current.forEach((system: System) => {
-          if (
-            system.name !== null &&
-            system.garden_name === selectedGardenName.current
-          ) {
-            if (!gardenNamespaceList.includes(system.namespace as string)) {
-              gardenNamespaceList.push(system.namespace as string);
-            }
-          }
-        });
-      } else {
-        gardenNamespaceList = namespaceItems.current;
-      }
-
-      const filtered = gardenNamespaceList.filter((item) =>
-        item.toLowerCase().includes(query),
-      );
-      setFilteredNamespaceItems(
-        filtered.sort((a: string, b: string) => a.localeCompare(b)),
-      );
-    }
-  };
-
-  const searchSystemItems = (event: any) => {
-    if (systemItems.current) {
-      const query = event.query.toLowerCase();
-      let namespaceSystemList: Array<string> = [];
-
-      // Show only systems with a matching namespace if selected Namespace
-      if (selectedNamespaceName.current || selectedGardenName.current) {
-        allSystems.current.forEach((system: System) => {
-          if (
-            system.name !== null &&
-            (system.namespace === selectedNamespaceName.current ||
-              (system.garden_name === selectedGardenName.current &&
-                selectedNamespaceName.current === undefined))
-          ) {
-            if (!namespaceSystemList.includes(system.name as string)) {
-              namespaceSystemList.push(system.name as string);
-            }
-          }
-        });
-      } else {
-        namespaceSystemList = systemItems.current;
-      }
-
-      const filtered = namespaceSystemList.filter((item) =>
-        item.toLowerCase().includes(query),
-      );
-      setFilteredSystemItems(
-        filtered.sort((a: string, b: string) => a.localeCompare(b)),
-      );
-    }
-  };
-
-  const searchVersionItems = (event: any) => {
-    if (systemItems.current) {
-      const query = event.query.toLowerCase();
-      let systemVersionList: Array<string> = [];
-
-      if (selectedNamespaceName.current || selectedSystemName.current) {
-        allSystems.current.forEach((system: System) => {
-          if (
-            system.version !== null &&
-            (system.name === selectedSystemName.current ||
-              (system.namespace === selectedNamespaceName.current &&
-                selectedSystemName.current === undefined) ||
-              (system.garden_name === selectedGardenName.current &&
-                selectedNamespaceName.current === undefined &&
-                selectedSystemName.current === undefined))
-          ) {
-            if (!systemVersionList.includes(system.version as string)) {
-              systemVersionList.push(system.version as string);
-            }
-          }
-        });
-      } else {
-        systemVersionList = versionItems.current;
-      }
-
-      const filtered = systemVersionList?.filter((item) =>
-        item.toLowerCase().includes(query),
-      );
-      setFilteredVersionItems(
-        filtered.sort((a: string, b: string) => a.localeCompare(b)),
-      );
-    }
-  };
-
-  const searchInstanceItems = (event: any) => {
-    if (instanceItems.current) {
-      const query = event.query.toLowerCase();
-      let systemInstanceList: Array<string> = [];
-
-      if (
-        selectedGardenName.current ||
-        selectedNamespaceName.current ||
-        selectedSystemName.current
-      ) {
-        allSystems.current.forEach((system: System) => {
-          if (
-            system.version !== null &&
-            (system.name === selectedSystemName.current ||
-              (system.namespace === selectedNamespaceName.current &&
-                selectedSystemName.current === undefined) ||
-              (system.garden_name === selectedGardenName.current &&
-                selectedNamespaceName.current === undefined &&
-                selectedSystemName.current === undefined))
-          ) {
-            if (system.instances) {
-              system.instances.forEach((instance: Instance) => {
-                if (
-                  instance.name &&
-                  !systemInstanceList.includes(instance.name)
-                ) {
-                  systemInstanceList.push(instance.name);
-                }
-              });
-            }
-          }
-        });
-      } else {
-        systemInstanceList = instanceItems.current;
-      }
-
-      const filtered = systemInstanceList.filter((item) =>
-        item.toLowerCase().includes(query),
-      );
-      setFilteredInstanceItems(
-        filtered.sort((a: string, b: string) => a.localeCompare(b)),
-      );
-    }
-  };
-
-  const searchCommandItems = (event: any) => {
-    if (commandItems.current) {
-      const query = event.query.toLowerCase();
-      let systemCommandList: Array<string> = [];
-
-      if (
-        selectedGardenName.current ||
-        selectedNamespaceName.current ||
-        selectedSystemName.current
-      ) {
-        allSystems.current.forEach((system: System) => {
-          if (
-            system.version !== null &&
-            (system.name === selectedSystemName.current ||
-              (system.namespace === selectedNamespaceName.current &&
-                selectedSystemName.current === undefined) ||
-              (system.garden_name === selectedGardenName.current &&
-                selectedNamespaceName.current === undefined &&
-                selectedSystemName.current === undefined))
-          ) {
-            if (system.commands) {
-              system.commands.forEach((command: Command) => {
-                if (command.name && !systemCommandList.includes(command.name)) {
-                  systemCommandList.push(command.name);
-                }
-              });
-            }
-          }
-        });
-      } else {
-        systemCommandList = commandItems.current;
-      }
-
-      const filtered = systemCommandList.filter((item) =>
-        item.toLowerCase().includes(query),
-      );
-      setFilteredCommandItems(
-        filtered.sort((a: string, b: string) => a.localeCompare(b)),
-      );
-    }
+    // 3. Return the compiled RegExp object
+    return new RegExp(regexString);
   };
 
   return (
-    <div className="flex flex-column gap-2">
+    <Box sx={{ my: 1 }}>
       {!isEdit && (
-        <label className="font-bold" htmlFor="subscribers">
-          Subscribers
-        </label>
+        <Typography sx={{ fontWeight: "bold" }}>Subscribers</Typography>
       )}
-      <div className="card" id="subscribers">
-        {subscriberList.map((subscriber, index) => (
-          <Card
-            key={index}
-            className="card flex flex-column gap-2 border-1"
-            header={() => header(index)}
+      {subscriberList.map((subscriber, index) => (
+        <Box
+          key={index}
+          sx={{
+            border: "1px solid",
+            borderColor: grey[300],
+            borderRadius: 2,
+            p: 2,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              width: "100%",
+            }}
           >
-            <div className="mb-2">
-              <label className="font-bold flex" htmlFor={`garden-${index}`}>
-                Garden
-              </label>
-              <datalist id="selectGardenDropdown" aria-hidden="true">
-                {filteredGardenItems?.map((value: string) => (
-                  <option key={value} value={value} />
-                ))}
-              </datalist>
-              <AutoComplete
-                dropdown
-                id={`garden-${index}`}
-                value={subscriber.garden}
-                suggestions={filteredGardenItems}
-                completeMethod={searchGardenItems}
-                onChange={(e) => {
-                  selectedGardenName.current = e.target.value as string;
-                  handleUpdateSubscriber("garden", e.target.value, index);
-                }}
-                dropdownIcon="pi pi-chevron-down"
-                pt={{
-                  input: {
-                    root: {
-                      "aria-controls": "selectGardenDropdown",
-                    },
-                  },
-                }}
-              />
-            </div>
-            <div className="mb-2">
-              <label className="font-bold flex" htmlFor={`namespace-${index}`}>
-                Namespace
-              </label>
-              <datalist id="selectNamespaceDropdown" aria-hidden="true">
-                {filteredNamespaceItems?.map((value: string) => (
-                  <option key={value} value={value} />
-                ))}
-              </datalist>
-              <AutoComplete
-                dropdown
-                id={`namespace-${index}`}
-                value={subscriber.namespace}
-                suggestions={filteredNamespaceItems}
-                completeMethod={searchNamespaceItems}
-                onChange={(e) => {
-                  selectedNamespaceName.current = e.target.value as string;
-                  handleUpdateSubscriber("namespace", e.target.value, index);
-                }}
-                dropdownIcon="pi pi-chevron-down"
-                pt={{
-                  input: {
-                    root: {
-                      "aria-controls": "selectNamespaceDropdown",
-                    },
-                  },
-                }}
-              />
-            </div>
-            <div className="mb-2">
-              <label className="font-bold flex" htmlFor={`system-${index}`}>
-                System
-              </label>
-              <datalist id="selectSystemDropdown" aria-hidden="true">
-                {filteredSystemItems?.map((value: string) => (
-                  <option key={value} value={value} />
-                ))}
-              </datalist>
-              <AutoComplete
-                dropdown
-                id={`system-${index}`}
-                value={subscriber.system}
-                suggestions={filteredSystemItems}
-                completeMethod={searchSystemItems}
-                onChange={(e) => {
-                  selectedSystemName.current = e.target.value as string;
-                  handleUpdateSubscriber("system", e.target.value, index);
-                }}
-                dropdownIcon="pi pi-chevron-down"
-                pt={{
-                  input: {
-                    root: {
-                      "aria-controls": "selectSystemDropdown",
-                    },
-                  },
-                }}
-              />
-            </div>
-            <div className="mb-2">
-              <label className="font-bold flex" htmlFor={`system-${index}`}>
-                Version
-              </label>
-              <datalist id="selectVersionDropdown" aria-hidden="true">
-                {filteredVersionItems?.map((value: string) => (
-                  <option key={value} value={value} />
-                ))}
-              </datalist>
-              <AutoComplete
-                dropdown
-                id={`version-${index}`}
-                value={subscriber.version}
-                suggestions={filteredVersionItems}
-                completeMethod={searchVersionItems}
-                onChange={(e) =>
-                  handleUpdateSubscriber("version", e.target.value, index)
+            {!isEdit && (
+              <AccessButton
+                tooltip="Remove"
+                onClick={() => handleClose(index)}
+                sx={{ my: 1 }}
+              >
+                <FontAwesomeIcon icon="close" />
+              </AccessButton>
+            )}
+          </Box>
+          <Stack spacing={1}>
+            <Autocomplete
+              id={`garden-${index}`}
+              value={subscriber.garden}
+              options={[]}
+              onChange={(_, newValue: any) => {
+                handleUpdateSubscriber("garden", newValue, index);
+              }}
+              filterOptions={(_, state: FilterOptionsState<string>) => {
+                const options = [] as string[];
+                for (const system of allSystems.current) {
+                  const matchValue = system?.garden_name;
+                  if (
+                    // Check Ref Value
+                    matchValue !== undefined &&
+                    !options.includes(matchValue) &&
+                    // Regex Check
+                    (matchValue.includes(state.inputValue) ||
+                      matchValue.match(escapeRegExp(state.inputValue)))
+                  ) {
+                    options.push(matchValue);
+                  }
                 }
-                dropdownIcon="pi pi-chevron-down"
-                pt={{
-                  input: {
-                    root: {
-                      "aria-controls": "selectVersionDropdown",
-                    },
-                  },
-                }}
-              />
-            </div>
-            <div className="mb-2">
-              <label className="font-bold flex" htmlFor={`system-${index}`}>
-                Instance
-              </label>
-              <datalist id="selectInstanceDropdown" aria-hidden="true">
-                {filteredInstanceItems?.map((value: string) => (
-                  <option key={value} value={value} />
-                ))}
-              </datalist>
-              <AutoComplete
-                dropdown
-                id={`instance-${index}`}
-                value={subscriber.instance}
-                suggestions={filteredInstanceItems}
-                completeMethod={searchInstanceItems}
-                onChange={(e) =>
-                  handleUpdateSubscriber("instance", e.target.value, index)
-                }
-                dropdownIcon="pi pi-chevron-down"
-                pt={{
-                  input: {
-                    root: {
-                      "aria-controls": "selectInstanceDropdown",
-                    },
-                  },
-                }}
-              />
-            </div>
-            <div className="mb-2">
-              <label className="font-bold flex" htmlFor={`system-${index}`}>
-                Command
-              </label>
-              <datalist id="selectCommandDropdown" aria-hidden="true">
-                {filteredCommandItems?.map((value: string) => (
-                  <option key={value} value={value} />
-                ))}
-              </datalist>
-              <AutoComplete
-                dropdown
-                id={`command-${index}`}
-                value={subscriber.command}
-                suggestions={filteredCommandItems}
-                completeMethod={searchCommandItems}
-                onChange={(e) =>
-                  handleUpdateSubscriber("command", e.target.value, index)
-                }
-                dropdownIcon="pi pi-chevron-down"
-                pt={{
-                  input: {
-                    root: {
-                      "aria-controls": "selectCommandDropdown",
-                    },
-                  },
-                }}
-              />
-            </div>
-          </Card>
-        ))}
-        {!isEdit && (
-          <div className="flex">
-            <AccessButton
-              className="mt-1 mb-3"
-              label={"Add subscriber"}
-              onClick={handleAddSubscriber}
+                return options;
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Garden Name"
+                  variant="outlined"
+                  placeholder="Garden Name"
+                />
+              )}
             />
-          </div>
-        )}
-      </div>
-    </div>
+
+            <Autocomplete
+              id={`namespace-${index}`}
+              value={subscriber.namespace}
+              options={[]}
+              onChange={(_, newValue: any) => {
+                handleUpdateSubscriber("namespace", newValue, index);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Namespace"
+                  variant="outlined"
+                  placeholder="Namespace"
+                />
+              )}
+              filterOptions={(_, state: FilterOptionsState<string>) => {
+                const options = [] as string[];
+                for (const system of allSystems.current) {
+                  const matchValue = system?.namespace;
+
+                  if (
+                    // Check Ref Value
+                    matchValue !== undefined &&
+                    !options.includes(matchValue) &&
+                    // Regex Check
+                    (matchValue.includes(state.inputValue) ||
+                      matchValue.match(escapeRegExp(state.inputValue))) &&
+                    // Check Garden Mapping
+                    (subscriber.garden === undefined ||
+                      (system.garden_name !== undefined &&
+                        (system.garden_name.includes(subscriber.garden) ||
+                          system.garden_name.match(
+                            escapeRegExp(subscriber.garden),
+                          ))))
+                  ) {
+                    options.push(matchValue);
+                  }
+                }
+                return options;
+              }}
+            />
+
+            <Autocomplete
+              id={`system-${index}`}
+              value={subscriber.system}
+              options={[]}
+              onChange={(_, newValue: any) => {
+                handleUpdateSubscriber("system", newValue, index);
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="System Name"
+                  variant="outlined"
+                  placeholder="System Name"
+                />
+              )}
+              filterOptions={(_, state: FilterOptionsState<string>) => {
+                const options = [] as string[];
+                for (const system of allSystems.current) {
+                  const matchValue = system?.name;
+
+                  if (
+                    // Check Ref Value
+                    matchValue !== undefined &&
+                    !options.includes(matchValue) &&
+                    // Regex Check
+                    (matchValue.includes(state.inputValue) ||
+                      matchValue.match(escapeRegExp(state.inputValue))) &&
+                    // Check Garden Mapping
+                    (subscriber.garden === undefined ||
+                      (system.garden_name !== undefined &&
+                        (system.garden_name.includes(subscriber.garden) ||
+                          system.garden_name.match(
+                            escapeRegExp(subscriber.garden),
+                          )))) &&
+                    // Check Namespace Mapping
+                    (subscriber.namespace === undefined ||
+                      (system.namespace !== undefined &&
+                        (system.namespace.includes(subscriber.namespace) ||
+                          system.namespace.match(
+                            escapeRegExp(subscriber.namespace),
+                          ))))
+                  ) {
+                    options.push(matchValue);
+                  }
+                }
+                return options;
+              }}
+            />
+
+            <Autocomplete
+              id={`version-${index}`}
+              value={subscriber.version}
+              options={[]}
+              onChange={(_, newValue: any) =>
+                handleUpdateSubscriber("version", newValue, index)
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="System Version"
+                  variant="outlined"
+                  placeholder="System Version"
+                />
+              )}
+              filterOptions={(_, state: FilterOptionsState<string>) => {
+                const options = [] as string[];
+                for (const system of allSystems.current) {
+                  const matchValue = system?.version;
+
+                  if (
+                    // Check Ref Value
+                    matchValue !== undefined &&
+                    !options.includes(matchValue) &&
+                    // Regex Check
+                    (matchValue.includes(state.inputValue) ||
+                      matchValue.match(escapeRegExp(state.inputValue))) &&
+                    // Check Garden Mapping
+                    (subscriber.garden === undefined ||
+                      (system.garden_name !== undefined &&
+                        (system.garden_name.includes(subscriber.garden) ||
+                          system.garden_name.match(
+                            escapeRegExp(subscriber.garden),
+                          )))) &&
+                    // Check Namespace Mapping
+                    (subscriber.namespace === undefined ||
+                      (system.namespace !== undefined &&
+                        (system.namespace.includes(subscriber.namespace) ||
+                          system.namespace.match(
+                            escapeRegExp(subscriber.namespace),
+                          )))) &&
+                    // Check Name Mapping
+                    (subscriber.system === undefined ||
+                      (system.name !== undefined &&
+                        (system.name.includes(subscriber.system) ||
+                          system.name.match(escapeRegExp(subscriber.system)))))
+                  ) {
+                    options.push(matchValue);
+                  }
+                }
+                return options;
+              }}
+            />
+
+            <Autocomplete
+              id={`instance-${index}`}
+              value={subscriber.instance}
+              options={[]}
+              onChange={(_, newValue: any) =>
+                handleUpdateSubscriber("instance", newValue, index)
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="System Instance"
+                  variant="outlined"
+                  placeholder="System Instance"
+                />
+              )}
+              filterOptions={(_, state: FilterOptionsState<string>) => {
+                const options = [] as string[];
+
+                for (const system of allSystems.current) {
+                  if (
+                    // Check Ref Value
+                    system.instances !== undefined &&
+                    system.instances.length > 0 &&
+                    // Check Garden Mapping
+                    (subscriber.garden === undefined ||
+                      (system.garden_name !== undefined &&
+                        (system.garden_name.includes(subscriber.garden) ||
+                          system.garden_name.match(
+                            escapeRegExp(subscriber.garden),
+                          )))) &&
+                    // Check Namespace Mapping
+                    (subscriber.namespace === undefined ||
+                      (system.namespace !== undefined &&
+                        (system.namespace.includes(subscriber.namespace) ||
+                          system.namespace.match(
+                            escapeRegExp(subscriber.namespace),
+                          )))) &&
+                    // Check Name Mapping
+                    (subscriber.system === undefined ||
+                      (system.name !== undefined &&
+                        (system.name.includes(subscriber.system) ||
+                          system.name.match(
+                            escapeRegExp(subscriber.system),
+                          )))) &&
+                    // Check Version Mapping
+                    (subscriber.version === undefined ||
+                      (system.version !== undefined &&
+                        (system.version.includes(subscriber.version) ||
+                          system.version.match(
+                            escapeRegExp(subscriber.version),
+                          ))))
+                  ) {
+                    for (const instanceValue of system.instances) {
+                      const matchValue = instanceValue.name;
+                      if (
+                        matchValue !== undefined &&
+                        !options.includes(matchValue) &&
+                        // Regex Check
+                        (matchValue.includes(state.inputValue) ||
+                          matchValue.match(escapeRegExp(state.inputValue)))
+                      ) {
+                        options.push(matchValue);
+                      }
+                    }
+                  }
+                }
+                return options;
+              }}
+            />
+
+            <Autocomplete
+              id={`command-${index}`}
+              value={subscriber.command}
+              options={[]}
+              onChange={(_, newValue: any) =>
+                handleUpdateSubscriber("command", newValue, index)
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Command Name"
+                  variant="outlined"
+                  placeholder="Command Name"
+                />
+              )}
+              filterOptions={(_, state: FilterOptionsState<string>) => {
+                const options = [] as string[];
+
+                for (const system of allSystems.current) {
+                  if (
+                    // Check Ref Value
+                    system.commands !== undefined &&
+                    system.commands.length > 0 &&
+                    // Check Garden Mapping
+                    (subscriber.garden === undefined ||
+                      (system.garden_name !== undefined &&
+                        (system.garden_name.includes(subscriber.garden) ||
+                          system.garden_name.match(
+                            escapeRegExp(subscriber.garden),
+                          )))) &&
+                    // Check Namespace Mapping
+                    (subscriber.namespace === undefined ||
+                      (system.namespace !== undefined &&
+                        (system.namespace.includes(subscriber.namespace) ||
+                          system.namespace.match(
+                            escapeRegExp(subscriber.namespace),
+                          )))) &&
+                    // Check Name Mapping
+                    (subscriber.system === undefined ||
+                      (system.name !== undefined &&
+                        (system.name.includes(subscriber.system) ||
+                          system.name.match(
+                            escapeRegExp(subscriber.system),
+                          )))) &&
+                    // Check Version Mapping
+                    (subscriber.version === undefined ||
+                      (system.version !== undefined &&
+                        (system.version.includes(subscriber.version) ||
+                          system.version.match(
+                            escapeRegExp(subscriber.version),
+                          )))) &&
+                    // Check Instance Mapping
+                    (subscriber.instance === undefined ||
+                      (system.instances !== undefined &&
+                        system.instances.some(
+                          (instanceValue) =>
+                            subscriber.instance !== undefined &&
+                            instanceValue.name !== undefined &&
+                            (instanceValue.name.includes(subscriber.instance) ||
+                              instanceValue.name.match(
+                                escapeRegExp(subscriber.instance),
+                              )),
+                        )))
+                  ) {
+                    for (const commandValue of system.commands) {
+                      const matchValue = commandValue.name;
+                      if (
+                        matchValue !== undefined &&
+                        !options.includes(matchValue) &&
+                        // Regex Check
+                        (matchValue.includes(state.inputValue) ||
+                          matchValue.match(escapeRegExp(state.inputValue)))
+                      ) {
+                        options.push(matchValue);
+                      }
+                    }
+                  }
+                }
+                return options;
+              }}
+            />
+          </Stack>
+        </Box>
+      ))}
+      {!isEdit && (
+        <AccessButton
+          sx={{ my: 1 }}
+          label={"Add subscriber"}
+          onClick={handleAddSubscriber}
+        >
+          Add subscriber
+        </AccessButton>
+      )}
+    </Box>
   );
 }
 
