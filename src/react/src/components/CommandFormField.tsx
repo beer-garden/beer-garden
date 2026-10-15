@@ -445,6 +445,11 @@ function CommandFormField({
                           index,
                         );
                       }}
+                      slotProps={{
+                        input: {
+                          "aria-describedby": `${parameter.key}-${index}-helper-text`,
+                        },
+                      }}
                       fullWidth
                       disabled={disabled}
                       error={
@@ -468,6 +473,11 @@ function CommandFormField({
                           index,
                         );
                       }}
+                      slotProps={{
+                        input: {
+                          "aria-describedby": `${parameter.key}-${index}-helper-text`,
+                        },
+                      }}
                       fullWidth
                       multiline
                       disabled={disabled}
@@ -484,6 +494,7 @@ function CommandFormField({
                     <NumberField
                       id={`${parameter.key}-${index}-input-id`}
                       value={item}
+                      aria-describedby={`${parameter.key}-${index}-helper-text`}
                       title={`${inputAreaAriaLabel} Index ${index}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                       disabled={disabled}
                       onValueChange={(value) =>
@@ -512,6 +523,7 @@ function CommandFormField({
                       id={`${parameter.key}-${index}-input-id`}
                       value={item}
                       disabled={disabled}
+                      aria-describedby={`${parameter.key}-${index}-helper-text`}
                       title={`${inputAreaAriaLabel} Index ${index}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                       onValueChange={(value) =>
                         handleMultiChange(parameter.key, value, index)
@@ -585,6 +597,11 @@ function CommandFormField({
                               parameter.error &&
                               parameter.errorIndex &&
                               parameter.errorIndex.includes(index),
+                            slotProps: {
+                              input: {
+                                "aria-describedby": `${parameter.key}-${index}-helper-text`,
+                              },
+                            },
                           },
                         }}
                       />
@@ -615,6 +632,11 @@ function CommandFormField({
                               parameter.error &&
                               parameter.errorIndex &&
                               parameter.errorIndex.includes(index),
+                            slotProps: {
+                              input: {
+                                "aria-describedby": `${parameter.key}-${index}-helper-text`,
+                              },
+                            },
                           },
                         }}
                       />
@@ -643,7 +665,7 @@ function CommandFormField({
               </Tooltip>
             </Box>
             <FormHelperText
-              key={`${parameter.key}-helper-text`}
+              key={`${parameter.key}-${index}-helper-text`}
               aria-live="polite"
               error={parameter.error}
               sx={inputDisplayStyling}
@@ -721,6 +743,11 @@ function CommandFormField({
                   onChange={(event: ChangeEvent<HTMLInputElement>) => {
                     handleChange(parameter.key, event.target.value);
                   }}
+                  slotProps={{
+                    input: {
+                      "aria-describedby": `${parameter.key}-helper-text`,
+                    },
+                  }}
                   fullWidth
                   disabled={disabled}
                   error={parameter.error}
@@ -736,6 +763,11 @@ function CommandFormField({
                   onChange={(event: ChangeEvent<HTMLInputElement>) => {
                     handleChange(parameter.key, event.target.value);
                   }}
+                  slotProps={{
+                    input: {
+                      "aria-describedby": `${parameter.key}-helper-text`,
+                    },
+                  }}
                   fullWidth
                   disabled={disabled}
                   multiline
@@ -748,6 +780,7 @@ function CommandFormField({
                 <NumberField
                   id={`${parameter.key}-input-id`}
                   value={parameter.value}
+                  aria-describedby={`${parameter.key}-helper-text`}
                   title={`${inputAreaAriaLabel}: Integer ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                   disabled={disabled}
                   onValueChange={(value) => handleChange(parameter.key, value)}
@@ -770,6 +803,7 @@ function CommandFormField({
                   id={`${parameter.key}-input-id`}
                   value={parameter.value}
                   disabled={disabled}
+                  aria-describedby={`${parameter.key}-helper-text`}
                   title={`${inputAreaAriaLabel}: Float ${parameter.maximum ? `Max Value=${parameter.maximum}` : ""} ${parameter.minimum ? `Max Value=${parameter.minimum}` : ""}`}
                   onValueChange={(value) => handleChange(parameter.key, value)}
                   error={parameter.error}
@@ -814,7 +848,6 @@ function CommandFormField({
                   <DatePicker
                     disabled={disabled}
                     value={parameter?.value ? dayjs(parameter.value) : null}
-                    aria-describedby={`${parameter.key}-helper-text`}
                     onChange={(newValue: PickerValue) => {
                       if (newValue && newValue.isValid()) {
                         handleChange(parameter.key, newValue.valueOf());
@@ -826,6 +859,11 @@ function CommandFormField({
                       textField: {
                         id: `${parameter.key}-input-id`,
                         error: parameter.error,
+                        slotProps: {
+                          input: {
+                            "aria-describedby": `${parameter.key}-helper-text`,
+                          },
+                        },
                       },
                     }}
                   />
@@ -849,6 +887,11 @@ function CommandFormField({
                       textField: {
                         id: `${parameter.key}-input-id`,
                         error: parameter.error,
+                        slotProps: {
+                          input: {
+                            "aria-describedby": `${parameter.key}-helper-text`,
+                          },
+                        },
                       },
                     }}
                   />
