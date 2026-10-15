@@ -6,7 +6,6 @@ import {
   FormControl,
   FormLabel,
   Grid,
-  InputLabel,
   MenuItem,
   Select,
   Stack,
@@ -1004,8 +1003,12 @@ function CommandForm({
   };
 
   const renderInputLabel = (parameter: InputParam) => {
+    const parameter_key = parameter.multi
+      ? `${parameter.key}-0-input-id`
+      : `${parameter.key}-input-id`;
+
     return (
-      <FormLabel htmlFor={parameter.key} sx={{ fontWeight: "bold" }}>
+      <FormLabel htmlFor={parameter_key} sx={{ fontWeight: "bold" }}>
         {parameter.key}
       </FormLabel>
     );
@@ -1042,13 +1045,9 @@ function CommandForm({
 
             <Grid size="grow">
               <FormControl fullWidth>
-                <InputLabel id="command-type-label-select">
-                  Command Type
-                </InputLabel>
                 <Select
-                  labelId="command-type-label-select"
+                  labelId="command-type-label"
                   id="COMMAND_TYPE"
-                  label="Command Type"
                   value={request?.command_type}
                   onChange={(e) =>
                     setRequest({ ...request, command_type: e.target.value })
