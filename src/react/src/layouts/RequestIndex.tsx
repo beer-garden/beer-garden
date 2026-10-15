@@ -179,8 +179,9 @@ function RequestIndex({
         <AccessButton
           basic
           onClick={() => setReloadRequestsTrigger(reloadRequestsTrigger + 1)}
-          tooltip={recordsUpdated ? "New updates available" : "Refresh"}
+          tooltip={recordsUpdated ? "New Request Updates Available" : "Refresh"}
           {...GenerateTourProps(RefreshTableTourStep)}
+          aria-live="polite"
         >
           {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
           <FontAwesomeIcon icon="refresh" />
