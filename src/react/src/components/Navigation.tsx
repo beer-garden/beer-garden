@@ -205,6 +205,7 @@ function NavigationMenu({
     display: { xs: "none", md: "flex" },
     whiteSpace: "nowrap",
     color: "inherit",
+    flexShrink: 0,
     textTransform: "none",
     "&:hover": {
       backgroundColor: "primary.dark",
@@ -591,15 +592,17 @@ function NavigationMenu({
               }
             }}
           >
-            <FAIcon
-              icon={iconDefault as IconProp}
-              aria-label="Application Icon"
-              sx={{ mr: 1 }}
-            />
+            <Stack direction="row" spacing={1}>
+              <FAIcon
+                icon={iconDefault as IconProp}
+                aria-label="Application Icon"
+                sx={{ mr: 1 }}
+              />
 
-            {applicationName && (
-              <Typography sx={{ mr: 1 }}>{applicationName}</Typography>
-            )}
+              {applicationName && (
+                <Typography sx={{ mr: 1 }}>{applicationName}</Typography>
+              )}
+            </Stack>
           </Button>
 
           <IconButton
