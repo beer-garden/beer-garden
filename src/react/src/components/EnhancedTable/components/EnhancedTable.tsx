@@ -602,7 +602,7 @@ const EnhancedTable = ({
   };
 
   return (
-    <Box sx={{ position: "relative", width: "100%" }}>
+    <Box sx={{ position: "relative", display: "table", width: "100%" }}>
       <TableContainer
         component={Paper}
         sx={{ position: "relative", opacity: isLoading ? 0.5 : 1 }}
