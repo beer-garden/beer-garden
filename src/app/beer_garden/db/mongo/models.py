@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 import datetime
-import json
 import logging
-import sys
 import zoneinfo
 from typing import Tuple
 
 import brewtils.models
 from brewtils.choices import parse
-from brewtils.errors import ModelValidationError, RequestStatusTransitionError
+from brewtils.errors import ModelValidationError
 from brewtils.models import Command as BrewtilsCommand
 from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Job as BrewtilsJob
@@ -38,9 +36,7 @@ from mongoengine import (
     ReferenceField,
     StringField,
 )
-from mongoengine.connection import get_db
-from mongoengine.errors import DoesNotExist, OperationError
-from pymongo.errors import DocumentTooLarge
+from mongoengine.errors import DoesNotExist
 
 from beer_garden import config
 from beer_garden.db.mongo.querysets import FileFieldHandlingQuerySet
@@ -340,7 +336,6 @@ class Request(MongoModel, Document):
     parent_id = StringField()
     children = DummyField(required=False)
     output = StringField()
-    output_gridfs = FileField()
     output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES)
     status = StringField(choices=BrewtilsRequest.STATUS_LIST, default="CREATED")
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
@@ -351,11 +346,13 @@ class Request(MongoModel, Document):
     has_parent = BooleanField(required=False)
     hidden = BooleanField(required=False, default=False)
     requester = StringField(required=False)
-    parameters_gridfs = FileField()
     is_event = BooleanField(required=False)
     source_garden = StringField(required=False)
     target_garden = StringField(required=False)
     root_command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
+
+    # output_gridfs = FileField()
+    # parameters_gridfs = FileField()
 
     meta = {
         "queryset_class": FileFieldHandlingQuerySet,
@@ -456,412 +453,6 @@ class Request(MongoModel, Document):
             },
         ],
     }
-
-    def pre_serialize(self):
-        """Pull any fields out of GridFS"""
-
-        encoding = "utf-8"
-
-        if self.output_gridfs:
-            logger.debug("Retrieving output from GridFS")
-            self.output = self.output_gridfs.read().decode(encoding)
-            self.output_gridfs = None
-
-        if self.parameters_gridfs:
-            logger.debug("Retrieving parameters from GridFS")
-            self.parameters = json.loads(self.parameters_gridfs.read().decode(encoding))
-            self.parameters_gridfs = None
-
-        try:
-            if self.parent_id is not None and self.has_parent:
-                self.parent = {id: self.parent_id}
-        except DoesNotExist:
-            # Unable to find parent, remove object to allow brewtils serializing
-            self.parent_id = None
-
-    def _spill_parameters_to_gridfs(self):
-
-        self.parameters_gridfs.put(
-            json.dumps(self.parameters),
-            encoding="utf-8",
-            parameters=True,
-        )
-        self.parameters = None
-
-    def _pre_save(self):
-        """Move request attributes to GridFS if too big"""
-
-        self.updated_at = get_current_time()
-        encoding = "utf-8"
-
-        if not self.metadata:
-            self.metadata = {}
-
-        if not self.command_display_name:
-            self.command_display_name = self.command
-
-        status_key = f"{self.status}_{config.get('garden.name')}"
-        if status_key not in self.metadata:
-            self.metadata[status_key] = int(get_current_time().timestamp() * 1000)
-
-        if self.has_parent or self.parent_id is not None:
-
-            if self.parent_id is None:
-                if self.parent is not None:
-                    self.parent_id = self.parent.id
-                else:
-                    self.has_parent = False
-
-            elif Request.objects(id=self.parent_id).count() == 0:
-                # Request is an Orphan, removing parent
-                self.has_parent = False
-                self.parent_id = None
-
-        if not hasattr(self, "root_command_type") or self.root_command_type is None:
-            if self.command_type == "TEMP":
-                self.root_command_type = "TEMP"
-            elif not self.has_parent or self.parent_id is None:
-                self.root_command_type = self.command_type
-
-            else:
-                # If this is a child request, we need to set the root_command_type
-                # to the same as the parent request
-                try:
-                    parent_request = Request.objects.only("root_command_type").get(
-                        id=self.parent_id
-                    )
-                    self.root_command_type = parent_request.root_command_type
-                except DoesNotExist:
-                    # Parent request was deleted, so we need to set the root_command_type
-                    # to the same as this request
-                    self.root_command_type = self.command_type
-
-        if self.parameters_gridfs.grid_id:
-            get_db()["fs.files"].update_one(
-                {"_id": self.parameters_gridfs.grid_id},
-                {
-                    "$set": {
-                        "status": self.status,
-                        "updated_at": self.updated_at,
-                        "root_command_type": self.root_command_type,
-                    }
-                },
-            )
-            get_db()["fs.chunks"].update_many(
-                {"files_id": self.parameters_gridfs.grid_id},
-                {
-                    "$set": {
-                        "status": self.status,
-                        "updated_at": self.updated_at,
-                        "root_command_type": self.root_command_type,
-                        "parameter": True,
-                    }
-                },
-            )
-            self.parameters = None
-
-        if self.output and self.output_gridfs.grid_id is None:
-            if sys.getsizeof(self.output) > REQUEST_MAX_PARAM_SIZE:
-                logger.debug("Output size too big, storing in gridfs")
-                self.output_gridfs.put(
-                    self.output,
-                    encoding=encoding,
-                    output=True,
-                    root_command_type=self.root_command_type,
-                    status=self.status,
-                    updated_at=self.updated_at,
-                )
-
-                get_db()["fs.chunks"].update_many(
-                    {"files_id": self.output_gridfs.grid_id},
-                    {
-                        "$set": {
-                            "status": self.status,
-                            "updated_at": self.updated_at,
-                            "root_command_type": self.root_command_type,
-                            "output": True,
-                        }
-                    },
-                )
-
-        if self.output_gridfs.grid_id:
-            self.output = None
-
-    def _post_save(self):
-
-        if self.status == "CREATED":
-            self._update_raw_file_references()
-
-        self._update_raw_file_gridfs()
-        self._update_file_references(self.parameters)
-
-    def _update_raw_file_gridfs(self):
-        parameters = self.parameters or {}
-
-        for param_value in parameters.values():
-            if (
-                isinstance(param_value, dict)
-                and param_value.get("type") == "bytes"
-                and param_value.get("id") is not None
-            ):
-                # Can't do this in this function because it only happens for CREATE
-                get_db()["raw_file"].update_one(
-                    {"_id": ObjectIdField().to_mongo(param_value["id"])},
-                    {
-                        "$set": {
-                            "status": self.status,
-                            "updated_at": self.updated_at,
-                            "root_command_type": self.root_command_type,
-                        }
-                    },
-                )
-
-                raw_file = get_db()["raw_file"].find_one(
-                    {"_id": ObjectIdField().to_mongo(param_value["id"])}, {"file": 1}
-                )
-
-                if raw_file is None or raw_file.get("file") is None:
-                    # If the file is None, it means it wasn't uploaded to GridFS
-                    continue
-
-                get_db()["fs.files"].update_one(
-                    {"_id": raw_file.get("file")},
-                    {
-                        "$set": {
-                            "status": self.status,
-                            "updated_at": self.updated_at,
-                            "root_command_type": self.root_command_type,
-                            "parameter": True,
-                        }
-                    },
-                )
-                get_db()["fs.chunks"].update_many(
-                    {"files_id": raw_file.get("file")},
-                    {
-                        "$set": {
-                            "status": self.status,
-                            "updated_at": self.updated_at,
-                            "root_command_type": self.root_command_type,
-                            "parameter": True,
-                        }
-                    },
-                )
-
-    def _update_raw_file_references(self):
-        parameters = self.parameters or {}
-
-        for param_value in parameters.values():
-            if (
-                isinstance(param_value, dict)
-                and param_value.get("type") == "bytes"
-                and param_value.get("id") is not None
-            ):
-                if self.target_garden and self.target_garden != config.get(
-                    "garden.name"
-                ):
-                    return
-                elif (
-                    System.objects(
-                        namespace=self.namespace,
-                        name=self.system,
-                        version=self.system_version,
-                        local=True,
-                    ).count()
-                    == 0
-                ):
-                    return
-
-                try:
-                    raw_file = RawFile.objects.get(id=param_value["id"])
-                    raw_file.request = self
-                    raw_file.save()
-                except RawFile.DoesNotExist:
-                    logger.debug(
-                        f"Error locating RawFile with id {param_value['id']} "
-                        "while saving Request {self.id}"
-                    )
-
-    def _update_file_references(self, parameters=None):
-        parameters = parameters or {}
-
-        if isinstance(parameters, dict):
-            if parameters.get("type") == "chunk":
-                file_id = parameters.get("details", {}).get("file_id")
-                get_db()["file"].update_one(
-                    {"_id": file_id},
-                    {
-                        "$set": {
-                            "status": self.status,
-                            "updated_at": self.updated_at,
-                            "root_command_type": self.root_command_type,
-                        }
-                    },
-                )
-                get_db()["file_chunk"].update_many(
-                    {"file_id": file_id},
-                    {
-                        "$set": {
-                            "status": self.status,
-                            "updated_at": self.updated_at,
-                            "root_command_type": self.root_command_type,
-                        }
-                    },
-                )
-
-            # If it's not a resolvable it might be a model, so recurse down and check
-            else:
-                for value in parameters.values():
-                    self._update_file_references(value)
-
-    def _delete_gridfs_files(self):
-        try:
-            db_request = Request.objects.get(id=self.id)
-
-            if db_request.output_gridfs:
-                db_request.output_gridfs.delete()
-            if db_request.parameters_gridfs:
-                db_request.parameters_gridfs.delete()
-
-            parameters = db_request.parameters or {}
-
-            for param_value in parameters.values():
-                if (
-                    isinstance(param_value, dict)
-                    and param_value.get("type") == "bytes"
-                    and param_value.get("id") is not None
-                ):
-                    try:
-                        raw_file = RawFile.objects.get(id=param_value["id"])
-                        raw_file.delete()
-                    except RawFile.DoesNotExist:
-                        pass
-        except Request.DoesNotExist:
-            # Request is already deleted
-            pass
-
-    def force_delete(self, *args, **kwargs):
-        """Force Delete the request and all associated requests"""
-        Request.objects.filter(parent_id=str(self.id)).delete()
-        self._delete_gridfs_files()
-        super(Request, self).delete(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        """Delete the request and all associated completed requests"""
-        for request in Request.objects(
-            parent_id=str(self.id), status__in=["SUCCESS", "CANCELED", "ERROR"]
-        ).only("id"):
-            request.delete()
-        Request.objects(parent_id=str(self.id)).update(
-            set__parent_id=None, set__has_parent=False
-        )
-
-        self._delete_gridfs_files()
-
-        super(Request, self).delete(*args, **kwargs)
-
-    def save(self, *args, **kwargs):
-
-        self._pre_save()
-        try:
-            super(Request, self).save(*args, **kwargs)
-        except (DocumentTooLarge, OperationError):
-            # Output values are capped at 5MB, so the parameters must be too large
-            # spilling them to gridfs
-            self._spill_parameters_to_gridfs()
-            super(Request, self).save(*args, **kwargs)
-        self._post_save()
-
-        return self
-
-    def clean(self):
-        """Validate before saving to the database"""
-
-        if self.status not in BrewtilsRequest.STATUS_LIST:
-            raise ModelValidationError(
-                f"Can not save Request {self}: Invalid status '{self.status}'"
-            )
-
-        if (
-            self.command_type is not None
-            and self.command_type not in BrewtilsRequest.COMMAND_TYPES
-        ):
-            raise ModelValidationError(
-                f"Can not save Request {self}: Invalid command type"
-                f" '{self.command_type}'"
-            )
-
-        if (
-            self.output_type is not None
-            and self.output_type not in BrewtilsRequest.OUTPUT_TYPES
-        ):
-            raise ModelValidationError(
-                f"Can not save Request {self}: Invalid output type '{self.output_type}'"
-            )
-
-        # Deal with has_parent
-        if self.has_parent is None:
-            self.has_parent = bool(self.parent_id)
-
-        if self.has_parent:
-            if Request.objects(id=self.parent_id).count() == 0:
-                raise ModelValidationError(
-                    f"Cannot save Request {self}: parent value is not "
-                    f"present in database"
-                )
-
-        if self.has_parent != bool(self.parent_id):
-            raise ModelValidationError(
-                f"Cannot save Request {self}: parent value of {self.parent_id!r} is not "
-                f"consistent with has_parent value of {self.has_parent}"
-            )
-
-        if (
-            not self.target_garden or self.target_garden == config.get("garden.name")
-        ) and ("status" in self.changed_fields or self.created):
-            self.status_updated_at = get_current_time()
-
-    def clean_update(self):
-        """Ensure that the update would not result in an illegal status transition"""
-        # Get the original status
-
-        # NOTE: The following was added for #1216, which aims to resolve the duplication
-        # and orphaning of files in gridfs. It is less than ideal to do an additional
-        # database lookup, but the various conversions to and from brewtils mean that
-        # we get here having lost the parameters_gridfs and output_gridfs values,
-        # preventing us from checking if they've already been populated. Rather than
-        # perform a potentially dangerous rework of the entire Request update flow,
-        # we opt to just pull the Request as it exists in the database so that we can
-        # check those gridfs field.
-
-        try:
-            old_request = Request.objects.only(
-                "parameters_gridfs", "output_gridfs", "status"
-            ).get(id=self.id)
-            if old_request:
-                self.parameters_gridfs = old_request.parameters_gridfs
-                self.output_gridfs = old_request.output_gridfs
-
-                if self.status != old_request.status:
-                    if old_request.status in BrewtilsRequest.COMPLETED_STATUSES:
-                        raise RequestStatusTransitionError(
-                            "Status for a request cannot be updated once it has been "
-                            f"completed. Current: {old_request.status}, "
-                            f"Requested: {self.status}"
-                        )
-
-                    if (
-                        old_request.status == "IN_PROGRESS"
-                        and self.status not in BrewtilsRequest.COMPLETED_STATUSES
-                    ):
-                        raise RequestStatusTransitionError(
-                            "Request status can only transition from IN_PROGRESS to a "
-                            f"completed status. Requested: {self.status}, completed statuses "
-                            f"are {BrewtilsRequest.COMPLETED_STATUSES}."
-                        )
-        except self.DoesNotExist:
-            # Requests to child gardens have an id set from the parent, but no
-            # local Request yet
-            pass
 
 
 class Subscriber(MongoModel, EmbeddedDocument):
@@ -1454,7 +1045,7 @@ class File(MongoModel, Document):
 
     owner_id = StringField(required=False)
     owner_type = StringField(required=False)
-    request = LazyReferenceField(Request, required=False, reverse_delete_rule=NULLIFY)
+    # request = LazyReferenceField(Request, required=False, reverse_delete_rule=NULLIFY)
     job = LazyReferenceField(Job, required=False, reverse_delete_rule=NULLIFY)
     updated_at = DateTimeField(default=get_current_time, required=True)
     file_name = StringField(required=True)
@@ -1493,7 +1084,8 @@ class FileChunk(MongoModel, Document):
 class RawFile(Document):
     file = FileField()
     created_at = DateTimeField(default=get_current_time, required=True)
-    request = LazyReferenceField(Request, required=False, reverse_delete_rule=CASCADE)
+    # request = LazyReferenceField(Request, required=False, reverse_delete_rule=CASCADE)
+    request_id = StringField()
 
     # TTL Fields
     status = StringField()

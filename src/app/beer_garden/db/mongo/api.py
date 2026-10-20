@@ -620,11 +620,8 @@ def gridfs_update_metadata(filter: dict, metadata_updates: dict):
 
 
 def gridfs_delete(filter: dict):
-    db = get_db()
-    fs = gridfs.GridFS(db)
-
-    for grid_out in fs.find(filter):
-        fs.delete(grid_out._id)
+    get_db()["fs.files"].delete_many(filter)
+    get_db()["fs.chunks"].delete_many(filter)
 
 
 def gridfs_read(filter: dict):

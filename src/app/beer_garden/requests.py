@@ -624,6 +624,7 @@ def get_request_children(request, max_depth=1, **kwargs):
     if max_depth != 0:
         if request.children:
             for child in request.children:
+                child = load_request_parameter_and_output(child, **kwargs)
                 child = get_request_children(child, max_depth=(max_depth - 1), **kwargs)
     return request
 
@@ -632,6 +633,7 @@ def get_request_parent(request, max_depth=1, **kwargs):
 
     if request.parent_id:
         request.parent = db.query_unique(Request, id=request.parent_id, **kwargs)
+        request.parent = load_request_parameter_and_output(request.parent, **kwargs)
 
     if max_depth != 0 and request.parent:
         request.parent = get_request_parent(
@@ -671,6 +673,7 @@ def get_request(
     request = request or db.query_unique(
         Request, id=request_id, raise_missing=True, **kwargs
     )
+    request = load_request_parameter_and_output(request, **kwargs)
 
     if children_depth != 0:
         get_request_children(request, max_depth=(children_depth - 1), **kwargs)
@@ -691,7 +694,11 @@ def get_requests(**kwargs) -> List[Request]:
         The list of Requests that matched the query
 
     """
-    return db.query(Request, **kwargs)
+    requests = db.query(Request, **kwargs)
+    for request in requests:
+        request = load_request_parameter_and_output(request, **kwargs)
+
+    return requests
 
 
 def determine_latest_system_version(request: Request):
@@ -751,10 +758,41 @@ def delete_requests(**kwargs) -> dict:
     requests = db.query(Request, filter_params=kwargs)
 
     for request in requests:
-        db.delete(request, force_delete=True)
+        delete_request(request, force_delete=True)
 
     logger.info(f"Deleted {len(requests)} requests")
     return kwargs
+
+
+def delete_request(
+    request: Request = None, request_id: str = None, force_delete: bool = False
+):
+    if request is None:
+        request = db.query_unique(Request, id=request_id)
+
+    # Delete All Children
+    if request.children is None:
+        request.children = get_request_children(request, max_depth=-1)
+
+    if request.children:
+        for child in request.children:
+            if force_delete or child.status in Request.COMPLETED_STATUSES:
+                delete_request(request=child)
+            else:
+                # Remove association so request can finish
+                child.has_parent = False
+                child.parent_id = None
+                child.parent = None
+                db.update_direct(child)
+
+    # Delete all Raw Files
+    RawFile.objects(request_id=request.id).delete()
+
+    # Delete all FS Chunks
+    db.gridfs_delete(filter={request_id: request.id})
+
+    # Delete Request
+    db.delete(request)
 
 
 def _publish_request(request: Request, is_admin: bool, priority: int):
@@ -859,7 +897,7 @@ def process_request(
     except Exception as ex:
         # An error publishing means this request will never complete, so remove it
         if not request.command_type == "EPHEMERAL":
-            db.delete(request)
+            delete_request(request)
 
             if wait_event:
                 request_map.pop(request.id, None)
@@ -901,32 +939,6 @@ def create_request(request: Request) -> Request:
     # file parameters. This should be revisited to see if there is a way to persist
     # remote requests locally without the base64 encoded data while avoiding this copy.
     request = deepcopy(request)
-    remove_bytes_parameter_base64(request.parameters, _is_local_request(request))
-
-    if request.source_garden is None:
-        request.source_garden = config.get("garden.name")
-
-    if request.target_garden is None:
-        request.target_garden = config.get("garden.name")
-
-    migrate_parent_id(request)
-    if request.has_parent or request.parent_id is not None:
-        if request.parent_id is None:
-            request.has_parent = False
-        else:
-            try:
-                parent = db.query_unique(
-                    Request,
-                    id=request.parent_id,
-                    include_fields=["command_type"],
-                    raise_missing=True,
-                )
-                if parent.command_type == "TEMP":
-                    request.command_type = "TEMP"
-            except DoesNotExist:
-                request.has_parent = False
-                request.parent = None
-                request.parent_id = None
 
     if hasattr(request.metadata, "_topic") and request.source_garden == config.get(
         "garden.name"
@@ -946,13 +958,48 @@ def create_request(request: Request) -> Request:
             )
         )
 
-    return db.create(request)
+    return save_request(request)
 
 
 REQUEST_MAX_PARAM_SIZE = 5 * 1_000_000
 
 
-def save_request(request: Request, validation: bool = True) -> Request:
+def save_request(
+    request: Request, validation: bool = True, modify=False, **kwargs
+) -> Request:
+
+    existing = request.id is not None and db.count(Request, id=request.id) == 1
+
+    if modify and existing:
+        existing_request = db.query_unique(Request, id=request.id)
+        updated = False
+
+        if "parameters" in kwargs or "output" in kwargs:
+            existing_request = load_request_parameter_and_output(existing_request)
+
+        for field in kwargs:
+            if field == "metadata":
+                kwargs[field] = {**getattr(existing_request, field), **kwargs[field]}
+            if getattr(existing_request, field) != kwargs[field]:
+                setattr(existing_request, field, kwargs[field])
+                updated = True
+        if not updated:
+            logger.warning(
+                f"Modify Request for {request.id} did not update any existing fields"
+            )
+            return existing_request
+        request = existing_request
+
+    elif modify and not existing:
+        raise Exception(f"Unable to find Request {request.id} to modify")
+
+    if not existing and request.id:
+        logger.warning(
+            f"Failed to update request {request.id}. Creating new request instead."
+        )
+
+    if request.status is None:
+        request.status = "CREATED"
 
     if validation:
         if request.status not in Request.STATUS_LIST:
@@ -979,17 +1026,56 @@ def save_request(request: Request, validation: bool = True) -> Request:
 
     # Pre Serialize
     request.updated_at = datetime.datetime.now(tz=datetime.timezone.utc)
+
+    # Handle Metadata
     if not request.metadata:
         request.metadata = {}
 
-    if not request.command_display_name:
-        request.command_display_name = request.command
+    if existing:
+        db_request = db.query_unique(
+            Request,
+            raise_missing=True,
+            id=request.id,
+            include_fields=["metadata", "status"],
+        )
+        if db_request.metadata:
+            request.metadata = {**db_request.metadata, **request.metadata}
+
+        if validation and request.status != db_request.status:
+            if db_request.status in Request.COMPLETED_STATUSES:
+                raise RequestStatusTransitionError(
+                    "Status for a request cannot be updated once it has been "
+                    f"completed. Current: {db_request.status}, "
+                    f"Requested: {request.status}"
+                )
+
+            if (
+                db_request.status == "IN_PROGRESS"
+                and request.status not in Request.COMPLETED_STATUSES
+            ):
+                raise RequestStatusTransitionError(
+                    "Request status can only transition from IN_PROGRESS to a "
+                    f"completed status. Requested: {request.status}, completed statuses "
+                    f"are {Request.COMPLETED_STATUSES}."
+                )
+
+        if (
+            not request.target_garden
+            or request.target_garden == config.get("garden.name")
+        ) and (request.status != db_request.status):
+            request.status_updated_at = datetime.datetime.now(tz=datetime.timezone.utc)
+
+    if request.status_updated_at is None:
+        request.status_updated_at = datetime.datetime.now(tz=datetime.timezone.utc)
 
     status_key = f"{request.status}_{config.get('garden.name')}"
     if status_key not in request.metadata:
         request.metadata[status_key] = int(
             datetime.datetime.now(tz=datetime.timezone.utc).timestamp() * 1000
         )
+
+    if not request.command_display_name:
+        request.command_display_name = request.command
 
     if request.parent is not None and request.parent_id is None:
         request.parent_id = request.parent.id
@@ -1034,6 +1120,8 @@ def save_request(request: Request, validation: bool = True) -> Request:
                 # to the same as this request
                 request.root_command_type = request.command_type
 
+    large_output = None
+    large_parameters = None
     # Checkout Output Size
     if (
         request.output
@@ -1045,45 +1133,17 @@ def save_request(request: Request, validation: bool = True) -> Request:
 
     # Save Request
 
-    if request.id is None or db.count(Request, id=request.id) == 0:
-        remove_bytes_parameter_base64(request)
+    if not existing:
+        remove_bytes_parameter_base64(request.parameters, _is_local_request(request))
 
         try:
-            db.create_direct(request)
+            request = db.create(request)
         except (DocumentTooLarge, OperationError):
             large_parameters = deepcopy(request.parameters)
             request.parameters = None
-            db.create_direct(request)
+            request = db.create(request)
     else:
-        # Migrate Metadata
-
-        # Check status transition
-        old_status = db.query_unique(
-            Request,
-            raise_missing=True,
-            id=request.id,
-            include_fields=["status"],
-        ).status
-
-        if request.status != old_status:
-            if old_status in Request.COMPLETED_STATUSES:
-                raise RequestStatusTransitionError(
-                    "Status for a request cannot be updated once it has been "
-                    f"completed. Current: {old_status}, "
-                    f"Requested: {request.status}"
-                )
-
-            if (
-                old_status == "IN_PROGRESS"
-                and request.status not in Request.COMPLETED_STATUSES
-            ):
-                raise RequestStatusTransitionError(
-                    "Request status can only transition from IN_PROGRESS to a "
-                    f"completed status. Requested: {request.status}, completed statuses "
-                    f"are {Request.COMPLETED_STATUSES}."
-                )
-
-        db.update_direct(request)
+        request = db.update_direct(request)
 
     if large_output:
         db.gridfs_create(model=large_output, request_id=request.id, output=True)
@@ -1091,8 +1151,17 @@ def save_request(request: Request, validation: bool = True) -> Request:
         db.gridfs_create(model=large_parameters, request_id=request.id, parameters=True)
 
     # Post Save
+    if request.status == "CREATED":
+        _update_raw_file_references(request)
+    else:
+        for raw_file in RawFile.objects(request_id=request.id):
+            raw_file.status = request.status
+            raw_file.updated_at = request.updated_at
+            raw_file.root_command_type = request.root_command_type
+            raw_file.save()
+
     db.gridfs_update_metadata(
-        {"request_id": request.id, "parameters": True},
+        {"request_id": request.id},
         {
             "status": request.status,
             "updated_at": request.updated_at,
@@ -1100,21 +1169,70 @@ def save_request(request: Request, validation: bool = True) -> Request:
         },
     )
 
-    db.gridfs_update_metadata(
-        {"request_id": request.id, "output": True},
-        {
-            "status": request.status,
-            "updated_at": request.updated_at,
-            "root_command_type": request.root_command_type,
-        },
+    return request
+
+
+def _update_raw_file_references(request: Request):
+    parameters = request.parameters or {}
+    if _is_local_request(request):
+        for param_value in parameters.values():
+            if (
+                isinstance(param_value, dict)
+                and param_value.get("type") == "bytes"
+                and param_value.get("id") is not None
+            ):
+                try:
+                    raw_file = RawFile.objects.get(id=param_value["id"])
+                    raw_file.request_id = request.id
+                    raw_file.status = request.status
+                    raw_file.updated_at = request.updated_at
+                    raw_file.root_command_type = request.root_command_type
+
+                    db.gridfs_update_metadata(
+                        {"id": raw_file.file.grid_id},
+                        {
+                            "status": request.status,
+                            "updated_at": request.updated_at,
+                            "root_command_type": request.root_command_type,
+                            "file_type": "parameter",
+                            "request_id": request.id,
+                        },
+                    )
+
+                    raw_file.save()
+                except RawFile.DoesNotExist:
+                    logger.debug(
+                        f"Error locating RawFile with id {param_value['id']} "
+                        "while saving Request {self.id}"
+                    )
+
+
+def load_request_parameter_and_output(request: Request, **kwargs):
+
+    skip_parameters = request.parameters is not None
+    skip_output = (
+        request.status not in Request.COMPLETED_STATUSES or request.output is not None
     )
 
-    # Required for read functions
-    # if request.parameters is None:
-    #     request.parameters = db.gridfs_read({"request_id":request.id, "parameters": True})
+    if "include_fields" in kwargs:
+        skip_parameters = (
+            skip_parameters or "parameters" not in kwargs["include_fields"]
+        )
+        skip_output = skip_output or "output" not in kwargs["include_fields"]
 
-    # if request.status in Request.COMPLETED_STATUSES and request.output is None:
-    #     request.output = db.gridfs_read({"request_id":request.id, "output": True})
+    if "exclude_fields" in kwargs:
+        skip_parameters = skip_parameters or "parameters" in kwargs["exclude_fields"]
+        skip_output = skip_output or "output" in kwargs["exclude_fields"]
+
+    if not skip_parameters:
+        request.parameters = db.gridfs_read(
+            {"request_id": request.id, "parameters": True}
+        )
+
+    if not skip_output:
+        request.output = db.gridfs_read({"request_id": request.id, "output": True})
+
+    return request
 
 
 def remove_bytes_parameter_base64(
@@ -1151,6 +1269,8 @@ def remove_bytes_parameter_base64(
                     ).save()
                     request_param["id"] = str(raw_file.id)
 
+                    # Need to migrate the other fields
+
                 del request_param["base64"]
 
 
@@ -1172,7 +1292,7 @@ def start_request(request_id: str = None, request: Request = None) -> Request:
     request = request or db.query_unique(Request, raise_missing=True, id=request_id)
 
     request.status = "IN_PROGRESS"
-    request = db.update(request)
+    request = save_request(request)
 
     # Metrics
     request_started(request)
@@ -1210,7 +1330,7 @@ def complete_request(
     request.output = output
     request.error_class = error_class
 
-    request = db.update(request)
+    request = save_request(request)
 
     # Metrics
     request_completed(request)
@@ -1258,7 +1378,7 @@ def cancel_request(request_id: str = None, request: Request = None) -> Request:
     request = request or db.query_unique(Request, raise_missing=True, id=request_id)
 
     request.status = "CANCELED"
-    request = db.update(request)
+    request = save_request(request)
 
     # TODO - Metrics here?
 
@@ -1273,21 +1393,7 @@ def invalid_request(request: Request = None):
 
 @publish_event(Events.REQUEST_UPDATED)
 def update_request(request: Request):
-    if request.id:
-        try:
-            return db.update(request)
-        except DoesNotExist:
-            logger.warning(
-                f"Failed to update request {request.id}. Creating new request instead."
-            )
-
-    migrate_parent_id(request)
-    return db.create(request)
-
-
-@publish_event(Events.REQUEST_UPDATED)
-def modify_request(request: Request, updates: dict):
-    return db.modify(request, **updates)
+    return save_request(request)
 
 
 def process_wait(request: Request, timeout: float) -> Request:
@@ -1322,7 +1428,9 @@ def process_wait(request: Request, timeout: float) -> Request:
     if not req_complete.wait(timeout):
         raise TimeoutError("Request did not complete before the specified timeout")
 
-    return db.query_unique(Request, id=created_request.id)
+    request = db.query_unique(Request, id=created_request.id)
+
+    return load_request_parameter_and_output(request)
 
 
 def handle_wait_event_filter(event):
@@ -1499,7 +1607,7 @@ def handle_event_create(event):
                     if foundUser:
                         break
 
-        return db.create_direct(event.payload)
+        return save_request(event.payload)
     except (NotUniqueException, BulkWriteError):
         return
 
@@ -1570,10 +1678,14 @@ def handle_event(event):
                             * 1000
                         )
 
-                    modified_request = db.modify(
+                    modified_request = save_request(
                         existing_request,
+                        modify=True,
                         status=event.payload.status,
                         metadata=metadata,
+                    )
+                    modified_request = load_request_parameter_and_output(
+                        modified_request
                     )
                     handle_event_rebroadcast(event.name, modified_request)
 
@@ -1583,7 +1695,9 @@ def handle_event(event):
                     handle_event_rebroadcast(event.name, created_request)
             return
         else:  # Only Completed statuses are handled in this else statement
-            existing_request = db.query_unique(Request, id=event.payload.id)
+            existing_request = db.query_unique(
+                Request, id=event.payload.id, include_field=["status"]
+            )
 
             if existing_request and existing_request.status != event.payload.status:
                 # Skip status that revert
@@ -1604,6 +1718,7 @@ def handle_event(event):
                 # the local garden we remove the parent before sending them. Only setting
                 # the subset of fields that change "corrects" the parent
 
+                updates = {}
                 for field in (
                     "status",
                     "status_updated_at",
@@ -1613,16 +1728,10 @@ def handle_event(event):
                     "output",
                     "error_class",
                 ):
-                    new_value = getattr(event.payload, field)
-                    # Merge metadata
-                    if field == "metadata":
-                        new_value = {**getattr(existing_request, field), **new_value}
+                    updates[field] = getattr(event.payload, field)
 
-                    if getattr(existing_request, field) != new_value:
-                        setattr(existing_request, field, new_value)
-
-                db.update_direct(existing_request)
-                handle_event_rebroadcast(event.name, existing_request)
+                request = save_request(event.payload, modify=True, **updates)
+                handle_event_rebroadcast(event.name, request)
 
 
 def migrate_parent_id(request: Request):
@@ -1660,7 +1769,7 @@ def clean_command_type_temp(request: Request, is_remote: bool):
                 # Give Threading based requests a chance to pull the
                 # Request before deleting it
                 time.sleep(0.5)
-            db.delete(request)
+            delete_request(request)
             return True
 
         # Delete any children that are TEMP once the current request
@@ -1680,7 +1789,7 @@ def clean_command_type_temp(request: Request, is_remote: bool):
         )
 
         for child in request.children:
-            db.delete(child)
+            delete_request(child)
 
         return False
 
