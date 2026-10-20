@@ -20,7 +20,7 @@ def request_aggregation(monkeypatch):
 @pytest.fixture
 def get_gardens_mock(monkeypatch):
     gardens_mock = Mock()
-    monkeypatch.setattr(metrics, "get_gardens", gardens_mock)
+    monkeypatch.setattr(db, "query", gardens_mock)
     return gardens_mock
 
 

@@ -395,10 +395,10 @@ def request_garden_send_latency_metrics(interval: int = 15):
 
 
 def request_garden_return_latency_metrics(interval: int = 15):
-    # Calcualted the average trip from a Target Garden to this Garden is seconds
+    # Calculates the average trip from a Target Garden to this Garden in seconds
 
     local_garden = config.get("garden.name")
-    gardens = gardens = db.query(
+    gardens = db.query(
         Garden, include_fields=["name"], filter_params={"name__ne": local_garden}
     )
 
