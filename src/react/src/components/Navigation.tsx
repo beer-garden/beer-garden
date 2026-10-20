@@ -607,7 +607,7 @@ function NavigationMenu({
             aria-label="Open navigation menu"
             sx={{
               display: { xs: "flex", md: "none" },
-              color: "white",
+              color: "primary.contrastText",
               backgroundColor: "primary.main",
               textTransform: "none",
               "&:hover": {
