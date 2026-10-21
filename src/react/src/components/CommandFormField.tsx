@@ -206,8 +206,8 @@ function CommandFormField({
                 error={parameter.error}
               >
                 {parameter.errorMsg
-                  ? `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : parameterDisplayName}: ${parameter.errorMsg}`
-                  : `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : parameterDisplayName}`}
+                  ? `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : `Parameter Input ${parameterDisplayName}`}: ${parameter.errorMsg}`
+                  : `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : `Parameter Input ${parameterDisplayName}`}`}
               </FormHelperText>
             </Box>
           </Tooltip>
@@ -276,8 +276,8 @@ function CommandFormField({
               error={parameter.error}
             >
               {parameter.errorMsg
-                ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${parameter.errorMsg}`
-                : `${parameter.optional ? "Optional: " : ""}${parameter.description}`}
+                ? `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : `Parameter Input ${parameterDisplayName}`}: ${parameter.errorMsg}`
+                : `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : `Parameter Input ${parameterDisplayName}`}`}
             </FormHelperText>
           </Box>
         </Tooltip>
@@ -356,8 +356,8 @@ function CommandFormField({
           error={parameter.error}
         >
           {parameter.errorMsg
-            ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${parameter.errorMsg}`
-            : `${parameter.optional ? "Optional: " : ""}${parameter.description}`}
+            ? `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : `Parameter Input ${parameterDisplayName}`}: ${parameter.errorMsg}`
+            : `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : `Parameter Input ${parameterDisplayName}`}`}
         </FormHelperText>
         {loadingChoices &&
           loadingChoices.some((loading) => loading.key === parameter.key) && (
@@ -685,8 +685,8 @@ function CommandFormField({
               {parameter.error &&
               parameter.errorIndex &&
               parameter.errorIndex.includes(index)
-                ? `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : parameterDisplayName}: ${parameter.errorIndexMessage?.find((value) => value.index === index)?.msg}`
-                : `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : parameterDisplayName}`}
+                ? `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : `Parameter Input ${parameterDisplayName}`}: ${parameter.errorIndexMessage?.find((value) => value.index === index)?.msg}`
+                : `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : `Parameter Input ${parameterDisplayName}`}`}
             </FormHelperText>
           </Box>
         ))}
@@ -968,8 +968,8 @@ function CommandFormField({
             error={parameter.error}
           >
             {parameter.errorMsg
-              ? `${parameter.optional ? "Optional: " : ""}${parameter.description}: ${parameter.errorMsg}`
-              : `${parameter.optional ? "Optional: " : ""}${parameter.description}`}
+              ? `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : `Parameter Input ${parameterDisplayName}`}: ${parameter.errorMsg}`
+              : `${parameter.optional ? "Optional: " : ""}${parameter.description !== undefined && parameter.description !== null ? parameter.description : `Parameter Input ${parameterDisplayName}`}`}
           </FormHelperText>
         </Box>
       </Box>
