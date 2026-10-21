@@ -201,6 +201,7 @@ function CommandFormField({
               </Select>
               <FormHelperText
                 key={`${parameter.key}-helper-text`}
+                id={`${parameter.key}-helper-text`}
                 aria-live="polite"
                 error={parameter.error}
               >
@@ -270,6 +271,7 @@ function CommandFormField({
             </Select>
             <FormHelperText
               key={`${parameter.key}-helper-text`}
+              id={`${parameter.key}-helper-text`}
               aria-live="polite"
               error={parameter.error}
             >
@@ -349,6 +351,7 @@ function CommandFormField({
 
         <FormHelperText
           key={`${parameter.key}-helper-text`}
+          id={`${parameter.key}-helper-text`}
           aria-live="polite"
           error={parameter.error}
         >
@@ -674,6 +677,7 @@ function CommandFormField({
             </Box>
             <FormHelperText
               key={`${parameter.key}-${index}-helper-text`}
+              id={`${parameter.key}-${index}-helper-text`}
               aria-live="polite"
               error={parameter.error}
               sx={inputDisplayStyling}
@@ -959,6 +963,7 @@ function CommandFormField({
           </Tooltip>
           <FormHelperText
             key={`${parameter.key}-helper-text`}
+            id={`${parameter.key}-helper-text`}
             aria-live="polite"
             error={parameter.error}
           >
