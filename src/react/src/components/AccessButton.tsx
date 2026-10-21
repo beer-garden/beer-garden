@@ -61,7 +61,7 @@ const AccessButton = ({
   }
 
   if (!Object.hasOwn(props, "variant")) {
-    props.variant = "contained";
+    props.variant = "outlined";
   }
 
   if (
@@ -100,7 +100,7 @@ const AccessButton = ({
   }
 
   if (raised) {
-    props.variant = "contained";
+    props.sx = { ...props.sx, ...{ boxShadow: "2" } };
   }
 
   if (text) {

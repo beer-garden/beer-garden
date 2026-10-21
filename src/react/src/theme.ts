@@ -57,6 +57,42 @@ const darkPalette = {
   divider: grey[700],
 };
 
+const buttonStyleGenerator = (ownerState: any, theme: any) => {
+  if (ownerState?.variant !== "text") {
+    const themeColor = theme.palette[ownerState.color];
+    if (themeColor) {
+      return {
+        borderColor: themeColor?.contrastText,
+        color: themeColor?.contrastText,
+        background: themeColor?.main,
+        borderWidth: "1px",
+      };
+    }
+
+    return {
+      borderColor: theme.palette.info.contrastText,
+      color: theme.palette.info.contrastText,
+      background: theme.palette.info.main,
+      borderWidth: "1px",
+    };
+  }
+
+  return {};
+};
+
+const chipStyleGenerator = (ownerState: any, theme: any) => {
+  const themeColor = theme.palette[ownerState.color];
+  if (themeColor) {
+    return {
+      border: `1px solid ${themeColor?.contrastText}`,
+    };
+  }
+
+  return {
+    border: `1px solid ${theme.palette.info.contrastText}`,
+  };
+};
+
 // See https://mui.com/material-ui/customization/palette/#color-schemes
 export const theme = createTheme({
   colorSchemes: {
@@ -94,10 +130,14 @@ export const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: ({ ownerState, theme }) => ({
-          ...(ownerState.variant === "outlined" && {
-            borderColor: theme.palette.text.primary,
-            color: theme.palette.text.primary,
-          }),
+          ...buttonStyleGenerator(ownerState, theme),
+        }),
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: ({ ownerState, theme }) => ({
+          ...chipStyleGenerator(ownerState, theme),
         }),
       },
     },
