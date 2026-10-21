@@ -53,9 +53,9 @@ class SummaryCollector(Collector):
         for value in values:
             labels = []
             for label_key in self._labels:
-                labels.append(value[label_key])
+                labels.append(value.get(label_key, ""))
 
-            summary.add_metric(labels, value["count"], value["sum_value"])
+            summary.add_metric(labels, value.get("count", 0), value.get("sum_value", 0))
         yield summary
 
 
@@ -92,16 +92,17 @@ class CumulativeCollector(Collector):
             if self._metric_keys is None:
                 labels = []
                 for label_key in self._labels:
-                    labels.append(value[label_key])
-                gauge.add_metric(labels, value["count"])
+                    labels.append(value.get(label_key, ""))
+                gauge.add_metric(labels, value.get("count", 0))
             else:
                 for metric_key in self._metric_keys:
                     if metric_key in value:
                         labels = []
                         for label_key in self._labels:
-                            labels.append(value[label_key])
+                            labels.append(value.get(label_key, ""))
                         labels.append(metric_key)
-                        gauge.add_metric(labels, value[metric_key])
+                        gauge.add_metric(labels, value.get(metric_key, 0))
+
         yield gauge
 
 
@@ -139,9 +140,9 @@ class TimeWindowCollector(Collector):
         for value in values:
             labels = []
             for label_key in self._labels:
-                labels.append(value[label_key])
+                labels.append(value.get(label_key, ""))
 
-            gauge.add_metric(labels, value["count"])
+            gauge.add_metric(labels, value.get("count", 0))
         yield gauge
 
 
