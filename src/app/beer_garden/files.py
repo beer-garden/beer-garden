@@ -231,9 +231,7 @@ def create_chunk(
         )
 
     file = check_file(file_id, upsert=kwargs.get("upsert", False))
-    chunk = FileChunk(
-        file_id=file.id, offset=offset, data=data, owner=kwargs.get("owner", None)
-    )
+    chunk = FileChunk(file_id=file.id, offset=offset, data=data)
 
     # This is starting to get DB-specific, but we want to be sure this is an atomic operation.
     chunk = db.create(chunk)
@@ -486,23 +484,13 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None) -> Fil
         # Case 2 : The old owner is a higher priority than the new one, but it was deleted.
         if new_owner_priority <= old_owner_priority or (
             file.owner_type in OWNERSHIP_PRIORITY
-            and (file.job is None and file.request is None)
         ):
-            if owner_type in OWNERSHIP_MAP:
-                owner = db.query_unique(OWNERSHIP_MAP[owner_type], id=owner_id)
-                file = db.modify(
-                    file,
-                    owner_id=owner_id,
-                    owner_type=owner_type,
-                    job=owner.id if owner is not None and owner_type == "JOB" else None,
-                    request=(
-                        owner.id
-                        if owner is not None and owner_type == "REQUEST"
-                        else None
-                    ),
-                )
-            else:
-                file = db.modify(file, owner_id=owner_id, owner_type=owner_type)
+            file = db.modify(file, owner_id=owner_id, owner_type=owner_type)
+
+            for chunk_id in file.chunks.values():
+                chunk = db.query_unique(FileChunk, id=chunk_id)
+                chunk.owner_type = owner_type
+                db.update(chunk)
 
             return _safe_build_object(FileStatus, file, operation_complete=True)
 

@@ -16,8 +16,6 @@ from brewtils.models import System as BrewtilsSystem
 from lark import ParseError
 from lark.exceptions import LarkError
 from mongoengine import (
-    CASCADE,
-    NULLIFY,
     PULL,
     BooleanField,
     DateTimeField,
@@ -30,7 +28,6 @@ from mongoengine import (
     FileField,
     GenericEmbeddedDocumentField,
     IntField,
-    LazyReferenceField,
     ListField,
     ObjectIdField,
     ReferenceField,
@@ -372,8 +369,6 @@ class Request(MongoModel, Document):
             {"name": "parent_id_index", "fields": ["parent_id"]},
             {"name": "parent_index", "fields": ["has_parent"]},
             {"name": "hidden_index", "fields": ["hidden"]},
-            # Used for Gridfs File Pruning
-            {"name": "gridfs_index", "fields": ["output_gridfs", "parameters_gridfs"]},
             # These are for sorting parent requests
             {
                 "name": "parent_command_display_name_index",
@@ -1045,8 +1040,6 @@ class File(MongoModel, Document):
 
     owner_id = StringField(required=False)
     owner_type = StringField(required=False)
-    # request = LazyReferenceField(Request, required=False, reverse_delete_rule=NULLIFY)
-    job = LazyReferenceField(Job, required=False, reverse_delete_rule=NULLIFY)
     updated_at = DateTimeField(default=get_current_time, required=True)
     file_name = StringField(required=True)
     file_size = IntField(required=True)
@@ -1071,8 +1064,8 @@ class FileChunk(MongoModel, Document):
     file_id = StringField(required=True)
     offset = IntField(required=True)
     data = StringField(required=True)
-    # Delete Rule (2) = CASCADE; This causes this document to be deleted when the owner doc is.
-    owner = LazyReferenceField(File, required=False, reverse_delete_rule=CASCADE)
+
+    owner_type = StringField(required=False)
 
     # TTL Fields
     status = StringField()
@@ -1084,7 +1077,6 @@ class FileChunk(MongoModel, Document):
 class RawFile(Document):
     file = FileField()
     created_at = DateTimeField(default=get_current_time, required=True)
-    # request = LazyReferenceField(Request, required=False, reverse_delete_rule=CASCADE)
     request_id = StringField()
 
     # TTL Fields
