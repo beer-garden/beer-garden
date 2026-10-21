@@ -523,7 +523,7 @@ function CommandForm({
           }
         }
 
-        prepareDefaultValues.push(newParam);
+        prepareDefaultValues.push(updateError(newParam));
       }
     }
     altParametersFields.current = prepareDefaultValues;
