@@ -580,7 +580,7 @@ function NavigationMenu({
           sx={{ display: "flex", alignItems: "center", gap: 2 }}
         >
           <Button
-            sx={navButtonStyles}
+            sx={{ ...navButtonStyles, display: { xs: "flex", md: "flex" } }}
             component={NavLink}
             to="/"
             {...GenerateTourProps(homeLinkTourStep)}
