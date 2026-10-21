@@ -580,7 +580,7 @@ function NavigationMenu({
           sx={{ display: "flex", alignItems: "center", gap: 2 }}
         >
           <Button
-            sx={{ ...navButtonStyles, display: { xs: "flex", md: "flex" } }}
+            sx={{ ...navButtonStyles, flexShrink: 0, display: "flex" }}
             component={NavLink}
             to="/"
             {...GenerateTourProps(homeLinkTourStep)}
@@ -591,15 +591,17 @@ function NavigationMenu({
               }
             }}
           >
-            <FAIcon
-              icon={iconDefault as IconProp}
-              aria-label="Application Icon"
-              sx={{ mr: 1 }}
-            />
+            <Stack direction="row" spacing={1}>
+              <FAIcon
+                icon={iconDefault as IconProp}
+                aria-label="Application Icon"
+                sx={{ mr: 1 }}
+              />
 
-            {applicationName && (
-              <Typography sx={{ mr: 1 }}>{applicationName}</Typography>
-            )}
+              {applicationName && (
+                <Typography sx={{ mr: 1 }}>{applicationName}</Typography>
+              )}
+            </Stack>
           </Button>
 
           <IconButton
@@ -641,7 +643,6 @@ function NavigationMenu({
               <span key={item.label}>{item.buttonTemplate()}</span>
             ))}
 
-          <Box sx={{ ml: "auto" }} />
           {authEnabled === true && (
             <>
               {username === undefined && (
@@ -665,9 +666,11 @@ function NavigationMenu({
               )}
             </>
           )}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0 }}>
+          <Box
+            sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 0 }}
+          >
             <AccessButton
-              sx={{ height: "36px", color: "primary.contrastText", mr: 2 }}
+              sx={{ height: "36px", color: "primary.contrastText" }}
               text
               onClick={toggleRunTour}
               tooltip="Start Tour"
