@@ -370,6 +370,7 @@ function SystemCard({
       }
       if (system.local && label === undefined) {
         label = "Unable to find Local Runner";
+        icon = "skull";
       }
     }
 
