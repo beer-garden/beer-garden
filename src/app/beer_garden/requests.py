@@ -48,7 +48,6 @@ import beer_garden.queue.api as queue
 from beer_garden.db.mongo.models import RawFile
 from beer_garden.errors import NotUniqueException, ShutdownError
 from beer_garden.events import publish, publish_event
-from beer_garden.metrics import request_completed, request_created, request_started
 
 logger = logging.getLogger(__name__)
 
@@ -876,9 +875,6 @@ def process_request(
             f"Error while publishing {request!r} to message broker"
         ) from ex
 
-    # Metrics
-    request_created(request)
-
     return request
 
 
@@ -908,6 +904,9 @@ def create_request(request: Request) -> Request:
 
     if request.target_garden is None:
         request.target_garden = config.get("garden.name")
+
+    if request.status is None:
+        request.status = "CREATED"
 
     migrate_parent_id(request)
     if request.has_parent or request.parent_id is not None:
@@ -1006,9 +1005,6 @@ def start_request(request_id: str = None, request: Request = None) -> Request:
     request.status = "IN_PROGRESS"
     request = db.update(request)
 
-    # Metrics
-    request_started(request)
-
     return request
 
 
@@ -1043,9 +1039,6 @@ def complete_request(
     request.error_class = error_class
 
     request = db.update(request)
-
-    # Metrics
-    request_completed(request)
 
     return request
 

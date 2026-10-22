@@ -371,6 +371,18 @@ def query(
     return [] if len(query_set) == 0 else to_brewtils(query_set)
 
 
+def aggregation(model_class: ModelType, pipeline: list = None) -> list:
+
+    query_set = _model_map[model_class].objects
+    cursor = query_set.aggregate(pipeline)
+
+    results = []
+
+    for document in cursor:
+        results.append(document)
+    return results
+
+
 def create_direct(obj: ModelItem) -> ModelItem:
     """Save a new item to the database, that already has an ID
 
