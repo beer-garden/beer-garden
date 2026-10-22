@@ -258,7 +258,6 @@ function TopicCard({
       <div>
         <AccessButton
           rounded
-          raised
           onClick={() => {
             void navigate(`/request/${request.id}`);
             removeItem(requestItem.itemId);
@@ -284,7 +283,6 @@ function TopicCard({
       <Grid>
         <AccessButton
           rounded
-          raised
           onClick={() => {
             setReloadRequestsTrigger(reloadRequestsTrigger + 1);
           }}

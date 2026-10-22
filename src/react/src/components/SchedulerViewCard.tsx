@@ -307,7 +307,6 @@ function SchedulerViewCard({
       <>
         <AccessButton
           rounded
-          raised
           onClick={() => {
             removeItem();
             void navigate(`/request/${request.id}`);
@@ -322,7 +321,6 @@ function SchedulerViewCard({
         </AccessButton>
         <AccessButton
           rounded
-          raised
           onClick={() => {
             if (request.id) {
               updateRequestItem({
@@ -349,7 +347,6 @@ function SchedulerViewCard({
       <Grid>
         <AccessButton
           rounded
-          raised
           onClick={() => setReloadRequestsTrigger(reloadRequestsTrigger + 1)}
           tooltip={recordsUpdated ? "New updates available" : "Refresh"}
         >
@@ -422,7 +419,6 @@ function SchedulerViewCard({
           >
             <AccessButton
               rounded
-              raised
               onClick={() => {
                 if (job?.id) {
                   RunAdhocJob(job.id).catch((error) => {
@@ -446,7 +442,6 @@ function SchedulerViewCard({
 
             <AccessButton
               rounded
-              raised
               onClick={() => {
                 editJob();
               }}
@@ -460,7 +455,6 @@ function SchedulerViewCard({
             {job?.status === "RUNNING" && (
               <AccessButton
                 rounded
-                raised
                 onClick={() => {
                   PauseJob(job)
                     .then((updatedJob) => {
@@ -487,7 +481,6 @@ function SchedulerViewCard({
             {job?.status === "PAUSED" && (
               <AccessButton
                 rounded
-                raised
                 onClick={() => {
                   ResumeJob(job)
                     .then((updatedJob) => {
@@ -513,7 +506,6 @@ function SchedulerViewCard({
             )}
             <AccessButton
               rounded
-              raised
               onClick={() => {
                 showConfirmDialog({
                   accept: deleteJob,

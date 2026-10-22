@@ -436,7 +436,6 @@ function SystemCard({
             title={`Start Instance ${instance.name} in ${system.namespace}.${system.name}.${system.version}`}
             {...GenerateTourProps(startInstanceTourStep)}
             {...permissions}
-            raised
             basic
             permission="PLUGIN_ADMIN"
           >
@@ -448,7 +447,6 @@ function SystemCard({
             title={`Stop Instance ${instance.name} in ${system.namespace}.${system.name}.${system.version}`}
             {...GenerateTourProps(stopInstanceTourStep)}
             {...permissions}
-            raised
             basic
             permission="PLUGIN_ADMIN"
           >
@@ -536,7 +534,6 @@ function SystemCard({
             onClick={handleInstanceMenuOpen}
             {...permissions}
             permission="OPERATOR"
-            raised
             basic
           >
             <FontAwesomeIcon icon="bars" />
@@ -596,7 +593,6 @@ function SystemCard({
                   {...GenerateTourProps(startInstancesTourStep)}
                   {...permissions}
                   permission="PLUGIN_ADMIN"
-                  raised
                   basic
                 >
                   <FontAwesomeIcon icon="play" />
@@ -609,7 +605,6 @@ function SystemCard({
                   {...GenerateTourProps(stopInstancesTourStep)}
                   {...permissions}
                   permission="PLUGIN_ADMIN"
-                  raised
                   basic
                 >
                   <FontAwesomeIcon icon="stop" />
@@ -623,7 +618,6 @@ function SystemCard({
                   {...GenerateTourProps(restartSystemTourStep)}
                   {...permissions}
                   permission="PLUGIN_ADMIN"
-                  raised
                   basic
                 >
                   <FontAwesomeIcon icon="refresh" />
@@ -636,7 +630,6 @@ function SystemCard({
                   {...GenerateTourProps(deleteSystemTourStep)}
                   {...permissions}
                   permission="PLUGIN_ADMIN"
-                  raised
                   basic
                 >
                   <FontAwesomeIcon icon="trash" />

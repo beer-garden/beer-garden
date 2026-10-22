@@ -206,7 +206,6 @@ function JobIndex({
       <div>
         <AccessButton
           rounded
-          raised
           basic
           onClick={() => addRequestItem({ jobId: job.id, type: "VIEW_JOB" })}
           title={"View Job " + job.name}
@@ -218,7 +217,6 @@ function JobIndex({
         <>
           <AccessButton
             rounded
-            raised
             basic
             onClick={() => {
               if (job.id) {
@@ -243,7 +241,6 @@ function JobIndex({
 
           <AccessButton
             rounded
-            raised
             basic
             onClick={() => {
               if (job.id) {
@@ -261,7 +258,6 @@ function JobIndex({
           {job.status === "RUNNING" && (
             <AccessButton
               rounded
-              raised
               basic
               onClick={() => {
                 PauseJob(job)
@@ -293,7 +289,6 @@ function JobIndex({
           {job.status === "PAUSED" && (
             <AccessButton
               rounded
-              raised
               basic
               onClick={() => {
                 ResumeJob(job)
@@ -324,7 +319,6 @@ function JobIndex({
           )}
           <AccessButton
             rounded
-            raised
             basic
             onClick={() => {
               const accept = () => {
@@ -459,7 +453,6 @@ function JobIndex({
       <Box sx={{ display: "flex" }}>
         <AccessButton
           sx={buttonStyle}
-          raised
           onClick={createJob}
           startIcon={<FAIcon icon="pencil" />}
           {...GenerateTourProps(createJobTourStep)}
@@ -489,7 +482,6 @@ function JobIndex({
 
         <AccessButton
           sx={buttonStyle}
-          raised
           onClick={() =>
             ExportJobs().catch((error) =>
               showSnackbar({

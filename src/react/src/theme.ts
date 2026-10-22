@@ -10,12 +10,20 @@ import {
 
 const lightPalette = {
   mode: "light" as const,
-  primary: { main: teal[400], contrastText: grey[900], teal: blue[900]  },
-  secondary: { main: red[400], contrastText: grey[900], red: blue[900]  },
-  error: { main: red[400], contrastText: grey[900], red: blue[900]  },
-  info: { main: blue[400], contrastText: grey[900], dark: blue[900] },
-  success: { main: lightGreen[400], contrastText: grey[900], dark: lightGreen[900]  },
-  warning: { main: deepOrange[400], contrastText: grey[900], dark: deepOrange[900]  },
+  primary: { main: teal[400], contrastText: grey[900], dark: teal[900] },
+  secondary: { main: red[400], contrastText: grey[900], dark: red[900] },
+  error: { main: red[400], contrastText: grey[900], dark: red[900] },
+  info: { main: blue[400], contrastText: grey[900], dark: blue[800] },
+  success: {
+    main: lightGreen[400],
+    contrastText: grey[900],
+    dark: lightGreen[900],
+  },
+  warning: {
+    main: deepOrange[400],
+    contrastText: grey[900],
+    dark: deepOrange[900],
+  },
   background: {
     default: grey[100],
     paper: grey[50],
@@ -36,11 +44,19 @@ const lightPalette = {
 const darkPalette = {
   mode: "dark" as const,
   primary: { main: teal[900], contrastText: grey[50], dark: teal[400] },
-  secondary: { main: red[900], contrastText: grey[50], dark: red[400]  },
-  error: { main: red[900], contrastText: grey[50], dark: red[400]  },
-  info: { main: blue[900], contrastText: grey[50], dark: blue[400]  },
-  success: { main: lightGreen[900], contrastText: grey[50], dark: lightGreen[400]  },
-  warning: { main: deepOrange[900], contrastText: grey[50], dark: deepOrange[400]  },
+  secondary: { main: red[900], contrastText: grey[50], dark: red[400] },
+  error: { main: red[900], contrastText: grey[50], dark: red[400] },
+  info: { main: blue[900], contrastText: grey[50], dark: blue[400] },
+  success: {
+    main: lightGreen[900],
+    contrastText: grey[50],
+    dark: lightGreen[400],
+  },
+  warning: {
+    main: deepOrange[900],
+    contrastText: grey[50],
+    dark: deepOrange[400],
+  },
   background: {
     default: grey[900],
     paper: grey[800],
