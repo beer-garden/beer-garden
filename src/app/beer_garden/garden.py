@@ -29,7 +29,6 @@ from brewtils.models import (
     System,
 )
 from mongoengine import DoesNotExist
-from packaging.version import InvalidVersion, parse
 from yapconf.exceptions import (
     YapconfItemNotFound,
     YapconfLoadError,
