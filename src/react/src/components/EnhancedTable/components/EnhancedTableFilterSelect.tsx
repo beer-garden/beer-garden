@@ -86,7 +86,6 @@ export const EnhancedTableFilterSelect = ({
             aria-label="Close Table Filter"
             sx={{ m: 2 }}
             color="info"
-            variant="contained"
           >
             <FontAwesomeIcon icon="xmark" />
           </Button>

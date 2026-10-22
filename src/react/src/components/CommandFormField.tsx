@@ -915,7 +915,6 @@ function CommandFormField({
                   component="label"
                   role={undefined}
                   disabled={disabled || parameter?.value?.name !== undefined}
-                  variant="contained"
                   tabIndex={-1}
                   startIcon={<FAIcon icon="upload" />}
                   aria-describedby={`${parameter.key}-helper-text`}
@@ -932,7 +931,6 @@ function CommandFormField({
                 <Button
                   component="label"
                   role={undefined}
-                  variant="contained"
                   disabled={disabled || uploadPercentage > 0}
                   tabIndex={-1}
                   startIcon={<FAIcon icon="upload" />}

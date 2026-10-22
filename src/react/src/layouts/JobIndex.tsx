@@ -473,7 +473,6 @@ function JobIndex({
           component="label"
           htmlFor="import_job_input"
           role={undefined}
-          variant="contained"
           tabIndex={-1}
           startIcon={<FAIcon icon="upload" />}
           sx={buttonStyle}
