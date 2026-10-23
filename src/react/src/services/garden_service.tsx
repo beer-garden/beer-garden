@@ -92,7 +92,13 @@ export const DeleteGarden = async (
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
     }
-    const data = await response.json();
+
+    if (response.status === 204) {
+      return;
+    }
+
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
     return data;
   } catch (error) {
     // Handle network errors or the error thrown above

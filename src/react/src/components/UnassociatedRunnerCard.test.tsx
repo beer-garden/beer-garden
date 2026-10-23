@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { Runner } from "../models/brewtils-types";
 import { RunnerGroup } from "../models/models";
-import { ToastProvider } from "../providers/ToastProvider";
+import { SnackbarProvider } from "../providers/SnackbarProvider";
 import * as runnerService from "../services/runner_service";
 import UnassociatedRunnerCard from "./UnassociatedRunnerCard";
 
@@ -26,9 +26,9 @@ describe("UnassociatedRunnerCard", () => {
 
   test("renders Runner Group", async () => {
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -44,9 +44,9 @@ describe("UnassociatedRunnerCard", () => {
     vi.mocked(runnerService.StopRunner);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId("STOP_GROUP");
@@ -63,9 +63,9 @@ describe("UnassociatedRunnerCard", () => {
     vi.mocked(runnerService.StartRunner);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId("START_GROUP");
@@ -82,9 +82,9 @@ describe("UnassociatedRunnerCard", () => {
     vi.mocked(runnerService.RemoveRunner);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId("DELETE_GROUP");
@@ -101,9 +101,9 @@ describe("UnassociatedRunnerCard", () => {
     vi.mocked(runnerService.ReloadRunner);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId("RELOAD_GROUP");
@@ -121,9 +121,9 @@ describe("UnassociatedRunnerCard", () => {
     vi.mocked(runnerService.StartRunner);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId(
@@ -145,9 +145,9 @@ describe("UnassociatedRunnerCard", () => {
     vi.mocked(runnerService.StopRunner);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId(
@@ -169,9 +169,9 @@ describe("UnassociatedRunnerCard", () => {
     vi.mocked(runnerService.RemoveRunner);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <UnassociatedRunnerCard runnerGroup={mock_runner_group} config={{}} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     const target_button = await screen.findByTestId(

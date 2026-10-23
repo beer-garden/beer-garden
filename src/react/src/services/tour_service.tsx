@@ -1,9 +1,10 @@
 import { RefObject } from "react";
+import { Step } from "react-joyride";
 
 import { TourStepProps } from "../models/models";
 
 export const ConvertToTourStepProps = (steps: Array<TourStepProps>): any => {
-  const tourSteps = [] as Array<any>;
+  const tourSteps = [] as Step[];
 
   for (const layerType of ["NAVIGATION", "LAYOUT", "COMPONENT"]) {
     for (const layerStep of steps
@@ -18,12 +19,16 @@ export const ConvertToTourStepProps = (steps: Array<TourStepProps>): any => {
         // Ensure we respect component ordering
         return stepA.pos - stepB.pos;
       })) {
-      tourSteps.push({
+      let tour = {
         content: layerStep.content,
         target: `[data-step="${layerStep.prefix}-${layerStep.uuid}-${layerStep.label}"]`,
         title: layerStep.label,
-        beaconPlacement: "top",
-      });
+      };
+
+      if (tourSteps.length === 0) {
+        tour = { ...tour, ...{ disableBeacon: true } };
+      }
+      tourSteps.push(tour);
     }
   }
 

@@ -1,12 +1,11 @@
-import { ScrollPanel } from "primereact/scrollpanel";
-import { Skeleton } from "primereact/skeleton";
+import { Skeleton, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 
 import CommandForm from "../components/CommandForm";
 import CommandSelect from "../components/CommandSelect";
 import { Command, Request, System } from "../models/brewtils-types";
 import { Config, RequestCommand } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import {
   DetermineLatestSystemVersion,
   GetSystemList,
@@ -44,7 +43,7 @@ function CommandCreate({
   const [showCommand, setShowCommand] = useState<boolean>(false);
   const [command, setCommand] = useState<Command | null>(null);
 
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
 
   // Effect only runs at startup to get systems
   useEffect(() => {
@@ -53,7 +52,7 @@ function CommandCreate({
         setSystems(data);
       })
       .catch((error) => {
-        showToast({
+        showSnackbar({
           severity: "error",
           summary: "Error",
           detail: `Error fetching system list: ${error}`,
@@ -188,7 +187,7 @@ function CommandCreate({
   ]);
 
   return (
-    <div>
+    <Stack spacing={2}>
       {systems && systems.length > 0 && (
         <CommandSelect
           systems={systems}
@@ -200,22 +199,20 @@ function CommandCreate({
         />
       )}
       {showCommand && (
-        <ScrollPanel style={{ width: "100%", height: "80%" }}>
-          <CommandForm
-            command={command}
-            disabled={false}
-            request={request}
-            setRequest={setRequest}
-            resetForm={resetForm}
-            setResetForm={setResetForm}
-            setIsFormValid={setIsFormValid}
-          />
-        </ScrollPanel>
+        <CommandForm
+          command={command}
+          disabled={false}
+          request={request}
+          setRequest={setRequest}
+          resetForm={resetForm}
+          setResetForm={setResetForm}
+          setIsFormValid={setIsFormValid}
+        />
       )}
       {(!systems || systems.length === 0 || !showCommand) && (
         <Skeleton width="100%" height="150px"></Skeleton>
       )}
-    </div>
+    </Stack>
   );
 }
 
