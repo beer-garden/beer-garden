@@ -80,7 +80,7 @@
       "rangeMaps": [
         {
           "from": "null",
-          "text": "N/A",
+          "text": "0",
           "to": "null"
         }
       ],
@@ -106,7 +106,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -161,7 +161,7 @@
       "rangeMaps": [
         {
           "from": "null",
-          "text": "N/A",
+          "text": "0",
           "to": "null"
         }
       ],
@@ -187,7 +187,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -242,7 +242,7 @@
       "rangeMaps": [
         {
           "from": "null",
-          "text": "N/A",
+          "text": "0",
           "to": "null"
         }
       ],
@@ -268,7 +268,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "0",
+          "text": "0%",
           "value": "null"
         }
       ],
@@ -349,7 +349,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "0",
+          "text": "0%",
           "value": "null"
         }
       ],
@@ -431,7 +431,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "0",
+          "text": "0%",
           "value": "null"
         }
       ],
@@ -512,7 +512,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "0",
+          "text": "0%",
           "value": "null"
         }
       ],
@@ -567,7 +567,7 @@
       "rangeMaps": [
         {
           "from": "null",
-          "text": "N/A",
+          "text": "0",
           "to": "null"
         }
       ],
@@ -593,7 +593,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "0%",
           "value": "null"
         }
       ],
@@ -648,7 +648,7 @@
       "rangeMaps": [
         {
           "from": "null",
-          "text": "N/A",
+          "text": "0",
           "to": "null"
         }
       ],
@@ -661,7 +661,7 @@
       "tableColumn": "",
       "targets": [
         {
-          "expr": "bg_http_api_latency_seconds_count{route=\"/api/v1/requests\", method=\"POST\", status=~\"2..\"}",
+          "expr": "sum(bg_requests_total)",
           "format": "time_series",
           "intervalFactor": 1,
           "refId": "A"
@@ -674,7 +674,7 @@
       "valueMaps": [
         {
           "op": "=",
-          "text": "N/A",
+          "text": "0",
           "value": "null"
         }
       ],
@@ -1521,7 +1521,7 @@
       },
       "yaxes": [
         {
-          "format": "dtdurations",
+          "format": "s",
           "label": null,
           "logBase": 1,
           "max": null,
