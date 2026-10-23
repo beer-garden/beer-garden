@@ -68,7 +68,7 @@ function AboutIndex({ config }: { config: Config }) {
         <li>
           <Link
             sx={{ mr: 0.5 }}
-            href="https://grafana.com/dashboards/6621"
+            href="https://grafana.com/grafana/dashboards/6621-beer-garden-performance/"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -80,7 +80,7 @@ function AboutIndex({ config }: { config: Config }) {
         <li>
           <Link
             sx={{ mr: 0.5 }}
-            href="https://grafana.com/dashboards/6624"
+            href="https://grafana.com/grafana/dashboards/6624-plugin-performance/"
             target="_blank"
             rel="noopener noreferrer"
           >
