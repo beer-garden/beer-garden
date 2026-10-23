@@ -84,8 +84,9 @@ export const EnhancedTableFilterSelect = ({
               setShowFilter(false);
             }}
             aria-label="Close Table Filter"
-            sx={{ m: 2 }}
+            sx={{ m: 2, boxShadow: "2" }}
             color="info"
+            variant="outlined"
           >
             <FontAwesomeIcon icon="xmark" />
           </Button>
@@ -94,7 +95,12 @@ export const EnhancedTableFilterSelect = ({
 
       <Grid container sx={{}}>
         <Grid size="grow" sx={{ ml: 2 }}>
-          <Button variant="outlined" onClick={() => addFilter()}>
+          <Button
+            variant="outlined"
+            sx={{ boxShadow: "2" }}
+            color="info"
+            onClick={() => addFilter()}
+          >
             <FontAwesomeIcon icon="plus" />
             <Typography variant="body2" component="span" sx={{ ml: 1 }}>
               Add Filter
@@ -102,7 +108,12 @@ export const EnhancedTableFilterSelect = ({
           </Button>
         </Grid>
         <Grid sx={{ mr: 2 }}>
-          <Button variant="outlined" onClick={clearFilters}>
+          <Button
+            variant="outlined"
+            sx={{ boxShadow: "2" }}
+            color="warning"
+            onClick={clearFilters}
+          >
             <FontAwesomeIcon icon="trash" />
             <Typography variant="body2" component="span" sx={{ ml: 1 }}>
               Remove All
