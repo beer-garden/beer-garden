@@ -9,6 +9,7 @@ REACT_DIR      = src/react
 VERSION          ?= 0.0.0
 PYTHON_VERSION   ?=3.11
 DIST             ?=rocky9
+RPM_DIGEST       ?=sha256
 DATE             ?= $(shell date +%Y-%m-%dT%H)
 
 .PHONY: clean clean-build clean-test clean-pyc help test
@@ -45,10 +46,10 @@ help:
 
 # RPM
 rpm-build:  ## build rpm
-	rpm/bin/build.py rpm $(VERSION) --iteration py$(PYTHON_VERSION) --python $(PYTHON_VERSION) --distribution $(DIST)
+	rpm/bin/build.py rpm $(VERSION) --iteration py$(PYTHON_VERSION) --python $(PYTHON_VERSION) --distribution $(DIST) --rpm-digest $(RPM_DIGEST)
 
 rpm-build-local:  ## build local rpm
-	rpm/bin/build.py rpm --local $(VERSION) --iteration py$(PYTHON_VERSION) --python $(PYTHON_VERSION) --distribution $(DIST)
+	rpm/bin/build.py rpm --local $(VERSION) --iteration py$(PYTHON_VERSION) --python $(PYTHON_VERSION) --distribution $(DIST) --rpm-digest $(RPM_DIGEST)
 
 # Docker
 docker-login: ## log in to the docker registry
