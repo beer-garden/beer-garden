@@ -107,6 +107,8 @@ function InstanceManageQueueDialog({
       open={isVisible}
       onClose={onClose}
       aria-labelledby="instance-manage-queue-dialog-title"
+      maxWidth="md"
+      fullWidth
     >
       <DialogTitle id="instance-manage-queue-dialog-title">
         <Grid container>

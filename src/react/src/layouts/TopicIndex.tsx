@@ -835,6 +835,8 @@ function TopicIndex({
           handleDialogClose();
         }}
         aria-labelledby="topic-dialog-title"
+        maxWidth="md"
+        fullWidth
       >
         <DialogTitle id="topic-dialog-title">
           {isEdit.current ? "Add Subscriber" : "Create Topic"}
