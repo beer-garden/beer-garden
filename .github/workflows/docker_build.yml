@@ -1,40 +1,45 @@
 name: Release Docker bgio/build Images
 
-on: workflow_dispatch
+on: 
+  workflow_dispatch:
+  schedule:
+    # Runs at 00:00 UTC on the 1st of every month
+    - cron: '0 0 1 * *'
 
 jobs:
 
-  docker-publish-python:
-    name: Docker Publish bgio/build:python${{ matrix.python-version }}
-    runs-on: ubuntu-latest
+  # Leaving here just in case we need to roll back to a centos instance
+  # docker-publish-python:
+  #   name: Docker Publish bgio/build:python${{ matrix.python-version }}
+  #   runs-on: ubuntu-latest
+  #   if: false
 
-    strategy:
-      fail-fast: false
-      matrix:
-        # python-version: ["3.11.14","3.12.12","3.13.9", "3.14.0"]
-        python-version: ["3.14.0"]
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       # python-version: ["3.11.14","3.12.12","3.13.9", "3.14.0"]
+  #       python-version: ["3.14.0"]
 
-    steps:
-      - uses: actions/checkout@v3
+  #   steps:
+  #     - uses: actions/checkout@v3
 
-      - name: Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+  #     - name: Login to DockerHub
+  #       uses: docker/login-action@v2
+  #       with:
+  #         username: ${{ secrets.DOCKERHUB_USERNAME }}
+  #         password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Build and Publish Images
-        working-directory: ./docker/dockerfiles/build
-        run: make build-image-centos7 PYTHON_VERSION=${{ matrix.python-version }}
+  #     - name: Build and Publish Images
+  #       working-directory: ./docker/dockerfiles/build
+  #       run: make build-image-centos7 PYTHON_VERSION=${{ matrix.python-version }}
 
   docker-publish-rocky9-python:
-    name: Docker Publish bgio/build:rocky9-python${{ matrix.python-version }}
+    name: Docker Publish bgio/build:rocky9-python3.${{ matrix.python-minor-version }}
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        # python-version: ["3.11.14","3.12.12","3.13.9", "3.14.0"]
-        python-version: ["3.14.0"]
+        python-minor-version: ["11","12","13","14","15"]
       fail-fast: false
 
     steps:
@@ -46,6 +51,13 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
+      - name: Get Latest Python Version
+        run: |
+          LATEST=$(curl -s https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json | \
+            grep -oP '"version": "\K3\.${{matrix.python-minor-version}}\.[0-9]+' | head -n 1)
+          echo "Latest 3.${{matrix.python-minor-version}} version is: $LATEST"
+          echo "PYTHON_VERSION=$LATEST" >> $GITHUB_ENV
+
       - name: Build and Publish Images
         working-directory: ./docker/dockerfiles/build
-        run: make build-image-rocky9 PYTHON_VERSION=${{ matrix.python-version }}
+        run: make build-image-rocky9 PYTHON_VERSION=${{ env.PYTHON_VERSION }}

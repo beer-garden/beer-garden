@@ -789,5 +789,7 @@ def ensure_model_migration():
             ensure_v3_29_model_migration()
             ensure_v3_30_model_migration()
 
-    # TODO: Move this over before release
-    ensure_v3_35_model_migration()
+        if not previous_config or Version(previous_config.get("version")) < Version(
+            "3.35.0"
+        ):
+            ensure_v3_35_model_migration()
