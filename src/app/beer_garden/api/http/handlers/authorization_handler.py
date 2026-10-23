@@ -8,7 +8,11 @@ from mongoengine.queryset.visitor import Q, QCombination
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.api.http.authentication import decode_token, get_user_from_token
+from beer_garden.api.http.authentication import (
+    decode_token,
+    get_user_from_token,
+    user_login,
+)
 from beer_garden.api.http.base_handler import BaseHandler
 from beer_garden.api.http.exceptions import (
     AuthorizationRequired,
@@ -41,23 +45,34 @@ class AuthorizationHandler(BaseHandler):
         to all gardens is returned"""
 
         if config.get("auth").enabled:
-            access_token = self._get_token_payload_from_request()
-
             try:
-                return get_user_from_token(access_token)
-            except InvalidTokenException:
-                raise RequestForbidden(reason="Authorization token invalid")
-            except ExpiredTokenException:
-                raise AuthorizationRequired(reason="Authorization token expired")
+                access_token = self._get_token_payload_from_request()
+
+                try:
+                    return get_user_from_token(access_token)
+                except InvalidTokenException:
+                    raise RequestForbidden(reason="Authorization token invalid")
+                except ExpiredTokenException:
+                    raise AuthorizationRequired(reason="Authorization token expired")
+            except AuthorizationRequired as e:
+                # Check and see if this has the login request information provided.
+                try:
+                    user = user_login(self.request)
+                    if user:
+                        return user
+                    else:
+                        raise e
+                except Exception:
+                    raise e
         else:
             return self._anonymous_superuser()
 
     async def process_operation(self, operation: Operation, **kwargs):
         # Inject target garden if provided in headers
-        if self.request.headers.get("Target-Garden"):
-            operation.target_garden_name = self.request.headers.get("Target-Garden")
-        if self.request.headers.get("Source-Garden"):
-            operation.source_garden_name = self.request.headers.get("Source-Garden")
+        if self.get_header("Target-Garden") is not None:
+            operation.target_garden_name = self.get_header("Target-Garden")
+        if self.get_header("Source-Garden") is not None:
+            operation.source_garden_name = self.get_header("Source-Garden")
 
         return await self.client(
             operation,
@@ -245,7 +260,8 @@ class AuthorizationHandler(BaseHandler):
             AuthorizationRequired: The token is not present
             InvalidToken: The supplied token was invalid
         """
-        auth_header = self.request.headers.get("Authorization")
+
+        auth_header = self.get_header("Authorization")
 
         if not auth_header or not auth_header.startswith("Bearer "):
             raise AuthorizationRequired(reason="No authorization token provided")

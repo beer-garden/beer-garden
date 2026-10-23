@@ -1,0 +1,915 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { BreadCrumb } from "primereact/breadcrumb";
+import { Card } from "primereact/card";
+import { InputSwitch } from "primereact/inputswitch";
+import { Skeleton } from "primereact/skeleton";
+import { Stepper, StepperChangeEvent } from "primereact/stepper";
+import { StepperPanel } from "primereact/stepperpanel";
+import { useEffect, useRef, useState } from "react";
+
+import {
+  Command,
+  Instance,
+  Job,
+  Request,
+  System,
+} from "../models/brewtils-types";
+import { Config, RequestCommand, RequestItem } from "../models/models";
+import { useToast } from "../providers/ToastProvider";
+import { CreateJob, GetJob, UpdateJob } from "../services/job_service";
+import { GetRequest } from "../services/request_service";
+import { PostRequest } from "../services/request_service";
+import { GetSystemList } from "../services/system_service";
+import { GetBaseURL } from "../services/util_service";
+import AccessButton from "./AccessButton";
+import CodeExample from "./CodeExample";
+import CommandForm from "./CommandForm";
+import CommandList from "./CommandList";
+import SchedulerForm from "./SchedulerForm";
+import SystemList from "./SystemList";
+
+function RequestWizard({
+  requestItem,
+  updateRequestItem,
+  removeItem,
+  isDialog,
+  config,
+}: {
+  requestItem: RequestItem;
+  updateRequestItem: (item: RequestItem) => void;
+  removeItem: (id: string) => void;
+  isDialog: boolean;
+  config: Config;
+}) {
+  const showToast = useToast();
+  const stepperRef = useRef<Stepper>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const stepperPanelOptions: any = {
+    className: "p-stepper-header p-stepper-header-right p-disabled",
+  };
+  const [stepperPanel1Options, setStepperPanel1Options] =
+    useState<any>(stepperPanelOptions);
+  const [stepperPanel2Options, setStepperPanel2Options] =
+    useState<any>(stepperPanelOptions);
+
+  const [selectedSystem, setSelectedSystem] = useState<System | undefined>(
+    undefined,
+  );
+  const [selectedInstance, setSelectedInstance] = useState<
+    Record<string, any> | undefined
+  >(undefined);
+  const [selectedCommand, setSelectedCommand] = useState<Command | undefined>(
+    undefined,
+  );
+  const [instances, setInstances] = useState<Array<Instance>>();
+  const instanceList: Array<any> = [];
+  const [resetForm, setResetForm] = useState<boolean>(false);
+  const [isFormValid, setIsFormValid] = useState<boolean>(false);
+  const [isJobValid, setIsJobValid] = useState<boolean>(false);
+  const [visibleCodeExample, setVisibleCodeExample] = useState<boolean>(false);
+
+  const [showCreateRequest, setShowCreateRequest] = useState<boolean>(
+    (requestItem?.requestId === undefined || requestItem?.requestId === null) &&
+      (requestItem?.jobId === undefined || requestItem?.jobId === null),
+  );
+
+  const [showStepper, setShowStepper] = useState<boolean>(false);
+
+  // Input Request
+  const [request, setRequest] = useState<Request | undefined>(
+    requestItem?.request ??
+      (requestItem.requestCommandInput
+        ? {
+            system: requestItem.requestCommandInput?.systemName,
+            system_version: requestItem.requestCommandInput?.version,
+            namespace: requestItem.requestCommandInput?.namespace,
+            instance_name: requestItem.requestCommandInput?.instance,
+            command: requestItem.requestCommandInput?.command,
+          }
+        : undefined),
+  );
+
+  const updateRequestValue = (requestValue: Request | undefined) => {
+    setRequest(requestValue);
+    updateRequestItem({
+      ...requestItem,
+      request: requestValue,
+      requestCommandInput: {
+        namespace: requestValue?.namespace,
+        systemName: requestValue?.system,
+        version: requestValue?.system_version,
+        instance: requestValue?.instance_name,
+        command: requestValue?.command,
+      },
+    });
+  };
+
+  // Job Panel
+  const [job, setJob] = useState<Job | undefined>(
+    requestItem?.job ?? undefined,
+  );
+
+  const updateJobValue = (jobValue: Job | undefined) => {
+    setJob(jobValue);
+    updateRequestItem({
+      ...requestItem,
+      job: jobValue,
+    });
+  };
+
+  const submitRequest = () => {
+    if (request) {
+      PostRequest(request)
+        .then((response_request) => {
+          updateRequestItem({
+            ...requestItem,
+            ...{
+              request: response_request,
+              requestId: response_request.id,
+              type: "VIEW_REQUEST",
+            },
+          });
+        })
+        .catch((error) => {
+          console.error("Error creating request:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error creating request: ${error}`,
+            life: 3000,
+          });
+        });
+    }
+  };
+
+  const submitRequestAndOpen = () => {
+    if (request) {
+      PostRequest(request)
+        .then((response_request) => {
+          window.open(
+            `${GetBaseURL()}/request/${response_request.id}`,
+            "_blank",
+          );
+        })
+        .catch((error) => {
+          console.error("Error creating request:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error creating request: ${error}`,
+            life: 3000,
+          });
+        });
+    }
+  };
+
+  const submitJob = () => {
+    if (job && request) {
+      CreateJob({ ...job, ...{ request_template: request } })
+        .then((createdJob) => {
+          updateRequestItem({
+            ...requestItem,
+            ...{
+              job: createdJob,
+              jobId: createdJob.id,
+              type: "VIEW_JOB",
+            },
+          });
+        })
+        .catch((error) => {
+          console.error("Error creating job:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error creating request: ${error}`,
+            life: 3000,
+          });
+        });
+    }
+  };
+
+  const updateJob = () => {
+    if (job && request) {
+      UpdateJob({ ...job, ...{ request_template: request } })
+        .then((updatedJob) => {
+          updateRequestItem({
+            ...requestItem,
+            ...{
+              job: updatedJob,
+              jobId: updatedJob.id,
+              type: "VIEW_JOB",
+            },
+          });
+        })
+        .catch((error) => {
+          console.error("Error updating job:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error updating job: ${error}`,
+            life: 3000,
+          });
+        });
+    }
+  };
+
+  const [showScheduleJob, setShowScheduleJob] = useState(
+    requestItem?.showSchedule ||
+      (requestItem?.jobId !== undefined && requestItem?.jobId !== null),
+  );
+  const updateShowScheduleJob = (showSchedule: boolean) => {
+    setShowScheduleJob(showSchedule);
+
+    updateRequestItem({
+      ...requestItem,
+      showSchedule: showSchedule,
+    });
+  };
+
+  // Create Request Panel
+  const updateRequestCommand = (requestCommand: RequestCommand) => {
+    updateRequestItem({
+      ...requestItem,
+      requestCommandInput: requestCommand,
+    });
+  };
+
+  const findSelectedSystem = (
+    namespace?: string,
+    system?: string,
+    system_version?: string,
+    instance_name?: string,
+    command?: string,
+    command_display_name?: string,
+  ) => {
+    GetSystemList()
+      .then((responseSystems) => {
+        const chosenSystem = responseSystems.find(
+          (s) =>
+            s.namespace == namespace &&
+            s.name == system &&
+            s.version == system_version,
+        );
+        setSelectedSystem(chosenSystem);
+        updateRequestValue({
+          ...request,
+          target_garden: chosenSystem?.garden_name,
+          source_garden: config.garden_name,
+        });
+        if (instance_name) {
+          if (chosenSystem?.instances?.find((i) => i.name == instance_name)) {
+            setSelectedInstance({
+              name: instance_name,
+              label: instance_name,
+            });
+          }
+
+          if (command || command_display_name) {
+            setSelectedCommand(
+              chosenSystem?.commands?.find(
+                (c) =>
+                  (command && c.name == command) ||
+                  (command_display_name &&
+                    c.display_name == command_display_name),
+              ),
+            );
+            setActiveIndex(2);
+            setShowCreateRequest(true);
+          } else {
+            setActiveIndex(1);
+          }
+        } else {
+          setActiveIndex(0);
+        }
+        setShowStepper(true);
+      })
+      .catch((error) => {
+        console.error("Error fetching systems:", error);
+        showToast({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching systems: ${error}`,
+          life: 3000,
+        });
+      });
+  };
+
+  const updateSelectedInstance = (instance: Record<string, any>) => {
+    setSelectedInstance(instance);
+    updateRequestValue({
+      ...request,
+      instance_name: instance?.name,
+    });
+  };
+
+  useEffect(() => {
+    if (selectedSystem) {
+      updateRequestValue({
+        ...request,
+        namespace: selectedSystem?.namespace,
+        system: selectedSystem?.name,
+        system_version: selectedSystem?.version,
+      });
+      if (selectedSystem.instances) {
+        selectedSystem.instances.forEach((instance: Instance) => {
+          if (instance.name && !instanceList.includes(instance)) {
+            instanceList.push(instance);
+          }
+        });
+        setInstances(instanceList);
+      }
+      if (selectedSystem?.instances?.length == 1) {
+        setSelectedInstance({
+          name: selectedSystem?.instances[0].name,
+          label: selectedSystem?.instances[0].name,
+        });
+      }
+    }
+  }, [selectedSystem]);
+
+  useEffect(() => {
+    if (selectedInstance) {
+      updateRequestValue({
+        ...request,
+        instance_name: selectedInstance?.name,
+      });
+    }
+  }, [selectedInstance, setSelectedInstance]);
+
+  useEffect(() => {
+    if (
+      requestItem?.requestId !== null &&
+      requestItem?.requestId !== undefined &&
+      requestItem?.request === undefined
+    ) {
+      GetRequest(requestItem.requestId, {})
+        .then((responseRequest) => {
+          findSelectedSystem(
+            responseRequest.namespace,
+            responseRequest.system,
+            responseRequest.system_version,
+            responseRequest.instance_name,
+            responseRequest.command,
+            responseRequest.command_display_name,
+          );
+
+          updateRequestValue({
+            ...request,
+            namespace: responseRequest.namespace,
+            system: responseRequest.system,
+            system_version: responseRequest.system_version,
+            instance_name: responseRequest.instance_name,
+            command_display_name: responseRequest.command_display_name,
+            command: responseRequest.command,
+            parameters: responseRequest.parameters,
+            command_type: responseRequest.command_type,
+            comment:
+              responseRequest.comment !== null
+                ? responseRequest.comment
+                : undefined,
+          });
+          updateRequestCommand({
+            namespace: responseRequest?.namespace ?? undefined,
+            systemName: responseRequest?.system ?? undefined,
+            version: responseRequest?.system_version ?? undefined,
+            instance: responseRequest?.instance_name ?? undefined,
+            command: responseRequest?.command ?? undefined,
+          });
+        })
+        .catch((error) => {
+          console.error("Error fetching request:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching request: ${error}`,
+            life: 3000,
+          });
+        });
+    } else if (
+      requestItem?.jobId !== null &&
+      requestItem?.jobId !== undefined &&
+      requestItem?.job === undefined
+    ) {
+      GetJob(requestItem.jobId, {})
+        .then((responseJob) => {
+          findSelectedSystem(
+            responseJob.request_template?.namespace,
+            responseJob.request_template?.system,
+            responseJob.request_template?.system_version,
+            responseJob.request_template?.instance_name,
+            responseJob.request_template?.command,
+            responseJob.request_template?.command_display_name,
+          );
+
+          updateJobValue(responseJob);
+          updateRequestValue({
+            ...request,
+            namespace: responseJob?.request_template?.namespace,
+            system: responseJob?.request_template?.system,
+            system_version: responseJob?.request_template?.system_version,
+            instance_name: responseJob?.request_template?.instance_name,
+            command: responseJob?.request_template?.command,
+            parameters: responseJob?.request_template?.parameters,
+            command_type: responseJob?.request_template?.command_type,
+            comment: responseJob?.request_template?.comment,
+          });
+          updateRequestCommand({
+            namespace: responseJob?.request_template?.namespace ?? undefined,
+            systemName: responseJob?.request_template?.system ?? undefined,
+            version: responseJob?.request_template?.system_version ?? undefined,
+            instance: responseJob?.request_template?.instance_name ?? undefined,
+            command: responseJob?.request_template?.command ?? undefined,
+          });
+        })
+        .catch((error) => {
+          console.error("Error fetching job:", error);
+          showToast({
+            severity: "error",
+            summary: "Error",
+            detail: `Error fetching job: ${error}`,
+            life: 3000,
+          });
+        });
+    } else if (
+      requestItem?.job !== undefined &&
+      requestItem.job?.request_template !== undefined
+    ) {
+      const job = requestItem.job;
+      findSelectedSystem(
+        job.request_template?.namespace,
+        job.request_template?.system,
+        job.request_template?.system_version,
+        job.request_template?.instance_name,
+        job.request_template?.command,
+        job.request_template?.command_display_name,
+      );
+      updateJobValue(job);
+      updateRequestValue({
+        ...request,
+        namespace: job.request_template?.namespace,
+        system: job.request_template?.system,
+        system_version: job.request_template?.system_version,
+        instance_name: job.request_template?.instance_name,
+        command: job.request_template?.command,
+        parameters: job.request_template?.parameters,
+        command_type: job.request_template?.command_type,
+        comment: job.request_template?.comment,
+      });
+      updateRequestCommand({
+        namespace: job.request_template?.namespace ?? undefined,
+        systemName: job.request_template?.system ?? undefined,
+        version: job.request_template?.system_version ?? undefined,
+        instance: job.request_template?.instance_name ?? undefined,
+        command: job.request_template?.command ?? undefined,
+      });
+    } else if (requestItem?.requestCommandInput !== undefined) {
+      findSelectedSystem(
+        requestItem.requestCommandInput.namespace,
+        requestItem.requestCommandInput.systemName,
+        requestItem.requestCommandInput.version,
+        requestItem.requestCommandInput.instance,
+        requestItem.requestCommandInput.command,
+      );
+    } else if (requestItem?.request !== undefined) {
+      findSelectedSystem(
+        requestItem.request.namespace,
+        requestItem.request.system,
+        requestItem.request.system_version,
+        requestItem.request.instance_name,
+        requestItem.request.command,
+      );
+      updateRequestCommand({
+        namespace: requestItem.request?.namespace ?? undefined,
+        systemName: requestItem.request?.system ?? undefined,
+        version: requestItem.request?.system_version ?? undefined,
+        instance: requestItem.request?.instance_name ?? undefined,
+        command: requestItem.request?.command ?? undefined,
+      });
+    } else {
+      setActiveIndex(0);
+      setShowStepper(true);
+    }
+  }, []);
+
+  const systemListButtonClick = (system: System) => {
+    setSelectedSystem(system);
+    updateRequestValue({
+      ...request,
+      target_garden: selectedSystem?.garden_name,
+      source_garden: config.garden_name,
+    });
+    stepperRef.current?.nextCallback();
+  };
+
+  const commandListButtonClick = (command: Command) => {
+    setSelectedCommand(command);
+    updateRequestValue({
+      ...request,
+      command: command?.name,
+    });
+    stepperRef.current?.nextCallback();
+  };
+
+  const iconItemTemplate = (item: any, options: any) => {
+    if (item.icon) {
+      return (
+        <span className={options.className}>
+          <FontAwesomeIcon icon={item.icon} />
+        </span>
+      );
+    }
+    return <span className={options.className}>{item.label}</span>;
+  };
+
+  const breadcrumbs = [
+    {
+      icon: "file-lines",
+      template: iconItemTemplate,
+    },
+    {
+      label: selectedSystem?.namespace,
+      template: iconItemTemplate,
+    },
+    {
+      label: selectedSystem?.name,
+      template: iconItemTemplate,
+    },
+    {
+      label: selectedSystem?.version,
+      template: iconItemTemplate,
+    },
+  ];
+
+  const commandBreadcrumbs = [
+    {
+      icon: "file-lines",
+      template: iconItemTemplate,
+    },
+    {
+      label: selectedSystem?.namespace,
+      template: iconItemTemplate,
+    },
+    {
+      label: selectedSystem?.name,
+      template: iconItemTemplate,
+    },
+    {
+      label: selectedSystem?.version,
+      template: iconItemTemplate,
+    },
+    {
+      label: selectedInstance?.name,
+      template: iconItemTemplate,
+    },
+    {
+      label: selectedCommand?.name,
+      template: iconItemTemplate,
+    },
+  ];
+
+  const cleanForm = () => {
+    const newRequest = { ...request, command_type: "" };
+    delete newRequest.parameters;
+    delete newRequest.comment;
+    updateRequestValue(newRequest);
+  };
+
+  const handleChangeStep = (e: StepperChangeEvent) => {
+    setActiveIndex(e.index);
+    if (e.index == 1) {
+      // Enable panel 1 & disable 2
+      setStepperPanel1Options({});
+      setStepperPanel2Options(stepperPanelOptions);
+      cleanForm();
+    } else if (e.index == 2) {
+      // Enable panel 1 & 2
+      setStepperPanel1Options({});
+      setStepperPanel2Options({});
+    } else {
+      // Disable panel 1 & 2
+      setStepperPanel1Options(stepperPanelOptions);
+      setStepperPanel2Options(stepperPanelOptions);
+      if (selectedInstance) {
+        setSelectedInstance(undefined);
+      }
+    }
+  };
+
+  return (
+    <Card
+      className="justify-content-center"
+      unstyled={isDialog}
+      header={
+        !isDialog && (
+          <div className="flex">
+            <AccessButton
+              onClick={() => {
+                removeItem(requestItem.itemId);
+              }}
+              tooltip={`Close Request Creation for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
+            >
+              <FontAwesomeIcon icon="xmark" />
+            </AccessButton>
+          </div>
+        )
+      }
+      key={requestItem.itemId}
+    >
+      {!showStepper && <Skeleton width="100%" height="150px"></Skeleton>}
+      {showStepper && (
+        <Stepper
+          ref={stepperRef}
+          activeStep={activeIndex}
+          style={{ flexBasis: "50rem" }}
+          pt={{
+            nav: {
+              "aria-label":
+                "Three step process of finding and executing create request",
+              "aria-description":
+                "Step 1: Pick System, Step 2: Pick Command, Step 3: Populate Create Request Form. Framework utilizes <ul> to generate breadcrumbs, this could confuses screen readers",
+              role: "tablist",
+            },
+            root: {
+              role: undefined,
+            },
+          }}
+          onChangeStep={handleChangeStep}
+        >
+          <StepperPanel
+            header="Pick System"
+            pt={{
+              action: ({ context }: { context: any }) => {
+                return {
+                  id: `${requestItem.itemId}_tab_1`,
+                  "aria-controls": context.active
+                    ? `${requestItem.itemId}_stepper_1`
+                    : undefined,
+                  "aria-label": `${requestItem.itemId} Pick System Step`,
+                  "aria-description": context.active
+                    ? "First step in creating a request where you select the system for your request."
+                    : "First step in creating a request where you select the system for your request, currently inactive.",
+                };
+              },
+              content: {
+                id: `${requestItem.itemId}_stepper_1`,
+                role: "tabpanel",
+                "aria-labelledby": `${requestItem.itemId}_tab_1`,
+              },
+              number: {
+                style: {
+                  color: "var(--info-color)",
+                  backgroundColor: "var(--info-background-color)",
+                },
+              },
+              separator: {
+                "aria-hidden": undefined,
+                tabIndex: -1,
+                style: {
+                  color: "var(--info-background-color)",
+                },
+              },
+            }}
+          >
+            <SystemList systemListButtonClick={systemListButtonClick} />
+          </StepperPanel>
+          <StepperPanel
+            header="Pick Command"
+            pt={{
+              action: ({ context }: { context: any }) => {
+                return {
+                  id: `${requestItem.itemId}_tab_2`,
+                  "aria-controls": context.active
+                    ? `${requestItem.itemId}_stepper_2`
+                    : undefined,
+                  "aria-label": `${requestItem.itemId} Pick Command Step`,
+                  "aria-description": context.active
+                    ? "Second step in creating a request where you select the command for your request."
+                    : "Second step in creating a request where you select the command for your request, currently inactive.",
+                };
+              },
+              content: {
+                id: `${requestItem.itemId}_stepper_2`,
+                role: "tabpanel",
+                "aria-labelledby": `${requestItem.itemId}_tab_2`,
+              },
+              number: {
+                style: {
+                  color: "var(--info-color)",
+                  backgroundColor: "var(--info-background-color)",
+                },
+              },
+              separator: {
+                "aria-hidden": undefined,
+                tabIndex: -1,
+                style: {
+                  color: "var(--info-background-color)",
+                },
+              },
+              header: stepperPanel1Options,
+            }}
+          >
+            <BreadCrumb
+              model={breadcrumbs}
+              className="mb-2"
+              aria-label="test"
+              pt={{
+                menu: {
+                  "aria-description":
+                    "Breadcrumb navigation for system and instance selection steps of request creation. Items in list has CSS injected list-style-type:none causing screen testers to fail",
+                },
+              }}
+            />
+            <CommandList
+              selectedSystem={selectedSystem}
+              commandListButtonClick={commandListButtonClick}
+              instances={
+                instances
+                  ? instances.map((instance) => ({
+                      name: instance.name,
+                      label: instance.name,
+                    }))
+                  : []
+              }
+              selectedInstance={selectedInstance}
+              setSelectedInstance={updateSelectedInstance}
+            />
+            <div className="flex pt-4 justify-content-between">
+              <AccessButton
+                label="Back"
+                severity="secondary"
+                onClick={() => {
+                  setSelectedInstance(undefined);
+                  stepperRef.current?.prevCallback();
+                }}
+              />
+            </div>
+          </StepperPanel>
+          <StepperPanel
+            header="Form"
+            pt={{
+              action: ({ context }: { context: any }) => {
+                return {
+                  id: `${requestItem.itemId}_tab_3`,
+                  "aria-controls": context.active
+                    ? `${requestItem.itemId}_stepper_3`
+                    : undefined,
+                  "aria-label": `${requestItem.itemId} Populate Create Request Form Step`,
+                  "aria-description": context.active
+                    ? "Third step in creating a request where you populate the form for your request."
+                    : "Third step in creating a request where you populate the form for your request, currently inactive.",
+                };
+              },
+              content: {
+                id: `${requestItem.itemId}_stepper_3`,
+                role: "tabpanel",
+                "aria-labelledby": `${requestItem.itemId}_tab_3`,
+              },
+              number: {
+                style: {
+                  color: "var(--info-color)",
+                  backgroundColor: "var(--info-background-color)",
+                },
+              },
+              separator: {
+                "aria-hidden": undefined,
+                tabIndex: -1,
+                style: {
+                  color: "var(--info-background-color)",
+                },
+              },
+              header: stepperPanel2Options,
+            }}
+          >
+            <BreadCrumb
+              model={commandBreadcrumbs}
+              className="mb-2"
+              pt={{
+                menu: {
+                  "aria-description":
+                    "Breadcrumb navigation for command selection step of request creation. Items in list has CSS injected list-style-type:none causing screen testers to fail",
+                },
+              }}
+            />
+            <div className="flex ml-4">
+              <span className="mr-2 align-self-center">Scheduled</span>
+              <InputSwitch
+                checked={showScheduleJob}
+                onChange={(e) => updateShowScheduleJob(e.value)}
+                pt={{
+                  root: {
+                    role: undefined,
+                    "aria-checked": undefined,
+                  },
+                  input: {
+                    "aria-label": "Toggle for creating Scheduled Job",
+                  },
+                }}
+              />
+            </div>
+            {showScheduleJob && (
+              <SchedulerForm
+                scheduledJob={job}
+                setScheduledJob={updateJobValue}
+                setIsJobValid={setIsJobValid}
+              />
+            )}
+            <CommandForm
+              command={selectedCommand}
+              disabled={false}
+              request={request}
+              setRequest={updateRequestValue}
+              resetForm={resetForm}
+              setResetForm={setResetForm}
+              setIsFormValid={setIsFormValid}
+            />
+            <div className="flex pt-4 justify-content-between">
+              <AccessButton
+                label="Back"
+                severity="secondary"
+                onClick={() => {
+                  cleanForm();
+                  stepperRef.current?.prevCallback();
+                }}
+              />
+              <AccessButton
+                label="Reset Form"
+                severity="warning"
+                onClick={() => setResetForm(true)}
+                className="ml-2"
+              />
+              <div>
+                <CodeExample
+                  visibleCodeExample={visibleCodeExample}
+                  setVisibleCodeExample={setVisibleCodeExample}
+                  request={request}
+                />
+                <AccessButton
+                  label="Code Examples"
+                  severity="info"
+                  onClick={() => setVisibleCodeExample(true)}
+                  className="mr-2"
+                />
+              </div>
+              {showCreateRequest && !showScheduleJob && (
+                <AccessButton
+                  label="Submit"
+                  icon="pi pi-arrow-right"
+                  disabled={!isFormValid}
+                  onMouseDown={(event: any) => {
+                    if (event.type === "mousedown" && event.button === 1) {
+                      submitRequestAndOpen();
+                    }
+                  }}
+                  onClick={submitRequest}
+                  config={config}
+                  permission="OPERATOR"
+                  hasNamespace={requestItem.requestCommandInput?.namespace}
+                  hasSystemName={requestItem.requestCommandInput?.systemName}
+                  hasSystemVersion={requestItem.requestCommandInput?.version}
+                  hasInstanceName={requestItem.requestCommandInput?.instance}
+                  hasCommandName={requestItem.requestCommandInput?.command}
+                />
+              )}
+              {showCreateRequest && showScheduleJob && !requestItem?.jobId && (
+                <AccessButton
+                  label="Submit Job"
+                  severity="success"
+                  icon="pi pi-arrow-right"
+                  disabled={!(isJobValid && isFormValid)}
+                  iconPos="right"
+                  onClick={submitJob}
+                  config={config}
+                  permission="OPERATOR"
+                  hasNamespace={requestItem.requestCommandInput?.namespace}
+                  hasSystemName={requestItem.requestCommandInput?.systemName}
+                  hasSystemVersion={requestItem.requestCommandInput?.version}
+                  hasInstanceName={requestItem.requestCommandInput?.instance}
+                  hasCommandName={requestItem.requestCommandInput?.command}
+                />
+              )}
+              {showCreateRequest && showScheduleJob && requestItem?.jobId && (
+                <AccessButton
+                  label="Update Job"
+                  severity="success"
+                  icon="pi pi-arrow-right"
+                  disabled={!(isJobValid && isFormValid)}
+                  iconPos="right"
+                  onClick={updateJob}
+                  config={config}
+                  permission="OPERATOR"
+                  hasNamespace={requestItem.requestCommandInput?.namespace}
+                  hasSystemName={requestItem.requestCommandInput?.systemName}
+                  hasSystemVersion={requestItem.requestCommandInput?.version}
+                  hasInstanceName={requestItem.requestCommandInput?.instance}
+                  hasCommandName={requestItem.requestCommandInput?.command}
+                />
+              )}
+            </div>
+          </StepperPanel>
+        </Stepper>
+      )}
+    </Card>
+  );
+}
+
+export default RequestWizard;

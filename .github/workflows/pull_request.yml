@@ -64,6 +64,31 @@ jobs:
         working-directory: ./test/integration
         run: make lint
 
+  UILinting:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: ["ubuntu-latest"]
+        node: ["20"]
+
+    name: UI Linting OS ${{ matrix.os }} - Node ${{ matrix.node }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install Dependencies
+        run: npm install
+        working-directory: ./src/react
+
+      - name: Run Tests
+        run: make lint
+        working-directory: ./src/react
+
   PyTest:
     runs-on: ${{ matrix.os }}
 
@@ -195,6 +220,25 @@ jobs:
 
       - name: Run Tests
         run: make test
+
+  Vitest:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: ["ubuntu-latest"]
+
+    name: Vitest OS ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: make test_docker_image
+        working-directory: ./src/react
+      
+      - name: Run Tests
+        run: make test
+        working-directory: ./src/react
 
   CodeCoverage:
     runs-on: ${{ matrix.os }}

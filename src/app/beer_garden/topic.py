@@ -176,6 +176,32 @@ def topic_remove_subscriber(
     return update_topic(topic)
 
 
+def reset_count(
+    subscriber: Subscriber = None, topic_id: str = None, topic_name: str = None
+) -> Topic:
+    """Reset Subscriber consumer count or Topic publisher count
+
+    Args:
+        subscriber: The subscriber to reset consumer count or None to reset Topic
+            publisher count
+        topic_id: The Topic id
+
+    Returns:
+        The updated Topic
+    """
+    db_topic = get_topic(topic_id=topic_id, topic_name=topic_name)
+
+    if subscriber:
+        for db_subscriber in db_topic.subscribers:
+            if db_subscriber == subscriber:
+                db_subscriber.consumer_count = 0
+                break
+    else:
+        db_topic.publisher_count = 0
+
+    return update_topic(db_topic)
+
+
 def update_topic(topic: Topic) -> Topic:
     """Update a Topic
 
