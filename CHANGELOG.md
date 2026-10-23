@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# TBD
+TBD
+
+- Updated Garden Downstream Receiving unresponsive trigger logic to default to a 60 minutes timeout if -1 is 
+  not set in `parent.sync_interval` on downstream configuration. (#)
+
 # 3.35.1
 9/9/2026
 
