@@ -772,6 +772,7 @@ def handle_event(event):
                 del event.payload.systems
 
             if event.name == Events.GARDEN_CONFIGURED.name:
+                stomp_found = False
                 if event.payload.name != config.get("garden.name") and (
                     (
                         event.payload.has_parent
@@ -781,7 +782,6 @@ def handle_event(event):
                 ):
                     gardens[event.payload.name] = event.payload
 
-                    stomp_found = False
                     for connection in event.payload.publishing_connections:
                         if connection.api.upper() == "STOMP":
                             stomp_found = True
