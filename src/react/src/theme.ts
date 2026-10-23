@@ -10,12 +10,20 @@ import {
 
 const lightPalette = {
   mode: "light" as const,
-  primary: { main: teal[400], contrastText: grey[900] },
-  secondary: { main: red[400], contrastText: grey[900] },
-  error: { main: red[400], contrastText: grey[900] },
-  info: { main: blue[400], contrastText: grey[900] },
-  success: { main: lightGreen[400], contrastText: grey[900] },
-  warning: { main: deepOrange[400], contrastText: grey[900] },
+  primary: { main: teal[400], contrastText: grey[900], dark: teal[900] },
+  secondary: { main: red[400], contrastText: grey[900], dark: red[900] },
+  error: { main: red[400], contrastText: grey[900], dark: red[900] },
+  info: { main: blue[400], contrastText: grey[900], dark: blue[800] },
+  success: {
+    main: lightGreen[400],
+    contrastText: grey[900],
+    dark: lightGreen[900],
+  },
+  warning: {
+    main: deepOrange[400],
+    contrastText: grey[900],
+    dark: deepOrange[900],
+  },
   background: {
     default: grey[100],
     paper: grey[50],
@@ -35,12 +43,20 @@ const lightPalette = {
 
 const darkPalette = {
   mode: "dark" as const,
-  primary: { main: teal[900], contrastText: grey[50] },
-  secondary: { main: red[900], contrastText: grey[50] },
-  error: { main: red[900], contrastText: grey[50] },
-  info: { main: blue[900], contrastText: grey[50] },
-  success: { main: lightGreen[900], contrastText: grey[50] },
-  warning: { main: deepOrange[900], contrastText: grey[50] },
+  primary: { main: teal[900], contrastText: grey[50], dark: teal[400] },
+  secondary: { main: red[900], contrastText: grey[50], dark: red[400] },
+  error: { main: red[900], contrastText: grey[50], dark: red[400] },
+  info: { main: blue[900], contrastText: grey[50], dark: blue[400] },
+  success: {
+    main: lightGreen[900],
+    contrastText: grey[50],
+    dark: lightGreen[400],
+  },
+  warning: {
+    main: deepOrange[900],
+    contrastText: grey[50],
+    dark: deepOrange[400],
+  },
   background: {
     default: grey[900],
     paper: grey[800],
@@ -55,6 +71,42 @@ const darkPalette = {
     selected: grey[700],
   },
   divider: grey[700],
+};
+
+const buttonStyleGenerator = (ownerState: any, theme: any) => {
+  if (ownerState?.variant !== "text") {
+    const themeColor = theme.palette[ownerState.color];
+    if (themeColor) {
+      return {
+        borderColor: themeColor?.dark,
+        color: themeColor?.contrastText,
+        background: themeColor?.main,
+        borderWidth: "1px",
+      };
+    }
+
+    return {
+      borderColor: theme.palette.info.dark,
+      color: theme.palette.info.contrastText,
+      background: theme.palette.info.main,
+      borderWidth: "1px",
+    };
+  }
+
+  return {};
+};
+
+const chipStyleGenerator = (ownerState: any, theme: any) => {
+  const themeColor = theme.palette[ownerState.color];
+  if (themeColor) {
+    return {
+      border: `1px solid ${themeColor?.dark}`,
+    };
+  }
+
+  return {
+    border: `1px solid ${theme.palette.info.dark}`,
+  };
 };
 
 // See https://mui.com/material-ui/customization/palette/#color-schemes
@@ -94,10 +146,14 @@ export const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: ({ ownerState, theme }) => ({
-          ...(ownerState.variant === "outlined" && {
-            borderColor: theme.palette.text.primary,
-            color: theme.palette.text.primary,
-          }),
+          ...buttonStyleGenerator(ownerState, theme),
+        }),
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: ({ ownerState, theme }) => ({
+          ...chipStyleGenerator(ownerState, theme),
         }),
       },
     },

@@ -255,7 +255,6 @@ function RequestOptions({
           <>
             <ButtonGroup
               color="success"
-              variant="contained"
               ref={splitButtonAnchorRef}
               aria-label="Button group with a nested menu"
               sx={{ ml: 2, mb: 2 }}

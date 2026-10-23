@@ -21,7 +21,6 @@ const AccessButton = ({
   children,
   basic,
   text,
-  raised,
   rounded,
   icon,
   ...props
@@ -30,7 +29,6 @@ const AccessButton = ({
     HasAccessProps & {
       basic?: boolean | undefined;
       text?: boolean | undefined;
-      raised?: boolean | undefined;
       rounded?: boolean | undefined;
       htmlFor?: string | undefined;
       icon?: boolean | undefined;
@@ -61,7 +59,7 @@ const AccessButton = ({
   }
 
   if (!Object.hasOwn(props, "variant")) {
-    props.variant = "contained";
+    props.variant = "outlined";
   }
 
   if (
@@ -99,12 +97,10 @@ const AccessButton = ({
     props.sx = { ...props.sx, ...{ borderRadius: "50px" } };
   }
 
-  if (raised) {
-    props.variant = "contained";
-  }
-
   if (text) {
     props.variant = "text";
+  } else {
+    props.sx = { ...props.sx, ...{ boxShadow: "2" } };
   }
 
   if (!Object.hasOwn(props, "color")) {

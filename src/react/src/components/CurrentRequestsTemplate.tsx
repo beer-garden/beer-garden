@@ -258,7 +258,6 @@ function CurrentRequestsTemplate({
         >
           <AccessButton
             rounded
-            raised
             tooltip={`Open Request ${request.id}`}
             sx={{ mr: 2 }}
           >
@@ -268,7 +267,6 @@ function CurrentRequestsTemplate({
 
         <AccessButton
           rounded
-          raised
           onClick={() => {
             DeleteRequest(request)
               .then(() => {

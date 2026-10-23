@@ -174,7 +174,6 @@ function TopicIndex({
 
         <Grid sx={{ display: "flex", alignItems: "center" }}>
           <AccessButton
-            raised
             onClick={handleSync}
             label="Sync Topics"
             data-testid="rescan-btn"
@@ -185,7 +184,6 @@ function TopicIndex({
             Sync Topics
           </AccessButton>
           <AccessButton
-            raised
             onClick={openTopicDialog}
             label="Create Topic"
             data-testid="create-btn"
@@ -346,7 +344,6 @@ function TopicIndex({
               <AccessButton
                 basic
                 rounded
-                raised
                 size="small"
                 aria-label={`Clear Publisher Count ${topicSubscriber?.publisher_count} from Topic ${topicSubscriber?.name}`}
                 tooltip="Clear Publisher Count"
@@ -494,7 +491,6 @@ function TopicIndex({
                 <AccessButton
                   basic
                   rounded
-                  raised
                   size="small"
                   aria-label={`Clear Count of ${topicSubscriber.subscribers.consumer_count} for Topic ${topicSubscriber?.name} Subscriber ${topicSubscriber.subscribers.garden ?? "*"} ${topicSubscriber.subscribers.namespace ?? "*"} ${topicSubscriber.subscribers.system ?? "*"} ${topicSubscriber.subscribers.version ?? "*"} ${topicSubscriber.subscribers.instance ?? "*"} ${topicSubscriber.subscribers.command ?? "*"}`}
                   tooltip="Clear count"
@@ -530,7 +526,6 @@ function TopicIndex({
                 <AccessButton
                   basic
                   rounded
-                  raised
                   onClick={() =>
                     removeSubscriber(
                       findTopic(topicSubscriber.id),
@@ -570,7 +565,6 @@ function TopicIndex({
               <AccessButton
                 basic
                 rounded
-                raised
                 onClick={() =>
                   addRequestItem({
                     topic: findTopic(topic.id),
@@ -587,7 +581,6 @@ function TopicIndex({
               <AccessButton
                 basic
                 rounded
-                raised
                 onClick={() => addSubscriber(findTopic(topic.id))}
                 aria-label={`Add Subscriber to Topic ${topic?.name}`}
                 tooltip="Add Subscriber"
@@ -600,7 +593,6 @@ function TopicIndex({
               <AccessButton
                 basic
                 rounded
-                raised
                 disabled={has_only_dynamic_subscribers !== true}
                 onClick={() => deleteTopic(findTopic(topic.id))}
                 aria-label={`Delete Topic ${topic?.name}`}
