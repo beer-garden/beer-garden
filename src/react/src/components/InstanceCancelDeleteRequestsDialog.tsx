@@ -418,6 +418,8 @@ function InstanceCancelDeleteRequestsDialog({
       open={isVisible}
       onClose={onClose}
       aria-labelledby="instance-cancel-delete-requests-dialog-title"
+      maxWidth="md"
+      fullWidth
     >
       <DialogTitle id="instance-cancel-delete-requests-dialog-title">
         <Grid container>
