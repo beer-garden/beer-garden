@@ -49,13 +49,17 @@ def prune_requests(ttl_name):
     )
 
     if ttl_name == "admin":
-        query = query & Q(has_parent=False) & Q(command_type="ADMIN")
+        query = (
+            query
+            & (Q(has_parent=False) | Q(has_parent=None) | Q(parent_id=None))
+            & Q(command_type="ADMIN")
+        )
     elif ttl_name == "temp":
         query = query & Q(command_type="TEMP")
     elif ttl_name == "action":
         query = (
             query
-            & Q(has_parent=False)
+            & (Q(has_parent=False) | Q(has_parent=None) | Q(parent_id=None))
             & (
                 Q(command_type="ACTION")
                 | Q(command_type=None)
@@ -63,11 +67,13 @@ def prune_requests(ttl_name):
             )
         )
     elif ttl_name == "info":
-        query = query & Q(has_parent=False) & Q(command_type="INFO")
+        query = (
+            query
+            & (Q(has_parent=False) | Q(has_parent=None) | Q(parent_id=None))
+            & Q(command_type="INFO")
+        )
 
-    request_cursor = Request.objects(query).only(
-        "id", "output_gridfs", "parameters_gridfs", "parameters"
-    )
+    request_cursor = Request.objects(query).only("id", "parameters")
 
     request_ids = []
 
@@ -104,7 +110,7 @@ def prune_request_cursor(
             # Get children
             if request:
                 child_cursor = Request.objects(parent_id=str(request.id)).only(
-                    "id", "output_gridfs", "parameters_gridfs", "parameters"
+                    "id", "parameters"
                 )
                 prune_request_cursor(child_cursor, batch_size, label, request_ids)
 
@@ -363,69 +369,38 @@ def prune_grid_fs():
 
             for i in range(batches, 0, -1):
                 outstanding_files = (
-                    files.find(filter, {"_id": 1})
+                    files.find(filter, {"_id": 1, "request_id": 1})
                     .limit(batch_size)
                     .skip(batch_size * (i - 1))
                 )
                 prune_grid_fs_files(db, files, list(outstanding_files))
 
         else:
-            outstanding_files = files.find(filter, {"_id": 1})
+            outstanding_files = files.find(filter, {"_id": 1, "request_id": 1})
             prune_grid_fs_files(db, files, list(outstanding_files))
 
 
 def prune_grid_fs_files(db, files, outstanding_files):
 
-    # Bulk Check for orphaned files
+    # This should be a small subset of grid fs files, so check each individually
+    # Then bulk delete
     outstanding_ids = []
     for outstanding_file in outstanding_files:
-        outstanding_ids.append(outstanding_file["_id"])
+        if "request_id" not in outstanding_file or (
+            Request.objects(id=outstanding_file["request_id"]).only("id").count() == 0
+            and RawFile.objects(Q(file=outstanding_file["_id"])).only("id").count() == 0
+        ):
+            outstanding_ids.append(outstanding_file["_id"])
 
-    requests_matching = (
-        Request.objects(
-            Q(output_gridfs__in=outstanding_ids)
-            | Q(parameters_gridfs__in=outstanding_ids)
-        )
-        .only("id")
-        .count()
-    )
+    counter = len(outstanding_ids)
 
-    raw_files_matching = RawFile.objects(Q(file__in=outstanding_ids)).only("id").count()
+    if counter > 0:
+        db["fs.chunks"].delete_many({"files_id": {"$in": outstanding_ids}})
+        files.delete_many({"_id": {"$in": outstanding_ids}})
+        logger.error(f"Deleted {counter} orphaned files from GridFS")
 
-    total_matching = requests_matching + raw_files_matching
-
-    try:
-        if total_matching > 0:
-            # If there are any files that are still referenced, we need to check
-            # each file individually to see if it is orphaned
-            outstanding_ids = []
-
-            for outstanding_file in outstanding_files:
-                if (
-                    Request.objects(
-                        Q(output_gridfs=outstanding_file["_id"])
-                        | Q(parameters_gridfs=outstanding_file["_id"])
-                    )
-                    .only("id")
-                    .count()
-                    == 0
-                    and RawFile.objects(Q(file=outstanding_file["_id"]))
-                    .only("id")
-                    .count()
-                    == 0
-                ):
-                    outstanding_ids.append(outstanding_file["_id"])
-    finally:
-
-        counter = len(outstanding_ids)
-
-        if counter > 0:
-            db["fs.chunks"].delete_many({"files_id": {"$in": outstanding_ids}})
-            files.delete_many({"_id": {"$in": outstanding_ids}})
-            logger.error(f"Deleted {counter} orphaned files from GridFS")
-
-        else:
-            logger.debug("No orphaned files found in GridFS")
+    else:
+        logger.debug("No orphaned files found in GridFS")
 
 
 def prune_orphan_command_type_info():

@@ -337,7 +337,7 @@ class Request(MongoModel, Document):
     status = StringField(choices=BrewtilsRequest.STATUS_LIST, default="CREATED")
     command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
     created_at = DateTimeField(default=get_current_time, required=True)
-    updated_at = DateTimeField(default=None, required=True)
+    updated_at = DateTimeField(default=get_current_time, required=True)
     status_updated_at = DateTimeField()
     error_class = StringField(required=False)
     has_parent = BooleanField(required=False)
@@ -347,9 +347,6 @@ class Request(MongoModel, Document):
     source_garden = StringField(required=False)
     target_garden = StringField(required=False)
     root_command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES)
-
-    # output_gridfs = FileField()
-    # parameters_gridfs = FileField()
 
     meta = {
         "queryset_class": FileFieldHandlingQuerySet,
