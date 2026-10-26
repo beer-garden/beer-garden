@@ -204,6 +204,7 @@ function RequestView({
       setRequest(undefined);
       updateRootRequest(undefined);
       urlRequestId.current = requestId;
+      requestIdRef.current = requestId;
     } else if (!request || request.id === undefined) {
       if (requestId !== undefined) {
         loadDisplayRequest().catch((error) => {
