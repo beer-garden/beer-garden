@@ -1696,7 +1696,7 @@ def handle_event(event):
             return
         else:  # Only Completed statuses are handled in this else statement
             existing_request = db.query_unique(
-                Request, id=event.payload.id, include_field=["status"]
+                Request, id=event.payload.id, include_fields=["status"]
             )
 
             if existing_request and existing_request.status != event.payload.status:

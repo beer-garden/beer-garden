@@ -1509,4 +1509,4 @@ class TestCreateRequest(object):
         child_request = create_request(child_request)
 
         assert child_request.id is not None
-        assert child_request.command_type == "TEMP"
+        assert child_request.root_command_type == "TEMP"

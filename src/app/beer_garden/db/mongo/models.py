@@ -1048,6 +1048,8 @@ class File(MongoModel, Document):
     # We could probably have kept using this if a GenericLazyReferenceField could have
     # a reverse_delete_rule. Alas!
     owner = DummyField()
+    request = DummyField()
+    job = DummyField()
 
     # TTL Fields
     status = StringField()
