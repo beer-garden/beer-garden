@@ -771,7 +771,9 @@ function CommandForm({
 
     if (
       request &&
-      (request?.command_type === undefined || request.command_type.length === 0)
+      (request?.command_type === undefined ||
+        request?.command_type === null ||
+        request.command_type.length === 0)
     ) {
       updated = true;
       if (
