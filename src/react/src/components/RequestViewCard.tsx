@@ -1,5 +1,4 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Card } from "primereact/card";
+import { DialogContent } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -9,7 +8,6 @@ import { Request } from "../models/brewtils-types";
 import { Config, RequestItem } from "../models/models";
 import { GetRequest } from "../services/request_service";
 import { getErrorCode } from "../services/util_service";
-import AccessButton from "./AccessButton";
 
 function RequestViewCard({
   requestItem,
@@ -155,21 +153,7 @@ function RequestViewCard({
   }, [request, listeners]);
 
   return (
-    <Card
-      unstyled={isDialog}
-      header={
-        !isDialog && (
-          <AccessButton
-            onClick={() => {
-              removeItem(requestItem.itemId);
-            }}
-            tooltip={`Close Request View for ${request?.command_display_name ?? request?.command ?? "Unknown Request"}`}
-          >
-            <FontAwesomeIcon icon="xmark" />
-          </AccessButton>
-        )
-      }
-    >
+    <DialogContent dividers>
       {error ? (
         <ErrorPage
           errorCode={getErrorCode(error?.message)}
@@ -194,7 +178,7 @@ function RequestViewCard({
           </div>
         )
       )}
-    </Card>
+    </DialogContent>
   );
 }
 
