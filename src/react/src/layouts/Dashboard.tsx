@@ -689,7 +689,7 @@ function GardenDashboard({
               </FormControl>
               <Grid container spacing={1}>
                 {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
-                  <Grid size={4} sx={{ minWidth: "250px" }}>
+                  <Grid key={runnerGroup.path} size={4} sx={{ minWidth: "250px" }}>
                     <UnassociatedRunnerCard
                       runnerGroup={runnerGroup}
                       config={config}
