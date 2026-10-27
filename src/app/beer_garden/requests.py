@@ -1104,6 +1104,8 @@ def save_request(
             # Request is an Orphan, removing parent
             request.has_parent = False
             request.parent_id = None
+        else:
+            request.has_parent = True
 
     if request.root_command_type is None:
         if request.command_type == "TEMP":

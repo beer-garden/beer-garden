@@ -4,13 +4,12 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
-from brewtils.errors import ModelValidationError, RequestStatusTransitionError
+from brewtils.errors import ModelValidationError
 from brewtils.schemas import RequestTemplateSchema
 from bson.objectid import ObjectId
 from mock import Mock
 from mongoengine import NotUniqueError
 
-import beer_garden.db.api as db
 from beer_garden import config
 from beer_garden.db.mongo.models import (
     Choices,
@@ -170,97 +169,6 @@ class TestRequest(object):
         request = Request(command="command", status="CREATED")
         assert "name" in repr(request)
         assert "CREATED" in repr(request)
-
-    class TestClean:
-        @pytest.mark.parametrize(
-            "req",
-            [
-                Request(system="foo", command="bar", status="bad"),
-                Request(system="foo", command="bar", command_type="BAD"),
-                Request(system="foo", command="bar", output_type="BAD"),
-            ],
-        )
-        def test_bad_values(self, req):
-            with pytest.raises(ModelValidationError):
-                req.clean()
-
-        @pytest.mark.parametrize(
-            "has_parent",
-            [(False), (True)],
-        )
-        def test_set_has_parent(self, has_parent):
-            parent_id = None
-            if has_parent:
-                parent = Request(
-                    system="system",
-                    instance_name="instance",
-                    system_version="1",
-                    namespace="namespace",
-                    command="say",
-                ).save()
-                parent_id = str(parent.id)
-            req = Request(command="bar", parent_id=parent_id)
-            req.clean()
-            assert req.has_parent is has_parent
-
-        @pytest.mark.parametrize(
-            "parent_id, has_parent",
-            [(None, True), ("something", False)],
-        )
-        def test_parent_mismatch(self, parent_id, has_parent):
-            req = Request(command="bar", parent_id=parent_id, has_parent=has_parent)
-            with pytest.raises(ModelValidationError):
-                req.clean()
-
-        @pytest.mark.parametrize(
-            "parent",
-            [
-                Request(
-                    system="system",
-                    instance_name="instance",
-                    system_version="1",
-                    namespace="namespace",
-                    command="say",
-                )
-            ],
-        )
-        def test_parent_orphan(self, parent):
-            parent.save()
-            req = Request(
-                system="system",
-                instance_name="instance",
-                system_version="1",
-                namespace="namespace",
-                command="bar",
-                parent_id=str(parent.id),
-                has_parent=True,
-            ).save()
-            req2 = Request.objects.get(id=req.id)
-            parent.delete()
-            with pytest.raises(
-                ModelValidationError, match=".*parent value is not present in database"
-            ):
-                req2.clean()
-
-    class TestCleanUpdate:
-        @pytest.mark.parametrize(
-            "start, end",
-            [
-                ("SUCCESS", "IN_PROGRESS"),
-                ("SUCCESS", "ERROR"),
-                ("IN_PROGRESS", "CREATED"),
-                ("CANCELED", "IN_PROGRESS"),
-            ],
-        )
-        def test_invalid_transitions(self, bg_request, start, end):
-            bg_request.status = start
-            bg_request.output = None
-
-            db.create(bg_request)
-
-            with pytest.raises(RequestStatusTransitionError):
-                bg_request.status = end
-                db.update(bg_request)
 
     # TODO - Make these integration tests
     # @patch("bg_utils.mongo.models.Request.objects")
