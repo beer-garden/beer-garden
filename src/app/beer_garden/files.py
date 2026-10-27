@@ -482,9 +482,7 @@ def set_owner(file_id: str, owner_id: str = None, owner_type: str = None) -> Fil
 
         # Case 1 : New owner has equal or higher priority
         # Case 2 : The old owner is a higher priority than the new one, but it was deleted.
-        if new_owner_priority <= old_owner_priority or (
-            file.owner_type in OWNERSHIP_PRIORITY
-        ):
+        if new_owner_priority <= old_owner_priority:
             file = db.modify(file, owner_id=owner_id, owner_type=owner_type)
 
             for chunk_id in file.chunks.values():

@@ -1065,6 +1065,7 @@ class FileChunk(MongoModel, Document):
     data = StringField(required=True)
 
     owner_type = StringField(required=False)
+    owner = DummyField()
 
     # TTL Fields
     status = StringField()
