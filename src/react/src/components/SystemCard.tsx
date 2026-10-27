@@ -325,7 +325,8 @@ function SystemCard({
     return (
       <>
         <Tooltip
-          title={`Status ${instance.status} for instance ${instance.name} in system ${system.namespace}.${system.name}.${system.version}`}
+          title={`Status ${instance.status} for instance ${instance.name} in system ${system.namespace}.${system.name}.${system.version}
+          ${instance.status_info?.heartbeat ? ` at ${new Date(instance.status_info?.heartbeat).toLocaleString()}` : ""}`}
         >
           <Box component="span" aria-label={undefined}>
             <Chip
