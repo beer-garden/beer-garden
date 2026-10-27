@@ -1068,12 +1068,6 @@ def save_request(
             or request.target_garden == config.get("garden.name")
         ) and (request.status != db_request.status):
             request.status_updated_at = datetime.datetime.now(tz=datetime.timezone.utc)
-    else:
-        if request.target_garden is None and _is_local_request(request):
-            request.target_garden = config.get("garden.name")
-
-        if request.source_garden is None and _is_local_request(request):
-            request.source_garden = config.get("garden.name")
 
     if request.status_updated_at is None:
         request.status_updated_at = datetime.datetime.now(tz=datetime.timezone.utc)
@@ -1090,11 +1084,14 @@ def save_request(
     if request.parent is not None and request.parent_id is None:
         request.parent_id = request.parent.id
 
-    if request.source_garden is None:
+    if request.target_garden is None and _is_local_request(request):
+        request.target_garden = config.get("garden.name")
+
+    if request.source_garden is None and _is_local_request(request):
         request.source_garden = config.get("garden.name")
 
-    if request.target_garden is None:
-        request.target_garden = config.get("garden.name")
+    if request.has_parent is None:
+        request.has_parent = False
 
     if request.has_parent or request.parent_id is not None:
 
