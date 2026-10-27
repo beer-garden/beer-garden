@@ -1,5 +1,10 @@
 # Beer Garden Changelog
 
+# TBD
+TBD
+
+- Fixed bug encountered while checking stomp garden connections
+
 # 3.35.1
 9/9/2026
 
