@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
+from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -12,18 +13,22 @@ from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System
 from mock import Mock, call, patch
 
+import beer_garden
 import beer_garden.config
 import beer_garden.requests
-from beer_garden.db.mongo.api import to_brewtils
-from beer_garden.db.mongo.models import Garden, Request
+from beer_garden.db.mongo.api import gridfs_exists, to_brewtils
+from beer_garden.db.mongo.models import Garden, RawFile, Request
 from beer_garden.garden import create_garden
 from beer_garden.requests import (
     RequestValidator,
     cancel_request_children,
     create_request,
+    delete_request,
     determine_latest_system_version,
     get_request,
+    load_request_parameter_and_output,
     rebroadcast,
+    save_request,
 )
 from beer_garden.systems import create_system
 
@@ -1510,3 +1515,281 @@ class TestCreateRequest(object):
 
         assert child_request.id is not None
         assert child_request.root_command_type == "TEMP"
+
+
+class TestSaveRequest(object):
+
+    @pytest.fixture(autouse=True)
+    def drop(self):
+        yield
+        Request.drop_collection()
+        beer_garden.config._CONFIG = {}
+
+    @pytest.fixture()
+    def max_size(self, monkeypatch):
+        """mock max request size to be arbitrarily small"""
+        monkeypatch.setattr(beer_garden.requests, "REQUEST_MAX_PARAM_SIZE", 100)
+        return beer_garden.requests.REQUEST_MAX_PARAM_SIZE + 10
+
+    @pytest.fixture()
+    def mock_gridfs_create(self, monkeypatch):
+        gridfs_create_mock = Mock()
+        monkeypatch.setattr(
+            beer_garden.requests.db, "gridfs_create", gridfs_create_mock
+        )
+        return gridfs_create_mock
+
+    @pytest.fixture()
+    def request_model(self):
+
+        return BrewtilsRequest(
+            namespace="parent",
+            system="testsystem",
+            system_version="1.0.0",
+            instance_name="instance1",
+            command="somecommand",
+            parameters={},
+            status="SUCCESS",
+        )
+
+    @pytest.fixture()
+    def raw_file(self):
+        rawfile = RawFile().save()
+
+        yield rawfile
+        rawfile.delete()
+
+    def test_save_stores_output_in_gridfs_after_maxsize(self, max_size, request_model):
+
+        request_model.parameters = {"message": "a"}
+        request_model.output = "a" * max_size
+        request_model = save_request(request_model)
+        assert request_model.output is None
+        request_model = load_request_parameter_and_output(request_model)
+        assert request_model.output is not None
+
+    def test_save_stores_parameters_in_gridfs_after_maxsize(self, request_model):
+
+        request_model.parameters = {"large_message": "a" * (16 * 1024 * 1024)}
+
+        request_model = save_request(request_model)
+
+        assert request_model.parameters == {}
+
+        request_model = load_request_parameter_and_output(request_model)
+
+        assert request_model.parameters is not None
+
+    def test_save_retains_if_under_maxsize(self, request_model, mock_gridfs_create):
+
+        save_request(request_model)
+
+        mock_gridfs_create.assert_not_called()
+        mock_gridfs_create.assert_not_called()
+
+    def test_save_retains_only_parameters(
+        self, request_model, mock_gridfs_create, max_size
+    ):
+        request_model.output = "a" * max_size
+        save_request(request_model)
+
+        mock_gridfs_create.assert_called_once()
+        _, kwargs = mock_gridfs_create.call_args
+
+        assert "output" in kwargs
+        assert kwargs["output"]
+
+    def test_save_retains_only_output(self, request_model, mock_gridfs_create):
+        request_model.parameters = {"large_message": "a" * (16 * 1024 * 1024)}
+        save_request(request_model)
+
+        mock_gridfs_create.assert_called_once()
+        _, kwargs = mock_gridfs_create.call_args
+
+        assert "parameters" in kwargs
+        assert kwargs["parameters"]
+
+    def test_save_handles_bool(self, request_model, mock_gridfs_create):
+        request_model.parameters = {"message": True}
+        save_request(request_model)
+
+        mock_gridfs_create.assert_not_called()
+
+    def test_save_preserves_status_updated_at_field_when_status_is_not_updated(
+        self, request_model
+    ):
+        request_model = save_request(request_model)
+        first_time = request_model.status_updated_at
+        request_model = save_request(request_model)
+
+        assert first_time == request_model.status_updated_at
+
+    def test_save_updates_status_updated_at_field_when_status_is_updated(
+        self, request_model
+    ):
+        beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
+        request_model.status = "CREATED"
+        request_model = save_request(request_model)
+        first_time = request_model.status_updated_at
+        request_model.status = "SUCCESS"
+        request_model = save_request(request_model)
+
+        assert first_time != request_model.status_updated_at
+
+    def test_save_preserves_status_updated_at_for_child_garden_requests(
+        self,
+        request_model,
+    ):
+        beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
+
+        request_model.namespace = "child_garden"
+        request_model.target_garden = "child_garden"
+        request_model.status = "CREATED"
+
+        request_model = save_request(request_model)
+
+        # Setting timestamp to none NOW value to ensure it doesn't change
+        status_updated_at = datetime.now(timezone.utc) - timedelta(days=1)
+        request_model.status = "SUCCESS"
+        request_model.status_updated_at = status_updated_at
+        request_model = save_request(request_model)
+
+        assert request_model.status_updated_at == status_updated_at
+
+    def test_save_updates_raw_file_reference(self, request_model, raw_file):
+        request_model.status = "CREATED"
+        request_model.parameters = {
+            "message": "hi",
+            "file_param": {"type": "bytes", "id": str(raw_file.id)},
+        }
+        request_model = save_request(request_model)
+
+        assert len(RawFile.objects.filter(request_id=request_model.id)) == 1
+
+
+class TestDeleteRequest(object):
+
+    @pytest.fixture(autouse=True)
+    def drop(self):
+        yield
+        Request.drop_collection()
+        beer_garden.config._CONFIG = {}
+
+    @pytest.fixture()
+    def max_size(self, monkeypatch):
+        """mock max request size to be arbitrarily small"""
+        monkeypatch.setattr(beer_garden.requests, "REQUEST_MAX_PARAM_SIZE", 100)
+        return beer_garden.requests.REQUEST_MAX_PARAM_SIZE + 10
+
+    @pytest.fixture()
+    def mock_gridfs_create(self, monkeypatch):
+        gridfs_create_mock = Mock()
+        monkeypatch.setattr(
+            beer_garden.requests.db, "gridfs_create", gridfs_create_mock
+        )
+        return gridfs_create_mock
+
+    @pytest.fixture()
+    def request_model(self):
+
+        return BrewtilsRequest(
+            namespace="parent",
+            system="testsystem",
+            system_version="1.0.0",
+            instance_name="instance1",
+            command="somecommand",
+            parameters={},
+            status="SUCCESS",
+        )
+
+    @pytest.fixture()
+    def raw_file(self):
+        rawfile = RawFile().save()
+
+        yield rawfile
+        rawfile.delete()
+
+    def test_delete(self, request_model):
+
+        request_model = save_request(request_model)
+
+        assert len(Request.objects.filter(id=request_model.id)) == 1
+
+        delete_request(request=request_model)
+
+        assert len(Request.objects.filter(id=request_model.id)) == 0
+
+    def test_delete_with_child(self, request_model):
+
+        parent = deepcopy(request_model)
+        child = deepcopy(request_model)
+        parent = save_request(parent)
+
+        child.has_parent = True
+        child.parent_id = parent.id
+
+        child = save_request(child)
+
+        assert len(Request.objects.filter(id=parent.id)) == 1
+        assert len(Request.objects.filter(id=child.id)) == 1
+
+        delete_request(request=parent)
+
+        assert len(Request.objects.filter(id=parent.id)) == 0
+        assert len(Request.objects.filter(id=child.id)) == 0
+
+    def test_delete_with_running_child(self, request_model):
+
+        parent = deepcopy(request_model)
+        child = deepcopy(request_model)
+        parent = save_request(parent)
+
+        child.has_parent = True
+        child.parent_id = parent.id
+        child.status = "CREATED"
+
+        child = save_request(child)
+
+        assert len(Request.objects.filter(id=parent.id)) == 1
+        assert len(Request.objects.filter(id=child.id)) == 1
+
+        delete_request(request=parent)
+
+        assert len(Request.objects.filter(id=parent.id)) == 0
+        assert len(Request.objects.filter(id=child.id)) == 1
+
+        assert Request.objects.get(id=child.id).parent_id is None
+        assert not Request.objects.get(id=child.id).has_parent
+
+    def test_delete_cascade_deletes_raw_file(self, request_model, raw_file):
+        request_model.status = "CREATED"
+        request_model.parameters = {
+            "message": "hi",
+            "file_param": {"type": "bytes", "id": str(raw_file.id)},
+        }
+        request_model = save_request(request_model)
+
+        delete_request(request=request_model)
+
+        assert len(RawFile.objects.filter(request_id=request_model.id)) == 0
+
+    def test_delete_cascade_output_in_gridfs(self, max_size, request_model):
+
+        request_model.parameters = {"message": "a"}
+        request_model.output = "a" * max_size
+        request_model = save_request(request_model)
+
+        assert gridfs_exists({"request_id": request_model.id, "output": True})
+        delete_request(request=request_model)
+
+        assert not gridfs_exists({"request_id": request_model.id, "output": True})
+
+    def test_delete_cascade_parameter_in_gridfs(self, max_size, request_model):
+
+        request_model.parameters = {"large_message": "a" * (16 * 1024 * 1024)}
+        request_model = save_request(request_model)
+
+        assert gridfs_exists({"request_id": request_model.id, "parameters": True})
+        delete_request(request=request_model)
+
+        assert not gridfs_exists({"request_id": request_model.id, "parameters": True})

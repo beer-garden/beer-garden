@@ -11,7 +11,6 @@ from mock import Mock
 from mongoengine import NotUniqueError
 
 import beer_garden.db.api as db
-import beer_garden.db.mongo.models
 from beer_garden import config
 from beer_garden.db.mongo.models import (
     Choices,
@@ -21,7 +20,6 @@ from beer_garden.db.mongo.models import (
     Instance,
     Job,
     Parameter,
-    RawFile,
     Request,
     Role,
     Subscriber,
@@ -263,80 +261,6 @@ class TestRequest(object):
             with pytest.raises(RequestStatusTransitionError):
                 bg_request.status = end
                 db.update(bg_request)
-
-    class TestDelete:
-
-        def test_delete(self):
-            request = Request(
-                system="system",
-                instance_name="instance",
-                system_version="1",
-                namespace="namespace",
-                command="bar",
-            )
-            request.save()
-            request.delete()
-
-            assert len(Request.objects.filter(id=request.id)) == 0
-
-        def test_delete_with_child(self):
-
-            parent = Request(
-                system="system",
-                instance_name="instance",
-                system_version="1",
-                namespace="namespace",
-                command="bar",
-            )
-            parent.save()
-
-            child = Request(
-                system="system",
-                instance_name="instance",
-                system_version="1",
-                namespace="namespace",
-                command="bar",
-                has_parent=True,
-                parent_id=str(parent.id),
-                status="SUCCESS",
-            )
-
-            child.save()
-
-            parent.delete()
-            assert len(Request.objects.filter(id=parent.id)) == 0
-            assert len(Request.objects.filter(id=child.id)) == 0
-
-        def test_delete_with_running_child(self):
-
-            parent = Request(
-                system="system",
-                instance_name="instance",
-                system_version="1",
-                namespace="namespace",
-                command="bar",
-            )
-            parent.save()
-
-            child = Request(
-                system="system",
-                instance_name="instance",
-                system_version="1",
-                namespace="namespace",
-                command="bar",
-                has_parent=True,
-                parent_id=str(parent.id),
-                status="CREATED",
-            )
-
-            child.save()
-
-            parent.delete()
-            assert len(Request.objects.filter(id=parent.id)) == 0
-            assert len(Request.objects.filter(id=child.id)) == 1
-
-            assert Request.objects.get(id=child.id).parent_id is None
-            assert not Request.objects.get(id=child.id).has_parent
 
     # TODO - Make these integration tests
     # @patch("bg_utils.mongo.models.Request.objects")
@@ -947,179 +871,6 @@ class TestGarden:
         for system in System.objects(garden_name=child_garden.name):
             for instance in system.instances:
                 assert len(instance.status_info.history) == 3
-
-
-class TestFileUpdates:
-    @pytest.fixture()
-    def raw_file(self):
-        rawfile = RawFile().save()
-
-        yield rawfile
-        rawfile.delete()
-
-    @pytest.fixture()
-    def request_model(self, raw_file, local_garden_name):
-
-        req = Request(
-            system="foo",
-            command="bar",
-            status="CREATED",
-            system_version="1.0.0",
-            instance_name="foobar",
-            namespace=local_garden_name,
-        )
-        req.parameters = {
-            "message": "hi",
-            "file_param": {"type": "bytes", "id": str(raw_file.id)},
-        }
-        req.output = "bye"
-        req.parameters_gridfs.put = Mock()
-        req.output_gridfs.put = Mock()
-        return req
-
-    @pytest.fixture()
-    def request_local_system(self, request_model):
-        System(
-            namespace=request_model.namespace,
-            name=request_model.system,
-            version=request_model.system_version,
-            local=True,
-        ).save()
-        yield
-        System.drop_collection()
-
-    @pytest.fixture()
-    def request_remote_system(self, request_model):
-        System(
-            namespace=request_model.namespace,
-            name=request_model.system,
-            version=request_model.system_version,
-            local=True,
-        ).save()
-        yield
-        System.drop_collection()
-
-    @pytest.fixture()
-    def max_size(self, monkeypatch):
-        """mock max request size to be arbitrarily small"""
-        monkeypatch.setattr(beer_garden.db.mongo.models, "REQUEST_MAX_PARAM_SIZE", 100)
-        return beer_garden.db.mongo.models.REQUEST_MAX_PARAM_SIZE + 10
-
-    def test_save_stores_output_in_gridfs_after_maxsize(
-        self, request_model, request_local_system, max_size
-    ):
-
-        request_model.parameters = {"message": "a"}
-        request_model.output = "a" * max_size
-        request_model.save()
-        request_model.output_gridfs.put.assert_called_once()
-
-    def test_save_stores_parameters_in_gridfs_after_maxsize(
-        self, request_model, request_local_system
-    ):
-
-        request_model.parameters = {"large_message": "a" * (16 * 1024 * 1024)}
-        request_model.save()
-
-        request_model.parameters_gridfs.put.assert_called_once()
-
-    def test_save_retains_if_under_maxsize(
-        self, request_model, request_local_system, max_size
-    ):
-        request_model.save()
-
-        request_model.parameters_gridfs.put.assert_not_called()
-        request_model.output_gridfs.put.assert_not_called()
-
-    def test_save_retains_only_parameters(
-        self, request_model, request_local_system, max_size
-    ):
-        request_model.output = "a" * max_size
-        request_model.save()
-
-        request_model.parameters_gridfs.put.assert_not_called()
-        request_model.output_gridfs.put.assert_called_once()
-
-    def test_save_retains_only_output(
-        self, request_model, request_local_system, max_size
-    ):
-        request_model.parameters = {"message": "a" * max_size}
-        request_model.save()
-
-        # TODO: Determine how to get this to trigger
-        # request_model.parameters_gridfs.put.assert_called_once()
-        request_model.output_gridfs.put.assert_not_called()
-
-    def test_save_handles_bool(self, request_model, request_local_system, max_size):
-        request_model.parameters = {"message": True}
-        request_model.save()
-
-        request_model.parameters_gridfs.put.assert_not_called()
-        request_model.output_gridfs.put.assert_not_called()
-
-    def test_save_preserves_status_updated_at_field_when_status_is_not_updated(
-        self, request_model, request_local_system
-    ):
-        request_model.save()
-        first_time = request_model.status_updated_at
-        request_model.save()
-
-        assert first_time == request_model.status_updated_at
-
-    def test_save_updates_status_updated_at_field_when_status_is_updated(
-        self, request_model, request_local_system
-    ):
-        request_model.save()
-        first_time = request_model.status_updated_at
-        request_model.status = "SUCCESS"
-        request_model.save()
-
-        assert first_time != request_model.status_updated_at
-
-    def test_save_preserves_status_updated_at_for_child_garden_requests(
-        self,
-        request_model,
-    ):
-        beer_garden.config._CONFIG = {"garden": {"name": "parent"}}
-
-        request_model.namespace = "child_garden"
-        request_model.target_garden = "child_garden"
-
-        System(
-            namespace=request_model.namespace,
-            name=request_model.system,
-            version=request_model.system_version,
-            local=True,
-        ).save()
-
-        request_model.save()
-
-        status_updated_at = datetime.now(timezone.utc) - timedelta(days=1)
-        request_model.status = "SUCCESS"
-        request_model.status_updated_at = status_updated_at
-        request_model.save()
-
-        assert request_model.status_updated_at == status_updated_at
-        beer_garden.config._CONFIG = {}
-        System.drop_collection()
-
-    def test_save_updates_raw_file_reference(
-        self, request_model, request_remote_system
-    ):
-        request_model.status = "CREATED"
-        request_model.save()
-
-        assert len(RawFile.objects.filter(request=request_model)) == 1
-
-    def test_delete_cascade_deletes_raw_file(
-        self, request_model, request_local_system, raw_file
-    ):
-        request_model.save()
-        raw_file.request = request_model
-        raw_file.save()
-        request_model.delete()
-
-        assert len(RawFile.objects.filter(request=request_model)) == 0
 
 
 class TestTopic:

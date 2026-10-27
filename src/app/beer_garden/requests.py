@@ -771,8 +771,8 @@ def delete_request(
         request = db.query_unique(Request, id=request_id)
 
     # Delete All Children
-    if request.children is None:
-        request.children = get_request_children(request, max_depth=-1)
+    if request.children is None or len(request.children) == 0:
+        request = get_request_children(request, max_depth=-1)
 
     if request.children:
         for child in request.children:
@@ -789,7 +789,7 @@ def delete_request(
     RawFile.objects(request_id=request.id).delete()
 
     # Delete all FS Chunks
-    db.gridfs_delete(filter={request_id: request.id})
+    db.gridfs_delete(filter={"request_id": request.id})
 
     # Delete Request
     db.delete(request)
@@ -832,6 +832,10 @@ def _is_local_request(request: Request) -> bool:
         name=request.system,
         version=request.system_version,
     )
+
+    if system is None:
+        # Can't find target system, treat as local request
+        return True
 
     return system.local
 
@@ -1064,6 +1068,12 @@ def save_request(
             or request.target_garden == config.get("garden.name")
         ) and (request.status != db_request.status):
             request.status_updated_at = datetime.datetime.now(tz=datetime.timezone.utc)
+    else:
+        if request.target_garden is None and _is_local_request(request):
+            request.target_garden = config.get("garden.name")
+
+        if request.source_garden is None and _is_local_request(request):
+            request.source_garden = config.get("garden.name")
 
     if request.status_updated_at is None:
         request.status_updated_at = datetime.datetime.now(tz=datetime.timezone.utc)
@@ -1209,7 +1219,7 @@ def _update_raw_file_references(request: Request):
 
 def load_request_parameter_and_output(request: Request, **kwargs):
 
-    skip_parameters = request.parameters is not None
+    skip_parameters = request.parameters is not None and request.parameters is not {}
     skip_output = (
         request.status not in Request.COMPLETED_STATUSES or request.output is not None
     )
@@ -1225,12 +1235,14 @@ def load_request_parameter_and_output(request: Request, **kwargs):
         skip_output = skip_output or "output" in kwargs["exclude_fields"]
 
     if not skip_parameters:
-        request.parameters = db.gridfs_read(
-            {"request_id": request.id, "parameters": True}
-        )
+        parameters = db.gridfs_read({"request_id": request.id, "parameters": True})
+        if parameters is not None:
+            request.parameters = parameters
 
     if not skip_output:
-        request.output = db.gridfs_read({"request_id": request.id, "output": True})
+        output = db.gridfs_read({"request_id": request.id, "output": True})
+        if output is not None:
+            request.output = output
 
     return request
 
