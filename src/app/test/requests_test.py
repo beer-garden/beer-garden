@@ -1715,16 +1715,18 @@ class TestSaveRequest(object):
             request_model.status = end
             save_request(request_model)
 
-    @pytest.mark.parametrize(
-        "key",
-        [
-            "status",
-            "command_type",
-            "output_type",
-        ],
-    )
-    def test_bad_status(self, request_model, key):
-        request_model[key] = "BAD"
+    def test_bad_status(self, request_model):
+        request_model.status = "BAD"
+        with pytest.raises(ModelValidationError):
+            save_request(request_model)
+
+    def test_bad_command_type(self, request_model):
+        request_model.command_type = "BAD"
+        with pytest.raises(ModelValidationError):
+            save_request(request_model)
+
+    def test_bad_output_type(self, request_model):
+        request_model.output_type = "BAD"
         with pytest.raises(ModelValidationError):
             save_request(request_model)
 
