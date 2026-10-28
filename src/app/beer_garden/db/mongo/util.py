@@ -37,6 +37,8 @@ def ensure_local_garden():
         garden.metadata["_unresponsive_timeout"] = (
             config.get("parent.sync_interval") * 3
         )
+    elif config.get("parent.sync_interval") < 1:
+        garden.metadata["_unresponsive_timeout"] = -1
     elif garden.metadata:
         garden.metadata.pop("_unresponsive_timeout", None)
 
