@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timezone
 
 from bson.dbref import DBRef
+from bson.objectid import ObjectId
 from mongoengine.connection import get_db
 from mongoengine.errors import FieldDoesNotExist, InvalidDocumentError
 from packaging.version import Version
@@ -269,27 +270,41 @@ def ensure_v3_35_model_migration():
 
 
 def ensure_v3_XX_model_migration():
+    target_version = "V3.XX"
+
     db = get_db()
     batch_size = config.get("db.prune.batch_size", default=-1)
+
+    request_updates = []
+    gridfs_updates = []
+    gridfs_chunks_updates = []
+    file_updates = []
+    raw_file_updates = []
+
+    request_collection = db.get_collection("request")
+    gridfs_files_collection = db.get_collection("fs.files")
+    gridfs_chunks_collection = db.get_collection("fs.chunks")
+    file_collection = db.get_collection("file")
+    raw_file_collection = db.get_collection("raw_file")
+
     if contains_field("request", "output_gridfs"):
 
-        logger.warning(
-            "Request output_gridfs was found in Requests and will be migrated to gridfs metadata"
-            " This is most likely because the database is using the old (v3.35) style of"
-            " storing in the database."
+        output_gridfs_count = request_collection.count_documents(
+            {"output_gridfs": {"$exists": True}}
         )
-        request_updates = []
-
-        gridfs_updates = []
-        gridfs_chunks_updates = []
-        request_collection = db.get_collection("request")
+        logger.warning(
+            f"Request output_gridfs was found in {output_gridfs_count}"
+            f" Requests and will be migrated to gridfs metadata. This is"
+            f" most likely because the database is using the old ({target_version})"
+            f" style of storing in the database."
+        )
 
         for legacy_request in request_collection.find(
             {"output_gridfs": {"$exists": True}}
         ):
             if legacy_request:
                 if "output_gridfs" in legacy_request and isinstance(
-                    legacy_request["output_gridfs"], DBRef
+                    legacy_request["output_gridfs"], ObjectId
                 ):
                     request_updates.append(
                         UpdateOne(
@@ -301,7 +316,7 @@ def ensure_v3_XX_model_migration():
                     )
                     gridfs_updates.append(
                         UpdateOne(
-                            {"_id": legacy_request["output_gridfs"].id},
+                            {"_id": legacy_request["output_gridfs"]},
                             {
                                 "$set": {
                                     "request_id": str(legacy_request["_id"]),
@@ -316,7 +331,7 @@ def ensure_v3_XX_model_migration():
                     )
                     gridfs_chunks_updates.append(
                         UpdateOne(
-                            {"_id": legacy_request["output_gridfs"].id},
+                            {"files_id": legacy_request["output_gridfs"]},
                             {
                                 "$set": {
                                     "request_id": str(legacy_request["_id"]),
@@ -330,39 +345,235 @@ def ensure_v3_XX_model_migration():
                         )
                     )
 
-            if batch_size > 0 and len(request_updates) > batch_size:
-                request_collection.bulk_write(request_updates, ordered=False)
-                request_updates = []
-        if len(request_updates) > 0:
-            request_collection.bulk_write(request_updates, ordered=False)
+            if batch_size > 0:
+                if len(request_updates) > batch_size:
+                    logger.info(
+                        f"{target_version} Model Migration: Batch Update Request "
+                        f"{len(request_updates)}"
+                    )
+                    request_collection.bulk_write(request_updates, ordered=False)
+                    request_updates = []
+                if len(gridfs_updates) > batch_size:
+                    logger.info(
+                        f"{target_version} Model Migration: Batch Update GridFS Files "
+                        f"{len(gridfs_updates)}"
+                    )
+                    gridfs_files_collection.bulk_write(gridfs_updates, ordered=False)
+                    request_updates = []
+                if len(gridfs_chunks_updates) > batch_size:
+                    logger.info(
+                        f"{target_version} Model Migration: Batch Update GridFS Chunks "
+                        f"{len(gridfs_chunks_updates)}"
+                    )
+                    gridfs_chunks_collection.bulk_write(
+                        gridfs_chunks_updates, ordered=False
+                    )
+                    request_updates = []
 
     if contains_field("request", "parameters_gridfs"):
-        logger.warning(
-            "Request Parent DBRef was found in Requests and will be migrated to parent_id."
-            " This is most likely because the database is using the old (v3.35) style of"
-            " storing in the database."
+
+        parameters_gridfs_count = request_collection.count_documents(
+            {"parameters_gridfs": {"$exists": True}}
         )
 
-    if contains_field("File", "job"):
         logger.warning(
-            "Request Parent DBRef was found in Requests and will be migrated to parent_id."
-            " This is most likely because the database is using the old (v3.35) style of"
-            " storing in the database."
+            f"Request parameters_gridfs was found in {parameters_gridfs_count}"
+            f" Requests and will be migrated to gridfs metadata. This is most"
+            f" likely because the database is using the old ({target_version}) style of"
+            f" storing in the database."
+        )
+        for legacy_request in request_collection.find(
+            {"parameters_gridfs": {"$exists": True}}
+        ):
+            if legacy_request:
+                if "parameters_gridfs" in legacy_request and isinstance(
+                    legacy_request["parameters_gridfs"], ObjectId
+                ):
+                    request_updates.append(
+                        UpdateOne(
+                            {"_id": legacy_request["_id"]},
+                            {
+                                "$unset": {"parameters_gridfs": ""},
+                            },
+                        )
+                    )
+                    gridfs_updates.append(
+                        UpdateOne(
+                            {"_id": legacy_request["parameters_gridfs"]},
+                            {
+                                "$set": {
+                                    "request_id": str(legacy_request["_id"]),
+                                    "status": legacy_request["status"],
+                                    "updated_at": legacy_request["updated_at"],
+                                    "root_command_type": legacy_request[
+                                        "root_command_type"
+                                    ],
+                                },
+                            },
+                        )
+                    )
+                    gridfs_chunks_updates.append(
+                        UpdateOne(
+                            {"files_id": legacy_request["parameters_gridfs"]},
+                            {
+                                "$set": {
+                                    "request_id": str(legacy_request["_id"]),
+                                    "status": legacy_request["status"],
+                                    "updated_at": legacy_request["updated_at"],
+                                    "root_command_type": legacy_request[
+                                        "root_command_type"
+                                    ],
+                                },
+                            },
+                        )
+                    )
+
+            if batch_size > 0:
+                if len(request_updates) > batch_size:
+                    logger.info(
+                        f"{target_version} Model Migration: Batch Update Request "
+                        f"{len(request_updates)}"
+                    )
+                    request_collection.bulk_write(request_updates, ordered=False)
+                    request_updates = []
+                if len(gridfs_updates) > batch_size:
+                    logger.info(
+                        f"{target_version} Model Migration: Batch Update GridFS Files "
+                        f"{len(gridfs_updates)}"
+                    )
+                    gridfs_files_collection.bulk_write(gridfs_updates, ordered=False)
+                    request_updates = []
+                if len(gridfs_chunks_updates) > batch_size:
+                    logger.info(
+                        f"{target_version} Model Migration: Batch Update GridFS Chunks "
+                        f"{len(gridfs_chunks_updates)}"
+                    )
+                    gridfs_chunks_collection.bulk_write(
+                        gridfs_chunks_updates, ordered=False
+                    )
+                    request_updates = []
+
+    if contains_field("file", "job"):
+        file_count = file_collection.count_documents({"job": {"$exists": True}})
+        logger.warning(
+            f"File job DBRef was found in {file_count} Files and will be migrated to owner_id."
+            f" This is most likely because the database is using the old ({target_version})"
+            f" style of storing in the database."
         )
 
-    if contains_field("File", "request"):
+        for legacy_file in file_collection.find({"job": {"$exists": True}}):
+            if legacy_file:
+                if "job" in legacy_request and isinstance(legacy_request["job"], DBRef):
+                    file_updates.append(
+                        UpdateOne(
+                            {"_id": legacy_file["_id"]},
+                            {
+                                "$set": {"owner_id": str(legacy_file.job.id)},
+                                "$unset": {"job": ""},
+                            },
+                        )
+                    )
+            if batch_size > 0 and len(file_updates) > batch_size:
+                logger.info(
+                    f"{target_version} Model Migration: Batch Update Files "
+                    f"{len(file_updates)}"
+                )
+                file_collection.bulk_write(file_updates, ordered=False)
+                file_updates = []
+
+    if contains_field("file", "request"):
+        file_count = file_collection.count_documents({"request": {"$exists": True}})
         logger.warning(
-            "Request Parent DBRef was found in Requests and will be migrated to parent_id."
-            " This is most likely because the database is using the old (v3.35) style of"
-            " storing in the database."
+            f"File request DBRef was found in {file_count} Files and"
+            f" will be migrated to owner_id. This is most likely"
+            f" because the database is using the old ({target_version})"
+            f" style of storing in the database."
         )
 
-    if contains_field("RawFile", "request"):
+        for legacy_file in file_collection.find({"request": {"$exists": True}}):
+            if legacy_file:
+                if "request" in legacy_request and isinstance(
+                    legacy_request["request"], DBRef
+                ):
+                    file_updates.append(
+                        UpdateOne(
+                            {"_id": legacy_file["_id"]},
+                            {
+                                "$set": {"owner_id": str(legacy_file.request.id)},
+                                "$unset": {"request": ""},
+                            },
+                        )
+                    )
+            if batch_size > 0 and len(file_updates) > batch_size:
+                logger.info(
+                    f"{target_version} Model Migration: Batch Update Files "
+                    f"{len(file_updates)}"
+                )
+                file_collection.bulk_write(file_updates, ordered=False)
+                file_updates = []
+
+    if contains_field("raw_file", "request"):
+        raw_file_count = file_collection.count_documents({"request": {"$exists": True}})
         logger.warning(
-            "Request Parent DBRef was found in Requests and will be migrated to parent_id."
-            " This is most likely because the database is using the old (v3.35) style of"
-            " storing in the database."
+            f"Raw File request DBRef was found in {raw_file_count} Files and will be"
+            f" migrated to owner_id. This is most likely because the database is using"
+            f" the old ({target_version}) style of storing in the database."
         )
+
+        for legacy_file in raw_file_collection.find({"request": {"$exists": True}}):
+            if legacy_file:
+                if "request" in legacy_request and isinstance(
+                    legacy_request["request"], DBRef
+                ):
+                    raw_file_updates.append(
+                        UpdateOne(
+                            {"_id": legacy_file["_id"]},
+                            {
+                                "$set": {"owner_id": str(legacy_file.request.id)},
+                                "$unset": {"request": ""},
+                            },
+                        )
+                    )
+            if batch_size > 0 and len(raw_file_updates) > batch_size:
+                logger.info(
+                    f"{target_version} Model Migration: Batch Update Files "
+                    f"{len(raw_file_updates)}"
+                )
+                raw_file_collection.bulk_write(raw_file_updates, ordered=False)
+                raw_file_updates = []
+
+    if len(request_updates) > 0:
+        logger.info(
+            f"{target_version} Model Migration: Update Request "
+            f"{len(request_updates)}"
+        )
+        request_collection.bulk_write(request_updates, ordered=False)
+
+    if len(gridfs_updates) > 0:
+        logger.info(
+            f"{target_version} Model Migration: Update GridFS Files "
+            f"{len(gridfs_updates)}"
+        )
+        gridfs_files_collection.bulk_write(gridfs_updates, ordered=False)
+
+    if len(gridfs_chunks_updates) > 0:
+        logger.info(
+            f"{target_version} Model Migration: Update GridFS Chunks "
+            f"{len(gridfs_chunks_updates)}"
+        )
+        gridfs_chunks_collection.bulk_write(gridfs_chunks_updates, ordered=False)
+
+    if len(file_updates) > 0:
+        logger.info(
+            f"{target_version} Model Migration: Update Files " f"{len(file_updates)}"
+        )
+        file_collection.bulk_write(file_updates, ordered=False)
+    if len(raw_file_updates) > 0:
+        logger.info(
+            f"{target_version} Model Migration: Update Files "
+            f"{len(raw_file_updates)}"
+        )
+        raw_file_collection.bulk_write(raw_file_updates, ordered=False)
 
 
 def find_root_command_type(request):
@@ -890,3 +1101,5 @@ def ensure_model_migration():
             "3.35.0"
         ):
             ensure_v3_35_model_migration()
+
+    ensure_v3_XX_model_migration()
