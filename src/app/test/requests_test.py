@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 from box import Box
-from brewtils.errors import ModelValidationError
+from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.models import Choices, Command, Event, Events
 from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Instance, Parameter
@@ -1665,6 +1665,68 @@ class TestSaveRequest(object):
         request_model = save_request(request_model)
 
         assert len(RawFile.objects.filter(request_id=request_model.id)) == 1
+
+    def test_parent_orphan(self, request_model):
+        parent = deepcopy(request_model)
+        child = deepcopy(request_model)
+        parent = save_request(parent)
+
+        child.has_parent = True
+        child.parent_id = parent.id
+
+        delete_request(parent)
+        child = save_request(child)
+        assert child.has_parent is False
+        assert child.parent_id is None
+
+    def test_set_has_parent(self, request_model):
+        parent = deepcopy(request_model)
+        child = deepcopy(request_model)
+        parent = save_request(parent)
+
+        child.parent_id = parent.id
+
+        child = save_request(child)
+        assert child.has_parent is True
+
+    def test_unset_has_parent(self, request_model):
+
+        request_model.has_parent = True
+
+        request_model = save_request(request_model)
+        assert request_model.has_parent is False
+
+    @pytest.mark.parametrize(
+        "start, end",
+        [
+            ("SUCCESS", "IN_PROGRESS"),
+            ("SUCCESS", "ERROR"),
+            ("IN_PROGRESS", "CREATED"),
+            ("CANCELED", "IN_PROGRESS"),
+        ],
+    )
+    def test_invalid_transitions(self, request_model, start, end):
+        request_model.status = start
+        request_model.output = None
+
+        request_model = save_request(request_model)
+
+        with pytest.raises(RequestStatusTransitionError):
+            request_model.status = end
+            save_request(request_model)
+
+    @pytest.mark.parametrize(
+        "key",
+        [
+            "status",
+            "command_type",
+            "output_type",
+        ],
+    )
+    def test_bad_status(self, request_model, key):
+        request_model[key] = "BAD"
+        with pytest.raises(ModelValidationError):
+            save_request(request_model)
 
 
 class TestDeleteRequest(object):
