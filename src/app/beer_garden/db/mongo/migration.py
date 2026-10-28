@@ -268,6 +268,103 @@ def ensure_v3_35_model_migration():
             request_collection.bulk_write(request_updates, ordered=False)
 
 
+def ensure_v3_XX_model_migration():
+    db = get_db()
+    batch_size = config.get("db.prune.batch_size", default=-1)
+    if contains_field("request", "output_gridfs"):
+
+        logger.warning(
+            "Request output_gridfs was found in Requests and will be migrated to gridfs metadata"
+            " This is most likely because the database is using the old (v3.35) style of"
+            " storing in the database."
+        )
+        request_updates = []
+
+        gridfs_updates = []
+        gridfs_chunks_updates = []
+        request_collection = db.get_collection("request")
+
+        for legacy_request in request_collection.find(
+            {"output_gridfs": {"$exists": True}}
+        ):
+            if legacy_request:
+                if "output_gridfs" in legacy_request and isinstance(
+                    legacy_request["output_gridfs"], DBRef
+                ):
+                    request_updates.append(
+                        UpdateOne(
+                            {"_id": legacy_request["_id"]},
+                            {
+                                "$unset": {"output_gridfs": ""},
+                            },
+                        )
+                    )
+                    gridfs_updates.append(
+                        UpdateOne(
+                            {"_id": legacy_request["output_gridfs"].id},
+                            {
+                                "$set": {
+                                    "request_id": str(legacy_request["_id"]),
+                                    "status": legacy_request["status"],
+                                    "updated_at": legacy_request["updated_at"],
+                                    "root_command_type": legacy_request[
+                                        "root_command_type"
+                                    ],
+                                },
+                            },
+                        )
+                    )
+                    gridfs_chunks_updates.append(
+                        UpdateOne(
+                            {"_id": legacy_request["output_gridfs"].id},
+                            {
+                                "$set": {
+                                    "request_id": str(legacy_request["_id"]),
+                                    "status": legacy_request["status"],
+                                    "updated_at": legacy_request["updated_at"],
+                                    "root_command_type": legacy_request[
+                                        "root_command_type"
+                                    ],
+                                },
+                            },
+                        )
+                    )
+
+            if batch_size > 0 and len(request_updates) > batch_size:
+                request_collection.bulk_write(request_updates, ordered=False)
+                request_updates = []
+        if len(request_updates) > 0:
+            request_collection.bulk_write(request_updates, ordered=False)
+
+    if contains_field("request", "parameters_gridfs"):
+        logger.warning(
+            "Request Parent DBRef was found in Requests and will be migrated to parent_id."
+            " This is most likely because the database is using the old (v3.35) style of"
+            " storing in the database."
+        )
+
+    if contains_field("File", "job"):
+        logger.warning(
+            "Request Parent DBRef was found in Requests and will be migrated to parent_id."
+            " This is most likely because the database is using the old (v3.35) style of"
+            " storing in the database."
+        )
+
+    if contains_field("File", "request"):
+        logger.warning(
+            "Request Parent DBRef was found in Requests and will be migrated to parent_id."
+            " This is most likely because the database is using the old (v3.35) style of"
+            " storing in the database."
+        )
+
+    if contains_field("RawFile", "request"):
+        logger.warning(
+            "Request Parent DBRef was found in Requests and will be migrated to parent_id."
+            " This is most likely because the database is using the old (v3.35) style of"
+            " storing in the database."
+        )
+
+
 def find_root_command_type(request):
     command_type = getattr(request, "command_type", "ACTION")
     if ("has_parent" in request and request["has_parent"]) or (
