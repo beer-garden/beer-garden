@@ -738,30 +738,70 @@ def load_garden_file(garden: Garden):
         pass
     finally:
 
-        http_publishing_connection.status_info.set_status_heartbeat(
-            http_publishing_connection.status,
-            max_history=config.get("garden.status_history"),
-        )
+        for connection in garden.publishing_connections:
+            if (
+                connection.api == "HTTP"
+                and connection.status != http_publishing_connection.status
+            ):
+                http_publishing_connection.status_info.set_status_heartbeat(
+                    http_publishing_connection.status,
+                    max_history=config.get("garden.status_history"),
+                )
+            elif (
+                connection.api == "STOMP"
+                and connection.status != stomp_publishing_connection.status
+            ):
+                stomp_publishing_connection.status_info.set_status_heartbeat(
+                    stomp_publishing_connection.status,
+                    max_history=config.get("garden.status_history"),
+                )
 
-        stomp_publishing_connection.status_info.set_status_heartbeat(
-            stomp_publishing_connection.status,
-            max_history=config.get("garden.status_history"),
-        )
+        if len(http_publishing_connection.status_info.history) == 0:
+            http_publishing_connection.status_info.set_status_heartbeat(
+                http_publishing_connection.status,
+                max_history=config.get("garden.status_history"),
+            )
 
-        stomp_receiving_connection.status_info.set_status_heartbeat(
-            stomp_receiving_connection.status,
-            max_history=config.get("garden.status_history"),
-        )
+        if len(stomp_publishing_connection.status_info.history) == 0:
+            stomp_publishing_connection.status_info.set_status_heartbeat(
+                stomp_publishing_connection.status,
+                max_history=config.get("garden.status_history"),
+            )
 
         garden.publishing_connections = [
             http_publishing_connection,
             stomp_publishing_connection,
         ]
 
-        http_receiving_connection.status_info.set_status_heartbeat(
-            http_receiving_connection.status,
-            max_history=config.get("garden.status_history"),
-        )
+        for connection in garden.receiving_connections:
+            if (
+                connection.api == "HTTP"
+                and connection.status != http_receiving_connection.status
+            ):
+                http_receiving_connection.status_info.set_status_heartbeat(
+                    http_receiving_connection.status,
+                    max_history=config.get("garden.status_history"),
+                )
+            elif (
+                connection.api == "STOMP"
+                and connection.status != stomp_receiving_connection.status
+            ):
+                stomp_receiving_connection.status_info.set_status_heartbeat(
+                    stomp_receiving_connection.status,
+                    max_history=config.get("garden.status_history"),
+                )
+
+        if len(http_receiving_connection.status_info.history) == 0:
+            http_receiving_connection.status_info.set_status_heartbeat(
+                http_receiving_connection.status,
+                max_history=config.get("garden.status_history"),
+            )
+
+        if len(stomp_receiving_connection.status_info.history) == 0:
+            stomp_receiving_connection.status_info.set_status_heartbeat(
+                stomp_receiving_connection.status,
+                max_history=config.get("garden.status_history"),
+            )
 
         garden.receiving_connections = [
             stomp_receiving_connection,
