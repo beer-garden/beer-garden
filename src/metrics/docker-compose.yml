@@ -1,0 +1,17 @@
+version: '3.5'
+
+services:
+  metrics-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: metrics-server
+    networks:
+      - bg-network
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+
+networks:
+  bg-network:
+    external: true   
