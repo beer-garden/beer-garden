@@ -1,7 +1,7 @@
 # my global config
 global:
-  scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
-  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  scrape_interval:     60s # Set the scrape interval to every 60 seconds. Default is every 1 minute.
+  evaluation_interval: 60s # Evaluate rules every 60 seconds. The default is every 1 minute.
   # scrape_timeout is set to the global default (10s).
 
 # Alertmanager configuration
@@ -26,4 +26,20 @@ scrape_configs:
     # scheme defaults to 'http'.
 
     static_configs:
-            - targets: ['prometheus:9091','brew-view:2338']
+      - targets: ['prometheus:9090']
+
+  - job_name: 'beer-garden-docker'
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+
+    static_configs:
+      - targets: ['beer-garden:2337']
+
+  - job_name: 'beer-garden-local'
+
+    # metrics_path defaults to '/metrics'
+    # scheme defaults to 'http'.
+
+    static_configs:
+      - targets: ['host.docker.internal:2337']
