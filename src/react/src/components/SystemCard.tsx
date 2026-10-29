@@ -31,6 +31,7 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { GetSeverity } from "../services/util_service";
+import InstanceStatusHistoryDialog from "./InstanceStatusHistoryDialog";
 import SystemForceDeleteDialog from "./SystemForceDeleteDialog";
 
 interface SystemCardProps {
@@ -76,6 +77,8 @@ function SystemCard({
   const closeQueueDialog = () => setQueueVisible(false);
   const [cancelDeleteVisible, setCancelDeleteVisible] = useState(false);
   const closeCancelDeleteDialog = () => setCancelDeleteVisible(false);
+  const [statusHistoryVisible, setStatusHistoryVisible] = useState(false);
+  const closeStatusHistoryDialog = () => setStatusHistoryVisible(false);
 
   const tourUuid = system.id;
   const tourPrefix = "system_summary";
@@ -508,6 +511,14 @@ function SystemCard({
                 >
                   Cancel/Delete Requests
                 </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    handleInstanceMenuClose();
+                    setStatusHistoryVisible(true);
+                  }}
+                >
+                  Show Status History
+                </MenuItem>
               </>
             )}
           </Menu>
@@ -528,6 +539,12 @@ function SystemCard({
             system={system}
             isVisible={cancelDeleteVisible}
             onClose={closeCancelDeleteDialog}
+          />
+          <InstanceStatusHistoryDialog
+            instance={instance}
+            system={system}
+            isVisible={statusHistoryVisible}
+            onClose={closeStatusHistoryDialog}
           />
           <AccessButton
             size="small"
