@@ -478,12 +478,12 @@ class RequestListAPI(AuthorizationHandler):
         else:
             query_args["q_filter"] = q_filter
 
-        if query_args.get("filter_params"):
-            query_args["filter_params"] = (
-                query_args["filter_params"] | self._parse_query_object()
+        if query_args.get("raw_query"):
+            query_args["raw_query"] = self._add_raw_query(
+                query_args["raw_query"] | self._parse_query_object()
             )
         else:
-            query_args["filter_params"] = self._parse_query_object()
+            query_args["raw_query"] = self._parse_query_object()
 
         if query_args.get("include_fields"):
             query_args["include_fields"].extend(self.get_arguments("include"))
@@ -515,6 +515,9 @@ class RequestListAPI(AuthorizationHandler):
             "recordsFiltered": db.count(
                 Request,
                 q_filter=q_filtered if q_filtered else q_filter,
+                raw_query=(
+                    query_args["raw_query"] if "raw_query" in query_args else None
+                ),
                 **query_args["filter_params"],
             ),
             "recordsTotal": db.count(Request, q_filter=q_filter),
@@ -976,19 +979,94 @@ class RequestListAPI(AuthorizationHandler):
 
     def _parse_query_object(self) -> dict:
 
-        filter_params = {}
+        raw_query = None
 
         for query in self.get_query_arguments("query"):
             query_obj = json.loads(query)
-            filter_params[
-                (
-                    f"{query_obj['field_name']}__{query_obj['modifier']}"
-                    if (query_obj["modifier"] and query_obj["modifier"] != "")
-                    else query_obj["field_name"]
-                )
-            ] = query_obj["value"]
 
-        return filter_params
+            if (
+                "modifier" not in query_obj
+                or query_obj["modifier"] == ""
+                or query_obj["modifier"] == "eq"
+            ):
+                raw_query = self._add_raw_query(
+                    raw_query, {query_obj["field_name"]: query_obj["value"]}
+                )
+            elif query_obj["modifier"] == "ne":
+                raw_query = self._add_raw_query(
+                    raw_query,
+                    {
+                        query_obj["field_name"]: {
+                            "$not": {"$regex": f"^{query_obj["value"]}"}
+                        }
+                    },
+                )
+            elif query_obj["modifier"] == "exists":
+                raw_query = self._add_raw_query(
+                    raw_query, {query_obj["field_name"]: {"$exists": True}}
+                )
+            elif query_obj["modifier"] == "endswith":
+                raw_query = self._add_raw_query(
+                    raw_query,
+                    {query_obj["field_name"]: {"$regex": f"\\.{query_obj["value"]}$"}},
+                )
+            elif query_obj["modifier"] == "startswith":
+                raw_query = self._add_raw_query(
+                    raw_query,
+                    {query_obj["field_name"]: {"$regex": f"^{query_obj["value"]}"}},
+                )
+            elif query_obj["modifier"] == "not__contains":
+                raw_query = self._add_raw_query(
+                    raw_query,
+                    {query_obj["field_name"]: {"$not": {"$regex": query_obj["value"]}}},
+                )
+            elif query_obj["modifier"] == "contains":
+                raw_query = self._add_raw_query(
+                    raw_query, {query_obj["field_name"]: {"$regex": query_obj["value"]}}
+                )
+            elif query_obj["modifier"] == "lt":
+                raw_query = self._add_raw_query(
+                    raw_query, {query_obj["field_name"]: {"$lt": query_obj["value"]}}
+                )
+            elif query_obj["modifier"] == "lte":
+                raw_query = self._add_raw_query(
+                    raw_query, {query_obj["field_name"]: {"$lte": query_obj["value"]}}
+                )
+            elif query_obj["modifier"] == "gt":
+                raw_query = self._add_raw_query(
+                    raw_query, {query_obj["field_name"]: {"$gt": query_obj["value"]}}
+                )
+            elif query_obj["modifier"] == "gte":
+                raw_query = self._add_raw_query(
+                    raw_query, {query_obj["field_name"]: {"$gte": query_obj["value"]}}
+                )
+            elif query_obj["modifier"] == "in":
+                raw_query = self._add_raw_query(
+                    raw_query, {query_obj["field_name"]: {"$in": query_obj["value"]}}
+                )
+            elif query_obj["modifier"] == "nin":
+                raw_query = self._add_raw_query(
+                    raw_query, {query_obj["field_name"]: {"$nin": query_obj["value"]}}
+                )
+
+        return raw_query
+
+    def _add_raw_query(self, raw_query: dict, new_query: dict):
+
+        # If raw_query is none/empty, return new query
+        if raw_query is None or len(raw_query) == 0:
+            return new_query
+
+        # If new query is none/empty, return raw_query
+        if new_query is None or len(new_query) == 0:
+            return raw_query
+
+        # Append to AND query, else roll both up to an AND query
+        if "$and" in raw_query:
+            raw_query["$and"].append(new_query)
+            return raw_query
+        else:
+            return {"$and": [raw_query, new_query]}
 
     def _parse_datatables_parameters(self) -> dict:
         """Parse the HTTP request's datatables query parameters
@@ -1004,6 +1082,7 @@ class RequestListAPI(AuthorizationHandler):
         """
         # These are what this function is populating
         filter_params = {}
+        raw_query = None
         q_filter = Q()
         include_fields = []
         order_by = None
@@ -1030,25 +1109,26 @@ class RequestListAPI(AuthorizationHandler):
         # Cool, now we can do stuff
         if search and search["value"]:
             text_search = None
-            for column in columns:
-                if column["data"] and column["data"] in [
-                    "command_display_name",
-                    "namespace",
-                    "system",
-                    "system_version",
-                    "instance",
-                    "status",
-                    "comment",
-                ]:
-                    q_filter = q_filter | (
-                        Q(**{column["data"] + "__contains": search["value"]})
-                    )
+            raw_query = self._add_raw_query(
+                raw_query,
+                {
+                    "$or": [
+                        {"command_display_name": {"$regex": search["value"]}},
+                        {"namespace": {"$regex": search["value"]}},
+                        {"system": {"$regex": search["value"]}},
+                        {"system_version": {"$regex": search["value"]}},
+                        {"instance": {"$regex": search["value"]}},
+                        {"status": {"$regex": search["value"]}},
+                        {"comment": {"$regex": search["value"]}},
+                    ]
+                },
+            )
 
         if not include_children:
-            filter_params["has_parent"] = False
+            raw_query = self._add_raw_query(raw_query, {"has_parent": False})
 
         if not include_hidden:
-            filter_params["hidden"] = False
+            raw_query = self._add_raw_query(raw_query, {"hidden": False})
 
         for column in columns:
             query_columns.append(column)
@@ -1065,41 +1145,71 @@ class RequestListAPI(AuthorizationHandler):
                 and column["search"]["value"]
             ):
                 if "__" in column["data"]:
-                    filter_params[column["data"]] = column["search"]["value"]
+                    raw_query = self._add_raw_query(
+                        raw_query, {column["data"]: column["search"]["value"]}
+                    )
                 elif column["data"] in ["created_at", "updated_at"]:
                     search_dates = column["search"]["value"].split("~")
 
                     if search_dates[0]:
-                        filter_params[column["data"] + "__gte"] = search_dates[0]
+                        raw_query = self._add_raw_query(
+                            raw_query, {f"{column["data"]}": {"$gte": search_dates[0]}}
+                        )
                     if search_dates[1]:
-                        filter_params[column["data"] + "__lte"] = search_dates[1]
+                        raw_query = self._add_raw_query(
+                            raw_query, {f"{column["data"]}": {"$lte": search_dates[1]}}
+                        )
 
                 elif column["data"] == "status":
-                    filter_params[column["data"] + "__exact"] = column["search"][
-                        "value"
-                    ]
+                    raw_query = self._add_raw_query(
+                        raw_query, {f"{column["data"]}": column["search"]["value"]}
+                    )
 
                 elif column["search"]["value"].upper() in ["NOT", "NOT "]:
-                    filter_params[column["data"] + "__exact"] = ""
+                    raw_query = self._add_raw_query(
+                        raw_query, {f"{column["data"]}": ""}
+                    )
                 elif column["data"] == "comment":
                     if column["search"]["value"].upper().startswith("NOT "):
-                        filter_params[column["data"] + "__not__contains"] = column[
-                            "search"
-                        ]["value"][4:]
+                        raw_query = self._add_raw_query(
+                            raw_query,
+                            {
+                                f"{column["data"]}": {
+                                    "$not": {"$regex": column["search"]["value"][4:]}
+                                }
+                            },
+                        )
                     else:
-                        filter_params[column["data"] + "__contains"] = column["search"][
-                            "value"
-                        ]
+                        raw_query = self._add_raw_query(
+                            raw_query,
+                            {
+                                f"{column["data"]}": {
+                                    "$regex": column["search"]["value"]
+                                }
+                            },
+                        )
 
                 else:
                     if column["search"]["value"].upper().startswith("NOT "):
-                        filter_params[column["data"] + "__not__startswith"] = column[
-                            "search"
-                        ]["value"][4:]
+                        raw_query = self._add_raw_query(
+                            raw_query,
+                            {
+                                f"{column["data"]}": {
+                                    "$not": {
+                                        "$regex": f"^{column["search"]["value"][4:]}"
+                                    }
+                                }
+                            },
+                        )
                     else:
-                        filter_params[column["data"] + "__startswith"] = column[
-                            "search"
-                        ]["value"]
+                        raw_query = self._add_raw_query(
+                            raw_query,
+                            {
+                                f"{column["data"]}": {
+                                    "$regex": f"^{column["search"]["value"]}"
+                                }
+                            },
+                        )
 
                 hint_helper.append(column["data"])
 
@@ -1118,6 +1228,7 @@ class RequestListAPI(AuthorizationHandler):
             "order_by": order_by,
             "hint": self._determine_hint(hint_helper, include_children, include_hidden),
             "q_filter": q_filter,
+            "raw_query": raw_query,
         }
 
     @staticmethod

@@ -1,5 +1,10 @@
 # Beer Garden Changelog
 
+# TBD
+TBD
+
+- Migrating Request API filtering to utilize raw_query logic (# )
+
 # 3.35.1
 9/9/2026
 
