@@ -98,3 +98,22 @@ export const GetInstanceLogs = async (
     throw error; // Re-throw to be handled by the component/hook
   }
 };
+
+export const GetInstance = async (instance_id: string): Promise<Instance> => {
+  try {
+    const response = await fetch(
+      `${GetBaseURL()}/api/v1/instances/${instance_id}`,
+    );
+    if (!response.ok) {
+      // Handle non-OK responses (e.g., 404, 500)
+      throw new Error(`HTTP error: Status ${response.status}`);
+    }
+    const data = (await response.json()) as Instance;
+
+    return data;
+  } catch (error) {
+    // Handle network errors or the error thrown above
+    console.error("Error fetching Instance:", error);
+    throw error; // Re-throw to be handled by the component/hook
+  }
+};

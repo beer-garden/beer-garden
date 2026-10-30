@@ -86,6 +86,14 @@ export interface InstanceDialogProps {
   onClose: any;
 }
 
+export interface GardenDialogProps {
+  gardenName: string;
+  connection_type: "PUBLISHING" | "RECEIVING";
+  api_type: "HTTP" | "STOMP";
+  isVisible: boolean;
+  onClose: any;
+}
+
 export interface PermissionCheck {
   global?: boolean;
   gardenName?: string;
