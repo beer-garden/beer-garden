@@ -36,6 +36,7 @@ import {
 } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import { ColumnField } from "./EnhancedTable/models/EnhancedTableModels";
+import StatusHistoryDialog from "./GardenStatusHistoryDialog";
 
 interface GardenConnection {
   garden: string;
@@ -64,6 +65,12 @@ function GardenSummary({
   const showSnackbar = useSnackbar();
   const tourUuid = selectedGarden?.id;
   const tourPrefix = "garden_summary";
+  const [statusHistoryVisible, setStatusHistoryVisible] = useState(false);
+  const closeStatusHistoryDialog = () => setStatusHistoryVisible(false);
+  const [downstreamConnectionType, setDownstreamConnectionType] =
+    useState<string>("receiving_connections");
+  const [downstreamAPIType, setDownstreamAPIType] = useState<string>("HTTP");
+  const [downstreamGardenName, setDownstreamGardenName] = useState<string>("");
 
   const getSystemCounts = () => {
     if (selectedGarden) {
@@ -392,21 +399,33 @@ function GardenSummary({
     const severity = GetSeverity(row.status);
 
     return (
-      <Tooltip
-        title={
-          row.type === "RECEIVING"
-            ? row.direction === "DOWNSTREAM"
-              ? `Status ${row.status} over ${row.api} for accepting events from ${row.garden} to ${selectedGarden?.name}`
-              : `Status ${row.status} over ${row.api} for accepting operations from ${row.garden} to ${selectedGarden?.name}`
-            : row.direction === "DOWNSTREAM"
-              ? `Status ${row.status} over ${row.api} for sending operations from ${row.garden} to ${selectedGarden?.name}`
-              : `Status ${row.status} over ${row.api} for sending events from ${row.garden} to ${selectedGarden?.name}`
-        }
-      >
-        <Box component="span" aria-label={undefined}>
+      <Box component="span" aria-label={undefined}>
+        <Tooltip
+          title={
+            row.type === "RECEIVING"
+              ? row.direction === "DOWNSTREAM"
+                ? `Status ${row.status} over ${row.api} for accepting events from ${row.garden} to ${selectedGarden?.name}`
+                : `Status ${row.status} over ${row.api} for accepting operations from ${row.garden} to ${selectedGarden?.name}`
+              : row.direction === "DOWNSTREAM"
+                ? `Status ${row.status} over ${row.api} for sending operations from ${row.garden} to ${selectedGarden?.name}`
+                : `Status ${row.status} over ${row.api} for sending events from ${row.garden} to ${selectedGarden?.name}`
+          }
+        >
           <Chip label={row.status} color={severity} />
-        </Box>
-      </Tooltip>
+        </Tooltip>
+        <AccessButton
+          onClick={() => {
+            setDownstreamGardenName(row.garden);
+            setDownstreamConnectionType(row.type);
+            setDownstreamAPIType(row.api);
+            setStatusHistoryVisible(true);
+          }}
+          aria-label={`Show Status History for ${row.garden} over ${row.api}`}
+          icon
+        >
+          <FAIcon icon="clock-rotate-left" />
+        </AccessButton>
+      </Box>
     );
   };
 
@@ -908,6 +927,13 @@ function GardenSummary({
               interrupted or missed. Please contact your Garden Admin
             </Alert>
           )}
+          <StatusHistoryDialog
+            gardenName={downstreamGardenName}
+            connection_type={downstreamConnectionType}
+            api_type={downstreamAPIType}
+            isVisible={statusHistoryVisible}
+            onClose={closeStatusHistoryDialog}
+          />
           <Box sx={{ mt: 2 }}>
             {downstreamConnections && downstreamConnections.length > 0 && (
               <EnhancedTable
