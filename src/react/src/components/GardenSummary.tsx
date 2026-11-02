@@ -36,7 +36,7 @@ import {
 } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import { ColumnField } from "./EnhancedTable/models/EnhancedTableModels";
-import StatusHistoryDialog from "./GardenStatusHistoryDialog";
+import GardenStatusHistoryDialog from "./GardenStatusHistoryDialog";
 
 interface GardenConnection {
   garden: string;
@@ -68,7 +68,7 @@ function GardenSummary({
   const [statusHistoryVisible, setStatusHistoryVisible] = useState(false);
   const closeStatusHistoryDialog = () => setStatusHistoryVisible(false);
   const [downstreamConnectionType, setDownstreamConnectionType] =
-    useState<string>("receiving_connections");
+    useState<string>("RECEIVING");
   const [downstreamAPIType, setDownstreamAPIType] = useState<string>("HTTP");
   const [downstreamGardenName, setDownstreamGardenName] = useState<string>("");
 
@@ -927,7 +927,7 @@ function GardenSummary({
               interrupted or missed. Please contact your Garden Admin
             </Alert>
           )}
-          <StatusHistoryDialog
+          <GardenStatusHistoryDialog
             gardenName={downstreamGardenName}
             connection_type={downstreamConnectionType}
             api_type={downstreamAPIType}

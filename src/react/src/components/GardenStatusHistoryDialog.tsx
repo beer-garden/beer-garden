@@ -20,7 +20,7 @@ import { FAIcon } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import EnhancedTable from "./EnhancedTable/components/EnhancedTable";
 
-function StatusHistoryDialog({
+function GardenStatusHistoryDialog({
   gardenName,
   connection_type,
   api_type,
@@ -37,13 +37,13 @@ function StatusHistoryDialog({
 
   useEffect(() => {
     if (isVisible) {
-      GetGarden(gardenName)
+      GetGarden(gardenName, true)
         .then((data: Garden) => {
           setCurrentGarden(data);
           setStatusHistory(
-            data?.publishing_connections
+            data[connection_type_key]
               .find((x: Connection) => x.api == api_type)
-              .status_info.history.sort(
+              .status_info?.history.sort(
                 (a: StatusHistory, b: StatusHistory) =>
                   b.heartbeat - a.heartbeat,
               ),
@@ -98,14 +98,16 @@ function StatusHistoryDialog({
           <Typography component="label">Current Status:</Typography>
           <Chip
             label={
-              currentGarden?.receiving_connections.find(
+              currentGarden &&
+              currentGarden[connection_type_key].find(
                 (x: Connection) => x.api == api_type,
               ).status
             }
             color={GetSeverity(
-              currentGarden?.receiving_connections.find(
-                (x: Connection) => x.api == api_type,
-              ).status,
+              currentGarden &&
+                currentGarden[connection_type_key].find(
+                  (x: Connection) => x.api == api_type,
+                ).status,
             )}
             id={`instance_status_${gardenName}`}
           />
@@ -133,7 +135,7 @@ function StatusHistoryDialog({
               label: "Timestamp",
               isString: true,
               template: (row) => (
-                <span>${new Date(row.heartbeat).toLocaleString()}</span>
+                <span>{new Date(row.heartbeat).toLocaleString()}</span>
               ),
             },
           ]}
@@ -148,4 +150,4 @@ function StatusHistoryDialog({
   );
 }
 
-export default StatusHistoryDialog;
+export default GardenStatusHistoryDialog;

@@ -5,8 +5,13 @@ import { GetBaseURL } from "./util_service";
 
 export const GetGarden = async (
   garden_name: string,
+  keep_history?: boolean,
   headerData?: any,
 ): Promise<Garden> => {
+  if (keep_history == undefined) {
+    keep_history = false;
+  }
+
   try {
     const headers = GetAuthHeaders();
     if (headerData) {
@@ -16,7 +21,7 @@ export const GetGarden = async (
     }
 
     const response = await fetch(
-      `${GetBaseURL()}/api/v1/gardens/${encodeURIComponent(garden_name)}`,
+      `${GetBaseURL()}/api/v1/gardens/${encodeURIComponent(garden_name)}?keep_history=${keep_history}`,
       {
         headers: headers,
       },

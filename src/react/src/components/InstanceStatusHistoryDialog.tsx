@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 
-import { Instance } from "../models/brewtils-types";
+import { Instance, StatusHistory } from "../models/brewtils-types";
 import { InstanceDialogProps } from "../models/models";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetInstance } from "../services/instance_service";
@@ -26,14 +26,20 @@ function InstanceStatusHistoryDialog({
   isVisible,
   onClose,
 }: InstanceDialogProps) {
-  const [currentInstance, setCurrentInstance] = useState<Instance>([]);
+  const [currentInstance, setCurrentInstance] = useState<Instance>();
+  const [statusHistory, setStatusHistory] = useState<StatusHistory[]>();
   const showSnackbar = useSnackbar();
 
   useEffect(() => {
     if (isVisible) {
-      GetInstance(instance.id)
+      GetInstance(instance.id!)
         .then((data: Instance) => {
           setCurrentInstance(data);
+          setStatusHistory(
+            data?.status_info?.history?.sort(
+              (a: StatusHistory, b: StatusHistory) => b.heartbeat - a.heartbeat,
+            ),
+          );
         })
         .catch((error) => {
           console.error("Error fetching status history:", error);
@@ -72,22 +78,19 @@ function InstanceStatusHistoryDialog({
         <Stack direction="row" spacing={1}>
           <Typography component="label">Last Change Event:</Typography>
           <span>
-            {new Date(
-              currentInstance.status_info?.heartbeat,
-            ).toLocaleString() ||
-              new Date(instance.status_info?.heartbeat).toLocaleString()}
+            {new Date(currentInstance?.status_info?.heartbeat).toLocaleString()}
           </span>
         </Stack>
         <Stack direction="row" spacing={1}>
           <Typography component="label">Current Status:</Typography>
           <Chip
-            label={currentInstance.status || instance.status}
-            color={GetSeverity(currentInstance.status || instance.status)}
+            label={currentInstance?.status}
+            color={GetSeverity(currentInstance?.status)}
             id={`instance_status_${instance?.id}`}
           />
         </Stack>
         <EnhancedTable
-          data={currentInstance.status_info?.history}
+          data={statusHistory}
           displayAll={true}
           aria-label="Instance Status History Table"
           header={
@@ -108,7 +111,9 @@ function InstanceStatusHistoryDialog({
               field: "heartbeat",
               label: "Timestamp",
               isString: true,
-              template: (row) => new Date(row.heartbeat).toLocaleString(),
+              template: (row) => (
+                <span>{new Date(row.heartbeat).toLocaleString()}</span>
+              ),
             },
           ]}
         />
