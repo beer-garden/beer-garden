@@ -997,7 +997,7 @@ class RequestListAPI(AuthorizationHandler):
                     raw_query,
                     {
                         query_obj["field_name"]: {
-                            "$not": {"$regex": f"^{query_obj["value"]}"}
+                            "$not": {"$regex": f"^{query_obj['value']}"}
                         }
                     },
                 )
