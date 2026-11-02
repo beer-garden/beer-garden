@@ -1008,12 +1008,12 @@ class RequestListAPI(AuthorizationHandler):
             elif query_obj["modifier"] == "endswith":
                 raw_query = self._add_raw_query(
                     raw_query,
-                    {query_obj["field_name"]: {"$regex": f"\\.{query_obj["value"]}$"}},
+                    {query_obj["field_name"]: {"$regex": f"\\.{query_obj['value']}$"}},
                 )
             elif query_obj["modifier"] == "startswith":
                 raw_query = self._add_raw_query(
                     raw_query,
-                    {query_obj["field_name"]: {"$regex": f"^{query_obj["value"]}"}},
+                    {query_obj["field_name"]: {"$regex": f"^{query_obj['value']}"}},
                 )
             elif query_obj["modifier"] == "not__contains":
                 raw_query = self._add_raw_query(
@@ -1153,28 +1153,26 @@ class RequestListAPI(AuthorizationHandler):
 
                     if search_dates[0]:
                         raw_query = self._add_raw_query(
-                            raw_query, {f"{column["data"]}": {"$gte": search_dates[0]}}
+                            raw_query, {column["data"]: {"$gte": search_dates[0]}}
                         )
                     if search_dates[1]:
                         raw_query = self._add_raw_query(
-                            raw_query, {f"{column["data"]}": {"$lte": search_dates[1]}}
+                            raw_query, {column["data"]: {"$lte": search_dates[1]}}
                         )
 
                 elif column["data"] == "status":
                     raw_query = self._add_raw_query(
-                        raw_query, {f"{column["data"]}": column["search"]["value"]}
+                        raw_query, {column["data"]: column["search"]["value"]}
                     )
 
                 elif column["search"]["value"].upper() in ["NOT", "NOT "]:
-                    raw_query = self._add_raw_query(
-                        raw_query, {f"{column["data"]}": ""}
-                    )
+                    raw_query = self._add_raw_query(raw_query, {column["data"]: ""})
                 elif column["data"] == "comment":
                     if column["search"]["value"].upper().startswith("NOT "):
                         raw_query = self._add_raw_query(
                             raw_query,
                             {
-                                f"{column["data"]}": {
+                                column["data"]: {
                                     "$not": {"$regex": column["search"]["value"][4:]}
                                 }
                             },
@@ -1182,11 +1180,7 @@ class RequestListAPI(AuthorizationHandler):
                     else:
                         raw_query = self._add_raw_query(
                             raw_query,
-                            {
-                                f"{column["data"]}": {
-                                    "$regex": column["search"]["value"]
-                                }
-                            },
+                            {column["data"]: {"$regex": column["search"]["value"]}},
                         )
 
                 else:
@@ -1194,9 +1188,9 @@ class RequestListAPI(AuthorizationHandler):
                         raw_query = self._add_raw_query(
                             raw_query,
                             {
-                                f"{column["data"]}": {
+                                column["data"]: {
                                     "$not": {
-                                        "$regex": f"^{column["search"]["value"][4:]}"
+                                        "$regex": f"^{column['search']['value'][4:]}"
                                     }
                                 }
                             },
@@ -1205,8 +1199,8 @@ class RequestListAPI(AuthorizationHandler):
                         raw_query = self._add_raw_query(
                             raw_query,
                             {
-                                f"{column["data"]}": {
-                                    "$regex": f"^{column["search"]["value"]}"
+                                column["data"]: {
+                                    "$regex": f"^{column['search']['value']}"
                                 }
                             },
                         )
