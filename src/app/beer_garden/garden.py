@@ -134,7 +134,7 @@ def get_garden(garden_name: str, **kwargs) -> Garden:
     if "include_fields" in kwargs and kwargs["include_fields"]:
         for required_field in ["has_parent", "name", "parent"]:
             if required_field not in kwargs["include_fields"]:
-                kwargs["include_fields"].add(required_field)
+                kwargs["include_fields"].append(required_field)
 
     if garden_name == config.get("garden.name"):
         gardens = db.query(Garden, **kwargs)
