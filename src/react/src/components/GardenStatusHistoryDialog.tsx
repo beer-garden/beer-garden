@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { useEffect, useState } from "react";
 
-import { Garden, StatusHistory } from "../models/brewtils-types";
+import { Connection, Garden, StatusHistory } from "../models/brewtils-types";
 import { GardenDialogProps } from "../models/models";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import { GetGarden } from "../services/garden_service";
@@ -28,7 +28,7 @@ function StatusHistoryDialog({
   onClose,
 }: GardenDialogProps) {
   const [currentGarden, setCurrentGarden] = useState<Garden>();
-  const [statusHistory, setStatusHistory] = useState<StatusHistory>();
+  const [statusHistory, setStatusHistory] = useState<StatusHistory[]>();
   const showSnackbar = useSnackbar();
   const connection_type_key =
     connection_type == "RECEIVING"
@@ -41,9 +41,12 @@ function StatusHistoryDialog({
         .then((data: Garden) => {
           setCurrentGarden(data);
           setStatusHistory(
-            data["publishing_connections"]
-              .find((x) => x.api == api_type)
-              .status_info.history.sort((a, b) => b.heartbeat - a.heartbeat),
+            data?.publishing_connections
+              .find((x: Connection) => x.api == api_type)
+              .status_info.history.sort(
+                (a: StatusHistory, b: StatusHistory) =>
+                  b.heartbeat - a.heartbeat,
+              ),
           );
         })
         .catch((error) => {
@@ -86,7 +89,7 @@ function StatusHistoryDialog({
             {currentGarden &&
               new Date(
                 currentGarden[connection_type_key].find(
-                  (x) => x.api == api_type,
+                  (x: Connection) => x.api == api_type,
                 ).status_info.heartbeat,
               ).toLocaleString()}
           </span>
@@ -95,13 +98,13 @@ function StatusHistoryDialog({
           <Typography component="label">Current Status:</Typography>
           <Chip
             label={
-              currentGarden["receiving_connections"].find(
-                (x) => x.api == api_type,
+              currentGarden?.receiving_connections.find(
+                (x: Connection) => x.api == api_type,
               ).status
             }
             color={GetSeverity(
-              currentGarden["receiving_connections"].find(
-                (x) => x.api == api_type,
+              currentGarden?.receiving_connections.find(
+                (x: Connection) => x.api == api_type,
               ).status,
             )}
             id={`instance_status_${gardenName}`}
@@ -129,7 +132,9 @@ function StatusHistoryDialog({
               field: "heartbeat",
               label: "Timestamp",
               isString: true,
-              template: (row) => new Date(row.heartbeat).toLocaleString(),
+              template: (row) => (
+                <span>${new Date(row.heartbeat).toLocaleString()}</span>
+              ),
             },
           ]}
         />
