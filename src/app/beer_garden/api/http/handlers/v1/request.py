@@ -480,7 +480,7 @@ class RequestListAPI(AuthorizationHandler):
 
         if query_args.get("raw_query"):
             query_args["raw_query"] = self._add_raw_query(
-                query_args["raw_query"] , self._parse_query_object()
+                query_args["raw_query"], self._parse_query_object()
             )
         else:
             query_args["raw_query"] = self._parse_query_object()
