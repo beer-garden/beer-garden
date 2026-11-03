@@ -252,7 +252,7 @@ def update_key_value(key: str, value, suffix: str = None):
         key = f"{key.removesuffix('.id')}._id"
         is_id = True
 
-    if isinstance(value, dict):
+    if isinstance(value, dict) or isinstance(value, BaseModel):
 
         if hasattr(value, "id"):
             if not is_id:
@@ -262,7 +262,7 @@ def update_key_value(key: str, value, suffix: str = None):
             if not is_id:
                 key = f"{key}._id"
 
-    if isinstance(value, list):
+    elif isinstance(value, list):
         if len(value) > 0 and (isinstance(value[0], dict)):
             if hasattr(value[0], "id"):
                 if not is_id:
@@ -292,10 +292,10 @@ def update_value(key: str, value):
                 return value
         if isinstance(value, ObjectId):
             return value
-        if isinstance(value, dict):
-            if hasattr("id"):
+        if isinstance(value, dict) or isinstance(value, BaseModel):
+            if hasattr(value, "id"):
                 return update_value(key, value.id)
-            if hasattr("_id"):
+            if hasattr(value, "_id"):
                 return update_value(key, value._id)
 
     return value
@@ -401,6 +401,20 @@ def kwargs_raw_query(**kwargs):
                 query,
                 {raw_field: {"$ne": raw_value}},
             )
+        elif isinstance(raw_field, dict):
+            query = combine_raw_query(
+                query,
+                {raw_field: {"$elemMatch": raw_value}},
+            )
+        elif isinstance(raw_field, BaseModel):
+            query = combine_raw_query(
+                query,
+                {
+                    raw_field: {
+                        "$elemMatch": SchemaParser.serialize(raw_value, to_string=False)
+                    }
+                },
+            )
         else:
             raw_field, raw_value = update_key_value(raw_field, kwargs[key])
 
@@ -429,9 +443,9 @@ def count(
         The number of items
 
     """
-    for k, v in kwargs.items():
-        if isinstance(v, BaseModel):
-            kwargs[k] = from_brewtils(v)
+    # for k, v in kwargs.items():
+    #     if isinstance(v, BaseModel):
+    #         kwargs[k] = from_brewtils(v)
 
     if raw_query or kwargs:
         query_set = _model_map[model_class].objects(
@@ -476,9 +490,6 @@ def query_unique(
     """
 
     try:
-        for k, v in kwargs.items():
-            if isinstance(v, BaseModel):
-                kwargs[k] = from_brewtils(v)
 
         include_fields = kwargs.pop("include_fields", None)
         exclude_fields = kwargs.pop("exclude_fields", None)
@@ -534,11 +545,6 @@ def query(
     filter_params = kwargs.get("filter_params")
     raw_query = kwargs.get("raw_query")
     if filter_params:
-        # If any values are brewtils models those need to be converted
-        for key in filter_params:
-            if isinstance(filter_params[key], BaseModel):
-                filter_params[key] = from_brewtils(filter_params[key])
-
         raw_query = combine_raw_query(raw_query, kwargs_raw_query(**filter_params))
     if raw_query:
         query_set = _model_map[model_class].objects(__raw__=raw_query)
@@ -755,6 +761,7 @@ def modify(obj: ModelItem, query=None, **kwargs) -> ModelItem:
         if isinstance(kwargs[key], BaseModel):
             kwargs[key] = from_brewtils(kwargs[key])
 
+    # TODO: Convert this to RAW
     mongo_obj.modify(query=query, **kwargs)
 
     return to_brewtils(mongo_obj)

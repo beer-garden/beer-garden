@@ -181,7 +181,7 @@ class RawQueryFilterBuilder:
         if len(filters) == 0:
             return None
 
-        return {"$or": [filters]}
+        return {"$or": filters}
 
     def _get_job_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
         if check_global_roles(user, permission_levels=permission_levels):
@@ -196,7 +196,7 @@ class RawQueryFilterBuilder:
                     if len(role.scope_systems) > 0:
                         filter = db.combine_raw_query(
                             filter,
-                            {"request_template__system": {"$in": role.scope_systems}},
+                            {"request_template.system": {"$in": role.scope_systems}},
                         )
                     if len(role.scope_instances) > 0:
                         filter = db.combine_raw_query(
@@ -236,7 +236,7 @@ class RawQueryFilterBuilder:
         if len(filters) == 0:
             return None
 
-        return {"$or": [filters]}
+        return {"$or": filters}
 
     def _get_system_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
         if check_global_roles(user, permission_levels=permission_levels):
@@ -289,7 +289,7 @@ class RawQueryFilterBuilder:
         if len(filters) == 0:
             return None
 
-        return {"$or": [filters]}
+        return {"$or": filters}
 
     def _get_instance_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
         if check_global_roles(user, permission_levels=permission_levels):
@@ -312,7 +312,7 @@ class RawQueryFilterBuilder:
         if len(filters) == 0:
             return None
 
-        return {"$or": [filters]}
+        return {"$or": filters}
 
     def build_filter(
         self, user: BrewtilsUser, permission: str, model: BrewtilsModel, **kwargs
