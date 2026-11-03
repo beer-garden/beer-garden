@@ -14,7 +14,7 @@ from brewtils.models import (
 
 from beer_garden.authorization import (
     ModelFilter,
-    QueryFilterBuilder,
+    RawQueryFilterBuilder,
     _has_empty_scopes,
     check_global_roles,
     generate_permission_levels,
@@ -58,7 +58,7 @@ def user_for_read_scope(role_for_read_scope):
 
 @pytest.fixture()
 def query_filter():
-    return QueryFilterBuilder()
+    return RawQueryFilterBuilder()
 
 
 @pytest.fixture()

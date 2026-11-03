@@ -112,6 +112,232 @@ def combine_filters(filter: dict, or_filter: dict) -> Q:
         return Q(**filter)
 
 
+class RawQueryFilterBuilder:
+    def _get_garden_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
+        """Returns a Q filter object for filtering a queryset for gardens"""
+
+        if check_global_roles(user, permission_levels=permission_levels):
+            return {}
+
+        garden_names = []
+        for roles in [user.local_roles, user.upstream_roles]:
+            for role in roles:
+                if role.permission in permission_levels:
+                    for garden_scope in role.scope_gardens:
+                        garden_names.append(garden_scope)
+
+        return {"name": {"$in": garden_names}}
+
+    def _get_request_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
+        if check_global_roles(user, permission_levels=permission_levels):
+            return Q()
+
+        filters = []
+
+        for roles in [user.local_roles, user.upstream_roles]:
+            for role in roles:
+                if role.permission in permission_levels:
+                    filter = None
+                    if len(role.scope_gardens) > 0:
+                        filter = db.combine_raw_query(
+                            filter, {"target_garden": {"$in": role.scope_gardens}}
+                        )
+                    if len(role.scope_systems) > 0:
+                        filter = db.combine_raw_query(
+                            filter, {"system": {"$in": role.scope_systems}}
+                        )
+                    if len(role.scope_instances) > 0:
+                        filter = db.combine_raw_query(
+                            filter, {"instance_name": {"$in": role.scope_instances}}
+                        )
+                    if len(role.scope_versions) > 0:
+                        filter["system_version__in"] = role.scope_versions
+                        filter = db.combine_raw_query(
+                            filter, {"system_version": {"$in": role.scope_versions}}
+                        )
+                    if len(role.scope_namespaces) > 0:
+                        filter = db.combine_raw_query(
+                            filter, {"namespace": {"$in": role.scope_namespaces}}
+                        )
+                    if len(role.scope_commands) > 0:
+                        filter = db.combine_raw_query(
+                            filter,
+                            {
+                                "$or": [
+                                    {"command": {"$in": role.scope_commands}},
+                                    {
+                                        "command_display_name": {
+                                            "$in": role.scope_commands
+                                        }
+                                    },
+                                ]
+                            },
+                        )
+
+                    if filter:
+                        filters.append(filter)
+
+        if len(filters) == 0:
+            return None
+
+        return {"$or": [filters]}
+
+    def _get_job_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
+        if check_global_roles(user, permission_levels=permission_levels):
+            return {}
+
+        filters = []
+
+        for roles in [user.local_roles, user.upstream_roles]:
+            for role in roles:
+                if role.permission in permission_levels:
+                    filter = None
+                    if len(role.scope_systems) > 0:
+                        filter = db.combine_raw_query(
+                            filter,
+                            {"request_template__system": {"$in": role.scope_systems}},
+                        )
+                    if len(role.scope_instances) > 0:
+                        filter = db.combine_raw_query(
+                            filter,
+                            {
+                                "request_template.instance_name": {
+                                    "$in": role.scope_instances
+                                }
+                            },
+                        )
+                    if len(role.scope_versions) > 0:
+                        filter = db.combine_raw_query(
+                            filter,
+                            {
+                                "request_template.system_version": {
+                                    "$in": role.scope_versions
+                                }
+                            },
+                        )
+                    if len(role.scope_namespaces) > 0:
+                        filter = db.combine_raw_query(
+                            filter,
+                            {
+                                "request_template.namespace": {
+                                    "$in": role.scope_namespaces
+                                }
+                            },
+                        )
+                    if len(role.scope_commands) > 0:
+                        filter = db.combine_raw_query(
+                            filter,
+                            {"request_template.command": {"$in": role.scope_commands}},
+                        )
+                    if len(filter) > 0:
+                        filters.append(filter)
+
+        if len(filters) == 0:
+            return None
+
+        return {"$or": [filters]}
+
+    def _get_system_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
+        if check_global_roles(user, permission_levels=permission_levels):
+            return Q()
+
+        filters = []
+
+        for roles in [user.local_roles, user.upstream_roles]:
+            for role in roles:
+                if role.permission in permission_levels:
+                    filter = None
+                    if len(role.scope_gardens) > 0:
+                        filter = db.combine_raw_query(
+                            filter, {"garden_name": {"$in": role.scope_gardens}}
+                        )
+                    if len(role.scope_systems) > 0:
+                        filter = db.combine_raw_query(
+                            filter, {"name": {"$in": role.scope_systems}}
+                        )
+                    if len(role.scope_instances) > 0:
+                        filter = db.combine_raw_query(
+                            filter, {"instances.name": {"$in": role.scope_instances}}
+                        )
+                    if len(role.scope_versions) > 0:
+                        filter = db.combine_raw_query(
+                            filter, {"version": {"$in": role.scope_versions}}
+                        )
+                    if len(role.scope_commands) > 0:
+                        filter = db.combine_raw_query(
+                            filter,
+                            {
+                                "$or": [
+                                    {"commands.command": {"$in": role.scope_commands}},
+                                    {
+                                        "commands.command_display_name": {
+                                            "$in": role.scope_commands
+                                        }
+                                    },
+                                ]
+                            },
+                        )
+                    if len(role.scope_namespaces) > 0:
+                        filter = db.combine_raw_query(
+                            filter, {"namespace": {"$in": role.scope_namespaces}}
+                        )
+
+                    if filter:
+                        filters.append(filter)
+
+        if len(filters) == 0:
+            return None
+
+        return {"$or": [filters]}
+
+    def _get_instance_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
+        if check_global_roles(user, permission_levels=permission_levels):
+            return {}
+
+        filters = []
+
+        for roles in [user.local_roles, user.upstream_roles]:
+            for role in roles:
+                if role.permission in permission_levels:
+                    filter = {}
+                    if len(role.scope_instances) > 0:
+                        filter = db.combine_raw_query(
+                            filter, {"name": {"$in": role.scope_instances}}
+                        )
+
+                    if len(filter) > 0:
+                        filters.append(filter)
+
+        if len(filters) == 0:
+            return None
+
+        return {"$or": [filters]}
+
+    def build_filter(
+        self, user: BrewtilsUser, permission: str, model: BrewtilsModel, **kwargs
+    ) -> Q:
+        permission_levels = generate_permission_levels(permission)
+
+        if len(user.local_roles) == 0 and len(user.upstream_roles) == 0:
+            return None
+
+        if model is None:
+            return None
+
+        if model is BrewtilsGarden:
+            return self._get_garden_filter(user, permission_levels)
+        if model is BrewtilsSystem:
+            return self._get_system_filter(user, permission_levels)
+        if model is BrewtilsInstance:
+            return self._get_instance_filter(user, permission_levels)
+        if model is BrewtilsRequest:
+            return self._get_request_filter(user, permission_levels)
+        if model is BrewtilsJob:
+            return self._get_job_filter(user, permission_levels)
+
+        return None
+
+
 class QueryFilterBuilder:
     def _get_garden_q_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
         """Returns a Q filter object for filtering a queryset for gardens"""

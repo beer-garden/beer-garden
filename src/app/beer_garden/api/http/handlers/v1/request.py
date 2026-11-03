@@ -473,15 +473,7 @@ class RequestListAPI(AuthorizationHandler):
         query_args = self._parse_datatables_parameters()
 
         # Add the filter for only requests the user is permitted to see
-        q_filter = self.permitted_objects_filter(Request)
-        q_filtered = None
-
-        if query_args.get("q_filter"):
-            query_args_q_filter = query_args["q_filter"]
-            q_filtered = q_filter & query_args_q_filter
-            query_args["q_filter"] = q_filtered
-        else:
-            query_args["q_filter"] = q_filter
+        query_args["raw_filter"] = self.permitted_objects_raw_filter(Request)
 
         if query_args.get("filter_params"):
             query_args["filter_params"] = (
@@ -525,10 +517,12 @@ class RequestListAPI(AuthorizationHandler):
             # And these are required by datatables
             "recordsFiltered": db.count(
                 Request,
-                q_filter=q_filtered if q_filtered else q_filter,
+                raw_filter=self.permitted_objects_raw_filter(Request),
                 **query_args["filter_params"],
             ),
-            "recordsTotal": db.count(Request, q_filter=q_filter),
+            "recordsTotal": db.count(
+                Request, raw_filter=self.permitted_objects_raw_filter(Request)
+            ),
             "draw": self.get_argument("draw", ""),
         }
 

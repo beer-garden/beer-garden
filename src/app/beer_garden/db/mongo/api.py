@@ -214,8 +214,164 @@ def get_job_store():
     return MongoJobStore()
 
 
+def combine_raw_query(raw_query: dict, new_query: dict):
+
+    # If raw_query is none/empty, return new query
+    if raw_query is None or len(raw_query) == 0:
+        return new_query
+
+    # If new query is none/empty, return raw_query
+    if new_query is None or len(new_query) == 0:
+        return raw_query
+
+    # Append to AND query, else roll both up to an AND query
+    if "$and" in raw_query:
+        raw_query["$and"].append(new_query)
+        return raw_query
+    else:
+        return {"$and": [raw_query, new_query]}
+
+
+def kwargs_raw_query(**kwargs):
+
+    if not kwargs:
+        return None
+
+    query = kwargs.pop("raw_query", None)
+
+    for key in kwargs:
+        raw_field = key.replace("__", ".")
+
+        if raw_field.endswith(".match"):
+            match_query = kwargs_raw_query(**kwargs[key])
+            query = combine_raw_query(
+                    query,
+                    {raw_field.removesuffix(".match"): {"$elemMatch": match_query}},
+                )
+        elif raw_field.endswith(".contains"):
+            if len(kwargs[key]) > 0 and (isinstance(kwargs[key][0], dict)):
+                ids = []
+                for value in kwargs[key]:
+                    if hasattr(value, "id"):
+                        ids.append(value.id)
+                    else:
+                        raise Exception(f"Unable to convert {value} to id reference")
+
+                query = combine_raw_query(
+                    query,
+                    {f"{raw_field.removesuffix('.contains')}.id": {"$in": ids}},
+                )
+            else:
+                query = combine_raw_query(
+                    query,
+                    {raw_field.removesuffix(".contains"): {"$in": kwargs[key]}},
+                )
+        elif raw_field.endswith(".not.contains"):
+            if len(kwargs[key]) > 0 and (isinstance(kwargs[key][0], dict)):
+                ids = []
+                for value in kwargs[key]:
+                    if hasattr(value, "id"):
+                        ids.append(value.id)
+                    else:
+                        raise Exception(f"Unable to convert {value} to id reference")
+
+                query = combine_raw_query(
+                    query,
+                    {
+                        f"{raw_field.removesuffix('.not.contains')}.id": {
+                            "$not": {"$in": ids}
+                        }
+                    },
+                )
+            else:
+                query = combine_raw_query(
+                    query,
+                    {
+                        raw_field.removesuffix(".not.contains"): {
+                            "$not": {"$in": kwargs[key]}
+                        }
+                    },
+                )
+        elif raw_field.endswith(".gt"):
+            query = combine_raw_query(
+                query,
+                {raw_field.removesuffix(".gt"): {"$gt": kwargs[key]}},
+            )
+        elif raw_field.endswith(".gte"):
+            query = combine_raw_query(
+                query,
+                {raw_field.removesuffix(".gte"): {"$gte": kwargs[key]}},
+            )
+        elif raw_field.endswith(".lt"):
+            query = combine_raw_query(
+                query,
+                {raw_field.removesuffix(".lt"): {"$lt": kwargs[key]}},
+            )
+        elif raw_field.endswith(".lte"):
+            query = combine_raw_query(
+                query,
+                {raw_field.removesuffix(".lte"): {"$lte": kwargs[key]}},
+            )
+        elif raw_field.endswith(".exact"):
+            query = combine_raw_query(
+                query,
+                {raw_field.removesuffix(".exact"): kwargs[key]},
+            )
+        elif raw_field.endswith(".startswith"):
+            query = combine_raw_query(
+                query,
+                {raw_field.removesuffix(".exact"): {"$regex": f"^{kwargs[key]}"}},
+            )
+        elif raw_field.endswith(".not.startswith"):
+            query = combine_raw_query(
+                query,
+                {
+                    raw_field.removesuffix(".exact"): {
+                        "$not": {"$regex": f"^{kwargs[key]}"}
+                    }
+                },
+            )
+        elif raw_field.endswith(".ne"):
+            if isinstance(kwargs[key], dict):
+                if hasattr(kwargs[key], "id"):
+                    query = combine_raw_query(
+                        query,
+                        {
+                            f"{raw_field.removesuffix('.ne')}.id": {
+                                "$ne": kwargs[key].id
+                            }
+                        },
+                    )
+                else:
+                    raise Exception(f"Unable to convert {kwargs[key]} to id reference")
+            else:
+                query = combine_raw_query(
+                    query,
+                    {raw_field.removesuffix(".ne"): {"$ne": kwargs[key]}},
+                )
+        else:
+            if isinstance(kwargs[key], dict):
+                if hasattr(kwargs[key], "id"):
+                    query = combine_raw_query(
+                        query,
+                        {f"{raw_field}.id": kwargs[key].id},
+                    )
+                else:
+                    raise Exception(f"Unable to convert {kwargs[key]} to id reference")
+            else:
+                query = combine_raw_query(
+                    query,
+                    {raw_field: kwargs[key]},
+                )
+
+    return query
+
+
 def count(
-    model_class: ModelType, q_filter: Union[Q, QCombination, None] = None, **kwargs
+    model_class: ModelType,
+    q_filter: Union[Q, QCombination, None] = None,
+    raw_query: dict = None,
+    **kwargs,
 ) -> int:
     """Count the number of items matching a query
 
@@ -232,7 +388,13 @@ def count(
         if isinstance(v, BaseModel):
             kwargs[k] = from_brewtils(v)
 
-    query_set = _model_map[model_class].objects(**kwargs)
+    logger.error(combine_raw_query(raw_query, kwargs_raw_query(**kwargs)))
+    if raw_query or kwargs:
+        query_set = _model_map[model_class].objects(
+            __raw__=combine_raw_query(raw_query, kwargs_raw_query(**kwargs))
+        )
+    else:
+        query_set = _model_map[model_class].objects
 
     if q_filter:
         query_set = query_set.filter(q_filter)
@@ -241,7 +403,7 @@ def count(
 
 
 def query_unique(
-    model_class: ModelType, raise_missing=False, **kwargs
+    model_class: ModelType, raise_missing=False, raw_query: dict = None, **kwargs
 ) -> Optional[ModelItem]:
     """Query a collection for a unique item
 
@@ -277,18 +439,19 @@ def query_unique(
         include_fields = kwargs.pop("include_fields", None)
         exclude_fields = kwargs.pop("exclude_fields", None)
 
-        if include_fields:
-            query_set = (
-                _model_map[model_class].objects.only(*include_fields).get(**kwargs)
-            )
-        elif exclude_fields:
-            query_set = (
-                _model_map[model_class].objects.exclude(*exclude_fields).get(**kwargs)
+        if raw_query or kwargs:
+            query_set = _model_map[model_class].objects(
+                __raw__=combine_raw_query(raw_query, kwargs_raw_query(**kwargs))
             )
         else:
-            query_set = _model_map[model_class].objects.get(**kwargs)
+            query_set = _model_map[model_class].objects
 
-        return to_brewtils(query_set)
+        if include_fields:
+            query_set = query_set.only(*include_fields)
+        elif exclude_fields:
+            query_set = query_set.exclude(*exclude_fields)
+
+        return to_brewtils(query_set.get())
     except DoesNotExist:
         if raise_missing:
             raise
@@ -324,23 +487,24 @@ def query(
 
     """
 
-    if kwargs.get("raw_query"):
-        query_set = _model_map[model_class].objects(__raw__=kwargs.get("raw_query"))
-    else:
-        query_set = _model_map[model_class].objects
-
-    if q_filter:
-        query_set = query_set.filter(q_filter)
-
-    if kwargs.get("filter_params"):
-        filter_params = kwargs["filter_params"]
-
+    filter_params = kwargs.get("filter_params")
+    if filter_params:
         # If any values are brewtils models those need to be converted
         for key in filter_params:
             if isinstance(filter_params[key], BaseModel):
                 filter_params[key] = from_brewtils(filter_params[key])
 
-        query_set = query_set.filter(**(kwargs.get("filter_params", {})))
+    if kwargs.get("raw_query") or filter_params:
+        query_set = _model_map[model_class].objects(
+            __raw__=combine_raw_query(
+                kwargs.get("raw_query"), kwargs_raw_query(**filter_params)
+            )
+        )
+    else:
+        query_set = _model_map[model_class].objects
+
+    if q_filter:
+        query_set = query_set.filter(q_filter)
 
     # Bad things happen if you try to use a hint with a text search.
     if kwargs.get("text_search"):
