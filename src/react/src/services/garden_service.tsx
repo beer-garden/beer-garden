@@ -8,10 +8,6 @@ export const GetGarden = async (
   keep_history?: boolean,
   headerData?: any,
 ): Promise<Garden> => {
-  if (keep_history == undefined) {
-    keep_history = false;
-  }
-
   try {
     const headers = GetAuthHeaders();
     if (headerData) {
@@ -19,13 +15,13 @@ export const GetGarden = async (
         headers.append(key, value as string);
       }
     }
-
-    const response = await fetch(
-      `${GetBaseURL()}/api/v1/gardens/${encodeURIComponent(garden_name)}?keep_history=${keep_history}`,
-      {
-        headers: headers,
-      },
-    );
+    let fetch_url = `${GetBaseURL()}/api/v1/gardens/${encodeURIComponent(garden_name)}`;
+    if (keep_history) {
+      fetch_url = `${GetBaseURL()}/api/v1/gardens/${encodeURIComponent(garden_name)}?keep_history=${keep_history}`;
+    }
+    const response = await fetch(fetch_url, {
+      headers: headers,
+    });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
@@ -117,7 +113,7 @@ export const GetRootGarden = async (
   headerData?: any,
 ): Promise<Garden> => {
   if (config?.garden_name) {
-    return GetGarden(config.garden_name, headerData);
+    return GetGarden(config.garden_name, false, headerData);
   }
   throw new Error("Root garden not defined in config");
 };
