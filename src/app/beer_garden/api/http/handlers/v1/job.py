@@ -232,7 +232,7 @@ class JobListAPI(AuthorizationHandler):
             Operation(
                 operation_type="JOB_READ_ALL",
                 kwargs={
-                    "raw_filter": permitted_objects_raw_filter,
+                    "raw_query": permitted_objects_raw_filter,
                     "filter_params": filter_params,
                 },
             ),
@@ -420,7 +420,7 @@ class JobExportAPI(AuthorizationHandler):
             Operation(
                 operation_type="JOB_READ_ALL",
                 kwargs={
-                    "raw_filter": permitted_objects_raw_filter,
+                    "raw_query": permitted_objects_raw_filter,
                     "filter_params": filter_params_dict,
                 },
             ),

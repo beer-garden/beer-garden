@@ -134,7 +134,7 @@ class CommandListAPI(AuthorizationHandler):
             Operation(
                 operation_type="COMMAND_READ_ALL",
                 kwargs={
-                    "raw_filter": permitted_objects_raw_filter,
+                    "raw_query": permitted_objects_raw_filter,
                 },
             )
         )

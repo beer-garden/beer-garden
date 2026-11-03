@@ -416,7 +416,7 @@ class SystemListAPI(AuthorizationHandler):
                 operation_type="SYSTEM_READ_ALL",
                 kwargs={
                     "serialize_kwargs": serialize_kwargs,
-                    "raw_filter": permitted_objects_raw_filter,
+                    "raw_query": permitted_objects_raw_filter,
                     "filter_params": filter_params,
                     "order_by": order_by,
                     "include_fields": include_fields,

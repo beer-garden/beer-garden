@@ -473,7 +473,7 @@ class RequestListAPI(AuthorizationHandler):
         query_args = self._parse_datatables_parameters()
 
         # Add the filter for only requests the user is permitted to see
-        query_args["raw_filter"] = self.permitted_objects_raw_filter(Request)
+        query_args["raw_query"] = self.permitted_objects_raw_filter(Request)
 
         if query_args.get("filter_params"):
             query_args["filter_params"] = (

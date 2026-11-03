@@ -25,7 +25,11 @@ from beer_garden.authorization import (
 )
 
 # from beer_garden.db.mongo.models import User
-from beer_garden.errors import ExpiredTokenException, InvalidTokenException
+from beer_garden.errors import (
+    ExpiredTokenException,
+    InvalidAuthorizationException,
+    InvalidTokenException,
+)
 
 # from mongoengine.queryset.visitor import Q, QCombination
 
@@ -177,14 +181,12 @@ class AuthorizationHandler(BaseHandler):
                 model type
         """
 
-        raw_filter = self.queryRawFilter.build_filter(
-            self.current_user, self.minimum_permission, model
-        )
-
-        if raw_filter is None:
-            raise RequestForbidden
-
-        return raw_filter
+        try:
+            return self.queryRawFilter.build_filter(
+                self.current_user, self.minimum_permission, model
+            )
+        except InvalidAuthorizationException as e:
+            raise RequestForbidden from e
 
     def prepare(self) -> None:
         """Called before each verb handler"""

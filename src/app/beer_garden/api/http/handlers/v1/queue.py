@@ -79,7 +79,7 @@ class QueueListAPI(AuthorizationHandler):
             Operation(
                 operation_type="QUEUE_READ",
                 kwargs={
-                    "raw_filter": permitted_objects_raw_filter,
+                    "raw_query": permitted_objects_raw_filter,
                 },
             ),
             filter_results=False,
