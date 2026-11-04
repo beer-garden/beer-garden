@@ -619,8 +619,8 @@ function GardenSummary({
                         >
                           <Box component="span" aria-label={undefined}>
                             <Chip
-                              data-testid={`${statusGroup.severity}_severity_system_summary`}
-                              id={`${statusGroup.severity}_${selectedGarden?.id}_severity_system_summary`}
+                              data-testid={`${statusGroup.severity}_group_system_summary`}
+                              id={`${statusGroup.severity}_${selectedGarden?.id}_group_system_summary`}
                               label={
                                 <div>
                                   {statusGroup.count}

@@ -441,14 +441,14 @@ function GardenDashboard({
     garden: Garden,
     systems: System[] | undefined,
   ) => {
-    const statusCounts = GenerateStatusCounts(
+    const statusGroupCounts = GenerateStatusCounts(
       gardenRef,
       associatedRunnersRef,
       garden,
       systems,
     );
 
-    return Array.from(statusCounts, (statusGroup) => {
+    return Array.from(statusGroupCounts, (statusGroup) => {
       if (statusGroup.count && statusGroup.count > 0) {
         return (
           <div key={`${statusGroup.severity}_${garden?.name}_count`}>
@@ -481,7 +481,7 @@ function GardenDashboard({
                       )}
                     </div>
                   }
-                  id={`${statusGroup.severity}_${garden?.id}_menu_severity_system_summary`}
+                  id={`${statusGroup.severity}_${garden?.id}_menu_group_system_summary`}
                   color={statusGroup.severity}
                   key={`${statusGroup.severity}_${garden?.name}`}
                 />
