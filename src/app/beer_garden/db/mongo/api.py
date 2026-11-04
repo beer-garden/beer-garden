@@ -215,7 +215,10 @@ def get_job_store():
 
 
 def count(
-    model_class: ModelType, q_filter: Union[Q, QCombination, None] = None, **kwargs
+    model_class: ModelType,
+    q_filter: Union[Q, QCombination, None] = None,
+    raw_query: dict = None,
+    **kwargs,
 ) -> int:
     """Count the number of items matching a query
 
@@ -232,7 +235,12 @@ def count(
         if isinstance(v, BaseModel):
             kwargs[k] = from_brewtils(v)
 
-    query_set = _model_map[model_class].objects(**kwargs)
+    if raw_query:
+        query_set = _model_map[model_class].objects(__raw__=raw_query)
+    else:
+        query_set = _model_map[model_class].objects
+
+    query_set = query_set(**kwargs)
 
     if q_filter:
         query_set = query_set.filter(q_filter)
