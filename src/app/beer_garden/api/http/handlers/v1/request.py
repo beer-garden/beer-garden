@@ -995,11 +995,7 @@ class RequestListAPI(AuthorizationHandler):
             elif query_obj["modifier"] == "ne":
                 raw_query = self._add_raw_query(
                     raw_query,
-                    {
-                        query_obj["field_name"]: {
-                            "$not": {"$regex": f"^{query_obj['value']}"}
-                        }
-                    },
+                    {query_obj["field_name"]: {"$ne": query_obj["value"]}},
                 )
             elif query_obj["modifier"] == "exists":
                 raw_query = self._add_raw_query(
@@ -1008,7 +1004,7 @@ class RequestListAPI(AuthorizationHandler):
             elif query_obj["modifier"] == "endswith":
                 raw_query = self._add_raw_query(
                     raw_query,
-                    {query_obj["field_name"]: {"$regex": f"\\.{query_obj['value']}$"}},
+                    {query_obj["field_name"]: {"$regex": f"{query_obj['value']}$"}},
                 )
             elif query_obj["modifier"] == "startswith":
                 raw_query = self._add_raw_query(
