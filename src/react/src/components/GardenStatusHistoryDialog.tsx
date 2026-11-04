@@ -61,6 +61,15 @@ function GardenStatusHistoryDialog({
     }
   }, [isVisible]);
 
+  const statusTemplate = (statusHistory: StatusHistory) => {
+    return (
+      <Chip
+        color={GetSeverity(statusHistory?.status)}
+        label={statusHistory.status}
+      />
+    );
+  };
+
   return (
     <Dialog
       data-testid="status-history-dialog"
@@ -83,35 +92,37 @@ function GardenStatusHistoryDialog({
         </Grid>
       </DialogTitle>
       <DialogContent>
-        <Stack direction="row" spacing={1}>
-          <Typography component="label">Last Change Event:</Typography>
-          <span>
-            {currentGarden &&
-              new Date(
+        <Box sx={{ mb: 1 }}>
+          <Stack direction="row" spacing={1}>
+            <Typography component="label">Last Change Event:</Typography>
+            <span>
+              {currentGarden &&
+                new Date(
+                  currentGarden[connection_type_key].find(
+                    (x: Connection) => x.api == api_type,
+                  ).status_info.heartbeat,
+                ).toLocaleString()}
+            </span>
+          </Stack>
+          <Stack direction="row" spacing={1}>
+            <Typography component="label">Current Status:</Typography>
+            <Chip
+              label={
+                currentGarden &&
                 currentGarden[connection_type_key].find(
                   (x: Connection) => x.api == api_type,
-                ).status_info.heartbeat,
-              ).toLocaleString()}
-          </span>
-        </Stack>
-        <Stack direction="row" spacing={1}>
-          <Typography component="label">Current Status:</Typography>
-          <Chip
-            label={
-              currentGarden &&
-              currentGarden[connection_type_key].find(
-                (x: Connection) => x.api == api_type,
-              ).status
-            }
-            color={GetSeverity(
-              currentGarden &&
-                currentGarden[connection_type_key].find(
-                  (x: Connection) => x.api == api_type,
-                ).status,
-            )}
-            id={`instance_status_${gardenName}`}
-          />
-        </Stack>
+                ).status
+              }
+              color={GetSeverity(
+                currentGarden &&
+                  currentGarden[connection_type_key].find(
+                    (x: Connection) => x.api == api_type,
+                  ).status,
+              )}
+              id={`instance_status_${gardenName}`}
+            />
+          </Stack>
+        </Box>
         <EnhancedTable
           data={statusHistory}
           displayAll={true}
@@ -128,6 +139,7 @@ function GardenStatusHistoryDialog({
               id: "status",
               field: "status",
               label: "Status",
+              template: statusTemplate,
             },
             {
               id: "heartbeat",

@@ -5,6 +5,7 @@ import {
   Chip,
   Divider,
   Skeleton,
+  Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -400,31 +401,34 @@ function GardenSummary({
 
     return (
       <Box component="span" aria-label={undefined}>
-        <Tooltip
-          title={
-            row.type === "RECEIVING"
-              ? row.direction === "DOWNSTREAM"
-                ? `Status ${row.status} over ${row.api} for accepting events from ${row.garden} to ${selectedGarden?.name}`
-                : `Status ${row.status} over ${row.api} for accepting operations from ${row.garden} to ${selectedGarden?.name}`
-              : row.direction === "DOWNSTREAM"
-                ? `Status ${row.status} over ${row.api} for sending operations from ${row.garden} to ${selectedGarden?.name}`
-                : `Status ${row.status} over ${row.api} for sending events from ${row.garden} to ${selectedGarden?.name}`
-          }
-        >
-          <Chip label={row.status} color={severity} />
-        </Tooltip>
-        <AccessButton
-          onClick={() => {
-            setDownstreamGardenName(row.garden);
-            setDownstreamConnectionType(row.type);
-            setDownstreamAPIType(row.api);
-            setStatusHistoryVisible(true);
-          }}
-          aria-label={`Show Status History for ${row.garden} over ${row.api}`}
-          icon
-        >
-          <FAIcon icon="clock-rotate-left" />
-        </AccessButton>
+        <Stack direction="row" spacing={1}>
+          <Tooltip
+            title={
+              row.type === "RECEIVING"
+                ? row.direction === "DOWNSTREAM"
+                  ? `Status ${row.status} over ${row.api} for accepting events from ${row.garden} to ${selectedGarden?.name}`
+                  : `Status ${row.status} over ${row.api} for accepting operations from ${row.garden} to ${selectedGarden?.name}`
+                : row.direction === "DOWNSTREAM"
+                  ? `Status ${row.status} over ${row.api} for sending operations from ${row.garden} to ${selectedGarden?.name}`
+                  : `Status ${row.status} over ${row.api} for sending events from ${row.garden} to ${selectedGarden?.name}`
+            }
+          >
+            <Chip label={row.status} color={severity} />
+          </Tooltip>
+          <AccessButton
+            size="small"
+            onClick={() => {
+              setDownstreamGardenName(row.garden);
+              setDownstreamConnectionType(row.type);
+              setDownstreamAPIType(row.api);
+              setStatusHistoryVisible(true);
+            }}
+            aria-label={`Show Status History for ${row.garden} over ${row.api}`}
+            icon
+          >
+            <FAIcon icon="clock-rotate-left" />
+          </AccessButton>
+        </Stack>
       </Box>
     );
   };

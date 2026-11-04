@@ -53,6 +53,15 @@ function InstanceStatusHistoryDialog({
     }
   }, [isVisible]);
 
+  const statusTemplate = (statusHistory: StatusHistory) => {
+    return (
+      <Chip
+        color={GetSeverity(statusHistory?.status)}
+        label={statusHistory.status}
+      />
+    );
+  };
+
   return (
     <Dialog
       data-testid="instance-status-history-dialog"
@@ -75,20 +84,24 @@ function InstanceStatusHistoryDialog({
         </Grid>
       </DialogTitle>
       <DialogContent>
-        <Stack direction="row" spacing={1}>
-          <Typography component="label">Last Change Event:</Typography>
-          <span>
-            {new Date(currentInstance?.status_info?.heartbeat).toLocaleString()}
-          </span>
-        </Stack>
-        <Stack direction="row" spacing={1}>
-          <Typography component="label">Current Status:</Typography>
-          <Chip
-            label={currentInstance?.status}
-            color={GetSeverity(currentInstance?.status)}
-            id={`instance_status_${instance?.id}`}
-          />
-        </Stack>
+        <Box sx={{ mb: 1 }}>
+          <Stack direction="row" spacing={1}>
+            <Typography component="label">Last Change Event:</Typography>
+            <span>
+              {new Date(
+                currentInstance?.status_info?.heartbeat,
+              ).toLocaleString()}
+            </span>
+          </Stack>
+          <Stack direction="row" spacing={1}>
+            <Typography component="label">Current Status:</Typography>
+            <Chip
+              label={currentInstance?.status}
+              color={GetSeverity(currentInstance?.status)}
+              id={`instance_status_${instance?.id}`}
+            />
+          </Stack>
+        </Box>
         <EnhancedTable
           data={statusHistory}
           displayAll={true}
@@ -105,6 +118,7 @@ function InstanceStatusHistoryDialog({
               id: "status",
               field: "status",
               label: "Status",
+              template: statusTemplate,
             },
             {
               id: "heartbeat",
