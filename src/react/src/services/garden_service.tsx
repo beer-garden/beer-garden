@@ -5,6 +5,7 @@ import { GetBaseURL } from "./util_service";
 
 export const GetGarden = async (
   garden_name: string,
+  keep_history?: boolean,
   headerData?: any,
 ): Promise<Garden> => {
   try {
@@ -14,13 +15,13 @@ export const GetGarden = async (
         headers.append(key, value as string);
       }
     }
-
-    const response = await fetch(
-      `${GetBaseURL()}/api/v1/gardens/${encodeURIComponent(garden_name)}`,
-      {
-        headers: headers,
-      },
-    );
+    let fetch_url = `${GetBaseURL()}/api/v1/gardens/${encodeURIComponent(garden_name)}`;
+    if (keep_history) {
+      fetch_url = `${GetBaseURL()}/api/v1/gardens/${encodeURIComponent(garden_name)}?keep_history=${keep_history}`;
+    }
+    const response = await fetch(fetch_url, {
+      headers: headers,
+    });
     if (!response.ok) {
       // Handle non-OK responses (e.g., 404, 500)
       throw new Error(`HTTP error: Status ${response.status}`);
@@ -112,7 +113,7 @@ export const GetRootGarden = async (
   headerData?: any,
 ): Promise<Garden> => {
   if (config?.garden_name) {
-    return GetGarden(config.garden_name, headerData);
+    return GetGarden(config.garden_name, false, headerData);
   }
   throw new Error("Root garden not defined in config");
 };
