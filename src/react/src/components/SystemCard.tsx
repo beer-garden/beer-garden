@@ -155,7 +155,7 @@ function SystemCard({
     return system.instances?.sort((a, b) =>
       (a.name ?? "").localeCompare(b.name ?? ""),
     );
-  }, [system]);
+  }, [system.instances]);
 
   useEffect(() => {
     if (tourStepsRef === undefined) {
@@ -642,7 +642,7 @@ function SystemCard({
             <Divider sx={{ my: 2, clear: "right" }} />
           </Box>
           <Stack divider={<Divider />} spacing={2}>
-            {sortedInstances.map((instance: Instance) => (
+            {sortedInstances?.map((instance: Instance) => (
               <div key={JSON.stringify(instance)}>
                 <Stack
                   direction="row"
