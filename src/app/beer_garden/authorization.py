@@ -14,7 +14,6 @@ from brewtils.models import Role as BrewtilsRole
 from brewtils.models import Runner as BrewtilsRunner
 from brewtils.models import System as BrewtilsSystem
 from brewtils.models import User as BrewtilsUser
-from mongoengine import Q
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -98,19 +97,6 @@ def _has_empty_scopes(
         if len(getattr(role, scope_attribute, [])) > 0:
             return False
     return True
-
-
-def combine_filters(filter: dict, or_filter: dict) -> Q:
-    q_filter = Q()
-    for item in or_filter:
-        q_filter |= Q(**{item: or_filter[item]})
-
-    if len(filter) > 0 and q_filter:
-        return Q(**filter) & q_filter
-    elif q_filter:
-        return q_filter
-    else:
-        return Q(**filter)
 
 
 class RawQueryFilterBuilder:
