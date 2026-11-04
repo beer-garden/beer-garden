@@ -51,7 +51,7 @@ def _remove_garden_history(garden: Garden):
         for receiving_connection in garden["receiving_connections"]:
             receiving_connection = _remove_status_info_history(receiving_connection)
 
-    if "publishing_connection" in garden:
+    if "publishing_connections" in garden:
         for publishing_connection in garden["publishing_connections"]:
             publishing_connection = _remove_status_info_history(publishing_connection)
 
@@ -91,6 +91,13 @@ class GardenAPI(AuthorizationHandler):
             collectionFormat: csv
             items:
               type: string
+          - name: keep_history
+            in: query
+            required: false
+            description: Flag indicating whether to keep status history
+            type: boolean
+            default: false
+
         responses:
           200:
             description: Garden with the given garden_name
@@ -124,6 +131,8 @@ class GardenAPI(AuthorizationHandler):
         if exclude_fields:
             exclude_fields = set(exclude_fields.split(","))
 
+        keep_history = self.get_query_argument("keep_history", default="false")
+
         response = await self.process_operation(
             Operation(
                 operation_type="GARDEN_READ",
@@ -136,7 +145,11 @@ class GardenAPI(AuthorizationHandler):
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        self.write(_remove_heartbeat_history(response))
+        self.write(
+            response
+            if keep_history.lower() == "true"
+            else _remove_heartbeat_history(response)
+        )
 
     async def delete(self, garden_name):
         """
