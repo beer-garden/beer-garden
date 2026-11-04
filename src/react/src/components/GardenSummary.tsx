@@ -5,6 +5,7 @@ import {
   Chip,
   Divider,
   Skeleton,
+  Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -75,7 +76,7 @@ function GardenSummary({
       );
     }
 
-    return new Map();
+    return [];
   };
 
   const getDownstreamConnections = () => {
@@ -148,8 +149,7 @@ function GardenSummary({
   };
 
   const [invalidRouting, setInvalidRouting] = useState(false);
-  const [systemCounts, setSystemCounts] =
-    useState<Map<string, number>>(getSystemCounts());
+  const [systemCounts, setSystemCounts] = useState(getSystemCounts());
 
   const [downstreamConnections, setDownstreamConnections] = useState(
     getDownstreamConnections(),
@@ -600,19 +600,49 @@ function GardenSummary({
                 Systems:
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center" }}>
-                {Array.from(systemCounts, ([status, count]) => {
-                  if (count && count > 0) {
-                    const statusSeverity = GetSeverity(status);
+                {Array.from(systemCounts, (statusGroup) => {
+                  if (statusGroup.count && statusGroup.count > 0) {
                     return (
-                      <div key={`${status}_Summary`}>
-                        <Tooltip title={`${status} Count ${count}`}>
+                      <div key={`${statusGroup.severity}_Summary`}>
+                        <Tooltip
+                          title={
+                            <Stack spacing={1}>
+                              {Array.from(statusGroup.summary, (summary) => {
+                                if (summary.count && summary.count > 0) {
+                                  return (
+                                    <div>{`${summary.status} Count ${summary.count}`}</div>
+                                  );
+                                }
+                              })}
+                            </Stack>
+                          }
+                        >
                           <Box component="span" aria-label={undefined}>
                             <Chip
-                              data-testid={`${status}_severity_system_summary`}
-                              id={`${status}_${selectedGarden?.id}_severity_system_summary`}
-                              label={count}
-                              color={statusSeverity}
-                              key={status}
+                              data-testid={`${statusGroup.severity}_severity_system_summary`}
+                              id={`${statusGroup.severity}_${selectedGarden?.id}_severity_system_summary`}
+                              label={
+                                <div>
+                                  {statusGroup.count}
+                                  {statusGroup.severity ===
+                                  "success" ? undefined : statusGroup.severity ===
+                                    "info" ? (
+                                    <FAIcon sx={{ ml: 0.5 }} icon="square" />
+                                  ) : statusGroup.severity === "warning" ? (
+                                    <FAIcon
+                                      sx={{ ml: 0.5 }}
+                                      icon="exclamation-triangle"
+                                    />
+                                  ) : (
+                                    <FAIcon
+                                      sx={{ ml: 0.5 }}
+                                      icon="xmark-circle"
+                                    />
+                                  )}
+                                </div>
+                              }
+                              color={statusGroup.severity}
+                              key={statusGroup.severity}
                             />
                           </Box>
                         </Tooltip>

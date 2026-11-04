@@ -10,6 +10,7 @@ import {
   Select,
   SelectChangeEvent,
   Skeleton,
+  Stack,
   Tooltip,
 } from "@mui/material";
 import { grey } from "@mui/material/colors";
@@ -447,18 +448,42 @@ function GardenDashboard({
       systems,
     );
 
-    return Array.from(statusCounts, ([status, count]) => {
-      if (count && count > 0) {
-        const statusSeverity = GetSeverity(status);
+    return Array.from(statusCounts, (statusGroup) => {
+      if (statusGroup.count && statusGroup.count > 0) {
         return (
-          <div key={`${status}_${garden?.name}_count`}>
-            <Tooltip title={`${status} Count ${count} for ${garden?.name}`}>
+          <div key={`${statusGroup.severity}_${garden?.name}_count`}>
+            <Tooltip
+              title={
+                <Stack spacing={1}>
+                  {Array.from(statusGroup.summary, (summary) => {
+                    if (summary.count && summary.count > 0) {
+                      return (
+                        <div>{`${summary.status} Count ${summary.count}`}</div>
+                      );
+                    }
+                  })}
+                </Stack>
+              }
+            >
               <Box component="span" aria-label={undefined}>
                 <Chip
-                  label={count}
-                  id={`${status}_${garden?.id}_menu_severity_system_summary`}
-                  color={statusSeverity}
-                  key={`${status}_${garden?.name}`}
+                  label={
+                    <div>
+                      {statusGroup.count}
+                      {statusGroup.severity ===
+                      "success" ? undefined : statusGroup.severity ===
+                        "info" ? (
+                        <FAIcon sx={{ ml: 0.5 }} icon="square" />
+                      ) : statusGroup.severity === "warning" ? (
+                        <FAIcon sx={{ ml: 0.5 }} icon="exclamation-triangle" />
+                      ) : (
+                        <FAIcon sx={{ ml: 0.5 }} icon="xmark-circle" />
+                      )}
+                    </div>
+                  }
+                  id={`${statusGroup.severity}_${garden?.id}_menu_severity_system_summary`}
+                  color={statusGroup.severity}
+                  key={`${statusGroup.severity}_${garden?.name}`}
                 />
               </Box>
             </Tooltip>
@@ -689,7 +714,11 @@ function GardenDashboard({
               </FormControl>
               <Grid container spacing={1}>
                 {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
-                  <Grid key={runnerGroup.path} size={4} sx={{ minWidth: "250px" }}>
+                  <Grid
+                    key={runnerGroup.path}
+                    size={4}
+                    sx={{ minWidth: "250px" }}
+                  >
                     <UnassociatedRunnerCard
                       runnerGroup={runnerGroup}
                       config={config}
