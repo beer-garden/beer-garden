@@ -1,4 +1,9 @@
 import {
+  faUserGear,
+  faUserShield,
+  faUserTag,
+} from "@fortawesome/free-solid-svg-icons";
+import {
   Box,
   Checkbox,
   Dialog,
@@ -71,7 +76,7 @@ function UserChangeRoles({
       return (
         <Box sx={{ display: "flex" }}>
           <FAIcon
-            icon="user-shield"
+            icon={faUserShield}
             title="Protected Role"
             role="img"
             aria-label="Protected Role"
@@ -84,7 +89,7 @@ function UserChangeRoles({
       return (
         <Box sx={{ display: "flex" }}>
           <FAIcon
-            icon="user-tag"
+            icon={faUserTag}
             title="File Generated Role"
             role="img"
             aria-label="File Generated Role"
@@ -97,7 +102,7 @@ function UserChangeRoles({
       return (
         <Box sx={{ display: "flex" }}>
           <FAIcon
-            icon="user-gear"
+            icon={faUserGear}
             title="Unprotected Role"
             role="img"
             aria-label="Unprotected Role"

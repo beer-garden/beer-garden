@@ -1,3 +1,10 @@
+import {
+  faEraser,
+  faKey,
+  faMoon,
+  faSignOut,
+  faSun,
+} from "@fortawesome/free-solid-svg-icons";
 import { Avatar, Box, Divider, Stack, Switch, Typography } from "@mui/material";
 import { useColorScheme } from "@mui/material/styles";
 import { useEffect, useState } from "react";
@@ -76,12 +83,12 @@ function UserOverlay({
           <Box sx={{ ml: 2 }} id="switchMode">
             {mode === "dark" ? (
               <>
-                <FAIcon icon="moon" sx={{ mr: 2 }} />
+                <FAIcon icon={faMoon} sx={{ mr: 2 }} />
                 <Box component="span">Dark Mode</Box>
               </>
             ) : (
               <>
-                <FAIcon icon="sun" sx={{ mr: 2 }} />
+                <FAIcon icon={faSun} sx={{ mr: 2 }} />
                 <Box component="span">Light Mode</Box>
               </>
             )}
@@ -110,7 +117,7 @@ function UserOverlay({
                 onClick={() => setShowPasswordDialog(true)}
                 data-testid="user-password-overlay"
               >
-                <FAIcon sx={{ mr: 2 }} icon="key" />
+                <FAIcon sx={{ mr: 2 }} icon={faKey} />
                 <Box component="span">Change Password</Box>
               </AccessButton>
             </Box>
@@ -124,7 +131,7 @@ function UserOverlay({
               onClick={onLogout}
               data-testid="user-logout-overlay"
             >
-              <FAIcon sx={{ mr: 2 }} icon="sign-out" />
+              <FAIcon sx={{ mr: 2 }} icon={faSignOut} />
               <Box component="span">Logout</Box>
             </AccessButton>
           </Box>
@@ -148,7 +155,7 @@ function UserOverlay({
             }}
             data-testid="clear-session-overlay"
           >
-            <FAIcon sx={{ mr: 2 }} icon="eraser" />
+            <FAIcon sx={{ mr: 2 }} icon={faEraser} />
             <Box component="span">Clear Session Data</Box>
           </AccessButton>
         </Box>

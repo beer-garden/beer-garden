@@ -1,3 +1,13 @@
+import {
+  faArrowUpRightFromSquare,
+  faEdit,
+  faEye,
+  faPause,
+  faPlay,
+  faRefresh,
+  faRocket,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import { Box, DialogContent, Grid, Typography } from "@mui/material";
 import { Dayjs } from "dayjs";
 import { useEffect, useRef, useState } from "react";
@@ -317,7 +327,7 @@ function SchedulerViewCard({
           }
           sx={{ mr: 1 }}
         >
-          <FAIcon icon="arrow-up-right-from-square" />
+          <FAIcon icon={faArrowUpRightFromSquare} />
         </AccessButton>
         <AccessButton
           rounded
@@ -332,7 +342,7 @@ function SchedulerViewCard({
           tooltip={`View Request ${request.command_display_name ?? request.command} ${request.id}`}
           sx={{ mr: 1 }}
         >
-          <FAIcon icon="eye" />
+          <FAIcon icon={faEye} />
         </AccessButton>
         {request.command_display_name ?? request.command ?? request.id}
       </>
@@ -351,7 +361,7 @@ function SchedulerViewCard({
           tooltip={recordsUpdated ? "New updates available" : "Refresh"}
         >
           {recordsUpdated && <FAIcon icon={"circle-exclamation"} />}
-          <FAIcon icon="refresh" />
+          <FAIcon icon={faRefresh} />
         </AccessButton>
       </Grid>
     </Grid>
@@ -437,7 +447,7 @@ function SchedulerViewCard({
               {...permissions}
               permission="OPERATOR"
             >
-              <FAIcon icon="rocket" />
+              <FAIcon icon={faRocket} />
             </AccessButton>
 
             <AccessButton
@@ -450,7 +460,7 @@ function SchedulerViewCard({
               {...permissions}
               permission="OPERATOR"
             >
-              <FAIcon icon="edit" />
+              <FAIcon icon={faEdit} />
             </AccessButton>
             {job?.status === "RUNNING" && (
               <AccessButton
@@ -475,7 +485,7 @@ function SchedulerViewCard({
                 {...permissions}
                 permission="OPERATOR"
               >
-                <FAIcon icon="pause" />
+                <FAIcon icon={faPause} />
               </AccessButton>
             )}
             {job?.status === "PAUSED" && (
@@ -501,7 +511,7 @@ function SchedulerViewCard({
                 {...permissions}
                 permission="OPERATOR"
               >
-                <FAIcon icon="play" />
+                <FAIcon icon={faPlay} />
               </AccessButton>
             )}
             <AccessButton
@@ -518,7 +528,7 @@ function SchedulerViewCard({
               {...permissions}
               permission="OPERATOR"
             >
-              <FAIcon icon="trash" />
+              <FAIcon icon={faTrash} />
             </AccessButton>
           </Grid>
         </Grid>

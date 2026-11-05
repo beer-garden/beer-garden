@@ -1,3 +1,4 @@
+import { faPlus, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Box, Grid } from "@mui/material";
 import Button from "@mui/material/Button";
@@ -88,7 +89,7 @@ export const EnhancedTableFilterSelect = ({
             color="info"
             variant="outlined"
           >
-            <FontAwesomeIcon icon="xmark" />
+            <FontAwesomeIcon icon={faXmark} />
           </Button>
         </Grid>
       </Grid>
@@ -101,7 +102,7 @@ export const EnhancedTableFilterSelect = ({
             color="info"
             onClick={() => addFilter()}
           >
-            <FontAwesomeIcon icon="plus" />
+            <FontAwesomeIcon icon={faPlus} />
             <Typography variant="body2" component="span" sx={{ ml: 1 }}>
               Add Filter
             </Typography>
@@ -114,7 +115,7 @@ export const EnhancedTableFilterSelect = ({
             color="warning"
             onClick={clearFilters}
           >
-            <FontAwesomeIcon icon="trash" />
+            <FontAwesomeIcon icon={faTrash} />
             <Typography variant="body2" component="span" sx={{ ml: 1 }}>
               Remove All
             </Typography>

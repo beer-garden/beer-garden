@@ -1,3 +1,4 @@
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Alert,
@@ -240,7 +241,7 @@ function RoleCard({
               onClick={onClose}
               aria-label="Close role dialog"
             >
-              <FontAwesomeIcon icon="xmark" />
+              <FontAwesomeIcon icon={faXmark} />
             </AccessButton>
           </Grid>
         </Grid>
