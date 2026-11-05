@@ -398,10 +398,8 @@ class ModelFilter:
 
         if system_name and check_garden and garden_name is None:
             if system and system.id and not system.local:
-                gardens = db.query(BrewtilsGarden, filter_params={"systems": system})
-
-                if gardens and len(gardens) == 1:
-                    garden_name = gardens[0].name
+                if system.garden_name:
+                    garden_name = system.garden_name
                 else:
                     # TODO: Add better Exception
                     raise Exception(
