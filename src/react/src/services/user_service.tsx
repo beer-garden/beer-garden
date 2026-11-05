@@ -13,8 +13,8 @@ export const GetCurrentUser = () => {
       if (decode.username) {
         return decode.username;
       }
-    } catch (err) {
-      throw new Error("Invalid token: " + token)
+    } catch (error) {
+      console.error("Error decoding token:", error);
     }
   }
   return undefined;
@@ -37,8 +37,8 @@ export const GetCurrentRoles = (): Array<Role> | undefined => {
         }
         return userRoles;
       }
-    } catch (err) {
-      throw new Error("Invalid token: " + token)
+    } catch (error) {
+      console.error("Error decoding token:", error);
     }
   }
   return undefined;
