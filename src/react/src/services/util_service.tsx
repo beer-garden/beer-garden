@@ -6,7 +6,7 @@ import { Box, BoxProps } from "@mui/material";
 import { RefObject } from "react";
 
 import { Garden, Instance, Runner, System } from "../models/brewtils-types";
-import { Version } from "../models/models";
+import { SeverityGroup, Version } from "../models/models";
 import { externalRoutesList } from "./routes_service";
 import { UpdatePowerUserMode, UpdateUserDarkMode } from "./user_service";
 
@@ -271,11 +271,7 @@ export const GenerateStatusCounts = (
     }
   }
 
-  const groupCounts = [] as {
-    severity: "success" | "info" | "warning" | "error";
-    count: number;
-    summary: { status: string; count: number }[];
-  }[];
+  const groupCounts = [] as Array<SeverityGroup>;
 
   groupCounts.push({
     severity: "success",

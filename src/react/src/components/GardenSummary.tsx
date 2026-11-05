@@ -13,7 +13,7 @@ import { RefObject, useEffect, useState } from "react";
 
 import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import { Connection, Garden, Runner, System } from "../models/brewtils-types";
-import { Config } from "../models/models";
+import { Config, SeverityGroup } from "../models/models";
 import { TourStepProps } from "../models/models";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import {
@@ -156,7 +156,8 @@ function GardenSummary({
   };
 
   const [invalidRouting, setInvalidRouting] = useState(false);
-  const [systemCounts, setSystemCounts] = useState(getSystemCounts());
+  const [systemCounts, setSystemCounts] =
+    useState<Array<SeverityGroup>>(getSystemCounts());
 
   const [downstreamConnections, setDownstreamConnections] = useState(
     getDownstreamConnections(),

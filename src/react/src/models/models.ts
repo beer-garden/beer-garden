@@ -153,3 +153,9 @@ export interface CustomJwtPayload extends JwtPayload {
     power_user: boolean;
   };
 }
+
+export interface SeverityGroup {
+  severity: "success" | "info" | "warning" | "error";
+  count: number;
+  summary: { status: string; count: number }[];
+}
