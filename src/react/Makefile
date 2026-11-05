@@ -1,6 +1,6 @@
 # Makefile for Beer-garden UI
 
-DOCKER_NAME    = bgio/ui-react
+DOCKER_NAME    = bgio/ui
 VERSION       ?= latest
 SHORT_VERSION  = $(shell echo $(VERSION) | head -c 1)
 DATE          ?= $(shell date +%Y-%m-%d)
@@ -87,25 +87,25 @@ test: test_docker_image
 
 # Docker
 docker-build: package ## build docker image
-	docker build --pull -t $(DOCKER_NAME):latest . --build-arg VERSION=$(VERSION)
-	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)
-	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)
+	docker build --pull -t $(DOCKER_NAME):latest-preview . --build-arg VERSION=$(VERSION)
+	docker tag $(DOCKER_NAME):latest-preview $(DOCKER_NAME):$(VERSION)-preview
+	docker tag $(DOCKER_NAME):latest-preview $(DOCKER_NAME):$(SHORT_VERSION)-preview
 
 docker-build-unstable: package ## build nightly docker image
-	docker build --pull -t $(DOCKER_NAME):unstable . --build-arg VERSION="unstable"
+	docker build --pull -t $(DOCKER_NAME):unstable-preview . --build-arg VERSION="unstable"
 
 # Publishing
 publish-docker: docker-build ## push the docker image
-	docker push $(DOCKER_NAME):latest
-	docker push $(DOCKER_NAME):$(VERSION)
-	docker push $(DOCKER_NAME):$(SHORT_VERSION)
+	docker push $(DOCKER_NAME):latest-preview
+	docker push $(DOCKER_NAME):$(VERSION)-preview
+	docker push $(DOCKER_NAME):$(SHORT_VERSION)-preview
 
 publish-docker-unstable: docker-build-unstable ## push the unstable docker image
-	docker push $(DOCKER_NAME):unstable
+	docker push $(DOCKER_NAME):unstable-preview
 
 publish-branch-docker-unstable: package
-	docker build -t $(DOCKER_NAME):branch-unstable-${DATE} .
-	docker push $(DOCKER_NAME):branch-unstable-${DATE}
+	docker build -t $(DOCKER_NAME):branch-unstable-preview-${DATE} .
+	docker push $(DOCKER_NAME):branch-unstable-preview-${DATE}
 
 build_preview: deps
 	npm run build -- --mode preview
