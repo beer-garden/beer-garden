@@ -631,8 +631,10 @@ def get_request_children(request, max_depth=1, **kwargs):
 
 def get_request_parent(request, max_depth=1, **kwargs):
 
-    if request.parent_id:
+    if request.parent_id and request.parent is None:
         request.parent = db.query_unique(Request, id=request.parent_id, **kwargs)
+
+    if request.parent:
         request.parent = load_request_parameter_and_output(request.parent, **kwargs)
 
     if max_depth != 0 and request.parent:
@@ -1151,23 +1153,21 @@ def save_request(
             large_parameters = deepcopy(request.parameters)
             request.parameters = None
             request = db.create(request)
+
+        _update_raw_file_references(request)
     else:
         request = db.update_direct(request)
 
-    if large_output:
-        db.gridfs_create(model=large_output, request_id=request.id, output=True)
-    if large_parameters:
-        db.gridfs_create(model=large_parameters, request_id=request.id, parameters=True)
-
-    # Post Save
-    if request.status == "CREATED":
-        _update_raw_file_references(request)
-    else:
         for raw_file in RawFile.objects(request_id=request.id):
             raw_file.status = request.status
             raw_file.updated_at = request.updated_at
             raw_file.root_command_type = request.root_command_type
             raw_file.save()
+
+    if large_output:
+        db.gridfs_create(model=large_output, request_id=request.id, output=True)
+    if large_parameters:
+        db.gridfs_create(model=large_parameters, request_id=request.id, parameters=True)
 
     db.gridfs_update_metadata(
         {"request_id": request.id},
@@ -1279,8 +1279,6 @@ def remove_bytes_parameter_base64(
                         file=gzip.decompress(base64.b64decode(bytes_base64))
                     ).save()
                     request_param["id"] = str(raw_file.id)
-
-                    # Need to migrate the other fields
 
                 del request_param["base64"]
 

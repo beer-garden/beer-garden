@@ -1044,9 +1044,8 @@ class File(MongoModel, Document):
     chunk_size = IntField(required=True)
     md5_sum = StringField(required=False)
 
-    # This was originally used instead of request and job. See #833
-    # We could probably have kept using this if a GenericLazyReferenceField could have
-    # a reverse_delete_rule. Alas!
+    # Dummy fields are here to handle legacy model. Can be removed once brewtils is updated
+    # This prevents the models from getting accidentally saved in the database.
     owner = DummyField()
     request = DummyField()
     job = DummyField()
