@@ -115,7 +115,7 @@ class RawQueryFilterBuilder:
 
         return {"name": {"$in": garden_names}}
 
-    def _get_request_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
+    def _get_request_filter(self, user: BrewtilsUser, permission_levels: list) -> dict:
         if check_global_roles(user, permission_levels=permission_levels):
             return None
 
@@ -169,7 +169,7 @@ class RawQueryFilterBuilder:
 
         return {"$or": filters}
 
-    def _get_job_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
+    def _get_job_filter(self, user: BrewtilsUser, permission_levels: list) -> dict:
         if check_global_roles(user, permission_levels=permission_levels):
             return None
 
@@ -224,7 +224,7 @@ class RawQueryFilterBuilder:
 
         return {"$or": filters}
 
-    def _get_system_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
+    def _get_system_filter(self, user: BrewtilsUser, permission_levels: list) -> dict:
         if check_global_roles(user, permission_levels=permission_levels):
             return None
 
@@ -277,7 +277,7 @@ class RawQueryFilterBuilder:
 
         return {"$or": filters}
 
-    def _get_instance_filter(self, user: BrewtilsUser, permission_levels: list) -> Q:
+    def _get_instance_filter(self, user: BrewtilsUser, permission_levels: list) -> dict:
         if check_global_roles(user, permission_levels=permission_levels):
             return None
 
@@ -302,7 +302,7 @@ class RawQueryFilterBuilder:
 
     def build_filter(
         self, user: BrewtilsUser, permission: str, model: BrewtilsModel, **kwargs
-    ) -> Q:
+    ) -> dict:
         permission_levels = generate_permission_levels(permission)
 
         if len(user.local_roles) == 0 and len(user.upstream_roles) == 0:
