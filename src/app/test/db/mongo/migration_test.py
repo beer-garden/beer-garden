@@ -13,6 +13,7 @@ from beer_garden.db.mongo.migration import (  # ensure_roles,; ensure_users,
     contains_fields,
     ensure_v3_29_model_migration,
     ensure_v3_30_model_migration,
+    ensure_v3_XX_model_migration,
 )
 
 
@@ -390,3 +391,185 @@ class TestMigrationScript(object):
 
         migrated_system = system_collection.find_one({})
         assert migrated_system["garden_name"] == garden_dict["name"]
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_XX_migrate_gridfs_output(self, request_dict):
+        db = get_db()
+
+        # Create Gridfs File
+        fs = gridfs.GridFS(db)
+        output_data_id = fs.put(b"raw file data")
+
+        # Create request with output_gridfs
+        request_dict["output"] = None
+        request_dict["output_gridfs"] = output_data_id
+
+        request_collection = db["request"]
+        request_collection.insert_one(request_dict)
+
+        assert (
+            request_collection.count_documents({"output_gridfs": {"$exists": True}})
+            == 1
+        )
+
+        ensure_v3_XX_model_migration()
+
+        assert (
+            request_collection.count_documents({"output_gridfs": {"$exists": True}})
+            == 0
+        )
+
+        loaded_request = request_collection.find_one({})
+        assert db["fs.files"].find_one({})["request_id"] == str(loaded_request["_id"])
+        assert db["fs.chunks"].find_one({})["request_id"] == str(loaded_request["_id"])
+
+        for field in ["status", "updated_at", "root_command_type"]:
+            assert db["fs.files"].find_one({})[field] == loaded_request[field]
+            assert db["fs.chunks"].find_one({})[field] == loaded_request[field]
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_XX_migrate_gridfs_parameters(self, request_dict):
+        db = get_db()
+
+        # Create Gridfs File
+        fs = gridfs.GridFS(db)
+        output_data_id = fs.put(b"raw file data")
+
+        # Create request with output_gridfs
+        request_dict["parameters"] = None
+        request_dict["parameters_gridfs"] = output_data_id
+
+        request_collection = db["request"]
+        request_collection.insert_one(request_dict)
+
+        assert (
+            request_collection.count_documents({"parameters_gridfs": {"$exists": True}})
+            == 1
+        )
+
+        ensure_v3_XX_model_migration()
+
+        assert (
+            request_collection.count_documents({"parameters_gridfs": {"$exists": True}})
+            == 0
+        )
+
+        loaded_request = request_collection.find_one({})
+        assert db["fs.files"].find_one({})["request_id"] == str(loaded_request["_id"])
+        assert db["fs.chunks"].find_one({})["request_id"] == str(loaded_request["_id"])
+
+        for field in ["status", "updated_at", "root_command_type"]:
+            assert db["fs.files"].find_one({})[field] == loaded_request[field]
+            assert db["fs.chunks"].find_one({})[field] == loaded_request[field]
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_XX_migrate_file_job(self, job_dict):
+        db = get_db()
+
+        job_collection = db["job"]
+        job_collection.insert_one(job_dict)
+        loaded_job = job_collection.find_one({})
+
+        file_collection = db["file"]
+        file_collection.insert_one(
+            {"file_name": "test", "job": DBRef("job", loaded_job["_id"])}
+        )
+        loaded_file = file_collection.find_one({})
+
+        file_chunk_collection = db["file_chunk"]
+        file_chunk_collection.insert_one(
+            {"file_id": loaded_file["_id"], "data": "my data"}
+        )
+
+        assert file_collection.count_documents({"job": {"$exists": True}}) == 1
+
+        assert (
+            file_chunk_collection.count_documents({"owner_type": {"$exists": True}})
+            == 0
+        )
+
+        ensure_v3_XX_model_migration()
+
+        assert file_collection.count_documents({"job": {"$exists": True}}) == 0
+        assert (
+            file_chunk_collection.count_documents({"owner_type": {"$exists": True}})
+            == 1
+        )
+
+        assert file_collection.find_one({})["owner_id"] == str(loaded_job["_id"])
+        assert file_chunk_collection.find_one({})["owner_type"] == "JOB"
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_XX_migrate_file_request(self, request_dict):
+        db = get_db()
+
+        request_collection = db["request"]
+        request_collection.insert_one(request_dict)
+        loaded_request = request_collection.find_one({})
+
+        file_collection = db["file"]
+        file_collection.insert_one(
+            {"file_name": "test", "request": DBRef("request", loaded_request["_id"])}
+        )
+        loaded_file = file_collection.find_one({})
+
+        file_chunk_collection = db["file_chunk"]
+        file_chunk_collection.insert_one(
+            {"file_id": loaded_file["_id"], "data": "my data"}
+        )
+
+        assert file_collection.count_documents({"request": {"$exists": True}}) == 1
+
+        assert (
+            file_chunk_collection.count_documents({"owner_type": {"$exists": True}})
+            == 0
+        )
+
+        ensure_v3_XX_model_migration()
+
+        assert file_collection.count_documents({"request": {"$exists": True}}) == 0
+        assert (
+            file_chunk_collection.count_documents({"owner_type": {"$exists": True}})
+            == 1
+        )
+
+        assert file_collection.find_one({})["owner_id"] == str(loaded_request["_id"])
+        assert file_chunk_collection.find_one({})["owner_type"] == "REQUEST"
+
+    @patch("mongoengine.connect", Mock())
+    @patch("mongoengine.register_connection", Mock())
+    def test_3_XX_migrate_raw_file(self, request_dict):
+        db = get_db()
+
+        request_collection = db["request"]
+        raw_file_collection = db["raw_file"]
+
+        request_collection.insert_one(request_dict)
+
+        db_request = request_collection.find_one()
+
+        fs = gridfs.GridFS(db)
+
+        raw_file_data_id = fs.put(b"raw file data")
+
+        raw_file_dict = {"file": raw_file_data_id, "request": db_request["_id"]}
+
+        raw_file_collection.insert_one(raw_file_dict)
+
+        assert raw_file_collection.count_documents({"request": {"$exists": True}}) == 1
+
+        ensure_v3_XX_model_migration()
+
+        assert raw_file_collection.count_documents({"request": {"$exists": True}}) == 0
+
+        loaded_request = request_collection.find_one({})
+        assert db["fs.files"].find_one({})["request_id"] == str(loaded_request["_id"])
+        assert db["fs.chunks"].find_one({})["request_id"] == str(loaded_request["_id"])
+
+        for field in ["status", "updated_at", "root_command_type"]:
+            assert db["fs.files"].find_one({})[field] == loaded_request[field]
+            assert db["fs.chunks"].find_one({})[field] == loaded_request[field]
