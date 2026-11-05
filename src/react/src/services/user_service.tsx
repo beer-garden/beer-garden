@@ -8,9 +8,13 @@ import { GetBaseURL } from "./util_service";
 export const GetCurrentUser = () => {
   const token = GetToken();
   if (token !== null) {
-    const decode = jwtDecode<CustomJwtPayload>(token);
-    if (decode.username) {
-      return decode.username;
+    try {
+      const decode = jwtDecode<CustomJwtPayload>(token);
+      if (decode.username) {
+        return decode.username;
+      }
+    } catch (err) {
+      throw new Error("Invalid token: " + token)
     }
   }
   return undefined;
@@ -19,18 +23,22 @@ export const GetCurrentUser = () => {
 export const GetCurrentRoles = (): Array<Role> | undefined => {
   const token = GetToken();
   if (token !== null) {
-    const decode = jwtDecode<CustomJwtPayload>(token);
-    if (decode.roles) {
-      const userRoles = [] as Array<Role>;
-      for (const role of decode.roles) {
-        // The role can be a string or an object depending on how the token was generated
-        if (typeof role === "string") {
-          userRoles.push(JSON.parse(role) as Role);
-        } else {
-          userRoles.push(role as Role);
+    try {
+      const decode = jwtDecode<CustomJwtPayload>(token);
+      if (decode.roles) {
+        const userRoles = [] as Array<Role>;
+        for (const role of decode.roles) {
+          // The role can be a string or an object depending on how the token was generated
+          if (typeof role === "string") {
+            userRoles.push(JSON.parse(role) as Role);
+          } else {
+            userRoles.push(role as Role);
+          }
         }
+        return userRoles;
       }
-      return userRoles;
+    } catch (err) {
+      throw new Error("Invalid token: " + token)
     }
   }
   return undefined;
