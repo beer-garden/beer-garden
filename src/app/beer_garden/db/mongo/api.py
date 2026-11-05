@@ -6,6 +6,8 @@ import brewtils.models
 from box import Box
 from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
+from bson.errors import InvalidId
+from bson.objectid import ObjectId
 from mongoengine import (
     ConnectionFailure,
     DoesNotExist,
@@ -214,8 +216,221 @@ def get_job_store():
     return MongoJobStore()
 
 
+def combine_raw_query(raw_query: dict, new_query: dict):
+
+    # If raw_query is none/empty, return new query
+    if raw_query is None or len(raw_query) == 0:
+        return new_query
+
+    # If new query is none/empty, return raw_query
+    if new_query is None or len(new_query) == 0:
+        return raw_query
+
+    # Append to AND query, else roll both up to an AND query
+    if "$and" in raw_query:
+        raw_query["$and"].append(new_query)
+        return raw_query
+    else:
+        return {"$and": [raw_query, new_query]}
+
+
+def is_id_key(key: str):
+    return key == "id" or key.endswith(".id")
+
+
+def update_key_value(key: str, value, suffix: str = None):
+
+    if suffix:
+        key = key.removesuffix(suffix)
+
+    is_id = False
+    if key == "id":
+        key = "_id"
+        is_id = True
+
+    elif key.endswith(".id"):
+        key = f"{key.removesuffix('.id')}._id"
+        is_id = True
+
+    if isinstance(value, dict) or isinstance(value, BaseModel):
+
+        if hasattr(value, "id"):
+            if not is_id:
+                key = f"{key}._id"
+
+        elif hasattr(value, "_id"):
+            if not is_id:
+                key = f"{key}._id"
+
+    elif isinstance(value, list):
+        if len(value) > 0 and (isinstance(value[0], dict)):
+            if hasattr(value[0], "id"):
+                if not is_id:
+                    key = f"{key}._id"
+
+            elif hasattr(value[0], "_id"):
+                if not is_id:
+                    key = f"{key}._id"
+
+    value = update_value(key, value)
+
+    return key, value
+
+
+def update_value(key: str, value):
+
+    if key.endswith("_id"):
+        if isinstance(value, list):
+            updated_values = []
+            for key_value in value:
+                updated_values.append(update_value(key, key_value))
+            return updated_values
+        if isinstance(value, str):
+            try:
+                return ObjectId(value)
+            except InvalidId:
+                return value
+        if isinstance(value, ObjectId):
+            return value
+        if isinstance(value, dict) or isinstance(value, BaseModel):
+            if hasattr(value, "id"):
+                return update_value(key, value.id)
+            if hasattr(value, "_id"):
+                return update_value(key, value._id)
+
+    return value
+
+
+def kwargs_raw_query(**kwargs):
+
+    if not kwargs:
+        return None
+
+    query = kwargs.pop("raw_query", None)
+
+    for key in kwargs:
+        raw_field = key.replace("__", ".")
+
+        if raw_field.endswith(".match"):
+            match_query = kwargs_raw_query(**kwargs[key])
+            raw_field, raw_value = update_key_value(raw_field, match_query, ".match")
+            query = combine_raw_query(
+                query,
+                {raw_field: {"$elemMatch": match_query}},
+            )
+        elif raw_field.endswith(".in"):
+            raw_field, raw_value = update_key_value(raw_field, kwargs[key], ".in")
+
+            query = combine_raw_query(
+                query,
+                {raw_field: {"$in": raw_value}},
+            )
+        elif raw_field.endswith(".not.contains"):
+
+            raw_field, raw_value = update_key_value(
+                raw_field, kwargs[key], ".not.contains"
+            )
+
+            query = combine_raw_query(
+                query,
+                {raw_field: {"$not": {"$in": raw_value}}},
+            )
+        elif raw_field.endswith(".contains"):
+            raw_field, raw_value = update_key_value(raw_field, kwargs[key], ".contains")
+
+            query = combine_raw_query(
+                query,
+                {raw_field: {"$in": raw_value}},
+            )
+
+        elif raw_field.endswith(".gt"):
+            raw_field, raw_value = update_key_value(raw_field, kwargs[key], ".gt")
+            query = combine_raw_query(
+                query,
+                {raw_field: {"$gt": raw_value}},
+            )
+        elif raw_field.endswith(".gte"):
+            raw_field, raw_value = update_key_value(raw_field, kwargs[key], ".gte")
+            query = combine_raw_query(
+                query,
+                {raw_field: {"$gte": raw_value}},
+            )
+        elif raw_field.endswith(".lt"):
+            raw_field, raw_value = update_key_value(raw_field, kwargs[key], ".lt")
+            query = combine_raw_query(
+                query,
+                {raw_field: {"$lt": raw_value}},
+            )
+        elif raw_field.endswith(".lte"):
+            raw_field, raw_value = update_key_value(raw_field, kwargs[key], ".lte")
+            query = combine_raw_query(
+                query,
+                {raw_field: {"$lte": raw_value}},
+            )
+        elif raw_field.endswith(".exact"):
+            raw_field, raw_value = update_key_value(raw_field, kwargs[key], ".exact")
+            query = combine_raw_query(
+                query,
+                {raw_field: raw_value},
+            )
+        elif raw_field.endswith(".not.startswith"):
+            raw_field, raw_value = update_key_value(
+                raw_field, kwargs[key], ".not.startswith"
+            )
+            query = combine_raw_query(
+                query,
+                {
+                    raw_field.removesuffix(".exact"): {
+                        "$not": {"$regex": f"^{raw_value}"}
+                    }
+                },
+            )
+        elif raw_field.endswith(".startswith"):
+            raw_field, raw_value = update_key_value(
+                raw_field, kwargs[key], ".startswith"
+            )
+            query = combine_raw_query(
+                query,
+                {raw_field: {"$regex": f"^{raw_value}"}},
+            )
+
+        elif raw_field.endswith(".ne"):
+            raw_field, raw_value = update_key_value(raw_field, kwargs[key], ".ne")
+
+            query = combine_raw_query(
+                query,
+                {raw_field: {"$ne": raw_value}},
+            )
+        elif isinstance(raw_field, dict):
+            query = combine_raw_query(
+                query,
+                {raw_field: {"$elemMatch": raw_value}},
+            )
+        elif isinstance(raw_field, BaseModel):
+            query = combine_raw_query(
+                query,
+                {
+                    raw_field: {
+                        "$elemMatch": SchemaParser.serialize(raw_value, to_string=False)
+                    }
+                },
+            )
+        else:
+            raw_field, raw_value = update_key_value(raw_field, kwargs[key])
+
+            query = combine_raw_query(
+                query,
+                {raw_field: raw_value},
+            )
+
+    return query
+
+
 def count(
-    model_class: ModelType, q_filter: Union[Q, QCombination, None] = None, **kwargs
+    model_class: ModelType,
+    q_filter: Union[Q, QCombination, None] = None,
+    raw_query: dict = None,
+    **kwargs,
 ) -> int:
     """Count the number of items matching a query
 
@@ -228,11 +443,16 @@ def count(
         The number of items
 
     """
-    for k, v in kwargs.items():
-        if isinstance(v, BaseModel):
-            kwargs[k] = from_brewtils(v)
+    # for k, v in kwargs.items():
+    #     if isinstance(v, BaseModel):
+    #         kwargs[k] = from_brewtils(v)
 
-    query_set = _model_map[model_class].objects(**kwargs)
+    if raw_query or kwargs:
+        query_set = _model_map[model_class].objects(
+            __raw__=combine_raw_query(raw_query, kwargs_raw_query(**kwargs))
+        )
+    else:
+        query_set = _model_map[model_class].objects
 
     if q_filter:
         query_set = query_set.filter(q_filter)
@@ -241,7 +461,7 @@ def count(
 
 
 def query_unique(
-    model_class: ModelType, raise_missing=False, **kwargs
+    model_class: ModelType, raise_missing=False, raw_query: dict = None, **kwargs
 ) -> Optional[ModelItem]:
     """Query a collection for a unique item
 
@@ -270,25 +490,23 @@ def query_unique(
     """
 
     try:
-        for k, v in kwargs.items():
-            if isinstance(v, BaseModel):
-                kwargs[k] = from_brewtils(v)
 
         include_fields = kwargs.pop("include_fields", None)
         exclude_fields = kwargs.pop("exclude_fields", None)
 
-        if include_fields:
-            query_set = (
-                _model_map[model_class].objects.only(*include_fields).get(**kwargs)
-            )
-        elif exclude_fields:
-            query_set = (
-                _model_map[model_class].objects.exclude(*exclude_fields).get(**kwargs)
-            )
+        if kwargs:
+            raw_query = combine_raw_query(raw_query, kwargs_raw_query(**kwargs))
+        if raw_query:
+            query_set = _model_map[model_class].objects(__raw__=raw_query)
         else:
-            query_set = _model_map[model_class].objects.get(**kwargs)
+            query_set = _model_map[model_class].objects
 
-        return to_brewtils(query_set)
+        if include_fields:
+            query_set = query_set.only(*include_fields)
+        elif exclude_fields:
+            query_set = query_set.exclude(*exclude_fields)
+
+        return to_brewtils(query_set.get())
     except DoesNotExist:
         if raise_missing:
             raise
@@ -324,23 +542,17 @@ def query(
 
     """
 
-    if kwargs.get("raw_query"):
-        query_set = _model_map[model_class].objects(__raw__=kwargs.get("raw_query"))
+    filter_params = kwargs.get("filter_params")
+    raw_query = kwargs.get("raw_query")
+    if filter_params:
+        raw_query = combine_raw_query(raw_query, kwargs_raw_query(**filter_params))
+    if raw_query:
+        query_set = _model_map[model_class].objects(__raw__=raw_query)
     else:
         query_set = _model_map[model_class].objects
 
     if q_filter:
         query_set = query_set.filter(q_filter)
-
-    if kwargs.get("filter_params"):
-        filter_params = kwargs["filter_params"]
-
-        # If any values are brewtils models those need to be converted
-        for key in filter_params:
-            if isinstance(filter_params[key], BaseModel):
-                filter_params[key] = from_brewtils(filter_params[key])
-
-        query_set = query_set.filter(**(kwargs.get("filter_params", {})))
 
     # Bad things happen if you try to use a hint with a text search.
     if kwargs.get("text_search"):
@@ -549,6 +761,7 @@ def modify(obj: ModelItem, query=None, **kwargs) -> ModelItem:
         if isinstance(kwargs[key], BaseModel):
             kwargs[key] = from_brewtils(kwargs[key])
 
+    # TODO: Convert this to RAW
     mongo_obj.modify(query=query, **kwargs)
 
     return to_brewtils(mongo_obj)

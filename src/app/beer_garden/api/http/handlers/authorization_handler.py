@@ -4,7 +4,6 @@ from typing import Type
 from brewtils.models import BaseModel as BrewtilsModel
 from brewtils.models import Operation, Permissions, Queue, Role, System, User
 from mongoengine import Document, QuerySet
-from mongoengine.queryset.visitor import Q, QCombination
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -21,19 +20,22 @@ from beer_garden.api.http.exceptions import (
 )
 from beer_garden.authorization import (
     ModelFilter,
-    QueryFilterBuilder,
+    RawQueryFilterBuilder,
     check_global_roles,
 )
 
 # from beer_garden.db.mongo.models import User
-from beer_garden.errors import ExpiredTokenException, InvalidTokenException
+from beer_garden.errors import (
+    ExpiredTokenException,
+    InvalidTokenException,
+)
 
 
 class AuthorizationHandler(BaseHandler):
     """Handler that builds on BaseHandler and adds support for authorizing requests
     via a jwt access token supplied in the Authorization header"""
 
-    queryFilter = QueryFilterBuilder()
+    queryRawFilter = RawQueryFilterBuilder()
     modelFilter = ModelFilter()
 
     minimum_permission = Permissions.READ_ONLY.name
@@ -104,13 +106,13 @@ class AuthorizationHandler(BaseHandler):
                 system = db.query_unique(
                     System,
                     raise_missing=False,
-                    instances__queue_info__request__name=kwargs["name"],
+                    raw_query={"instances.queue_info.request.name": kwargs["name"]},
                 )
                 if not system:
                     system = db.query_unique(
                         System,
                         raise_missing=False,
-                        instances__queue_info__admin__name=kwargs["name"],
+                        raw_query={"instances.queue_info.admin.name": kwargs["name"]},
                     )
                 if not system:
                     raise NotFound
@@ -120,18 +122,20 @@ class AuthorizationHandler(BaseHandler):
                 raise NotFound
         else:
             # Change to brewtils query
-            provided_filter = Q(**kwargs) & self.queryFilter.build_filter(
+            provided_raw_filter = self.queryRawFilter.build_filter(
                 self.current_user, self.minimum_permission, model
             )
 
-            requested_objects = db.query(model, q_filter=provided_filter)
+            requested_objects = db.query(
+                model, raw_filter=provided_raw_filter, filter_params=kwargs
+            )
             if len(requested_objects) > 1:
                 raise NotFound(
                     "Multiple records returned for schema query: "
-                    f"{model.schema}, {provided_filter}"
+                    f"{model.schema}, {provided_raw_filter}"
                 )
             elif len(requested_objects) == 0:
-                if len(db.query(model, q_filter=Q(**kwargs))) > 0:
+                if len(db.query(model, filter_params=kwargs)) > 0:
                     raise RequestForbidden
                 else:
                     raise NotFound
@@ -157,9 +161,7 @@ class AuthorizationHandler(BaseHandler):
             self.current_user, self.minimum_permission, model
         )
 
-    def permitted_objects_filter(
-        self, model: Type[Document]
-    ) -> QCombination:  # Updated
+    def permitted_objects_raw_filter(self, model: Type[Document]) -> dict:  # Updated
         """Returns a QCombination that can be used to filter a QuerySet down to the
         objects for which the requesting user has the given permission.
 
@@ -169,21 +171,16 @@ class AuthorizationHandler(BaseHandler):
                 access to the object
 
         Returns:
-            QCombination: A mongoengine QCombination filter
+            dict: A pymongo raw filter object
 
         Raises:
             RequestForbidden: The requesting user has access to no objects of the given
                 model type
         """
 
-        q_filter = self.queryFilter.build_filter(
+        return self.queryRawFilter.build_filter(
             self.current_user, self.minimum_permission, model
         )
-
-        if q_filter is None:
-            raise RequestForbidden
-
-        return q_filter
 
     def prepare(self) -> None:
         """Called before each verb handler"""
