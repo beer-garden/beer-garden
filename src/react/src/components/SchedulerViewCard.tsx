@@ -1,5 +1,6 @@
 import {
   faArrowUpRightFromSquare,
+  faCircleExclamation,
   faEdit,
   faEye,
   faPause,
@@ -360,7 +361,7 @@ function SchedulerViewCard({
           onClick={() => setReloadRequestsTrigger(reloadRequestsTrigger + 1)}
           tooltip={recordsUpdated ? "New updates available" : "Refresh"}
         >
-          {recordsUpdated && <FAIcon icon={"circle-exclamation"} />}
+          {recordsUpdated && <FAIcon icon={faCircleExclamation} />}
           <FAIcon icon={faRefresh} />
         </AccessButton>
       </Grid>

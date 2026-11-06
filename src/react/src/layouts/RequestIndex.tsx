@@ -1,6 +1,7 @@
 import {
   faArrowUpRightFromSquare,
   faBriefcase,
+  faCircleExclamation,
   faEye,
   faLevelUp,
   faRefresh,
@@ -191,7 +192,7 @@ function RequestIndex({
           {...GenerateTourProps(RefreshTableTourStep)}
           aria-live="polite"
         >
-          {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
+          {recordsUpdated && <FontAwesomeIcon icon={faCircleExclamation} />}
           <FontAwesomeIcon icon={faRefresh} />
         </AccessButton>
       </Box>
