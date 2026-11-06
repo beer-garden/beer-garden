@@ -9,7 +9,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { TourStepProps } from "../models/models";
-import { ToastProvider } from "../providers/ToastProvider";
+import { SnackbarProvider } from "../providers/SnackbarProvider";
 import * as permissionService from "../services/permission_service";
 import * as roleService from "../services/role_service";
 import RoleIndex from "./RoleIndex";
@@ -67,9 +67,9 @@ describe("RoleIndex", () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <RoleIndex config={{}} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -85,9 +85,9 @@ describe("RoleIndex", () => {
     vi.mocked(roleService.Rescan).mockResolvedValue();
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <RoleIndex config={{}} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -109,9 +109,9 @@ describe("RoleIndex", () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <RoleIndex config={{}} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -129,9 +129,9 @@ describe("RoleIndex", () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <RoleIndex config={{}} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -148,9 +148,9 @@ describe("RoleIndex", () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <RoleIndex config={{}} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -176,12 +176,12 @@ describe("RoleIndex", () => {
 
   //Test duplicate
   test("Test duplicate button", async () => {
-    vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);    
+    vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <RoleIndex config={{}} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -219,9 +219,9 @@ describe("RoleIndex", () => {
     vi.mocked(roleService.EditRole).mockResolvedValue(mockRoles[1]);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <RoleIndex config={{}} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {
@@ -256,9 +256,9 @@ describe("RoleIndex", () => {
     vi.mocked(roleService.GetRoles).mockResolvedValue(mockRoles);
 
     render(
-      <ToastProvider>
+      <SnackbarProvider>
         <RoleIndex config={{}} tourStepsRef={mockTourSteps()} />
-      </ToastProvider>,
+      </SnackbarProvider>,
     );
 
     await waitFor(() => {

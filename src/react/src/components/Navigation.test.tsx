@@ -1,9 +1,15 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { BrowserRouter } from "react-router-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { TourStepProps } from "../models/models";
-import { ToastProvider } from "../providers/ToastProvider";
+import { SnackbarProvider } from "../providers/SnackbarProvider";
 import * as tokenService from "../services/token_service";
 import * as userService from "../services/user_service";
 import Navigation from "./Navigation";
@@ -30,7 +36,7 @@ describe("Navigation", () => {
 
     render(
       <BrowserRouter basename="/">
-        <ToastProvider>
+        <SnackbarProvider>
           <Navigation
             listeners={{}}
             config={{ auth_enabled: true }}
@@ -39,7 +45,7 @@ describe("Navigation", () => {
             tourStepsRef={mockTourSteps()}
             addRequestItem={() => {}}
           />
-        </ToastProvider>
+        </SnackbarProvider>
       </BrowserRouter>,
     );
 
@@ -48,12 +54,12 @@ describe("Navigation", () => {
     });
   });
 
-  test("disable login", async () => {
+  test("ctrl+HOME moves focus to the navbar", async () => {
     vi.mocked(tokenService.GetToken).mockReturnValue(null);
 
     render(
       <BrowserRouter basename="/">
-        <ToastProvider>
+        <SnackbarProvider>
           <Navigation
             listeners={{}}
             config={{
@@ -64,7 +70,42 @@ describe("Navigation", () => {
             tourStepsRef={mockTourSteps()}
             addRequestItem={() => {}}
           />
-        </ToastProvider>
+        </SnackbarProvider>
+      </BrowserRouter>,
+    );
+
+    await waitFor(() => {
+      expect(document.getElementById("navbar")).not.toBeNull();
+    });
+
+    const navbar = document.getElementById("navbar");
+    expect(navbar).not.toBeNull();
+    expect(navbar).not.toHaveFocus();
+
+    fireEvent.keyDown(window, { key: "Home", ctrlKey: true, bubbles: true });
+
+    await waitFor(() => {
+      expect(navbar).toHaveFocus();
+    });
+  });
+
+  test("disable login", async () => {
+    vi.mocked(tokenService.GetToken).mockReturnValue(null);
+
+    render(
+      <BrowserRouter basename="/">
+        <SnackbarProvider>
+          <Navigation
+            listeners={{}}
+            config={{
+              auth_enabled: false,
+            }}
+            runReloadUI={() => {}}
+            toggleRunTour={() => {}}
+            tourStepsRef={mockTourSteps()}
+            addRequestItem={() => {}}
+          />
+        </SnackbarProvider>
       </BrowserRouter>,
     );
 

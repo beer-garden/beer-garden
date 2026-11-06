@@ -1,18 +1,32 @@
+import {
+  faArrowDown,
+  faArrowUp,
+  faClockRotateLeft,
+  faPlay,
+  faServer,
+  faSquare,
+  faStop,
+  faTriangleExclamation,
+  faXmarkCircle,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Badge } from "primereact/badge";
-import { Card } from "primereact/card";
-import { Column } from "primereact/column";
-import { DataTable } from "primereact/datatable";
-import { Message } from "primereact/message";
-import { Skeleton } from "primereact/skeleton";
-import { Tag } from "primereact/tag";
-import { Tooltip } from "primereact/tooltip";
+import {
+  Alert,
+  Box,
+  Chip,
+  Divider,
+  Skeleton,
+  Stack,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import { RefObject, useEffect, useState } from "react";
 
+import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import { Connection, Garden, Runner, System } from "../models/brewtils-types";
-import { Config } from "../models/models";
+import { Config, SeverityGroup } from "../models/models";
 import { TourStepProps } from "../models/models";
-import { useToast } from "../providers/ToastProvider";
+import { useSnackbar } from "../providers/SnackbarProvider";
 import {
   DeleteGarden,
   RescanGarden,
@@ -27,8 +41,23 @@ import {
   ClearTourSteps,
   GenerateTourProps,
 } from "../services/tour_service";
-import { GenerateStatusCounts, GetSeverity } from "../services/util_service";
+import {
+  FAIcon,
+  GenerateStatusCounts,
+  GetSeverity,
+} from "../services/util_service";
 import AccessButton from "./AccessButton";
+import { ColumnField } from "./EnhancedTable/models/EnhancedTableModels";
+import GardenStatusHistoryDialog from "./GardenStatusHistoryDialog";
+
+interface GardenConnection {
+  garden: string;
+  api: string;
+  status: string;
+  type: string;
+  direction: string;
+  config?: any;
+}
 
 function GardenSummary({
   gardenRef,
@@ -45,28 +74,15 @@ function GardenSummary({
   tourStepsRef?: RefObject<Array<TourStepProps>>;
   config: Config;
 }) {
-  const showToast = useToast();
+  const showSnackbar = useSnackbar();
   const tourUuid = selectedGarden?.id;
   const tourPrefix = "garden_summary";
-  const getPublishingConnections = () => {
-    if (selectedGarden?.publishing_connections) {
-      return selectedGarden.publishing_connections.filter(
-        (connection: Connection) => connection.status !== "NOT_CONFIGURED",
-      );
-    } else {
-      return [];
-    }
-  };
-
-  const getReceivingConnections = () => {
-    if (selectedGarden?.receiving_connections) {
-      return selectedGarden.receiving_connections.filter(
-        (connection: Connection) => connection.status !== "NOT_CONFIGURED",
-      );
-    } else {
-      return [];
-    }
-  };
+  const [statusHistoryVisible, setStatusHistoryVisible] = useState(false);
+  const closeStatusHistoryDialog = () => setStatusHistoryVisible(false);
+  const [downstreamConnectionType, setDownstreamConnectionType] =
+    useState<string>("RECEIVING");
+  const [downstreamAPIType, setDownstreamAPIType] = useState<string>("HTTP");
+  const [downstreamGardenName, setDownstreamGardenName] = useState<string>("");
 
   const getSystemCounts = () => {
     if (selectedGarden) {
@@ -78,18 +94,85 @@ function GardenSummary({
       );
     }
 
-    return new Map();
+    return [];
+  };
+
+  const getDownstreamConnections = () => {
+    const connections = [] as GardenConnection[];
+
+    if (gardenRef?.current?.name === selectedGarden?.name) {
+      if (selectedGarden?.receiving_connections) {
+        for (const connection of selectedGarden.receiving_connections) {
+          if (connection.status !== "NOT_CONFIGURED") {
+            connections.push({
+              garden: selectedGarden.parent ?? "UPSTREAM",
+              api: connection.api,
+              status: connection.status,
+              type: "RECEIVING",
+              direction: "UPSTREAM",
+              config: connection.config,
+            });
+          }
+        }
+      }
+
+      if (selectedGarden?.publishing_connections) {
+        for (const connection of selectedGarden.publishing_connections) {
+          if (connection.status !== "NOT_CONFIGURED") {
+            connections.push({
+              garden: selectedGarden.parent ?? "UPSTREAM",
+              api: connection.api,
+              status: connection.status,
+              type: "PUBLISHING",
+              direction: "UPSTREAM",
+              config: connection.config,
+            });
+          }
+        }
+      }
+    }
+    if (selectedGarden?.children) {
+      for (const child of selectedGarden.children) {
+        if (child?.receiving_connections) {
+          for (const connection of child.receiving_connections) {
+            if (connection.status !== "NOT_CONFIGURED") {
+              connections.push({
+                garden: child.name,
+                api: connection.api,
+                status: connection.status,
+                type: "RECEIVING",
+                direction: "DOWNSTREAM",
+                config: connection.config,
+              });
+            }
+          }
+        }
+        if (child?.publishing_connections) {
+          for (const connection of child.publishing_connections) {
+            if (connection.status !== "NOT_CONFIGURED") {
+              connections.push({
+                garden: child.name,
+                api: connection.api,
+                status: connection.status,
+                type: "PUBLISHING",
+                direction: "DOWNSTREAM",
+                config: connection.config,
+              });
+            }
+          }
+        }
+      }
+    }
+    return connections;
   };
 
   const [invalidRouting, setInvalidRouting] = useState(false);
-  const [publishingConnections, setPublishingConnections] = useState<
-    Array<Connection>
-  >(getPublishingConnections());
-  const [receivingConnections, setReceivingonnections] = useState<
-    Array<Connection>
-  >(getReceivingConnections());
   const [systemCounts, setSystemCounts] =
-    useState<Map<string, number>>(getSystemCounts());
+    useState<Array<SeverityGroup>>(getSystemCounts());
+
+  const [downstreamConnections, setDownstreamConnections] = useState(
+    getDownstreamConnections(),
+  );
 
   const rescanPluginTourStep: TourStepProps = {
     prefix: tourPrefix,
@@ -189,9 +272,14 @@ function GardenSummary({
   };
 
   useEffect(() => {
-    setPublishingConnections(getPublishingConnections());
-    setReceivingonnections(getReceivingConnections());
     setSystemCounts(getSystemCounts());
+    setDownstreamConnections(getDownstreamConnections());
+
+    if (gardenRef.current && selectedGarden?.parent) {
+      parentRoutingCheck(gardenRef.current, selectedGarden?.parent, true);
+    } else {
+      setInvalidRouting(false);
+    }
 
     if (tourStepsRef !== undefined) {
       ClearTourSteps(tourStepsRef, tourPrefix, tourUuid);
@@ -204,9 +292,6 @@ function GardenSummary({
         if (gardenRef.current.name === selectedGarden?.name) {
           AddTourStep(tourStepsRef, syncAllTourStep);
         } else {
-          if (selectedGarden?.parent) {
-            parentRoutingCheck(gardenRef.current, selectedGarden?.parent, true);
-          }
           AddTourStep(tourStepsRef, syncGardenTourStep);
           AddTourStep(tourStepsRef, syncUsersTourStep);
           AddTourStep(tourStepsRef, deleteGardenTourStep);
@@ -269,7 +354,7 @@ function GardenSummary({
     }
   }, [selectedGarden, selectedSystems]);
 
-  const apiTemplate = (connection: Connection, type: string) => {
+  const apiTemplate = (connection: GardenConnection, type: string) => {
     let url = "";
 
     if (connection.config?.host !== undefined) {
@@ -312,43 +397,126 @@ function GardenSummary({
 
     return (
       <>
+        {connection.api}
         {url.length > 0 && (
-          <Tooltip position="bottom" content={url} target={`#${targetId}`} />
+          <Tooltip title={url}>
+            <FAIcon icon={faServer} id={targetId} sx={{ ml: 1 }} />
+          </Tooltip>
         )}
-        <span id={targetId}>{connection.api}</span>
       </>
     );
   };
 
-  const statusTemplate = (row: Connection) => {
+  const statusTemplate = (row: GardenConnection) => {
     const severity = GetSeverity(row.status);
 
-    return <Tag value={row.status} severity={severity} />;
+    return (
+      <Box component="span" aria-label={undefined}>
+        <Stack direction="row" spacing={1}>
+          <Tooltip
+            title={
+              row.type === "RECEIVING"
+                ? row.direction === "DOWNSTREAM"
+                  ? `Status ${row.status} over ${row.api} for accepting events from ${row.garden} to ${selectedGarden?.name}`
+                  : `Status ${row.status} over ${row.api} for accepting operations from ${row.garden} to ${selectedGarden?.name}`
+                : row.direction === "DOWNSTREAM"
+                  ? `Status ${row.status} over ${row.api} for sending operations from ${row.garden} to ${selectedGarden?.name}`
+                  : `Status ${row.status} over ${row.api} for sending events from ${row.garden} to ${selectedGarden?.name}`
+            }
+          >
+            <Chip label={row.status} color={severity} />
+          </Tooltip>
+          <AccessButton
+            size="small"
+            onClick={() => {
+              setDownstreamGardenName(row.garden);
+              setDownstreamConnectionType(row.type);
+              setDownstreamAPIType(row.api);
+              setStatusHistoryVisible(true);
+            }}
+            aria-label={`Show Status History for ${row.garden} over ${row.api}`}
+            icon
+          >
+            <FAIcon icon={faClockRotateLeft} />
+          </AccessButton>
+        </Stack>
+      </Box>
+    );
   };
 
-  const connectionActions = (node: Connection, type: string) => {
-    if (
-      gardenRef.current?.name === selectedGarden?.name ||
-      (selectedGarden?.has_parent === true &&
-        selectedGarden.parent !== undefined &&
-        selectedGarden.parent !== gardenRef.current?.name)
-    ) {
-      return <></>;
+  const getConnectionColumns = () => {
+    const columns = [
+      {
+        id: "garden",
+        field: "garden",
+        label: "Garden",
+        template: (row) => {
+          return (
+            <Tooltip
+              title={
+                <Box component="span" sx={{ whiteSpace: "pre-line" }}>
+                  {row.direction === "DOWNSTREAM"
+                    ? `Downstream: ${row.garden}\n${selectedGarden?.name} sends operations and accepts events from ${row.garden}`
+                    : `Upstream: ${row.garden}\n${selectedGarden?.name} sends events to ${row.garden}`}
+                </Box>
+              }
+            >
+              <span>
+                <FAIcon
+                  icon={
+                    row.direction === "DOWNSTREAM" ? faArrowDown : faArrowUp
+                  }
+                  sx={{ mr: 2 }}
+                />
+                {row.garden}
+              </span>
+            </Tooltip>
+          );
+        },
+      },
+      {
+        id: "type",
+        field: "type",
+        label: "Type",
+      },
+      {
+        id: "api",
+        field: "api",
+        label: "API",
+        template: (row) => apiTemplate(row, row.type),
+      },
+      {
+        id: "status",
+        field: "status",
+        label: "Status",
+        template: statusTemplate,
+      },
+    ] as ColumnField[];
+
+    if (gardenRef?.current?.name === selectedGarden?.name) {
+      columns.push({
+        id: "actions",
+        label: "Actions",
+        template: (node: any) => connectionActions(node, node.type),
+      });
     }
+    return columns;
+  };
+  const connectionActions = (node: GardenConnection, type: string) => {
     return (
-      <div className="flex gap-2">
+      <Box sx={{ display: "flex", gap: 2 }}>
         <AccessButton
-          data-testid={type + "_" + node?.api + "_START"}
+          data-testid={`${node.garden}_${type}_${node?.api}_START`}
           {...GenerateTourProps({
             prefix: tourPrefix,
             uuid: tourUuid,
             label: `${type} START ${node?.api}`,
           })}
           onClick={() => {
-            if (selectedGarden?.name && node?.status && node?.api) {
-              UpdateApiGarden(selectedGarden.name, type, node.api, type)
+            if (node?.status && node?.api) {
+              UpdateApiGarden(node.garden, type, node.api, type)
                 .then(() => {
-                  showToast({
+                  showSnackbar({
                     severity: "success",
                     summary: "Success",
                     detail: `Stopped Garden API connection ${node.api}`,
@@ -357,7 +525,7 @@ function GardenSummary({
                 })
                 .catch((error) => {
                   console.error("Error Updating Garden API Connection:", error);
-                  showToast({
+                  showSnackbar({
                     severity: "error",
                     summary: "Error",
                     detail: `Error Updating Garden API Connection: ${error}`,
@@ -368,26 +536,34 @@ function GardenSummary({
               throw Error(`Error missing ${JSON.stringify(node)}`);
             }
           }}
-          tooltip={`${type} START ${node?.api}`}
+          title={
+            node.type === "RECEIVING"
+              ? node.direction === "DOWNSTREAM"
+                ? `Start acceping events from ${node.garden} to ${selectedGarden?.name} over ${node.api}`
+                : `Start acceping operation from ${node.garden} to ${selectedGarden?.name} over ${node.api}`
+              : node.direction === "DOWNSTREAM"
+                ? `Start sending operations from ${selectedGarden?.name} to ${node.garden} over ${node.api}`
+                : `Start sending events from ${selectedGarden?.name} to ${node.garden} over ${node.api}`
+          }
           config={config}
           permission="GARDEN_ADMIN"
           hasGardenName={selectedGarden?.name}
         >
-          <FontAwesomeIcon icon="play" />
+          <FontAwesomeIcon icon={faPlay} />
         </AccessButton>
         <AccessButton
-          severity="warning"
-          data-testid={type + "_" + node?.api + "_STOP"}
+          color="warning"
+          data-testid={`${node.garden}_${type}_${node?.api}_STOP`}
           {...GenerateTourProps({
             prefix: tourPrefix,
             uuid: tourUuid,
             label: `${type} STOP ${node?.api}`,
           })}
           onClick={() => {
-            if (selectedGarden?.name && node?.status && node?.api) {
-              UpdateApiGarden(selectedGarden.name, "DISABLED", node.api, type)
+            if (node?.status && node?.api) {
+              UpdateApiGarden(node.garden, "DISABLED", node.api, type)
                 .then(() => {
-                  showToast({
+                  showSnackbar({
                     severity: "success",
                     summary: "Success",
                     detail: `Started Garden API connection ${node.api}`,
@@ -396,7 +572,7 @@ function GardenSummary({
                 })
                 .catch((error) => {
                   console.error("Error Updating Garden API Connection:", error);
-                  showToast({
+                  showSnackbar({
                     severity: "error",
                     summary: "Error",
                     detail: `Error Updating Garden API Connection: ${error}`,
@@ -405,30 +581,115 @@ function GardenSummary({
                 });
             }
           }}
-          tooltip={`${type} STOP ${node?.api}`}
+          title={
+            node.type === "RECEIVING"
+              ? node.direction === "DOWNSTREAM"
+                ? `Stop acceping events from ${node.garden} to ${selectedGarden?.name} over ${node.api}`
+                : `Stop acceping operation from ${node.garden} to ${selectedGarden?.name} over ${node.api}`
+              : node.direction === "DOWNSTREAM"
+                ? `Stop sending operations from ${selectedGarden?.name} to ${node.garden} over ${node.api}`
+                : `Stop sending events from ${selectedGarden?.name} to ${node.garden} over ${node.api}`
+          }
           config={config}
           permission="GARDEN_ADMIN"
           hasGardenName={selectedGarden?.name}
         >
-          <FontAwesomeIcon icon="stop" />
+          <FontAwesomeIcon icon={faStop} />
         </AccessButton>
-      </div>
+      </Box>
     );
   };
 
   return (
-    <Card
-      className="mb-4"
-      style={{ width: "100%" }}
-      unstyled
-      key={selectedGarden?.name}
-    >
-      <div className="flex ml-2 page-header">
-        <h1 className="flex-1">
-          {selectedGarden?.name
-            ? `Garden Summary: ${selectedGarden?.name}`
-            : "Garden Summary"}
-        </h1>
+    <Box sx={{ mb: 4, width: "100%" }} key={selectedGarden?.name}>
+      <Box
+        sx={{
+          display: "flex",
+          ml: 1,
+          pb: "9px",
+          margin: "20px 0 20px",
+        }}
+      >
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: "bold" }}>
+            {selectedGarden?.name
+              ? `Garden Summary: ${selectedGarden?.name}`
+              : "Garden Summary"}
+          </Typography>
+          <Box sx={{ display: "flex" }}>
+            <Box sx={{ display: "flex", mr: 2 }}>
+              <Typography
+                variant="subtitle1"
+                component="h2"
+                sx={{ mr: 2, fontWeight: "bold" }}
+              >
+                Version:
+              </Typography>
+              <Typography variant="subtitle1" component="h2">
+                {selectedGarden?.version}
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex" }}>
+              <Typography sx={{ mr: 2, fontWeight: "bold" }}>
+                Systems:
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                {Array.from(systemCounts, (statusGroup) => {
+                  if (statusGroup.count && statusGroup.count > 0) {
+                    return (
+                      <div key={`${statusGroup.severity}_Summary`}>
+                        <Tooltip
+                          title={
+                            <Stack spacing={1}>
+                              {Array.from(statusGroup.summary, (summary) => {
+                                if (summary.count && summary.count > 0) {
+                                  return (
+                                    <div>{`${summary.status} Count ${summary.count}`}</div>
+                                  );
+                                }
+                              })}
+                            </Stack>
+                          }
+                        >
+                          <Box component="span" aria-label={undefined}>
+                            <Chip
+                              data-testid={`${statusGroup.severity}_group_system_summary`}
+                              id={`${statusGroup.severity}_${selectedGarden?.id}_group_system_summary`}
+                              label={
+                                <div>
+                                  {statusGroup.count}
+                                  {statusGroup.severity ===
+                                  "success" ? undefined : statusGroup.severity ===
+                                    "info" ? (
+                                    <FAIcon sx={{ ml: 0.5 }} icon={faSquare} />
+                                  ) : statusGroup.severity === "warning" ? (
+                                    <FAIcon
+                                      sx={{ ml: 0.5 }}
+                                      icon={faTriangleExclamation}
+                                    />
+                                  ) : (
+                                    <FAIcon
+                                      sx={{ ml: 0.5 }}
+                                      icon={faXmarkCircle}
+                                    />
+                                  )}
+                                </div>
+                              }
+                              color={statusGroup.severity}
+                              key={statusGroup.severity}
+                            />
+                          </Box>
+                        </Tooltip>
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })}
+              </Box>
+            </Box>
+          </Box>
+        </Box>
         {selectedGarden?.name && (
           <div>
             <AccessButton
@@ -436,12 +697,12 @@ function GardenSummary({
               label="Rescan Plugins"
               tooltip={`Rescan Plugins for Garden ${selectedGarden?.name}`}
               data-testid={"RESCAN_PLUGINS"}
-              className="mr-2"
+              sx={{ mr: 1 }}
               onClick={() => {
                 if (selectedGarden?.name) {
                   Rescan(selectedGarden.name)
                     .then(() => {
-                      showToast({
+                      showSnackbar({
                         severity: "success",
                         summary: "Success",
                         detail: `Rescanned Plugins for Garden ${selectedGarden?.name}`,
@@ -453,7 +714,7 @@ function GardenSummary({
                         "Error Rescanning Garden Plugin Dir:",
                         error,
                       );
-                      showToast({
+                      showSnackbar({
                         severity: "error",
                         summary: "Error",
                         detail: `Error Rescanning Garden Plugin Dir: ${error}`,
@@ -465,18 +726,20 @@ function GardenSummary({
               config={config}
               permission="GARDEN_ADMIN"
               hasGardenName={selectedGarden?.name}
-            />
+            >
+              Rescan Plugins
+            </AccessButton>
             <AccessButton
               label="Rescan Downstream"
               tooltip={`Rescan Downstream for Garden ${selectedGarden?.name}`}
               {...GenerateTourProps(rescanDownstreamTourStep)}
               data-testid={"RESCAN_DOWNSTREAM"}
-              className="mr-2"
+              sx={{ mr: 1 }}
               onClick={() => {
                 if (selectedGarden?.name) {
                   RescanGarden(selectedGarden.name)
                     .then(() => {
-                      showToast({
+                      showSnackbar({
                         severity: "success",
                         summary: "Success",
                         detail: `Rescanned Downstream for Garden ${selectedGarden?.name}`,
@@ -485,7 +748,7 @@ function GardenSummary({
                     })
                     .catch((error) => {
                       console.error("Error Rescanning Garden:", error);
-                      showToast({
+                      showSnackbar({
                         severity: "error",
                         summary: "Error",
                         detail: `Error Rescanning Garden: ${error}`,
@@ -497,19 +760,21 @@ function GardenSummary({
               config={config}
               permission="GARDEN_ADMIN"
               hasGardenName={selectedGarden?.name}
-            />
+            >
+              Rescan Downstream
+            </AccessButton>
             <AccessButton
               label="Clear Plugin Queues"
               tooltip={`Clear Plugin Queues for Garden ${selectedGarden?.name}`}
               {...GenerateTourProps(clearPluginsQueuesTourStep)}
               data-testid={"CLEAR_PLUGIN_QUEUES"}
-              className="mr-2"
-              severity="warning"
+              sx={{ mr: 1 }}
+              color="warning"
               onClick={() => {
                 if (selectedGarden?.name) {
                   ClearAllQueues(selectedGarden.name)
                     .then(() => {
-                      showToast({
+                      showSnackbar({
                         severity: "success",
                         summary: "Success",
                         detail: `Cleared Plugin Queues for Garden ${selectedGarden?.name}`,
@@ -518,7 +783,7 @@ function GardenSummary({
                     })
                     .catch((error) => {
                       console.error("Error clearing Plugin Queue:", error);
-                      showToast({
+                      showSnackbar({
                         severity: "error",
                         summary: "Error",
                         detail: `Error clearing Plugin Queue: ${error}`,
@@ -530,7 +795,9 @@ function GardenSummary({
               config={config}
               permission="GARDEN_ADMIN"
               hasGardenName={selectedGarden?.name}
-            />
+            >
+              Clear Plugin Queues
+            </AccessButton>
             {gardenRef.current &&
               gardenRef.current.name !== selectedGarden?.name && (
                 <AccessButton
@@ -538,12 +805,12 @@ function GardenSummary({
                   tooltip={`Sync Garden ${selectedGarden?.name}`}
                   {...GenerateTourProps(syncGardenTourStep)}
                   data-testid={"SYNC_GARDEN"}
-                  className="mr-2"
+                  sx={{ mr: 1 }}
                   onClick={() => {
                     if (selectedGarden?.name) {
                       SyncGarden(selectedGarden.name)
                         .then(() => {
-                          showToast({
+                          showSnackbar({
                             severity: "success",
                             summary: "Success",
                             detail: `Synced Garden ${selectedGarden?.name}`,
@@ -552,7 +819,7 @@ function GardenSummary({
                         })
                         .catch((error) => {
                           console.error("Error Syncing Garden:", error);
-                          showToast({
+                          showSnackbar({
                             severity: "error",
                             summary: "Error",
                             detail: `Error Syncing Garden: ${error}`,
@@ -564,7 +831,9 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                />
+                >
+                  Sync
+                </AccessButton>
               )}
             {gardenRef.current &&
               gardenRef.current.name === selectedGarden?.name && (
@@ -572,11 +841,11 @@ function GardenSummary({
                   label="Sync All"
                   {...GenerateTourProps(syncAllTourStep)}
                   data-testid={"SYNC_ALL"}
-                  className="mr-2"
+                  sx={{ mr: 1 }}
                   onClick={() => {
                     SyncGarden()
                       .then(() => {
-                        showToast({
+                        showSnackbar({
                           severity: "success",
                           summary: "Success",
                           detail: `Synced Garden ${selectedGarden?.name}`,
@@ -585,7 +854,7 @@ function GardenSummary({
                       })
                       .catch((error) => {
                         console.error("Error Syncing Garden:", error);
-                        showToast({
+                        showSnackbar({
                           severity: "error",
                           summary: "Error",
                           detail: `Error Syncing Garden: ${error}`,
@@ -596,7 +865,9 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                />
+                >
+                  Sync All
+                </AccessButton>
               )}
             {gardenRef.current &&
               gardenRef.current.name !== selectedGarden?.name && (
@@ -605,12 +876,12 @@ function GardenSummary({
                   tooltip={`Sync Users for Garden ${selectedGarden?.name}`}
                   {...GenerateTourProps(syncUsersTourStep)}
                   data-testid={"SYNC_USERS"}
-                  className="mr-2"
+                  sx={{ mr: 1 }}
                   onClick={() => {
                     if (selectedGarden?.name) {
                       SyncUsersGarden(selectedGarden.name)
                         .then(() => {
-                          showToast({
+                          showSnackbar({
                             severity: "success",
                             summary: "Success",
                             detail: `Synced Users for Garden ${selectedGarden?.name}`,
@@ -622,7 +893,7 @@ function GardenSummary({
                             "Error Syncing Users in Garden:",
                             error,
                           );
-                          showToast({
+                          showSnackbar({
                             severity: "error",
                             summary: "Error",
                             detail: `Error Syncing Users in Garden: ${error}`,
@@ -634,7 +905,9 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                />
+                >
+                  Sync Users
+                </AccessButton>
               )}
             {gardenRef.current &&
               gardenRef.current.name !== selectedGarden?.name && (
@@ -643,13 +916,13 @@ function GardenSummary({
                   tooltip={`Delete Garden ${selectedGarden?.name}`}
                   {...GenerateTourProps(deleteGardenTourStep)}
                   data-testid={"DELETE_GARDEN"}
-                  severity="danger"
-                  className="mr-2"
+                  color="error"
+                  sx={{ mr: 1 }}
                   onClick={() => {
                     if (selectedGarden?.name) {
                       DeleteGarden(selectedGarden.name)
                         .then(() => {
-                          showToast({
+                          showSnackbar({
                             severity: "success",
                             summary: "Success",
                             detail: `Deleted Garden ${selectedGarden?.name}`,
@@ -658,7 +931,7 @@ function GardenSummary({
                         })
                         .catch((error) => {
                           console.error("Error Deleting Garden:", error);
-                          showToast({
+                          showSnackbar({
                             severity: "error",
                             summary: "Error",
                             detail: `Error Deleting Garden: ${error}`,
@@ -670,143 +943,59 @@ function GardenSummary({
                   config={config}
                   permission="GARDEN_ADMIN"
                   hasGardenName={selectedGarden?.name}
-                />
+                >
+                  Delete Garden
+                </AccessButton>
               )}
           </div>
         )}
-      </div>
+      </Box>
+      <Divider />
       {selectedGarden?.name ? (
         <div>
           {invalidRouting && (
-            <Message
-              className="mx-2 mb-2"
-              severity="warn"
-              text="Warning - Upstream routing error. Requests or Syncs might be interrupted or missed. Please contact your Garden Admin"
-              pt={{
-                icon: {
-                  role: "img",
-                  "aria-label": "Close Alert Message",
-                  style: { color: "var(--warning-color)" },
-                },
+            <Alert
+              sx={{
+                mx: 1,
+                mb: 1,
               }}
-              style={{
-                backgroundColor: "var(--warning-background-color)",
-                color: "var(--warning-color)",
-              }}
-            />
+              severity="warning"
+              icon={
+                <FAIcon
+                  icon={faTriangleExclamation}
+                  role="img"
+                  aria-label="Warning alert icon"
+                />
+              }
+            >
+              Warning - Upstream routing error. Requests or Syncs might be
+              interrupted or missed. Please contact your Garden Admin
+            </Alert>
           )}
-          <div className="grid">
-            <div className="col-3">
-              <h2>Version</h2>
-              <p>{selectedGarden?.version}</p>
-            </div>
-            <div className="col-3">
-              <h2>Systems</h2>
-              <div className="flex">
-                {Array.from(systemCounts, ([status, count]) => {
-                  if (count && count > 0) {
-                    const statusSeverity = GetSeverity(status);
-                    return (
-                      <div key={`${status}_Summary`}>
-                        <Tooltip
-                          content={`${status} Count ${count}`}
-                          target={`#${status}_${selectedGarden?.id}_severity_system_summary`}
-                          position="bottom"
-                        />
-                        <Badge
-                          data-testid={`${status}_severity_system_summary`}
-                          id={`${status}_${selectedGarden?.id}_severity_system_summary`}
-                          value={count}
-                          severity={statusSeverity}
-                          key={status}
-                        />
-                      </div>
-                    );
-                  }
-
-                  return null;
-                })}
-              </div>
-            </div>
-            {selectedGarden?.children &&
-              selectedGarden?.children.length > 0 && (
-                <div className="col-3">
-                  <h2>Downstream</h2>
-
-                  {selectedGarden?.children &&
-                    selectedGarden?.children.length > 0 && (
-                      <ul>
-                        {" "}
-                        {Array.from(
-                          selectedGarden.children ?? [],
-                          (child: Garden) => {
-                            return <li key={child.name}>{child.name}</li>;
-                          },
-                        )}
-                      </ul>
-                    )}
-                </div>
-              )}
-            {selectedGarden?.parent && (
-              <div className="col-3">
-                <h2>Upstream</h2>
-                <ul>
-                  <li>{selectedGarden?.parent}</li>
-                </ul>
-              </div>
+          <GardenStatusHistoryDialog
+            gardenName={downstreamGardenName}
+            connection_type={downstreamConnectionType}
+            api_type={downstreamAPIType}
+            isVisible={statusHistoryVisible}
+            onClose={closeStatusHistoryDialog}
+          />
+          <Box sx={{ mt: 2 }}>
+            {downstreamConnections && downstreamConnections.length > 0 && (
+              <EnhancedTable
+                data={downstreamConnections}
+                groupBy="garden"
+                size="small"
+                displayAll={true}
+                columns={getConnectionColumns()}
+                aria-label="Downstream Garden Connections Table"
+              />
             )}
-          </div>
-          <div className="grid">
-            {receivingConnections && receivingConnections.length > 0 && (
-              <div className="col-4">
-                <h2>Receiving</h2>
-
-                <DataTable value={receivingConnections}>
-                  <Column
-                    field="api"
-                    header="API"
-                    body={(row) => apiTemplate(row, "RECEIVING")}
-                  />
-                  <Column
-                    field="status"
-                    header="Status"
-                    body={statusTemplate}
-                  />
-                  <Column
-                    header="Actions"
-                    body={(node: any) => connectionActions(node, "RECEIVING")}
-                  />
-                </DataTable>
-              </div>
-            )}
-
-            {publishingConnections && publishingConnections.length > 0 && (
-              <div className="col-4">
-                <h2>Publishing</h2>
-                <DataTable value={publishingConnections}>
-                  <Column
-                    field="api"
-                    header="API"
-                    body={(row) => apiTemplate(row, "PUBLISHING")}
-                  />
-                  <Column
-                    field="status"
-                    header="Status"
-                    body={statusTemplate}
-                  />
-                  <Column
-                    header="Actions"
-                    body={(node: any) => connectionActions(node, "PUBLISHING")}
-                  />
-                </DataTable>
-              </div>
-            )}
-          </div>
+          </Box>
         </div>
       ) : (
         <Skeleton width="100%" height="150px"></Skeleton>
       )}
-    </Card>
+    </Box>
   );
 }
 

@@ -39,12 +39,6 @@ export interface Listener {
   props: Record<string, any>;
 }
 
-export interface ScratchPadValue {
-  padId: string;
-  padType: string | null;
-  values: any;
-}
-
 export interface RequestCommand {
   namespace?: string;
   systemName?: string;
@@ -73,12 +67,29 @@ export interface InputParam extends Parameter {
   isInvalid: boolean;
   options: Array<{ label: string; value: any }> | undefined;
   error: boolean;
+  errorIndex?: number[];
   errorMsg?: string;
+  errorIndexMessage?: { index: number; msg: string }[];
+}
+
+export interface SystemForceDeleteDialogProps {
+  system: System;
+  error: string;
+  isVisible: boolean;
+  onClose: any;
 }
 
 export interface InstanceDialogProps {
   instance: Instance;
   system: System;
+  isVisible: boolean;
+  onClose: any;
+}
+
+export interface GardenDialogProps {
+  gardenName: string;
+  connection_type: string;
+  api_type: string;
   isVisible: boolean;
   onClose: any;
 }
@@ -94,6 +105,8 @@ export interface PermissionCheck {
 }
 
 export interface HasAccessProps {
+  label?: string;
+  tooltip?: string;
   config?: Config;
   permission?: "READ_ONLY" | "OPERATOR" | "PLUGIN_ADMIN" | "GARDEN_ADMIN";
   isGlobal?: boolean;
@@ -139,4 +152,10 @@ export interface CustomJwtPayload extends JwtPayload {
     dark_mode: boolean;
     power_user: boolean;
   };
+}
+
+export interface SeverityGroup {
+  severity: "success" | "info" | "warning" | "error";
+  count: number;
+  summary: { status: string; count: number }[];
 }

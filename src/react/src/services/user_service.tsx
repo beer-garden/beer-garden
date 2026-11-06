@@ -8,9 +8,13 @@ import { GetBaseURL } from "./util_service";
 export const GetCurrentUser = () => {
   const token = GetToken();
   if (token !== null) {
-    const decode = jwtDecode<CustomJwtPayload>(token);
-    if (decode.username) {
-      return decode.username;
+    try {
+      const decode = jwtDecode<CustomJwtPayload>(token);
+      if (decode.username) {
+        return decode.username;
+      }
+    } catch (error) {
+      console.error("Error decoding token:", error);
     }
   }
   return undefined;
@@ -19,44 +23,25 @@ export const GetCurrentUser = () => {
 export const GetCurrentRoles = (): Array<Role> | undefined => {
   const token = GetToken();
   if (token !== null) {
-    const decode = jwtDecode<CustomJwtPayload>(token);
-    if (decode.roles) {
-      const userRoles = [] as Array<Role>;
-      for (const role of decode.roles) {
-        // The role can be a string or an object depending on how the token was generated
-        if (typeof role === "string") {
-          userRoles.push(JSON.parse(role) as Role);
-        } else {
-          userRoles.push(role as Role);
+    try {
+      const decode = jwtDecode<CustomJwtPayload>(token);
+      if (decode.roles) {
+        const userRoles = [] as Array<Role>;
+        for (const role of decode.roles) {
+          // The role can be a string or an object depending on how the token was generated
+          if (typeof role === "string") {
+            userRoles.push(JSON.parse(role) as Role);
+          } else {
+            userRoles.push(role as Role);
+          }
         }
+        return userRoles;
       }
-      return userRoles;
+    } catch (error) {
+      console.error("Error decoding token:", error);
     }
   }
   return undefined;
-};
-
-export const UpdateUserTheme = async (theme: string): Promise<void> => {
-  const headers = GetAuthHeaders();
-  const username = GetCurrentUser();
-  if (!username) {
-    return;
-  }
-  headers.append("Content-Type", "application/json");
-  const fetch_url = `${GetBaseURL()}/api/v1/users/${username}`;
-  const response = await fetch(fetch_url, {
-    headers: headers,
-    method: "PATCH",
-    body: JSON.stringify({
-      operation: "set",
-      path: "/preferences/theme",
-      value: theme,
-    }),
-  });
-  if (!response.ok) {
-    // Handle non-OK responses (e.g., 404, 500)
-    throw new Error(`HTTP error: Status ${response.status}`);
-  }
 };
 
 export const UpdateUserDarkMode = async (darkMode: boolean): Promise<void> => {
