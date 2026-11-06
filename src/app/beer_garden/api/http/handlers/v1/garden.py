@@ -122,7 +122,7 @@ class GardenAPI(AuthorizationHandler):
 
         exclude_fields = self.get_query_argument("exclude_fields", None)
         if exclude_fields:
-            exclude_fields = list(set(exclude_fields.split(",")))
+            exclude_fields = set(exclude_fields.split(","))
 
         response = await self.process_operation(
             Operation(
@@ -373,7 +373,7 @@ class GardenListAPI(AuthorizationHandler):
 
         exclude_fields = self.get_query_argument("exclude_fields", None)
         if exclude_fields:
-            exclude_fields = list(set(exclude_fields.split(",")))
+            exclude_fields = set(exclude_fields.split(","))
 
         permitted_gardens_list = await self.process_operation(
             Operation(
