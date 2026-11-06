@@ -4,7 +4,9 @@ import {
   faCircle,
   faCircleExclamation,
   faPlay,
+  faSquare,
   faTriangleExclamation,
+  faXmarkCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -480,11 +482,11 @@ function GardenDashboard({
                       {statusGroup.severity ===
                       "success" ? undefined : statusGroup.severity ===
                         "info" ? (
-                        <FAIcon sx={{ ml: 0.5 }} icon="square" />
+                        <FAIcon sx={{ ml: 0.5 }} icon={faSquare} />
                       ) : statusGroup.severity === "warning" ? (
-                        <FAIcon sx={{ ml: 0.5 }} icon="exclamation-triangle" />
+                        <FAIcon sx={{ ml: 0.5 }} icon={faTriangleExclamation} />
                       ) : (
-                        <FAIcon sx={{ ml: 0.5 }} icon="xmark-circle" />
+                        <FAIcon sx={{ ml: 0.5 }} icon={faXmarkCircle} />
                       )}
                     </div>
                   }

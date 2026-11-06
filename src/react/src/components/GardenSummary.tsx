@@ -4,8 +4,10 @@ import {
   faClockRotateLeft,
   faPlay,
   faServer,
+  faSquare,
   faStop,
   faTriangleExclamation,
+  faXmarkCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -659,16 +661,16 @@ function GardenSummary({
                                   {statusGroup.severity ===
                                   "success" ? undefined : statusGroup.severity ===
                                     "info" ? (
-                                    <FAIcon sx={{ ml: 0.5 }} icon="square" />
+                                    <FAIcon sx={{ ml: 0.5 }} icon={faSquare} />
                                   ) : statusGroup.severity === "warning" ? (
                                     <FAIcon
                                       sx={{ ml: 0.5 }}
-                                      icon="exclamation-triangle"
+                                      icon={faTriangleExclamation}
                                     />
                                   ) : (
                                     <FAIcon
                                       sx={{ ml: 0.5 }}
-                                      icon="xmark-circle"
+                                      icon={faXmarkCircle}
                                     />
                                   )}
                                 </div>
