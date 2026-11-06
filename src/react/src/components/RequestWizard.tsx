@@ -1,3 +1,4 @@
+import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import {
   Box,
   Card,
@@ -724,7 +725,7 @@ function RequestWizard({
                 hasCommandName={requestItem.requestCommandInput?.command}
               >
                 Submit
-                <FAIcon icon="arrow-right" sx={{ ml: 2 }} />
+                <FAIcon icon={faArrowRight} sx={{ ml: 2 }} />
               </AccessButton>
             )}
             {showCreateRequest && toggleScheduleJob && !requestItem?.jobId && (
@@ -742,7 +743,7 @@ function RequestWizard({
                 hasCommandName={requestItem.requestCommandInput?.command}
               >
                 Submit Job
-                <FAIcon icon="arrow-right" sx={{ ml: 2 }} />
+                <FAIcon icon={faArrowRight} sx={{ ml: 2 }} />
               </AccessButton>
             )}
             {showCreateRequest && toggleScheduleJob && requestItem?.jobId && (
@@ -760,7 +761,7 @@ function RequestWizard({
                 hasCommandName={requestItem.requestCommandInput?.command}
               >
                 Update Job
-                <FAIcon icon="arrow-right" sx={{ ml: 2 }} />
+                <FAIcon icon={faArrowRight} sx={{ ml: 2 }} />
               </AccessButton>
             )}
           </Box>

@@ -1,3 +1,12 @@
+import {
+  faArrowUpRightFromSquare,
+  faBriefcase,
+  faCircleExclamation,
+  faEye,
+  faLevelUp,
+  faRefresh,
+  faUserSecret,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Box,
@@ -183,8 +192,8 @@ function RequestIndex({
           {...GenerateTourProps(RefreshTableTourStep)}
           aria-live="polite"
         >
-          {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
-          <FontAwesomeIcon icon="refresh" />
+          {recordsUpdated && <FontAwesomeIcon icon={faCircleExclamation} />}
+          <FontAwesomeIcon icon={faRefresh} />
         </AccessButton>
       </Box>
     </Box>
@@ -227,13 +236,13 @@ function RequestIndex({
               sx={{ textDecoration: "none" }}
               tabIndex={-1}
             >
-              <FAIcon icon="level-up" sx={{ mr: 2 }} data-pr-position="top" />
+              <FAIcon icon={faLevelUp} sx={{ mr: 2 }} data-pr-position="top" />
             </Link>
           </Tooltip>
         )}
         <span>{request.command_display_name ?? request.command}</span>
         {request.hidden && (
-          <FontAwesomeIcon icon="user-secret" style={{ float: "right" }} />
+          <FontAwesomeIcon icon={faUserSecret} style={{ float: "right" }} />
         )}
       </div>
     );
@@ -260,7 +269,7 @@ function RequestIndex({
             sx={{ mr: 1 }}
             {...GenerateTourProps(OpenRequestTourStep)}
           >
-            <FontAwesomeIcon icon="arrow-up-right-from-square" />
+            <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
           </AccessButton>
         </Link>
         <AccessButton
@@ -270,7 +279,7 @@ function RequestIndex({
           sx={{ mr: 1 }}
           {...GenerateTourProps(ViewRequestTourStep)}
         >
-          <FontAwesomeIcon icon="eye" />
+          <FontAwesomeIcon icon={faEye} />
         </AccessButton>
         {showJob && (
           <AccessButton
@@ -280,7 +289,7 @@ function RequestIndex({
             sx={{ mr: 1 }}
             {...GenerateTourProps(ViewJobTourStep)}
           >
-            <FontAwesomeIcon icon="briefcase" />
+            <FontAwesomeIcon icon={faBriefcase} />
           </AccessButton>
         )}
       </div>

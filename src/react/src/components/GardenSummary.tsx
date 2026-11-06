@@ -1,3 +1,12 @@
+import {
+  faArrowDown,
+  faArrowUp,
+  faClockRotateLeft,
+  faPlay,
+  faServer,
+  faStop,
+  faTriangleExclamation,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Alert,
@@ -389,7 +398,7 @@ function GardenSummary({
         {connection.api}
         {url.length > 0 && (
           <Tooltip title={url}>
-            <FAIcon icon="server" id={targetId} sx={{ ml: 1 }} />
+            <FAIcon icon={faServer} id={targetId} sx={{ ml: 1 }} />
           </Tooltip>
         )}
       </>
@@ -426,7 +435,7 @@ function GardenSummary({
             aria-label={`Show Status History for ${row.garden} over ${row.api}`}
             icon
           >
-            <FAIcon icon="clock-rotate-left" />
+            <FAIcon icon={faClockRotateLeft} />
           </AccessButton>
         </Stack>
       </Box>
@@ -453,7 +462,7 @@ function GardenSummary({
               <span>
                 <FAIcon
                   icon={
-                    row.direction === "DOWNSTREAM" ? "arrow-down" : "arrow-up"
+                    row.direction === "DOWNSTREAM" ? faArrowDown : faArrowUp
                   }
                   sx={{ mr: 2 }}
                 />
@@ -538,7 +547,7 @@ function GardenSummary({
           permission="GARDEN_ADMIN"
           hasGardenName={selectedGarden?.name}
         >
-          <FontAwesomeIcon icon="play" />
+          <FontAwesomeIcon icon={faPlay} />
         </AccessButton>
         <AccessButton
           color="warning"
@@ -583,7 +592,7 @@ function GardenSummary({
           permission="GARDEN_ADMIN"
           hasGardenName={selectedGarden?.name}
         >
-          <FontAwesomeIcon icon="stop" />
+          <FontAwesomeIcon icon={faStop} />
         </AccessButton>
       </Box>
     );
@@ -921,7 +930,7 @@ function GardenSummary({
               severity="warning"
               icon={
                 <FAIcon
-                  icon="triangle-exclamation"
+                  icon={faTriangleExclamation}
                   role="img"
                   aria-label="Warning alert icon"
                 />

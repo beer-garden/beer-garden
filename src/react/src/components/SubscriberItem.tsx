@@ -1,3 +1,4 @@
+import { faClose } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Autocomplete,
@@ -147,7 +148,7 @@ function SubscriberItem({
                 onClick={() => handleClose(index)}
                 sx={{ my: 1 }}
               >
-                <FontAwesomeIcon icon="close" />
+                <FontAwesomeIcon icon={faClose} />
               </AccessButton>
             )}
           </Box>

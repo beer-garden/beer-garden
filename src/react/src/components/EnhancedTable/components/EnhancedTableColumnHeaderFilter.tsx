@@ -1,3 +1,4 @@
+import { faFilter } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import IconButton from "@mui/material/IconButton";
 import Tooltip from "@mui/material/Tooltip";
@@ -61,7 +62,7 @@ export const EnhancedTableColumnHeaderFilter = ({
           aria-haspopup="true"
           aria-expanded={filterMenuOpen}
         >
-          <FontAwesomeIcon icon="filter" />
+          <FontAwesomeIcon icon={faFilter} />
         </IconButton>
       </Tooltip>
       {showFilter && (

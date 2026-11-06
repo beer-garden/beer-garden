@@ -1,3 +1,4 @@
+import { faClose } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Autocomplete,
@@ -101,7 +102,7 @@ function RoleScopeCard({
     return (
       <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1 }}>
         <AccessButton tooltip="Remove" onClick={() => handleClose(index)}>
-          <FontAwesomeIcon icon="close" />
+          <FontAwesomeIcon icon={faClose} />
         </AccessButton>
       </Box>
     );

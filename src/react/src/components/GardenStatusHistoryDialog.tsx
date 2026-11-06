@@ -1,3 +1,4 @@
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import {
   Box,
   Chip,
@@ -86,7 +87,7 @@ function GardenStatusHistoryDialog({
               aria-label="Close status history dialog"
               onClick={onClose}
             >
-              <FAIcon icon="xmark" />
+              <FAIcon icon={faXmark} />
             </AccessButton>
           </Grid>
         </Grid>

@@ -1,3 +1,9 @@
+import {
+  faPlay,
+  faRefresh,
+  faStop,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Box, ButtonGroup, Chip, Divider, Stack } from "@mui/material";
 import { grey } from "@mui/material/colors";
@@ -123,7 +129,7 @@ function UnassociatedRunnerCard({
             config={config}
             permission="PLUGIN_ADMIN"
           >
-            <FontAwesomeIcon icon="play" />
+            <FontAwesomeIcon icon={faPlay} />
           </AccessButton>
           <AccessButton
             size="small"
@@ -135,7 +141,7 @@ function UnassociatedRunnerCard({
             config={config}
             permission="PLUGIN_ADMIN"
           >
-            <FontAwesomeIcon icon="stop" />
+            <FontAwesomeIcon icon={faStop} />
           </AccessButton>
           <AccessButton
             size="small"
@@ -145,7 +151,7 @@ function UnassociatedRunnerCard({
             config={config}
             permission="PLUGIN_ADMIN"
           >
-            <FontAwesomeIcon icon="trash" />
+            <FontAwesomeIcon icon={faTrash} />
           </AccessButton>
         </ButtonGroup>
       </Box>
@@ -183,7 +189,7 @@ function UnassociatedRunnerCard({
                   config={config}
                   permission="PLUGIN_ADMIN"
                 >
-                  <FontAwesomeIcon icon="play" />
+                  <FontAwesomeIcon icon={faPlay} />
                 </AccessButton>
                 <AccessButton
                   size="small"
@@ -193,7 +199,7 @@ function UnassociatedRunnerCard({
                   config={config}
                   permission="PLUGIN_ADMIN"
                 >
-                  <FontAwesomeIcon icon="stop" />
+                  <FontAwesomeIcon icon={faStop} />
                 </AccessButton>
                 <AccessButton
                   size="small"
@@ -204,7 +210,7 @@ function UnassociatedRunnerCard({
                   config={config}
                   permission="PLUGIN_ADMIN"
                 >
-                  <FontAwesomeIcon icon="refresh" />
+                  <FontAwesomeIcon icon={faRefresh} />
                 </AccessButton>
               </ButtonGroup>
               <AccessButton
@@ -215,7 +221,7 @@ function UnassociatedRunnerCard({
                 config={config}
                 permission="PLUGIN_ADMIN"
               >
-                <FontAwesomeIcon icon="trash" />
+                <FontAwesomeIcon icon={faTrash} />
               </AccessButton>
             </Box>
             <Box component="span">../{runnerGroup.path}</Box>

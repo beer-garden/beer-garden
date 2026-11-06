@@ -1,4 +1,12 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import {
+  faBars,
+  faGears,
+  faPlay,
+  faRefresh,
+  faStop,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Box,
@@ -443,7 +451,7 @@ function SystemCard({
             basic
             permission="PLUGIN_ADMIN"
           >
-            <FontAwesomeIcon icon="play" />
+            <FontAwesomeIcon icon={faPlay} />
           </AccessButton>
           <AccessButton
             size="small"
@@ -454,7 +462,7 @@ function SystemCard({
             basic
             permission="PLUGIN_ADMIN"
           >
-            <FontAwesomeIcon icon="stop" />
+            <FontAwesomeIcon icon={faStop} />
           </AccessButton>
 
           <Menu
@@ -554,7 +562,7 @@ function SystemCard({
             permission="OPERATOR"
             basic
           >
-            <FontAwesomeIcon icon="bars" />
+            <FontAwesomeIcon icon={faBars} />
           </AccessButton>
         </ButtonGroup>
       </div>
@@ -588,7 +596,7 @@ function SystemCard({
         <Box sx={{ bgcolor: "primary.main" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 2 }}>
             <FontAwesomeIcon
-              icon={system.icon_name ? (system.icon_name as IconProp) : "gears"}
+              icon={system.icon_name ? (system.icon_name as IconProp) : faGears}
               aria-hidden="true"
             />
             <Box component="span" sx={{ maxWidth: "20rem", fontWeight: 600 }}>
@@ -613,7 +621,7 @@ function SystemCard({
                   permission="PLUGIN_ADMIN"
                   basic
                 >
-                  <FontAwesomeIcon icon="play" />
+                  <FontAwesomeIcon icon={faPlay} />
                 </AccessButton>
                 <AccessButton
                   size="small"
@@ -625,7 +633,7 @@ function SystemCard({
                   permission="PLUGIN_ADMIN"
                   basic
                 >
-                  <FontAwesomeIcon icon="stop" />
+                  <FontAwesomeIcon icon={faStop} />
                 </AccessButton>
               </ButtonGroup>
               <ButtonGroup>
@@ -638,7 +646,7 @@ function SystemCard({
                   permission="PLUGIN_ADMIN"
                   basic
                 >
-                  <FontAwesomeIcon icon="refresh" />
+                  <FontAwesomeIcon icon={faRefresh} />
                 </AccessButton>
 
                 <AccessButton
@@ -650,7 +658,7 @@ function SystemCard({
                   permission="PLUGIN_ADMIN"
                   basic
                 >
-                  <FontAwesomeIcon icon="trash" />
+                  <FontAwesomeIcon icon={faTrash} />
                 </AccessButton>
               </ButtonGroup>
             </Box>

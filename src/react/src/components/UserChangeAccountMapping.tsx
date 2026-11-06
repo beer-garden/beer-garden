@@ -1,3 +1,4 @@
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import {
   Dialog,
   DialogActions,
@@ -234,7 +235,7 @@ function UserChangeAccountMapping({
               aria-label="Close account mapping dialog"
               onClick={handleAccountMappingDialogClose}
             >
-              <FAIcon icon="xmark" />
+              <FAIcon icon={faXmark} />
             </AccessButton>
           </Grid>
         </Grid>
