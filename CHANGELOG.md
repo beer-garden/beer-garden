@@ -3,7 +3,7 @@
 # TBD
 TBD
 
-- Fixed bug encountered while checking stomp garden connections
+- Fixed bug encountered while checking stomp garden connections (#2487)
 
 # 3.35.1
 9/9/2026
