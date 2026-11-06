@@ -118,7 +118,7 @@ class GardenAPI(AuthorizationHandler):
 
         include_fields = self.get_query_argument("include_fields", None)
         if include_fields:
-            include_fields = set(include_fields.split(","))
+            include_fields = list(set(include_fields.split(",")))
 
         exclude_fields = self.get_query_argument("exclude_fields", None)
         if exclude_fields:
@@ -369,7 +369,7 @@ class GardenListAPI(AuthorizationHandler):
 
         include_fields = self.get_query_argument("include_fields", None)
         if include_fields:
-            include_fields = set(include_fields.split(","))
+            include_fields = list(set(include_fields.split(",")))
 
         exclude_fields = self.get_query_argument("exclude_fields", None)
         if exclude_fields:

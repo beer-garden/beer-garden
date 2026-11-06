@@ -1,5 +1,10 @@
 # Beer Garden Changelog
 
+# TBD
+TBD
+
+- Fixed Garden API include_fields set append error
+
 # 3.35.1
 9/9/2026
 
