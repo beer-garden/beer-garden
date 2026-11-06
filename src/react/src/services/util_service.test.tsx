@@ -18,18 +18,18 @@ test("Compare Different Objects", () => {
 });
 
 it.each([
-  { status: "INITIALIZING" },
-  { status: "RUNNING" },
-  { status: "PAUSED" },
-  { status: "STOPPED" },
-  { status: "DEAD" },
-  { status: "UNRESPONSIVE" },
-  { status: "STARTING" },
-  { status: "STOPPING" },
-  { status: "UNKNOWN" },
-  { status: "AWAITING_SYSTEM" },
-  { status: "ERROR" },
-])(`system map $status`, ({ status }) => {
+  { status: "RUNNING", severity: "success" },
+  { status: "PAUSED", severity: "info" },
+  { status: "STOPPED", severity: "info" },
+  { status: "INITIALIZING", severity: "warning" },
+  { status: "STARTING", severity: "warning" },
+  { status: "STOPPING", severity: "warning" },
+  { status: "AWAITING_SYSTEM", severity: "warning" },
+  { status: "UNKNOWN", severity: "error" },
+  { status: "DEAD", severity: "error" },
+  { status: "UNRESPONSIVE", severity: "error" },
+  { status: "ERROR", severity: "error" },
+])(`system map $status $severity`, ({ status, severity }) => {
   const gardenRef = { current: { name: "root" } as Garden };
 
   const associatedRunners = { current: [] };
@@ -47,14 +47,27 @@ it.each([
 
   const systems = selectedGarden.systems;
 
-  const statusMap = GenerateStatusCounts(
+  const statusGroupMap = GenerateStatusCounts(
     gardenRef,
     associatedRunners,
     selectedGarden,
     systems,
   );
 
-  expect(statusMap.get(status)).toBe(1);
+  for (const group of statusGroupMap) {
+    if (group.severity === severity) {
+      expect(group.count).toBe(1);
+      for (const summary of group.summary) {
+        if (summary.status === status) {
+          expect(summary.count).toBe(1);
+        } else {
+          expect(summary.count).toBe(0);
+        }
+      }
+    } else {
+      expect(group.count).toBe(0);
+    }
+  }
 });
 
 it.each([
@@ -201,15 +214,20 @@ describe("GenerateStatusCounts edge cases", () => {
     const associatedRunners = { current: [] };
     const garden = { name: "root" } as Garden;
 
-    const statusMap = GenerateStatusCounts(
+    const statusGroupMap = GenerateStatusCounts(
       gardenRef,
       associatedRunners,
       garden,
       undefined,
     );
 
-    expect(statusMap.get("RUNNING")).toBe(0);
-    expect(statusMap.get("DEAD")).toBe(0);
+    for (const group of statusGroupMap) {
+      for (const summary of group.summary) {
+        expect(summary.count).toBe(0);
+      }
+
+      expect(group.count).toBe(0);
+    }
   });
 
   it("counts UNASSOCIATED_RUNNER when runners are not assigned to systems", () => {
@@ -226,14 +244,25 @@ describe("GenerateStatusCounts edge cases", () => {
     } as Garden;
     const systems = [] as System[];
 
-    const statusMap = GenerateStatusCounts(
+    const statusGroupMap = GenerateStatusCounts(
       gardenRef,
       associatedRunners,
       garden,
       systems,
     );
 
-    expect(statusMap.get("UNASSOCIATED_RUNNER")).toBe(1);
+    for (const group of statusGroupMap) {
+      if (group.severity === "error") {
+        expect(group.count).toBe(1);
+        for (const summary of group.summary) {
+          if (summary.status === "UNASSOCIATED_RUNNER") {
+            expect(summary.count).toBe(1);
+          }
+        }
+      } else {
+        expect(group.count).toBe(0);
+      }
+    }
   });
 
   it("does not count UNASSOCIATED_RUNNER when garden is not root", () => {
@@ -246,14 +275,25 @@ describe("GenerateStatusCounts edge cases", () => {
     const garden = { name: "child" } as Garden;
     const systems: System[] = [];
 
-    const statusMap = GenerateStatusCounts(
+    const statusGroupMap = GenerateStatusCounts(
       gardenRef,
       associatedRunners,
       garden,
       systems,
     );
 
-    expect(statusMap.get("UNASSOCIATED_RUNNER")).toBe(0);
+    for (const group of statusGroupMap) {
+      if (group.severity === "error") {
+        expect(group.count).toBe(0);
+        for (const summary of group.summary) {
+          if (summary.status === "UNASSOCIATED_RUNNER") {
+            expect(summary.count).toBe(0);
+          }
+        }
+      } else {
+        expect(group.count).toBe(0);
+      }
+    }
   });
 
   it("counts multiple instances across systems", () => {
@@ -280,14 +320,35 @@ describe("GenerateStatusCounts edge cases", () => {
 
     const systems = garden.systems;
 
-    const statusMap = GenerateStatusCounts(
+    const statusGroupMap = GenerateStatusCounts(
       gardenRef,
       associatedRunners,
       garden,
       systems,
     );
 
-    expect(statusMap.get("RUNNING")).toBe(2);
-    expect(statusMap.get("DEAD")).toBe(1);
+    for (const group of statusGroupMap) {
+      if (group.severity === "error") {
+        expect(group.count).toBe(1);
+        for (const summary of group.summary) {
+          if (summary.status === "DEAD") {
+            expect(summary.count).toBe(1);
+          } else {
+            expect(summary.count).toBe(0);
+          }
+        }
+      } else if (group.severity === "success") {
+        expect(group.count).toBe(2);
+        for (const summary of group.summary) {
+          if (summary.status === "RUNNING") {
+            expect(summary.count).toBe(2);
+          } else {
+            expect(summary.count).toBe(0);
+          }
+        }
+      } else {
+        expect(group.count).toBe(0);
+      }
+    }
   });
 });

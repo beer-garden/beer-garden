@@ -6,7 +6,7 @@ import { Box, BoxProps } from "@mui/material";
 import { RefObject } from "react";
 
 import { Garden, Instance, Runner, System } from "../models/brewtils-types";
-import { Version } from "../models/models";
+import { SeverityGroup, Version } from "../models/models";
 import { externalRoutesList } from "./routes_service";
 import { UpdatePowerUserMode, UpdateUserDarkMode } from "./user_service";
 
@@ -271,7 +271,63 @@ export const GenerateStatusCounts = (
     }
   }
 
-  return statusCounts;
+  const groupCounts = [] as Array<SeverityGroup>;
+
+  groupCounts.push({
+    severity: "success",
+    count: statusCounts.get("RUNNING") || 0,
+    summary: [{ status: "RUNNING", count: statusCounts.get("RUNNING") || 0 }],
+  });
+
+  groupCounts.push({
+    severity: "info",
+    count:
+      (statusCounts.get("PAUSED") || 0) + (statusCounts.get("STOPPED") || 0),
+    summary: [
+      { status: "PAUSED", count: statusCounts.get("PAUSED") || 0 },
+      { status: "STOPPED", count: statusCounts.get("STOPPED") || 0 },
+    ],
+  });
+
+  groupCounts.push({
+    severity: "warning",
+    count:
+      (statusCounts.get("INITIALIZING") || 0) +
+      (statusCounts.get("STARTING") || 0) +
+      (statusCounts.get("STOPPING") || 0) +
+      (statusCounts.get("AWAITING_SYSTEM") || 0),
+    summary: [
+      { status: "INITIALIZING", count: statusCounts.get("INITIALIZING") || 0 },
+      { status: "STARTING", count: statusCounts.get("STARTING") || 0 },
+      { status: "STOPPING", count: statusCounts.get("STOPPING") || 0 },
+      {
+        status: "AWAITING_SYSTEM",
+        count: statusCounts.get("AWAITING_SYSTEM") || 0,
+      },
+    ],
+  });
+
+  groupCounts.push({
+    severity: "error",
+    count:
+      (statusCounts.get("DEAD") || 0) +
+      (statusCounts.get("UNRESPONSIVE") || 0) +
+      (statusCounts.get("UNKNOWN") || 0) +
+      (statusCounts.get("ERROR") || 0) +
+      (statusCounts.get("UNASSOCIATED_RUNNER") || 0),
+    summary: [
+      { status: "DEAD", count: statusCounts.get("DEAD") || 0 },
+      { status: "UNRESPONSIVE", count: statusCounts.get("UNRESPONSIVE") || 0 },
+      { status: "UNKNOWN", count: statusCounts.get("UNKNOWN") || 0 },
+      { status: "ERROR", count: statusCounts.get("ERROR") || 0 },
+      {
+        status: "UNASSOCIATED_RUNNER",
+        count: statusCounts.get("UNASSOCIATED_RUNNER") || 0,
+      },
+    ],
+  });
+
+  return groupCounts;
 };
 
 export const getErrorCode = (errorMsg: string) => {

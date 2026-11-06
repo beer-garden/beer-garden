@@ -4,8 +4,10 @@ import {
   faClockRotateLeft,
   faPlay,
   faServer,
+  faSquare,
   faStop,
   faTriangleExclamation,
+  faXmarkCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -22,7 +24,7 @@ import { RefObject, useEffect, useState } from "react";
 
 import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import { Connection, Garden, Runner, System } from "../models/brewtils-types";
-import { Config } from "../models/models";
+import { Config, SeverityGroup } from "../models/models";
 import { TourStepProps } from "../models/models";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import {
@@ -92,7 +94,7 @@ function GardenSummary({
       );
     }
 
-    return new Map();
+    return [];
   };
 
   const getDownstreamConnections = () => {
@@ -166,7 +168,7 @@ function GardenSummary({
 
   const [invalidRouting, setInvalidRouting] = useState(false);
   const [systemCounts, setSystemCounts] =
-    useState<Map<string, number>>(getSystemCounts());
+    useState<Array<SeverityGroup>>(getSystemCounts());
 
   const [downstreamConnections, setDownstreamConnections] = useState(
     getDownstreamConnections(),
@@ -632,19 +634,49 @@ function GardenSummary({
                 Systems:
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center" }}>
-                {Array.from(systemCounts, ([status, count]) => {
-                  if (count && count > 0) {
-                    const statusSeverity = GetSeverity(status);
+                {Array.from(systemCounts, (statusGroup) => {
+                  if (statusGroup.count && statusGroup.count > 0) {
                     return (
-                      <div key={`${status}_Summary`}>
-                        <Tooltip title={`${status} Count ${count}`}>
+                      <div key={`${statusGroup.severity}_Summary`}>
+                        <Tooltip
+                          title={
+                            <Stack spacing={1}>
+                              {Array.from(statusGroup.summary, (summary) => {
+                                if (summary.count && summary.count > 0) {
+                                  return (
+                                    <div>{`${summary.status} Count ${summary.count}`}</div>
+                                  );
+                                }
+                              })}
+                            </Stack>
+                          }
+                        >
                           <Box component="span" aria-label={undefined}>
                             <Chip
-                              data-testid={`${status}_severity_system_summary`}
-                              id={`${status}_${selectedGarden?.id}_severity_system_summary`}
-                              label={count}
-                              color={statusSeverity}
-                              key={status}
+                              data-testid={`${statusGroup.severity}_group_system_summary`}
+                              id={`${statusGroup.severity}_${selectedGarden?.id}_group_system_summary`}
+                              label={
+                                <div>
+                                  {statusGroup.count}
+                                  {statusGroup.severity ===
+                                  "success" ? undefined : statusGroup.severity ===
+                                    "info" ? (
+                                    <FAIcon sx={{ ml: 0.5 }} icon={faSquare} />
+                                  ) : statusGroup.severity === "warning" ? (
+                                    <FAIcon
+                                      sx={{ ml: 0.5 }}
+                                      icon={faTriangleExclamation}
+                                    />
+                                  ) : (
+                                    <FAIcon
+                                      sx={{ ml: 0.5 }}
+                                      icon={faXmarkCircle}
+                                    />
+                                  )}
+                                </div>
+                              }
+                              color={statusGroup.severity}
+                              key={statusGroup.severity}
                             />
                           </Box>
                         </Tooltip>
