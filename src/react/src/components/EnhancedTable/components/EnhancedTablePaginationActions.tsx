@@ -1,3 +1,9 @@
+import {
+  faAngleLeft,
+  faAngleRight,
+  faAnglesLeft,
+  faAnglesRight,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Box from "@mui/material/Box";
 import IconButton from "@mui/material/IconButton";
@@ -52,9 +58,9 @@ export function EnhancedTablePaginationActions(
         sx={{ color: "action.selected" }}
       >
         {theme.direction === "rtl" ? (
-          <FontAwesomeIcon icon="angles-right" />
+          <FontAwesomeIcon icon={faAnglesRight} />
         ) : (
-          <FontAwesomeIcon icon="angles-left" />
+          <FontAwesomeIcon icon={faAnglesLeft} />
         )}
       </IconButton>
       <IconButton
@@ -64,9 +70,9 @@ export function EnhancedTablePaginationActions(
         sx={{ color: "action.hover" }}
       >
         {theme.direction === "rtl" ? (
-          <FontAwesomeIcon icon="angle-right" />
+          <FontAwesomeIcon icon={faAngleRight} />
         ) : (
-          <FontAwesomeIcon icon="angle-left" />
+          <FontAwesomeIcon icon={faAngleLeft} />
         )}
       </IconButton>
       <IconButton
@@ -76,9 +82,9 @@ export function EnhancedTablePaginationActions(
         sx={{ color: "action.hover" }}
       >
         {theme.direction === "rtl" ? (
-          <FontAwesomeIcon icon="angle-left" />
+          <FontAwesomeIcon icon={faAngleLeft} />
         ) : (
-          <FontAwesomeIcon icon="angle-right" />
+          <FontAwesomeIcon icon={faAngleRight} />
         )}
       </IconButton>
       <IconButton
@@ -88,9 +94,9 @@ export function EnhancedTablePaginationActions(
         sx={{ color: "action.selected" }}
       >
         {theme.direction === "rtl" ? (
-          <FontAwesomeIcon icon="angles-left" />
+          <FontAwesomeIcon icon={faAnglesLeft} />
         ) : (
-          <FontAwesomeIcon icon="angles-right" />
+          <FontAwesomeIcon icon={faAnglesRight} />
         )}
       </IconButton>
     </Box>

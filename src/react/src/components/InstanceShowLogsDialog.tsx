@@ -1,3 +1,4 @@
+import { faDownload, faXmark } from "@fortawesome/free-solid-svg-icons";
 import {
   Alert,
   Box,
@@ -179,7 +180,7 @@ function InstanceShowLogsDialog({
               aria-label="Close instance show logs dialog"
               onClick={onClose}
             >
-              <FAIcon icon="xmark" />
+              <FAIcon icon={faXmark} />
             </AccessButton>
           </Grid>
         </Grid>
@@ -257,7 +258,7 @@ function InstanceShowLogsDialog({
                   aria-label="Download Current Logs Displayed"
                 >
                   Download
-                  <FAIcon icon="download" sx={{ ml: 1 }} />
+                  <FAIcon icon={faDownload} sx={{ ml: 1 }} />
                 </Box>
                 <Box
                   component="pre"

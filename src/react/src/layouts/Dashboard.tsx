@@ -1,4 +1,11 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import {
+  faBeerMugEmpty,
+  faCircle,
+  faCircleExclamation,
+  faPlay,
+  faTriangleExclamation,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Box,
@@ -349,12 +356,12 @@ function GardenDashboard({
               id={`GARDEN_MENU_${garden.id}`}
             >
               <FAIcon
-                icon="play"
+                icon={faPlay}
                 sx={{ color: "warning.contrast" }}
                 rotation={270}
               />
               <FAIcon
-                icon="triangle-exclamation"
+                icon={faTriangleExclamation}
                 sx={{
                   color: "warning.main",
                 }}
@@ -368,7 +375,7 @@ function GardenDashboard({
       // don't currently have access to the downstream icons
       return (
         <FontAwesomeIcon
-          icon={(config?.icon_default as IconProp) ?? "beer-mug-empty"}
+          icon={(config?.icon_default as IconProp) ?? faBeerMugEmpty}
         />
       );
     } else if (!publishing && !receiving) {
@@ -381,9 +388,9 @@ function GardenDashboard({
               className="fa-layers"
               id={`GARDEN_MENU_${garden.id}`}
             >
-              <FAIcon icon="circle" sx={{ color: "error.contrast" }} />
+              <FAIcon icon={faCircle} sx={{ color: "error.contrast" }} />
               <FAIcon
-                icon="circle-exclamation"
+                icon={faCircleExclamation}
                 sx={{
                   color: "error.main",
                 }}
@@ -402,9 +409,9 @@ function GardenDashboard({
               className="fa-layers"
               id={`GARDEN_MENU_${garden.id}`}
             >
-              <FAIcon icon="circle" sx={{ color: "error.contrast" }} />
+              <FAIcon icon={faCircle} sx={{ color: "error.contrast" }} />
               <FAIcon
-                icon="circle-exclamation"
+                icon={faCircleExclamation}
                 sx={{
                   color: "error.main",
                 }}
@@ -423,9 +430,9 @@ function GardenDashboard({
               className="fa-layers"
               id={`GARDEN_MENU_${garden.id}`}
             >
-              <FAIcon icon="circle" sx={{ color: "error.contrast" }} />
+              <FAIcon icon={faCircle} sx={{ color: "error.contrast" }} />
               <FAIcon
-                icon="circle-exclamation"
+                icon={faCircleExclamation}
                 sx={{
                   color: "error.main",
                 }}

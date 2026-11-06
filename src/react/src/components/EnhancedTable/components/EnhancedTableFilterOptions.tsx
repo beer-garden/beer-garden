@@ -1,3 +1,4 @@
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { FormControl, InputLabel } from "@mui/material";
 import Grid from "@mui/material/Grid";
@@ -435,7 +436,7 @@ export const EnhancedTableFilterOptions = ({
             onClick={() => removeFilter(id)}
             aria-label="Remove filter"
           >
-            <FontAwesomeIcon icon="xmark" />
+            <FontAwesomeIcon icon={faXmark} />
           </IconButton>
           <Grid size="grow">
             <FormControl fullWidth>

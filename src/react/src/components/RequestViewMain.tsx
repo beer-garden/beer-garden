@@ -1,3 +1,4 @@
+import { faBriefcase } from "@fortawesome/free-solid-svg-icons";
 import { Grid, Typography } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
@@ -299,7 +300,7 @@ function RequestViewMain({
                     }
                   }}
                 >
-                  <FAIcon icon="briefcase" sx={{ alignContent: "center" }} />
+                  <FAIcon icon={faBriefcase} sx={{ alignContent: "center" }} />
                 </AccessButton>
               )}
           </Grid>

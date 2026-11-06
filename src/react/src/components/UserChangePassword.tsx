@@ -1,3 +1,4 @@
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import {
   Alert,
   Dialog,
@@ -130,7 +131,7 @@ function UserChangePassword({
               aria-label="Close change password dialog"
               onClick={handleUserPasswordDialogClose}
             >
-              <FAIcon icon="xmark" />
+              <FAIcon icon={faXmark} />
             </AccessButton>
           </Grid>
         </Grid>

@@ -1,3 +1,4 @@
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { Box, Skeleton } from "@mui/material";
 import { useState } from "react";
 
@@ -71,7 +72,7 @@ function displayOutput(request: Request) {
             onClick={() => setHideOutput(false)}
             sx={{ ml: 2 }}
           >
-            <FAIcon icon="plus" />
+            <FAIcon icon={faPlus} />
           </AccessButton>
         </Box>
       )}

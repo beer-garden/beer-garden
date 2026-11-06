@@ -1,3 +1,11 @@
+import {
+  faClone,
+  faPencil,
+  faTrashCan,
+  faUserGear,
+  faUserShield,
+  faUserTag,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Alert, Box, ButtonGroup, Typography } from "@mui/material";
 import { RefObject, useCallback, useEffect, useRef, useState } from "react";
@@ -246,7 +254,7 @@ function RoleIndex({
         return (
           <Box sx={{ display: "flex" }}>
             <FAIcon
-              icon="user-shield"
+              icon={faUserShield}
               title="Protected Role"
               role="img"
               aria-label="Protected Role"
@@ -259,7 +267,7 @@ function RoleIndex({
         return (
           <Box sx={{ display: "flex" }}>
             <FAIcon
-              icon="user-tag"
+              icon={faUserTag}
               title="Generated Role"
               role="img"
               aria-label="File Generated Role"
@@ -272,7 +280,7 @@ function RoleIndex({
         return (
           <Box sx={{ display: "flex" }}>
             <FAIcon
-              icon="user-gear"
+              icon={faUserGear}
               title="Unprotected Role"
               role="img"
               aria-label="Unprotected Role"
@@ -299,7 +307,7 @@ function RoleIndex({
               onClick={() => handleLoadRole(role, true)}
               {...GenerateTourProps(duplicateRoleTourStep)}
             >
-              <FontAwesomeIcon icon="clone" />
+              <FontAwesomeIcon icon={faClone} />
             </AccessButton>
             {!role.file_generated && !role.protected && (
               <AccessButton
@@ -309,7 +317,7 @@ function RoleIndex({
                 onClick={() => handleLoadRole(role, false)}
                 {...GenerateTourProps(editRoleTourStep)}
               >
-                <FontAwesomeIcon icon="pencil" />
+                <FontAwesomeIcon icon={faPencil} />
               </AccessButton>
             )}
             {!role.file_generated && !role.protected && (
@@ -320,7 +328,7 @@ function RoleIndex({
                 onClick={() => handleDeleteRole(role)}
                 {...GenerateTourProps(deleteRoleTourStep)}
               >
-                <FontAwesomeIcon icon="trash-can" />
+                <FontAwesomeIcon icon={faTrashCan} />
               </AccessButton>
             )}
           </ButtonGroup>

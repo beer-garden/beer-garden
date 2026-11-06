@@ -1,4 +1,14 @@
 import {
+  faArrowRightFromBracket,
+  faGlobe,
+  faKey,
+  faTrash,
+  faUser,
+  faUserPlus,
+  faUserShield,
+  faUserTag,
+} from "@fortawesome/free-solid-svg-icons";
+import {
   Alert,
   Box,
   Chip,
@@ -221,7 +231,7 @@ function UserIndex({
       return (
         <span {...GenerateTourProps(protectedUserTourStep)}>
           <FAIcon
-            icon="user-shield"
+            icon={faUserShield}
             title="Protected User"
             role="img"
             aria-label="Protected User"
@@ -235,7 +245,7 @@ function UserIndex({
       return (
         <span {...GenerateTourProps(fileGeneratedUserTourStep)}>
           <FAIcon
-            icon="user-tag"
+            icon={faUserTag}
             title="Generated User"
             role="img"
             aria-label="File Generated User"
@@ -248,7 +258,7 @@ function UserIndex({
     return (
       <span {...GenerateTourProps(userUserTourStep)}>
         <FAIcon
-          icon="user"
+          icon={faUser}
           title="Regular User"
           role="img"
           aria-label="Regular User"
@@ -439,7 +449,7 @@ function UserIndex({
           permission="GARDEN_ADMIN"
           isGlobal={true}
         >
-          <FAIcon icon="arrow-right-from-bracket" />
+          <FAIcon icon={faArrowRightFromBracket} />
         </AccessButton>
         <AccessButton
           sx={buttonSx}
@@ -454,7 +464,7 @@ function UserIndex({
           permission="GARDEN_ADMIN"
           isGlobal={true}
         >
-          <FAIcon icon="globe" />
+          <FAIcon icon={faGlobe} />
         </AccessButton>
         {(rowData.protected === undefined || rowData.protected === false) && (
           <AccessButton
@@ -470,7 +480,7 @@ function UserIndex({
             permission="GARDEN_ADMIN"
             isGlobal={true}
           >
-            <FAIcon icon="user-plus" />
+            <FAIcon icon={faUserPlus} />
           </AccessButton>
         )}
         {(rowData.protected === undefined || rowData.protected === false) && (
@@ -489,7 +499,7 @@ function UserIndex({
             permission="GARDEN_ADMIN"
             isGlobal={true}
           >
-            <FAIcon icon="key" />
+            <FAIcon icon={faKey} />
           </AccessButton>
         )}
 
@@ -531,7 +541,7 @@ function UserIndex({
             permission="GARDEN_ADMIN"
             isGlobal={true}
           >
-            <FAIcon icon="trash" />
+            <FAIcon icon={faTrash} />
           </AccessButton>
         )}
       </Box>

@@ -1,3 +1,4 @@
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import {
   Box,
   Dialog,
@@ -119,7 +120,7 @@ function InstanceManageQueueDialog({
               aria-label="Close manage queue dialog"
               onClick={onClose}
             >
-              <FAIcon icon="xmark" />
+              <FAIcon icon={faXmark} />
             </AccessButton>
           </Grid>
         </Grid>
