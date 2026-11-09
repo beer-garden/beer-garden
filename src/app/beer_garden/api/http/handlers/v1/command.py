@@ -128,13 +128,13 @@ class CommandListAPI(AuthorizationHandler):
           - Deprecated
         """
 
-        permitted_objects_filter = self.permissioned_queryset(System)
+        permitted_objects_raw_filter = self.permitted_objects_raw_filter(System)
 
         response = await self.process_operation(
             Operation(
                 operation_type="COMMAND_READ_ALL",
                 kwargs={
-                    "q_filter": permitted_objects_filter,
+                    "raw_query": permitted_objects_raw_filter,
                 },
             )
         )

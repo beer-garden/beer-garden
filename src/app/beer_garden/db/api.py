@@ -26,4 +26,6 @@ delete = beer_garden.db.mongo.api.delete
 create_direct = beer_garden.db.mongo.api.create_direct
 update_direct = beer_garden.db.mongo.api.update_direct
 
+combine_raw_query = beer_garden.db.mongo.api.combine_raw_query
+
 prune_topics = beer_garden.db.mongo.util.prune_topics

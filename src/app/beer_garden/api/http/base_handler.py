@@ -30,6 +30,7 @@ from beer_garden.api.http.exceptions import BadRequest, BaseHTTPError
 from beer_garden.api.http.metrics import http_api_latency_total
 from beer_garden.errors import (
     EndpointRemovedException,
+    InvalidAuthorizationException,
     NotFoundException,
     NotUniqueException,
     RoutingException,
@@ -72,6 +73,7 @@ class BaseHandler(RequestHandler):
         ValueError: {"status_code": 400},
         AuthorizationRequired: {"status_code": 401},
         RequestForbidden: {"status_code": 403},
+        InvalidAuthorizationException: {"status_code": 403},
         DoesNotExist: {"status_code": 404, "message": "Resource does not exist"},
         NotFoundError: {"status_code": 404},
         NotFoundException: {"status_code": 404},
