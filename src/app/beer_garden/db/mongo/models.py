@@ -4,23 +4,16 @@ import json
 import logging
 import sys
 import zoneinfo
-from typing import Tuple
 
 import brewtils.models
-from brewtils.choices import parse
 from brewtils.errors import ModelValidationError, RequestStatusTransitionError
 from brewtils.models import Command as BrewtilsCommand
-from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Parameter as BrewtilsParameter
 from brewtils.models import Request as BrewtilsRequest
-from brewtils.models import System as BrewtilsSystem
-from lark import ParseError
-from lark.exceptions import LarkError
 from mongoengine import (
     CASCADE,
     NULLIFY,
-    PULL,
     BooleanField,
     DateTimeField,
     DictField,
@@ -35,7 +28,6 @@ from mongoengine import (
     LazyReferenceField,
     ListField,
     ObjectIdField,
-    ReferenceField,
     StringField,
 )
 from mongoengine.connection import get_db
@@ -139,52 +131,12 @@ class Choices(MongoModel, EmbeddedDocument):
     value = DynamicField(required=True)
     details = DictField()
 
-    def __init__(self, *args, **kwargs):
-        EmbeddedDocument.__init__(self, *args, **kwargs)
-
-    def clean(self):
-        if self.type == "static" and not isinstance(self.value, (list, dict)):
-            raise ModelValidationError(
-                f"Can not save choices '{self}': type is 'static' but the value is "
-                "not a list or dictionary"
-            )
-        elif self.type == "url" and not isinstance(self.value, str):
-            raise ModelValidationError(
-                f"Can not save choices '{self}': type is 'url' but the value is "
-                "not a string"
-            )
-        elif self.type == "command" and not isinstance(self.value, (str, dict)):
-            raise ModelValidationError(
-                f"Can not save choices '{self}': type is 'command' but the value is "
-                "not a string or dict"
-            )
-
-        if self.type == "command" and isinstance(self.value, dict):
-            value_keys = self.value.keys()
-            for required_key in ("command", "system", "version"):
-                if required_key not in value_keys:
-                    raise ModelValidationError(
-                        f"Can not save choices '{self}': specifying value as a "
-                        f"dictionary requires a '{required_key}' item"
-                    )
-
-        try:
-            if self.details == {}:
-                if isinstance(self.value, str):
-                    self.details = parse(self.value)
-                elif isinstance(self.value, dict):
-                    self.details = parse(self.value["command"])
-        except (LarkError, ParseError):
-            raise ModelValidationError(
-                f"Can not save choices '{self}': Unable to parse"
-            )
-
 
 class Parameter(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.Parameter
 
     key = StringField(required=True)
-    type = StringField(required=True, default="Any", choices=BrewtilsParameter.TYPES)
+    type = StringField(required=True)
     multi = BooleanField(required=True, default=False)
     display_name = StringField(required=False)
     optional = BooleanField(required=True, default=True)
@@ -201,30 +153,6 @@ class Parameter(MongoModel, EmbeddedDocument):
     type_info = DictField(required=False)
     parameters = EmbeddedDocumentListField("Parameter")
 
-    # If no display name was set, it will default it to the same thing as the key
-    def __init__(self, *args, **kwargs):
-        if not kwargs.get("display_name", None):
-            kwargs["display_name"] = kwargs.get("key", None)
-
-        EmbeddedDocument.__init__(self, *args, **kwargs)
-
-    def clean(self):
-        """Validate before saving to the database"""
-
-        if not self.nullable and self.optional and self.default is None:
-            raise ModelValidationError(
-                f"Can not save Parameter {self}: For this Parameter nulls are not "
-                "allowed, but the parameter is optional with no default defined."
-            )
-
-        if len(self.parameters) != len(
-            set(parameter.key for parameter in self.parameters)
-        ):
-            raise ModelValidationError(
-                f"Can not save Parameter {self}: Contains Parameters with duplicate"
-                " keys"
-            )
-
 
 class Command(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.Command
@@ -233,8 +161,8 @@ class Command(MongoModel, EmbeddedDocument):
     display_name = StringField()
     description = StringField()
     parameters = EmbeddedDocumentListField("Parameter")
-    command_type = StringField(choices=BrewtilsCommand.COMMAND_TYPES, default="ACTION")
-    output_type = StringField(choices=BrewtilsCommand.OUTPUT_TYPES, default="STRING")
+    command_type = StringField()
+    output_type = StringField()
     schema = DictField()
     form = DictField()
     template = StringField()
@@ -244,30 +172,6 @@ class Command(MongoModel, EmbeddedDocument):
     tags = ListField(field=StringField())
     topics = ListField(field=StringField())
     allow_any_kwargs = BooleanField(default=False)
-
-    def clean(self):
-        """Validate before saving to the database"""
-
-        if not self.name:
-            raise ModelValidationError("Can not save a Command with an empty name")
-
-        if self.command_type not in BrewtilsCommand.COMMAND_TYPES:
-            raise ModelValidationError(
-                f"Can not save Command {self}: Invalid command type"
-                f" '{self.command_type}'"
-            )
-
-        if self.output_type not in BrewtilsCommand.OUTPUT_TYPES:
-            raise ModelValidationError(
-                f"Can not save Command {self}: Invalid output type '{self.output_type}'"
-            )
-
-        if len(self.parameters) != len(
-            set(parameter.key for parameter in self.parameters)
-        ):
-            raise ModelValidationError(
-                f"Can not save Command {self}: Contains Parameters with duplicate keys"
-            )
 
 
 class StatusHistory(MongoModel, EmbeddedDocument):
@@ -301,14 +205,6 @@ class Instance(MongoModel, EmbeddedDocument):
     queue_info = DictField()
     icon_name = StringField()
     metadata = DictField()
-
-    def clean(self):
-        """Validate before saving to the database"""
-
-        if self.status not in BrewtilsInstance.INSTANCE_STATUSES:
-            raise ModelValidationError(
-                f"Can not save Instance {self}: Invalid status '{self.status}'"
-            )
 
 
 class Request(MongoModel, Document):
@@ -876,19 +772,6 @@ class Subscriber(MongoModel, EmbeddedDocument):
     subscriber_type = StringField()
     consumer_count = IntField(default=0)
 
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return (
-                self.subscriber_type == other.subscriber_type
-                and self.garden == other.garden
-                and self.namespace == other.namespace
-                and self.system == other.system
-                and self.version == other.version
-                and self.instance == other.instance
-                and self.command == other.command
-            )
-        return False
-
 
 class Topic(MongoModel, Document):
     brewtils_model = brewtils.models.Topic
@@ -902,17 +785,6 @@ class Topic(MongoModel, Document):
         "index_background": True,
         "indexes": [{"name": "unique_index", "fields": ["name"], "unique": True}],
     }
-
-    def add_subscriber(self, subscriber: Subscriber):
-        if subscriber not in self.subscribers:
-            self.subscribers.append(subscriber)
-            self.save()
-
-    def remove_subscriber(self, subscriber: Subscriber):
-
-        if subscriber in self.subscribers:
-            self.subscribers.remove(subscriber)
-            self.save()
 
 
 class System(MongoModel, Document):
@@ -947,177 +819,6 @@ class System(MongoModel, Document):
             }
         ],
     }
-
-    def clean(self):
-        """Validate before saving to the database"""
-
-        if len(self.instances) > self.max_instances > -1:
-            raise ModelValidationError(
-                "Can not save System %s: Number of instances (%s) "
-                "exceeds system limit (%s)"
-                % (str(self), len(self.instances), self.max_instances)
-            )
-
-        if len(self.instances) != len(
-            set(instance.name for instance in self.instances)
-        ):
-            raise ModelValidationError(
-                "Can not save System %s: Duplicate instance names" % str(self)
-            )
-
-    def delete(self, **kwargs):
-
-        try:
-            if self.local and len(self.instances) > 0:
-                for command in self.commands:
-                    for instance in self.instances:
-                        if len(command.topics) > 0:
-                            for topic in command.topics:
-                                if Topic.objects(name=topic).count() > 0:
-                                    db_topic = Topic.objects.get(name=topic)
-
-                                    for subscriber in db_topic.subscribers:
-                                        if (
-                                            subscriber.garden == self.garden_name
-                                            and subscriber.system == self.name
-                                            and subscriber.namespace == self.namespace
-                                            and subscriber.version == self.version
-                                            and subscriber.instance == instance.name
-                                            and subscriber.command == command.name
-                                            and subscriber.subscriber_type
-                                            == "ANNOTATED"
-                                        ):
-                                            db_topic.remove_subscriber(subscriber)
-
-                                    if len(db_topic.subscribers) == 0:
-                                        db_topic.delete()
-
-                        if not self.prefix_topic:
-                            topic_generated = (
-                                f"{self.garden_name}.{self.namespace}."
-                                f"{self.name}.{self.version}."
-                                f"{instance.name}.{command.name}"
-                            )
-                        else:
-                            topic_generated = f"{self.prefix_topic}.{command.name}"
-
-                        if Topic.objects(name=topic_generated).count() > 0:
-                            db_topic = Topic.objects.get(name=topic_generated)
-
-                            for subscriber in db_topic.subscribers:
-                                if (
-                                    subscriber.garden == self.garden_name
-                                    and subscriber.system == self.name
-                                    and subscriber.namespace == self.namespace
-                                    and subscriber.version == self.version
-                                    and subscriber.instance == instance.name
-                                    and subscriber.command == command.name
-                                    and subscriber.subscriber_type == "GENERATED"
-                                ):
-                                    db_topic.remove_subscriber(subscriber)
-
-                            if len(db_topic.subscribers) == 0:
-                                db_topic.delete()
-        except DoesNotExist:
-            logger.error(
-                (
-                    "Error finding garden for system deletion "
-                    f"Namespace = {self.namespace} "
-                    f"System {self.name} "
-                    f"Version {self.version}"
-                )
-            )
-
-        super().delete(**kwargs)
-
-    def save(self, **kwargs):
-        max_history = config.get("plugin.status_history", default=5)
-        for instance in self.instances:
-            if instance.status_info and len(instance.status_info.history) > max_history:
-                instance.status_info.history = instance.status_info.history[
-                    (max_history * -1) :
-                ]
-
-        if self.local:
-            self.garden_name = config.get("garden.name")
-            self.save_topics()
-
-        return super().save(**kwargs)
-
-    def update(self, **kwargs):
-
-        if self.local:
-            self.save_topics()
-
-        return super().update(**kwargs)
-
-    def modify(self, query=None, **update):
-
-        is_updated = super().modify(query, **update)
-
-        if (
-            is_updated
-            and self.local
-            and ("commands" in update or "push_all__instances" in update)
-        ):
-            self.save_topics()
-
-        return is_updated
-
-    def save_topics(self):
-
-        if not self.local:
-            # Skip topic management for non-local systems,
-            # as they won't have any topics to manage
-            return
-
-        if len(self.instances) > 0:
-            for command in self.commands:
-                for instance in self.instances:
-                    if len(command.topics) > 0:
-                        for topic in command.topics:
-                            if Topic.objects(name=topic).count() > 0:
-                                db_topic = Topic.objects.get(name=topic)
-                            else:
-                                db_topic = Topic(name=topic)
-
-                            db_topic.add_subscriber(
-                                Subscriber(
-                                    garden=self.garden_name,
-                                    namespace=self.namespace,
-                                    system=self.name,
-                                    version=self.version,
-                                    instance=instance.name,
-                                    command=command.name,
-                                    subscriber_type="ANNOTATED",
-                                )
-                            )
-
-                    if not self.prefix_topic:
-                        topic_generated = (
-                            f"{self.garden_name}.{self.namespace}."
-                            f"{self.name}.{self.version}."
-                            f"{instance.name}.{command.name}"
-                        )
-                    else:
-                        topic_generated = f"{self.prefix_topic}.{command.name}"
-
-                    if Topic.objects(name=topic_generated).count() > 0:
-                        db_topic = Topic.objects.get(name=topic_generated)
-                    else:
-                        db_topic = Topic(name=topic_generated)
-
-                        db_topic.add_subscriber(
-                            Subscriber(
-                                garden=self.garden_name,
-                                namespace=self.namespace,
-                                system=self.name,
-                                version=self.version,
-                                instance=instance.name,
-                                command=command.name,
-                                subscriber_type="GENERATED",
-                            )
-                        )
 
 
 class Event(MongoModel, Document):
@@ -1294,7 +995,7 @@ class Garden(MongoModel, Document):
     receiving_connections = EmbeddedDocumentListField("Connection")
     publishing_connections = EmbeddedDocumentListField("Connection")
 
-    systems = ListField(ReferenceField(System, reverse_delete_rule=PULL))
+    systems = DummyField(required=False)
 
     parent = StringField(required=False)
 
@@ -1321,132 +1022,6 @@ class Garden(MongoModel, Document):
             },
         ],
     }
-
-    def deep_save(self):
-        max_history = config.get("garden.status_history", default=5)
-        for connection in self.receiving_connections:
-            if (
-                connection.status_info
-                and len(connection.status_info.history) > max_history
-            ):
-                connection.status_info.history = connection.status_info.history[
-                    (max_history * -1) :
-                ]
-
-        for connection in self.publishing_connections:
-            if (
-                connection.status_info
-                and len(connection.status_info.history) > max_history
-            ):
-                connection.status_info.history = connection.status_info.history[
-                    (max_history * -1) :
-                ]
-
-        if self.connection_type != "LOCAL":
-            self._update_associated_systems()
-
-            # Ensure no configurations are stored locally, if sent
-            if self.has_parent:
-                for connection in self.receiving_connections:
-                    connection.config = {}
-
-                for connection in self.publishing_connections:
-                    connection.config = {}
-
-        self.save()
-
-    def _update_associated_systems(self):
-        """If the call to the `deep_save` method is on a child garden object, we ensure
-        that when saving the systems, unknowns are deleted."""
-        # import moved here to avoid a circular import loop
-        from beer_garden.systems import remove_system
-
-        def _get_system_triple(system: System) -> Tuple[str, str, str]:
-            namespace = getattr(system, "namespace", self.name)
-            name = getattr(system, "name", None)
-            version = getattr(system, "version", None)
-            if not name or not version:
-                name = str(system)
-                version = ""
-            return (
-                namespace,
-                name,
-                version,
-            )
-
-        # we leverage the fact that systems must be unique up to the triple of their
-        # namespaces, names and versions
-        child_systems_already_known = {}
-        for system in System.objects(garden_name=self.name).only(
-            "garden_name",
-            "namespace",
-            "name",
-            "version",
-            "prefix_topic",
-            "instances.name",
-            "commands.topics",
-            "commands.name",
-        ):
-            child_systems_already_known[_get_system_triple(system)] = system.id
-
-        local_systems = [
-            _get_system_triple(system)
-            for system in System.objects(local=True).only(
-                "namespace", "name", "version"
-            )
-        ]
-
-        for system in self.systems:
-            triple = _get_system_triple(system)
-
-            # Check is System is a Local System
-            if triple not in local_systems:
-                if triple in child_systems_already_known:
-                    system_id_to_remove = child_systems_already_known.pop(triple)
-
-                    # system_id_to_remove and system.id are ObjectIds
-                    if system_id_to_remove != system.id:
-                        # remove the system from before this update with the same triple
-                        logger.error(
-                            f"Removing System <{triple[0]}"
-                            f", {triple[1]}"
-                            f", {triple[2]}> with ID={system_id_to_remove}"
-                            f"; doesn't match ID={system.id}"
-                            " for known system with same attributes"
-                        )
-                        remove_system(system_id=system_id_to_remove)
-
-                try:
-                    system.garden_name = self.name
-                    system.save()
-                    system.save_topics()
-                except Exception as ex:
-                    logger.error(
-                        f"Error saving system {str(system)} in garden {self.name}: {ex}"
-                    )
-
-            else:
-                system.delete()
-
-        # if there's anything left over, delete those too; this could occur, e.g.,
-        # if a child system deleted a particular version of a plugin and installed
-        # another version of the same plugin
-        for bad_system_id in child_systems_already_known.values():
-            logger.error(
-                f"Removing System with ID={str(bad_system_id)} because it "
-                f"matches no known system in child garden ({self.name})"
-            )
-            try:
-                remove_system(system_id=bad_system_id)
-            except Exception:
-                remove_system(system=BrewtilsSystem(id=str(bad_system_id)))
-
-        self.systems = System.objects(garden_name=self.name)
-
-
-class SystemGardenMapping(MongoModel, Document):
-    system = ReferenceField("System")
-    garden = ReferenceField("Garden")
 
 
 class File(MongoModel, Document):

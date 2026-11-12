@@ -549,7 +549,8 @@ def modify(obj: ModelItem, query=None, **kwargs) -> ModelItem:
         if isinstance(kwargs[key], BaseModel):
             kwargs[key] = from_brewtils(kwargs[key])
 
-    mongo_obj.modify(query=query, **kwargs)
+    # New is required to return back the updated value
+    mongo_obj.modify(query=query, new=True, **kwargs)
 
     return to_brewtils(mongo_obj)
 

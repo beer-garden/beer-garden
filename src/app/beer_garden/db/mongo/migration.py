@@ -762,6 +762,15 @@ def ensure_v3_30_model_migration():
             logger.warning(f"Migrating garden_name for {len(updates)} Systems")
 
 
+def ensure_v3_XX_model_migration():
+
+    if contains_fields("garden", ["systems"]):
+        db = get_db()
+        garden_collection = db.get_collection("garden")
+        result = garden_collection.update_many({}, {"$unset": {"systems": ""}})
+        logger.info(f"Migrating {result.modified_count} Gardens to remove Systems Ref.")
+
+
 def ensure_model_migration():
     """Ensures that the database is properly migrated. All migrations ran from this
     single function for easy management"""
@@ -793,3 +802,11 @@ def ensure_model_migration():
             "3.35.0"
         ):
             ensure_v3_35_model_migration()
+
+        # if not previous_config or Version(previous_config.get("version")) < Version(
+        #     "3.XX.0"
+        # ):
+        #     ensure_v3_XX_model_migration()
+
+    # TODO Update Version Logic Above to migrate properly
+    ensure_v3_XX_model_migration()

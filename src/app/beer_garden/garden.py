@@ -16,7 +16,7 @@ import logging
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 from brewtils.errors import PluginError
 from brewtils.models import (
@@ -47,7 +47,7 @@ from beer_garden.errors import (
     RoutingRequestException,
 )
 from beer_garden.events import publish, publish_event
-from beer_garden.systems import get_systems, remove_system
+from beer_garden.systems import get_systems, remove_system, upsert_system
 
 logger = logging.getLogger(__name__)
 
@@ -435,7 +435,7 @@ def update_garden_status(garden_name: str, new_status: str) -> Garden:
 
 
 def remove_remote_systems(garden: Garden):
-    for system in garden.systems:
+    for system in get_systems(garden_name=garden.name, include_fields=["id"]):
         remove_system(system.id)
 
 
@@ -479,6 +479,9 @@ def create_garden(garden: Garden) -> Garden:
             Connection(api="STOMP", status="MISSING_CONFIGURATION"),
         ]
 
+    clean_garden(garden)
+    update_associated_systems(garden)
+
     return db.create(garden)
 
 
@@ -517,7 +520,127 @@ def update_garden(garden: Garden) -> Garden:
         The updated Garden
     """
 
+    clean_garden(garden)
+    update_associated_systems(garden)
+
     return db.update(garden)
+
+
+def clean_garden(garden: Garden):
+    max_history = config.get("garden.status_history", default=5)
+    for connection in garden.receiving_connections:
+        if connection.status_info and len(connection.status_info.history) > max_history:
+            connection.status_info.history = connection.status_info.history[
+                (max_history * -1) :
+            ]
+
+    for connection in garden.publishing_connections:
+        if connection.status_info and len(connection.status_info.history) > max_history:
+            connection.status_info.history = connection.status_info.history[
+                (max_history * -1) :
+            ]
+
+    if garden.connection_type != "LOCAL":
+
+        # Ensure no configurations are stored locally, if sent
+        if garden.has_parent:
+            for connection in garden.receiving_connections:
+                connection.config = {}
+
+            for connection in garden.publishing_connections:
+                connection.config = {}
+
+    return garden
+
+
+def update_associated_systems(garden: Garden):
+
+    if garden.name == config.get("garden.name") or garden.connection_type == "LOCAL":
+        return garden
+
+    def _get_system_triple(system: System) -> Tuple[str, str, str]:
+        namespace = getattr(system, "namespace", garden.name)
+        name = getattr(system, "name", None)
+        version = getattr(system, "version", None)
+        if not name or not version:
+            name = str(system)
+            version = ""
+        return (
+            namespace,
+            name,
+            version,
+        )
+
+    # we leverage the fact that systems must be unique up to the triple of their
+    # namespaces, names and versions
+    child_systems_already_known = {}
+    for system in get_systems(
+        garden_name=garden.name,
+        include_fields=[
+            "garden_name",
+            "namespace",
+            "name",
+            "version",
+            "prefix_topic",
+            "instances__name",
+            "commands__topics",
+            "commands__name",
+        ],
+    ):
+        child_systems_already_known[_get_system_triple(system)] = system.id
+
+    local_systems = [
+        _get_system_triple(system)
+        for system in get_systems(
+            local=True, include_fields=["namespace", "name", "version"]
+        )
+    ]
+
+    for system in garden.systems:
+        triple = _get_system_triple(system)
+
+        # Check is System is a Local System
+        if triple not in local_systems:
+            if triple in child_systems_already_known:
+                system_id_to_remove = child_systems_already_known.pop(triple)
+
+                # system_id_to_remove and system.id are ObjectIds
+                if system_id_to_remove != system.id:
+                    # remove the system from before this update with the same triple
+                    logger.error(
+                        f"Removing System <{triple[0]}"
+                        f", {triple[1]}"
+                        f", {triple[2]}> with ID={system_id_to_remove}"
+                        f"; doesn't match ID={system.id}"
+                        " for known system with same attributes"
+                    )
+                    remove_system(system_id=system_id_to_remove)
+
+            try:
+                system.garden_name = garden.name
+                upsert_system(system)
+
+            except Exception as ex:
+                logger.error(
+                    f"Error saving system {str(system)} in garden {garden.name}: {ex}"
+                )
+
+        else:
+            remove_system(system=system)
+
+    # if there's anything left over, delete those too; this could occur, e.g.,
+    # if a child system deleted a particular version of a plugin and installed
+    # another version of the same plugin
+    for bad_system_id in child_systems_already_known.values():
+        logger.error(
+            f"Removing System with ID={str(bad_system_id)} because it "
+            f"matches no known system in child garden ({garden.name})"
+        )
+        remove_system(system_id=bad_system_id)
+
+    garden.systems = get_systems(garden_name=garden.name)
+
+    return garden
 
 
 def upsert_garden(garden: Garden, skip_connections: bool = True) -> Garden:
