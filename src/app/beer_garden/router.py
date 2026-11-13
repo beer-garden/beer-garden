@@ -134,7 +134,7 @@ route_functions = {
     "JOB_RESUME": beer_garden.scheduler.resume_job,
     "JOB_DELETE": beer_garden.scheduler.remove_job,
     "JOB_EXECUTE": beer_garden.scheduler.execute_job,
-    "SYSTEM_CREATE": beer_garden.systems.upsert,
+    "SYSTEM_CREATE": beer_garden.systems.upsert_system,
     "SYSTEM_READ": beer_garden.systems.get_system,
     "SYSTEM_READ_ALL": beer_garden.systems.get_systems,
     "SYSTEM_UPDATE": beer_garden.systems.update_system,
@@ -602,7 +602,6 @@ def setup_routing():
     """
     for system in db.query(
         System,
-        filter_params={"local": True},
         include_fields=[
             "id",
             "name",
@@ -622,7 +621,6 @@ def setup_routing():
             (garden.has_parent and garden.parent == config.get("garden.name"))
             or not garden.has_parent
         ):
-            add_routing_garden(garden)
 
             if (
                 garden.connection_type is not None
@@ -647,7 +645,7 @@ def setup_routing():
                 logger.warning(f"Garden with invalid connection info: {garden!r}")
 
 
-def add_routing_system(system=None, garden_name=None):
+def add_routing_system(system: System = None, garden_name: str = None):
     """Update the gardens used for routing
 
     NOTE: THIS NEEDS TO BE ABLE TO BE CALLED MULTIPLE TIMES FOR THE SAME SYSTEM!
@@ -656,27 +654,20 @@ def add_routing_system(system=None, garden_name=None):
     sure this can handle that without breaking.
 
     """
-    # Default to local garden name
-    if getattr(system, "garden_name", None):
-        garden_name = system.garden_name
-    elif not garden_name:
-        for garden in get_gardens():
-            for garden_system in garden.systems:
-                if garden_system.id == system.id:
-                    garden_name = garden.name
-                    break
-            if garden_name:
-                break
+    if system.garden_name is None:
+        system.garden_name = garden_name
 
     with routing_lock:
-        logger.debug(f"{garden_name}: Adding system {system} ({system.id})")
+        logger.debug(f"{system.garden_name}: Adding system {system} ({system.id})")
 
-        system_name_routes[str(system)] = garden_name
-        system_id_routes[system.id] = garden_name
+        system_name_routes[str(system)] = system.garden_name
+        system_id_routes[system.id] = system.garden_name
 
         for instance in system.instances:
-            logger.debug(f"{garden_name}: Adding {system} instance ({instance.id})")
-            instance_id_routes[instance.id] = garden_name
+            logger.debug(
+                f"{system.garden_name}: Adding {system} instance ({instance.id})"
+            )
+            instance_id_routes[instance.id] = system.garden_name
 
 
 def remove_routing_system(system=None):

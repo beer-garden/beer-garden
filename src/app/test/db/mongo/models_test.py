@@ -12,7 +12,6 @@ from mongoengine import NotUniqueError
 
 import beer_garden.db.api as db
 import beer_garden.db.mongo.models
-from beer_garden import config
 from beer_garden.db.mongo.models import (
     Choices,
     Command,
@@ -24,9 +23,7 @@ from beer_garden.db.mongo.models import (
     RawFile,
     Request,
     Role,
-    Subscriber,
     System,
-    Topic,
     User,
     UserToken,
 )
@@ -415,18 +412,6 @@ class TestSystem(object):
 
     def test_clean(self, default_system):
         default_system.clean()
-
-    def test_clean_fail_max_instances(self, default_system):
-        default_system.max_instances = 1
-        default_system.instances.append(Instance(name="default2"))
-        with pytest.raises(ModelValidationError):
-            default_system.clean()
-
-    def test_clean_fail_duplicate_instance_names(self, default_system):
-        default_system.max_instances = 2
-        default_system.instances.append(Instance(name="default"))
-        with pytest.raises(ModelValidationError):
-            default_system.clean()
 
     # TODO - These need to be integration tests
     # @patch("bg_utils.mongo.models.System.objects")
@@ -849,105 +834,6 @@ class TestGarden:
         with pytest.raises(NotUniqueError):
             Garden(name=f"not{local_garden.name}", connection_type="LOCAL").save()
 
-    def test_child_garden_system_attrib_update(self, child_garden, child_system_v2):
-        """If the systems of a child garden are updated such that their names,
-        namespaces, or versions are changed, the original systems are removed and
-        replaced with the new systems when the garden is saved."""
-        orig_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
-        )
-
-        orig_system_versions = set(
-            map(
-                lambda x: str(getattr(x, "version")), child_garden.systems  # noqa: B009
-            )
-        )
-
-        assert (
-            self.v1_str in orig_system_versions
-            and self.v2_str not in orig_system_versions
-        )
-
-        child_garden.systems = [child_system_v2]
-        child_garden.deep_save()
-
-        # we check that the garden written to the DB has the correct systems
-        print("New Systems")
-        garden_systems = System.objects(garden_name=child_garden.name)
-        for system in garden_systems:
-            print(system)
-        new_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), garden_systems)  # noqa: B009
-        )
-        new_system_versions = set(
-            map(lambda x: str(getattr(x, "version")), garden_systems)  # noqa: B009
-        )
-
-        assert (
-            self.v1_str not in new_system_versions
-            and self.v2_str in new_system_versions
-        )
-        assert new_system_ids.intersection(orig_system_ids) == set()
-
-    def test_child_garden_system_id_update(self, child_garden):
-        """If the systems of a child garden are updated such that the names, namespaces
-        and versions remain constant, but the IDs are different, the original systms
-        are removed and replaced with the new systems when the garden is saved."""
-        orig_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
-        )
-        child_garden.systems[0].id = ObjectId()
-        new_system_id = str(child_garden.systems[0].id)
-
-        assert new_system_id not in orig_system_ids
-
-        child_garden.deep_save()
-        db_garden = Garden.objects().first()
-
-        new_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), db_garden.systems)  # noqa: B009
-        )
-
-        assert new_system_id in new_system_ids
-        assert orig_system_ids.intersection(new_system_ids) == set()
-
-    def test_child_garden_save_history(self, child_garden_history):
-        """Verifies that instance.status_info.history is updated to local
-        plugin.status_history length and extra history removed"""
-
-        config._CONFIG = {"garden": {"status_history": 3}}
-
-        # child_system_history.save()
-        child_garden_history.deep_save()
-
-        # we check that the garden written to the DB has the correct systems
-        db_garden = Garden.objects().first()
-
-        for connection in db_garden.publishing_connections:
-            if connection.api == "HTTP":
-                assert len(connection.status_info.history) == 3
-        for connection in db_garden.publishing_connections:
-            if connection.api == "HTTP":
-                assert len(connection.status_info.history) == 3
-
-    def test_child_garden_system_save_history(self, child_garden, child_system_history):
-        """Verifies that instance.status_info.history is updated to local
-        plugin.status_history length and extra history removed"""
-
-        config._CONFIG = {"plugin": {"status_history": 3}}
-
-        for instance in child_system_history.instances:
-            assert len(instance.status_info.history) == 5
-
-        # child_system_history.save()
-        child_garden.systems = [child_system_history]
-        child_garden.deep_save()
-
-        # we check that the garden written to the DB has the correct systems
-        for system in System.objects(garden_name=child_garden.name):
-            for instance in system.instances:
-                assert len(instance.status_info.history) == 3
-
 
 class TestFileUpdates:
     @pytest.fixture()
@@ -1120,89 +1006,3 @@ class TestFileUpdates:
         request_model.delete()
 
         assert len(RawFile.objects.filter(request=request_model)) == 0
-
-
-class TestTopic:
-    @pytest.fixture(autouse=True)
-    def drop(self, mongo_conn):
-        Topic.drop_collection()
-
-    def test_add_subscriber(self):
-        topic = Topic(name="foo")
-
-        subscriber1 = Subscriber(
-            subscriber_type="type1",
-            garden="garden",
-            namespace="namespace",
-            system="system",
-            version="version",
-            instance="instance",
-            command="command",
-            consumer_count=1,
-        )
-        topic.add_subscriber(subscriber1)
-        assert len(topic.subscribers) == 1
-        subscriber2 = Subscriber(
-            subscriber_type="type2",
-            garden="garden",
-            namespace="namespace",
-            system="system",
-            version="version",
-            instance="instance",
-            command="command",
-            consumer_count=1,
-        )
-        topic.add_subscriber(subscriber2)
-        assert len(topic.subscribers) == 2
-        subscriber3 = Subscriber(
-            subscriber_type="type1",
-            garden="garden",
-            namespace="namespace",
-            system="system",
-            version="version",
-            instance="instance",
-            command="command",
-            consumer_count=5,
-        )
-        topic.add_subscriber(subscriber3)
-        assert len(topic.subscribers) == 2
-
-    def test_remove_subscriber(self):
-        topic = Topic(name="foo")
-
-        subscriber1 = Subscriber(
-            subscriber_type="type1",
-            garden="garden",
-            namespace="namespace",
-            system="system",
-            version="version",
-            instance="instance",
-            command="command",
-            consumer_count=1,
-        )
-        subscriber2 = Subscriber(
-            subscriber_type="type2",
-            garden="garden",
-            namespace="namespace",
-            system="system",
-            version="version",
-            instance="instance",
-            command="command",
-            consumer_count=1,
-        )
-        topic.subscribers.append(subscriber1)
-        topic.subscribers.append(subscriber2)
-        assert len(topic.subscribers) == 2
-
-        subscriber3 = Subscriber(
-            subscriber_type="type1",
-            garden="garden",
-            namespace="namespace",
-            system="system",
-            version="version",
-            instance="instance",
-            command="command",
-            consumer_count=5,
-        )
-        topic.remove_subscriber(subscriber3)
-        assert len(topic.subscribers) == 1

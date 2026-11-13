@@ -12,14 +12,25 @@ import copy
 import logging
 from typing import List, Sequence
 
+from brewtils.choices import parse as BrewtilsChoiceParse
 from brewtils.errors import (
     BrewtilsException,
     ModelValidationError,
     PluginError,
     RequestPublishException,
 )
-from brewtils.models import Command, Event, Events, Instance, System
+from brewtils.models import (
+    Command,
+    Event,
+    Events,
+    Instance,
+    Parameter,
+    Subscriber,
+    System,
+)
 from brewtils.schemas import SystemSchema
+from lark import ParseError
+from lark.exceptions import LarkError
 from packaging.version import InvalidVersion, parse
 
 import beer_garden.config as config
@@ -29,6 +40,7 @@ import beer_garden.queue.api as queue
 from beer_garden.errors import NotFoundException, NotUniqueException
 from beer_garden.events import publish, publish_event
 from beer_garden.plugin import publish_stop
+from beer_garden.topic import topic_add_subscriber, topic_remove_subscriber
 
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
@@ -135,6 +147,172 @@ def determine_latest(systems):
         return None
 
 
+def clean_system(system: System) -> System:
+    """Validate and Clean System Model
+
+    Args:
+        system: The System to clean
+
+    Returns:
+        The cleaned System
+    """
+
+    if system.max_instances is None:
+        system.max_instances = -1
+
+    if len(system.instances) > system.max_instances > -1:
+        raise ModelValidationError(
+            "Can not save System %s: Number of instances (%s) "
+            "exceeds system limit (%s)"
+            % (str(system), len(system.instances), system.max_instances)
+        )
+
+    if len(system.instances) != len(
+        set(instance.name for instance in system.instances)
+    ):
+        raise ModelValidationError(
+            "Can not save System %s: Duplicate instance names" % str(system)
+        )
+
+    max_history = config.get("plugin.status_history", default=5)
+    for instance in system.instances:
+        if instance.status_info and len(instance.status_info.history) > max_history:
+            instance.status_info.history = instance.status_info.history[
+                (max_history * -1) :
+            ]
+
+        if instance.status is None:
+            instance.status = "INITIALIZING"
+
+        if instance.status not in Instance.INSTANCE_STATUSES:
+            raise ModelValidationError(
+                f"Can not save Instance {instance}: Invalid status '{instance.status}'"
+            )
+
+    for command in system.commands:
+        clean_command(command)
+
+    if system.garden_name is None and (system.local is True or system.local is None):
+        system.garden_name = config.get("garden.name")
+
+    if system.garden_name == config.get("garden.name"):
+        system.local = True
+
+    return system
+
+
+def clean_command(command: Command) -> Command:
+    if not command.name:
+        raise ModelValidationError("Can not save a Command with an empty name")
+
+    if command.command_type is None:
+        command.command_type = "ACTION"
+
+    if command.output_type is None:
+        command.output_type = "STRING"
+
+    if command.command_type not in Command.COMMAND_TYPES:
+        raise ModelValidationError(
+            f"Can not save Command {command}: Invalid command type"
+            f" '{command.command_type}'"
+        )
+
+    if command.output_type not in Command.OUTPUT_TYPES:
+        raise ModelValidationError(
+            f"Can not save Command {command}: Invalid output type '{command.output_type}'"
+        )
+
+    if len(command.parameters) != len(
+        set(parameter.key for parameter in command.parameters)
+    ):
+        raise ModelValidationError(
+            f"Can not save Command {command}: Contains Parameters with duplicate keys"
+        )
+
+    for parameter in command.parameters:
+        clean_parameter(parameter)
+
+    return command
+
+
+def clean_parameter(parameter: Parameter) -> Parameter:
+    if parameter.type is None:
+        parameter.type = "Any"
+
+    if not parameter.nullable and parameter.optional and parameter.default is None:
+        raise ModelValidationError(
+            f"Can not save Parameter {parameter}: For this Parameter nulls are not "
+            "allowed, but the parameter is optional with no default defined."
+        )
+
+    if len(parameter.parameters) != len(
+        set(parameter.key for parameter in parameter.parameters)
+    ):
+        raise ModelValidationError(
+            f"Can not save Parameter {parameter}: Contains Parameters with duplicate"
+            " keys"
+        )
+
+    if parameter.form_input_type:
+        if parameter.form_input_type not in Parameter.FORM_INPUT_TYPES:
+            raise ModelValidationError(
+                f"Invalid parameter form_input_type '{parameter.form_input_type}'"
+            )
+
+    if parameter.display_name is None:
+        parameter.display_name = parameter.key
+
+    if parameter.choices:
+        if parameter.choices.type == "static" and not isinstance(
+            parameter.choices.value, (list, dict)
+        ):
+            raise ModelValidationError(
+                f"Can not save choices '{parameter.choices}': type is 'static' "
+                f"but the value is not a list or dictionary"
+            )
+        elif parameter.choices.type == "url" and not isinstance(
+            parameter.choices.value, str
+        ):
+            raise ModelValidationError(
+                f"Can not save choices '{parameter.choices}': type is 'url' but "
+                f"the value is not a string"
+            )
+        elif parameter.choices.type == "command" and not isinstance(
+            parameter.choices.value, (str, dict)
+        ):
+            raise ModelValidationError(
+                f"Can not save choices '{parameter.choices}': type is 'command' "
+                f"but the value is not a string or dict"
+            )
+
+        if parameter.choices.type == "command" and isinstance(
+            parameter.choices.value, dict
+        ):
+            value_keys = parameter.choices.value.keys()
+            for required_key in ("command", "system", "version"):
+                if required_key not in value_keys:
+                    raise ModelValidationError(
+                        f"Can not save choices '{parameter.choices}': "
+                        f"specifying value as a dictionary requires "
+                        f"a '{required_key}' item"
+                    )
+
+        try:
+            if parameter.choices.details == {}:
+                if isinstance(parameter.choices.value, str):
+                    parameter.choices.details = BrewtilsChoiceParse(
+                        parameter.choices.value
+                    )
+                elif isinstance(parameter.choices.value, dict):
+                    parameter.choices.details = BrewtilsChoiceParse(
+                        parameter.choices.value["command"]
+                    )
+        except (LarkError, ParseError):
+            raise ModelValidationError(
+                f"Can not save choices '{parameter.choices}': Unable to parse"
+            )
+
+
 @publish_event(Events.SYSTEM_CREATED)
 def create_system(system: System) -> System:
     """Create a new System
@@ -146,11 +324,19 @@ def create_system(system: System) -> System:
         The created System
 
     """
-    if system.namespace is None:
-        system.namespace = config.get("garden.name")
+
+    if system.local or system.namespace is None:
+        system.garden_name = config.get("garden.name")
+
+        if system.namespace is None:
+            system.namespace = config.get("garden.name")
+
+    clean_system(system)
 
     # Create in the database
     system = db.create(system)
+
+    update_system_topics(system)
 
     # Also need to let the routing module know
     from beer_garden.router import add_routing_system
@@ -199,6 +385,9 @@ def update_system(
     system = system or db.query_unique(System, id=system_id)
 
     if new_commands is not None:
+        for command in new_commands:
+            clean_command(command)
+
         # Convert these to DB form and back to make sure all defaults are correct
         mongo_commands = [db.from_brewtils(command) for command in new_commands]
         brew_commands = db.to_brewtils(mongo_commands)
@@ -265,6 +454,9 @@ def update_system(
 
     system = db.modify(system, **updates)
 
+    if "commands" in updates or "push_all__instances" in updates:
+        update_system_topics(system)
+
     # Also need to let the routing module know
     from beer_garden.router import add_routing_system
 
@@ -273,7 +465,7 @@ def update_system(
     return system
 
 
-def upsert(system: System) -> System:
+def upsert_system(system: System) -> System:
     """Helper to create or update a system
 
     Args:
@@ -317,6 +509,49 @@ def reload_system(system_id: str = None, system: System = None) -> None:
     return system
 
 
+def update_system_topics(system: System):
+
+    if system.local and len(system.instances) > 0:
+        for command in system.commands:
+            for instance in system.instances:
+                if len(command.topics) > 0:
+                    for topic in command.topics:
+                        topic_add_subscriber(
+                            subscriber=Subscriber(
+                                garden=system.garden_name,
+                                namespace=system.namespace,
+                                system=system.name,
+                                version=system.version,
+                                instance=instance.name,
+                                command=command.name,
+                                subscriber_type="ANNOTATED",
+                            ),
+                            topic_name=topic,
+                        )
+
+                if not system.prefix_topic:
+                    topic_generated = (
+                        f"{system.garden_name}.{system.namespace}."
+                        f"{system.name}.{system.version}."
+                        f"{instance.name}.{command.name}"
+                    )
+                else:
+                    topic_generated = f"{system.prefix_topic}.{command.name}"
+
+                topic_add_subscriber(
+                    subscriber=Subscriber(
+                        garden=system.garden_name,
+                        namespace=system.namespace,
+                        system=system.name,
+                        version=system.version,
+                        instance=instance.name,
+                        command=command.name,
+                        subscriber_type="GENERATED",
+                    ),
+                    topic_name=topic_generated,
+                )
+
+
 @publish_event(Events.SYSTEM_REMOVED)
 def remove_system(system_id: str = None, system: System = None) -> System:
     """Remove a system
@@ -330,6 +565,46 @@ def remove_system(system_id: str = None, system: System = None) -> System:
 
     """
     system = system or db.query_unique(System, id=system_id)
+
+    if system.local and len(system.instances) > 0:
+        for command in system.commands:
+            for instance in system.instances:
+                if len(command.topics) > 0:
+                    for topic in command.topics:
+                        topic_remove_subscriber(
+                            Subscriber(
+                                garden=system.garden_name,
+                                system=system.name,
+                                namespace=system.namespace,
+                                version=system.version,
+                                instance=instance.name,
+                                command=command.name,
+                                subscriber_type="ANNOTATED",
+                            ),
+                            topic_name=topic,
+                        )
+
+                if not system.prefix_topic:
+                    topic_generated = (
+                        f"{system.garden_name}.{system.namespace}."
+                        f"{system.name}.{system.version}."
+                        f"{instance.name}.{command.name}"
+                    )
+                else:
+                    topic_generated = f"{system.prefix_topic}.{command.name}"
+
+                topic_remove_subscriber(
+                    Subscriber(
+                        garden=system.garden_name,
+                        system=system.name,
+                        namespace=system.namespace,
+                        version=system.version,
+                        instance=instance.name,
+                        command=command.name,
+                        subscriber_type="GENERATED",
+                    ),
+                    topic_name=topic_generated,
+                )
 
     db.delete(system)
 
@@ -494,7 +769,9 @@ def remove_instance(
     Returns:
         The deleted Instance
     """
-    db.modify(system, pull__instances=instance)
+    system = db.modify(system, pull__instances=instance)
+
+    update_system_topics(system)
 
     return instance
 
@@ -553,6 +830,8 @@ def handle_event(event: Event) -> None:
                 < 1
             ):
                 event.payload.local = False
+
+                clean_system(event.payload)
 
                 # Update if the ID matches
                 if db.count(System, id=event.payload.id) > 0:

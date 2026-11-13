@@ -148,13 +148,16 @@ def topic_add_subscriber(
     if subscriber not in topic.subscribers:
         topic.subscribers.append(subscriber)
 
-    return update_topic(topic)
+        return update_topic(topic)
+
+    return topic
 
 
 def topic_remove_subscriber(
     subscriber: Subscriber, topic_id: str = None, topic_name: str = None
 ) -> Topic:
-    """Remove a Subscriber from a Topic
+    """Remove a Subscriber from a Topic. GENERATED and ANNOTATED subscriber types will
+       delete the Topic if subscriber list is empty.
 
     Args:
         subscriber: The subscriber to remove
@@ -172,6 +175,12 @@ def topic_remove_subscriber(
 
     if subscriber in topic.subscribers:
         topic.subscribers.remove(subscriber)
+
+    if len(topic.subscribers) == 0 and subscriber.subscriber_type in [
+        "GENERATED",
+        "ANNOTATED",
+    ]:
+        return remove_topic(topic=topic)
 
     return update_topic(topic)
 

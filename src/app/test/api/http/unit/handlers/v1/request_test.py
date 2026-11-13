@@ -89,7 +89,11 @@ def db_cleanup():
 @pytest.fixture(autouse=True)
 def local_system():
     system = System(
-        name="somesystem", version="1.0.0", namespace="somegarden", local=True
+        name="somesystem",
+        version="1.0.0",
+        namespace="somegarden",
+        local=True,
+        garden_name="somegarden",
     ).save()
 
     yield system
@@ -99,7 +103,11 @@ def local_system():
 @pytest.fixture(autouse=True)
 def remote_system():
     system = System(
-        name="somesystem", version="1.0.0", namespace="remotegarden", local=False
+        name="somesystem",
+        version="1.0.0",
+        namespace="remotegarden",
+        local=False,
+        garden_name="remotegarden",
     ).save()
 
     yield system
