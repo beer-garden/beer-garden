@@ -156,6 +156,9 @@ def clean_system(system: System) -> System:
         The cleaned System
     """
 
+    if system.max_instances is None:
+        system.max_instances = -1
+
     if len(system.instances) > system.max_instances > -1:
         raise ModelValidationError(
             "Can not save System %s: Number of instances (%s) "
@@ -177,121 +180,128 @@ def clean_system(system: System) -> System:
                 (max_history * -1) :
             ]
 
+        if instance.status is None:
+            instance.status = "INITIALIZING"
+
         if instance.status not in Instance.INSTANCE_STATUSES:
             raise ModelValidationError(
                 f"Can not save Instance {instance}: Invalid status '{instance.status}'"
             )
 
     for command in system.commands:
-        if not command.name:
-            raise ModelValidationError("Can not save a Command with an empty name")
-
-        if command.command_type is None:
-            command.command_type = "ACTION"
-
-        if command.output_type is None:
-            command.output_type = "STRING"
-
-        if command.command_type not in Command.COMMAND_TYPES:
-            raise ModelValidationError(
-                f"Can not save Command {command}: Invalid command type"
-                f" '{command.command_type}'"
-            )
-
-        if command.output_type not in Command.OUTPUT_TYPES:
-            raise ModelValidationError(
-                f"Can not save Command {command}: Invalid output type '{command.output_type}'"
-            )
-
-        if len(command.parameters) != len(
-            set(parameter.key for parameter in command.parameters)
-        ):
-            raise ModelValidationError(
-                f"Can not save Command {command}: Contains Parameters with duplicate keys"
-            )
-
-        for parameter in command.parameters:
-
-            if parameter.type is None:
-                parameter.type = "Any"
-
-            if (
-                not parameter.nullable
-                and parameter.optional
-                and parameter.default is None
-            ):
-                raise ModelValidationError(
-                    f"Can not save Parameter {parameter}: For this Parameter nulls are not "
-                    "allowed, but the parameter is optional with no default defined."
-                )
-
-            if len(parameter.parameters) != len(
-                set(parameter.key for parameter in parameter.parameters)
-            ):
-                raise ModelValidationError(
-                    f"Can not save Parameter {parameter}: Contains Parameters with duplicate"
-                    " keys"
-                )
-
-            if parameter.form_input_type:
-                if parameter.form_input_type not in Parameter.FORM_INPUT_TYPES:
-                    raise ModelValidationError(
-                        f"Can not save Command {command}: Invalid parameter "
-                        f"form_input_type '{parameter.form_input_type}'"
-                    )
-
-            if parameter.display_name is None:
-                parameter.display_name = parameter.key
-
-            if parameter.choices:
-                if parameter.choices.type == "static" and not isinstance(
-                    parameter.choices.value, (list, dict)
-                ):
-                    raise ModelValidationError(
-                        f"Can not save choices '{parameter.choices}': type is 'static' "
-                        f"but the value is not a list or dictionary"
-                    )
-                elif parameter.choices.type == "url" and not isinstance(
-                    parameter.choices.value, str
-                ):
-                    raise ModelValidationError(
-                        f"Can not save choices '{parameter.choices}': type is 'url' but "
-                        f"the value is not a string"
-                    )
-                elif parameter.choices.type == "command" and not isinstance(
-                    parameter.choices.value, (str, dict)
-                ):
-                    raise ModelValidationError(
-                        f"Can not save choices '{parameter.choices}': type is 'command' "
-                        f"but the value is not a string or dict"
-                    )
-
-                if parameter.choices.type == "command" and isinstance(
-                    parameter.choices.value, dict
-                ):
-                    value_keys = parameter.choices.value.keys()
-                    for required_key in ("command", "system", "version"):
-                        if required_key not in value_keys:
-                            raise ModelValidationError(
-                                f"Can not save choices '{parameter.choices}': "
-                                f"specifying value as a dictionary requires "
-                                f"a '{required_key}' item"
-                            )
-
-                try:
-                    if parameter.choices.details == {}:
-                        if isinstance(parameter.choices.value, str):
-                            parameter.choices.details = parse(parameter.choices.value)
-                        elif isinstance(parameter.choices.value, dict):
-                            parameter.choices.details = parse(
-                                parameter.choices.value["command"]
-                            )
-                except (LarkError, ParseError):
-                    raise ModelValidationError(
-                        f"Can not save choices '{parameter.choices}': Unable to parse"
-                    )
+        clean_command(command)
 
     return system
+
+
+def clean_command(command: Command) -> Command:
+    if not command.name:
+        raise ModelValidationError("Can not save a Command with an empty name")
+
+    if command.command_type is None:
+        command.command_type = "ACTION"
+
+    if command.output_type is None:
+        command.output_type = "STRING"
+
+    if command.command_type not in Command.COMMAND_TYPES:
+        raise ModelValidationError(
+            f"Can not save Command {command}: Invalid command type"
+            f" '{command.command_type}'"
+        )
+
+    if command.output_type not in Command.OUTPUT_TYPES:
+        raise ModelValidationError(
+            f"Can not save Command {command}: Invalid output type '{command.output_type}'"
+        )
+
+    if len(command.parameters) != len(
+        set(parameter.key for parameter in command.parameters)
+    ):
+        raise ModelValidationError(
+            f"Can not save Command {command}: Contains Parameters with duplicate keys"
+        )
+
+    for parameter in command.parameters:
+        clean_parameter(parameter)
+
+    return command
+
+
+def clean_parameter(parameter: Parameter) -> Parameter:
+    if parameter.type is None:
+        parameter.type = "Any"
+
+    if not parameter.nullable and parameter.optional and parameter.default is None:
+        raise ModelValidationError(
+            f"Can not save Parameter {parameter}: For this Parameter nulls are not "
+            "allowed, but the parameter is optional with no default defined."
+        )
+
+    if len(parameter.parameters) != len(
+        set(parameter.key for parameter in parameter.parameters)
+    ):
+        raise ModelValidationError(
+            f"Can not save Parameter {parameter}: Contains Parameters with duplicate"
+            " keys"
+        )
+
+    if parameter.form_input_type:
+        if parameter.form_input_type not in Parameter.FORM_INPUT_TYPES:
+            raise ModelValidationError(
+                f"Invalid parameter form_input_type '{parameter.form_input_type}'"
+            )
+
+    if parameter.display_name is None:
+        parameter.display_name = parameter.key
+
+    if parameter.choices:
+        if parameter.choices.type == "static" and not isinstance(
+            parameter.choices.value, (list, dict)
+        ):
+            raise ModelValidationError(
+                f"Can not save choices '{parameter.choices}': type is 'static' "
+                f"but the value is not a list or dictionary"
+            )
+        elif parameter.choices.type == "url" and not isinstance(
+            parameter.choices.value, str
+        ):
+            raise ModelValidationError(
+                f"Can not save choices '{parameter.choices}': type is 'url' but "
+                f"the value is not a string"
+            )
+        elif parameter.choices.type == "command" and not isinstance(
+            parameter.choices.value, (str, dict)
+        ):
+            raise ModelValidationError(
+                f"Can not save choices '{parameter.choices}': type is 'command' "
+                f"but the value is not a string or dict"
+            )
+
+        if parameter.choices.type == "command" and isinstance(
+            parameter.choices.value, dict
+        ):
+            value_keys = parameter.choices.value.keys()
+            for required_key in ("command", "system", "version"):
+                if required_key not in value_keys:
+                    raise ModelValidationError(
+                        f"Can not save choices '{parameter.choices}': "
+                        f"specifying value as a dictionary requires "
+                        f"a '{required_key}' item"
+                    )
+
+        try:
+            if parameter.choices.details == {}:
+                if isinstance(parameter.choices.value, str):
+                    parameter.choices.details = parse(parameter.choices.value)
+                elif isinstance(parameter.choices.value, dict):
+                    parameter.choices.details = parse(
+                        parameter.choices.value["command"]
+                    )
+        except (LarkError, ParseError):
+            raise ModelValidationError(
+                f"Can not save choices '{parameter.choices}': Unable to parse"
+            )
 
 
 @publish_event(Events.SYSTEM_CREATED)
@@ -366,6 +376,9 @@ def update_system(
     system = system or db.query_unique(System, id=system_id)
 
     if new_commands is not None:
+        for command in new_commands:
+            clean_command(command)
+
         # Convert these to DB form and back to make sure all defaults are correct
         mongo_commands = [db.from_brewtils(command) for command in new_commands]
         brew_commands = db.to_brewtils(mongo_commands)
@@ -577,7 +590,7 @@ def remove_system(system_id: str = None, system: System = None) -> System:
                     system.version,
                     instance.name,
                     command.name,
-                    "ANNOTATED",
+                    "GENERATED",
                 )
 
     db.delete(system)

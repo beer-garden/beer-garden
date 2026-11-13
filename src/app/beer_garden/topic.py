@@ -140,7 +140,7 @@ def remove_subscriber(
             else:
                 updated_subscribers.append(subscriber)
 
-        if len(remove_subscriber) > 0:
+        if len(removed_subscribers) > 0:
             if (
                 subscriber_type in ["GENERATED", "ANNOTATED"]
                 and len(updated_subscribers) == 0

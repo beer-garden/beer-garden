@@ -94,7 +94,7 @@ def local_garden_system():
             version="1.2.3",
             namespace="local_garden",
             local=True,
-            instances=[BrewtilsInstance(name="1")],
+            instances=[BrewtilsInstance(name="1", status="RUNNING")],
             commands=[BrewtilsCommand(name="command")],
         )
     )

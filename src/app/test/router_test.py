@@ -86,6 +86,7 @@ class TestRequestRouting:
                 namespace="somegarden",
                 local=True,
                 instances=[BrewtilsInstance(name="default", status="RUNNING")],
+                garden_name="somegarden",
             )
         )
 
