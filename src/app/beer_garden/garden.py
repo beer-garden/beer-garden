@@ -494,7 +494,12 @@ def create_garden(garden: Garden) -> Garden:
     clean_garden(garden)
     update_associated_systems(garden)
 
-    return db.create(garden)
+    garden = db.create(garden)
+
+    # Need to add back Systems because Mongo removes them
+    enrich_garden_systems(garden)
+
+    return garden
 
 
 def garden_add_system(system: System, garden_name: str) -> Garden:
@@ -625,9 +630,33 @@ def update_associated_systems(garden: Garden):
                         " for known system with same attributes"
                     )
                     remove_system(system_id=system_id_to_remove)
+            elif (
+                new_system.id and new_system.id in child_systems_already_known.values()
+            ):
+                for matching_tuple in [
+                    k
+                    for k, v in child_systems_already_known.items()
+                    if v == new_system.id
+                ]:
+                    logger.error(
+                        f"Removing System <{matching_tuple[0]}"
+                        f", {matching_tuple[1]}"
+                        f", {matching_tuple[2]}> with ID={new_system.id}"
+                        f"; doesn't match Tuple <{triple[0]}"
+                        f", {triple[1]}"
+                        f", {triple[2]}>"
+                        " for known system with same ID"
+                    )
+                child_systems_already_known = {
+                    k: v
+                    for k, v in child_systems_already_known.items()
+                    if v != new_system.id
+                }
+                remove_system(system_id=new_system.id)
 
             try:
                 new_system.garden_name = garden.name
+                new_system.local = False
                 upsert_system(new_system)
 
             except Exception as ex:

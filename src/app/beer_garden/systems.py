@@ -12,6 +12,7 @@ import copy
 import logging
 from typing import List, Sequence
 
+from brewtils.choices import parse as BrewtilsChoiceParse
 from brewtils.errors import (
     BrewtilsException,
     ModelValidationError,
@@ -39,7 +40,7 @@ import beer_garden.queue.api as queue
 from beer_garden.errors import NotFoundException, NotUniqueException
 from beer_garden.events import publish, publish_event
 from beer_garden.plugin import publish_stop
-from beer_garden.topic import remove_subscriber, topic_add_subscriber
+from beer_garden.topic import topic_add_subscriber, topic_remove_subscriber
 
 REQUEST_FIELDS = set(SystemSchema.get_attribute_names())
 
@@ -191,6 +192,12 @@ def clean_system(system: System) -> System:
     for command in system.commands:
         clean_command(command)
 
+    if system.garden_name is None and (system.local is True or system.local is None):
+        system.garden_name = config.get("garden.name")
+
+    if system.garden_name == config.get("garden.name"):
+        system.local = True
+
     return system
 
 
@@ -293,9 +300,11 @@ def clean_parameter(parameter: Parameter) -> Parameter:
         try:
             if parameter.choices.details == {}:
                 if isinstance(parameter.choices.value, str):
-                    parameter.choices.details = parse(parameter.choices.value)
+                    parameter.choices.details = BrewtilsChoiceParse(
+                        parameter.choices.value
+                    )
                 elif isinstance(parameter.choices.value, dict):
-                    parameter.choices.details = parse(
+                    parameter.choices.details = BrewtilsChoiceParse(
                         parameter.choices.value["command"]
                     )
         except (LarkError, ParseError):
@@ -562,15 +571,17 @@ def remove_system(system_id: str = None, system: System = None) -> System:
             for instance in system.instances:
                 if len(command.topics) > 0:
                     for topic in command.topics:
-                        remove_subscriber(
-                            topic,
-                            system.garden_name,
-                            system.name,
-                            system.namespace,
-                            system.version,
-                            instance.name,
-                            command.name,
-                            "ANNOTATED",
+                        topic_remove_subscriber(
+                            Subscriber(
+                                garden=system.garden_name,
+                                system=system.name,
+                                namespace=system.namespace,
+                                version=system.version,
+                                instance=instance.name,
+                                command=command.name,
+                                subscriber_type="ANNOTATED",
+                            ),
+                            topic_name=topic,
                         )
 
                 if not system.prefix_topic:
@@ -582,15 +593,17 @@ def remove_system(system_id: str = None, system: System = None) -> System:
                 else:
                     topic_generated = f"{system.prefix_topic}.{command.name}"
 
-                remove_subscriber(
-                    topic_generated,
-                    system.garden_name,
-                    system.name,
-                    system.namespace,
-                    system.version,
-                    instance.name,
-                    command.name,
-                    "GENERATED",
+                topic_remove_subscriber(
+                    Subscriber(
+                        garden=system.garden_name,
+                        system=system.name,
+                        namespace=system.namespace,
+                        version=system.version,
+                        instance=instance.name,
+                        command=command.name,
+                        subscriber_type="GENERATED",
+                    ),
+                    topic_name=topic_generated,
                 )
 
     db.delete(system)

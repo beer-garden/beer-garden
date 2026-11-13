@@ -8,6 +8,9 @@ from brewtils.models import System as BrewtilsSystem
 from beer_garden import config
 from beer_garden.db.mongo.models import Garden, System, Topic
 from beer_garden.systems import (
+    clean_command,
+    clean_parameter,
+    clean_system,
     create_system,
     determine_latest,
     get_systems,
@@ -308,3 +311,147 @@ class TestSystem:
     def test_determine_latest_no_systems(self):
         """Return none if no matching systems"""
         assert determine_latest([]) is None
+
+    def test_clean_system_fail_max_instances(self, system):
+        system.max_instances = 1
+        system.instances.append(BrewtilsInstance(name="default1", status="RUNNING"))
+        system.instances.append(BrewtilsInstance(name="default2", status="RUNNING"))
+        with pytest.raises(ModelValidationError):
+            clean_system(system)
+
+    def test_clean_system_fail_duplicate_instance_names(self, system):
+        system.max_instances = 2
+        system.instances.append(BrewtilsInstance(name="default", status="RUNNING"))
+        system.instances.append(BrewtilsInstance(name="default", status="RUNNING"))
+        with pytest.raises(ModelValidationError):
+            clean_system(system)
+
+    def test_clean_system_fail_invalid_instance_name(self, system):
+        system.max_instances = 2
+        system.instances.append(BrewtilsInstance(name="default", status="BAD"))
+        with pytest.raises(ModelValidationError):
+            clean_system(system)
+
+    def test_clean_system_set_max_instances(self, system):
+        system.max_instances = None
+        system.instances.append(BrewtilsInstance(name="default", status="RUNNING"))
+        clean_system(system)
+
+        assert system.max_instances == -1
+
+    def test_clean_system_set_garden_name(self, system):
+        config._CONFIG = {"garden": {"name": "somegarden"}}
+        system.garden_name = None
+        system.instances.append(BrewtilsInstance(name="default", status="RUNNING"))
+        clean_system(system)
+
+        assert system.garden_name == "somegarden"
+
+    def test_clean_system_set_local(self, system):
+        config._CONFIG = {"garden": {"name": "somegarden"}}
+        system.garden_name = "somegarden"
+        system.local = False
+        system.instances.append(BrewtilsInstance(name="default", status="RUNNING"))
+        clean_system(system)
+
+        assert system.local is True
+
+    def test_clean_command_fail_name(self, bg_command):
+        bg_command.name = None
+
+        with pytest.raises(ModelValidationError):
+            clean_command(bg_command)
+
+    def test_clean_command_set_command_type(self, bg_command):
+        bg_command.command_type = None
+        clean_command(bg_command)
+
+        assert bg_command.command_type == "ACTION"
+
+    def test_clean_command_fail_command_type(self, bg_command):
+        bg_command.command_type = "INVALID"
+
+        with pytest.raises(ModelValidationError):
+            clean_command(bg_command)
+
+    def test_clean_command_set_output_type(self, bg_command):
+        bg_command.output_type = None
+        clean_command(bg_command)
+
+        assert bg_command.output_type == "STRING"
+
+    def test_clean_command_fail_output_type(self, bg_command):
+        bg_command.output_type = "INVALID"
+
+        with pytest.raises(ModelValidationError):
+            clean_command(bg_command)
+
+    def test_clean_command_fail_duplicate_parameters(self, bg_command):
+        bg_command.parameters.append(bg_command.parameters[0])
+
+        with pytest.raises(ModelValidationError):
+            clean_command(bg_command)
+
+    def test_clean_parameter_set_type(self, bg_parameter):
+        bg_parameter.type = None
+        clean_parameter(bg_parameter)
+
+        assert bg_parameter.type == "Any"
+
+    def test_clean_parameter_fail_non_nullable_optional(self, bg_parameter):
+        bg_parameter.nullable = False
+        bg_parameter.optional = True
+        bg_parameter.default = None
+
+        with pytest.raises(ModelValidationError):
+            clean_parameter(bg_parameter)
+
+    def test_clean_parameter_fail_form_input_type(self, bg_parameter):
+        bg_parameter.form_input_type = "INVALID"
+
+        with pytest.raises(ModelValidationError):
+            clean_parameter(bg_parameter)
+
+    def test_clean_parameter_set_display_name(self, bg_parameter):
+        bg_parameter.display_name = None
+        clean_parameter(bg_parameter)
+
+        assert bg_parameter.display_name == bg_parameter.key
+
+    def test_clean_parameter_choices_fail_static(self, bg_parameter, bg_choices):
+        bg_choices.type = "static"
+        bg_choices.value = "str"
+        bg_parameter.choices = bg_choices
+
+        with pytest.raises(ModelValidationError):
+            clean_parameter(bg_parameter)
+
+    def test_clean_parameter_choices_fail_url(self, bg_parameter, bg_choices):
+        bg_choices.type = "url"
+        bg_choices.value = {"key": "value"}
+        bg_parameter.choices = bg_choices
+
+        with pytest.raises(ModelValidationError):
+            clean_parameter(bg_parameter)
+
+    def test_clean_parameter_choices_fail_command(self, bg_parameter, bg_choices):
+        bg_choices.type = "command"
+        bg_choices.value = ["list"]
+        bg_parameter.choices = bg_choices
+
+        with pytest.raises(ModelValidationError):
+            clean_parameter(bg_parameter)
+
+    def test_clean_parameter_choices_fail_command_missing_field(
+        self, bg_parameter, bg_choices
+    ):
+        bg_choices.type = "command"
+        bg_choices.value = {
+            "command": "command",
+            "system": "system",
+            "missing_version": "version",
+        }
+        bg_parameter.choices = bg_choices
+
+        with pytest.raises(ModelValidationError):
+            clean_parameter(bg_parameter)

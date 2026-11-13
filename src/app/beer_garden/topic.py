@@ -94,65 +94,6 @@ def remove_topic(
     return topic
 
 
-def remove_subscriber(
-    topic_name: str,
-    garden: str,
-    system: str,
-    namespace: str,
-    version: str,
-    instance: str,
-    command: str,
-    subscriber_type: str,
-):
-    """Removes subscriber from topic. GENERATED and ANNOTATED subscriber types will
-       delete the Topic is subscriber list is empty.
-
-    Args:
-        topic_name: The Topic name
-        garden: The subscriber target Garden
-        system: The subscriber target System
-        namespace: The subscriber target Namespace
-        version: The subscriber target Version
-        instance: The subscriber target Instance
-        command: The subscriber target command Command
-        subscriber_type: The subscriber type
-
-    Returns:
-        The topic with removed subscribers
-
-    """
-    topic = get_topic(topic_name=topic_name)
-    if topic:
-        updated_subscribers = []
-        removed_subscribers = []
-
-        for subscriber in topic.subscribers:
-            if (
-                subscriber.garden == garden
-                and subscriber.system == system
-                and subscriber.namespace == namespace
-                and subscriber.version == version
-                and subscriber.instance == instance
-                and subscriber.command == command
-                and subscriber.subscriber_type == subscriber_type
-            ):
-                removed_subscribers.append(subscriber)
-            else:
-                updated_subscribers.append(subscriber)
-
-        if len(removed_subscribers) > 0:
-            if (
-                subscriber_type in ["GENERATED", "ANNOTATED"]
-                and len(updated_subscribers) == 0
-            ):
-                remove_topic(topic=topic)
-            else:
-                topic.subscribers = updated_subscribers
-                update_topic(topic)
-
-    return topic
-
-
 def get_topics_regex(topic) -> List[Topic]:
     """Based off provided topic find matching regex contained within the Topics table
 
@@ -215,7 +156,8 @@ def topic_add_subscriber(
 def topic_remove_subscriber(
     subscriber: Subscriber, topic_id: str = None, topic_name: str = None
 ) -> Topic:
-    """Remove a Subscriber from a Topic
+    """Remove a Subscriber from a Topic. GENERATED and ANNOTATED subscriber types will
+       delete the Topic if subscriber list is empty.
 
     Args:
         subscriber: The subscriber to remove
@@ -233,6 +175,12 @@ def topic_remove_subscriber(
 
     if subscriber in topic.subscribers:
         topic.subscribers.remove(subscriber)
+
+    if len(topic.subscribers) == 0 and subscriber.subscriber_type in [
+        "GENERATED",
+        "ANNOTATED",
+    ]:
+        return remove_topic(topic=topic)
 
     return update_topic(topic)
 
