@@ -137,8 +137,39 @@ def get_garden(garden_name: str, **kwargs) -> Garden:
             if required_field not in kwargs["include_fields"]:
                 kwargs["include_fields"].append(required_field)
 
+    garden_kwargs = {}
+
+    if kwargs:
+        for filter, values in kwargs.items():
+            if (
+                values
+                and isinstance(values, (list, set))
+                and filter not in garden_kwargs
+            ):
+                query_values = []
+                for value in values:
+                    if not value.startswith("systems__"):
+                        query_values.append(value)
+
+                if query_values:
+                    garden_kwargs[filter] = query_values
+            elif values and isinstance(values, dict) and filter not in garden_kwargs:
+                garden_kwargs[filter] = values
+
+                # TODO: Handle Raw Query Logic
+                # query_values = {}
+
+                # for value_key, value_value in value.items():
+                #     if not value_key.startswith("systems"):
+                #         query_values[value_key] = value_value
+
+                # if query_values:
+                #     garden_kwargs[filter] = query_values
+            else:
+                garden_kwargs[filter] = values
+
     if garden_name == config.get("garden.name"):
-        gardens = db.query(Garden, **kwargs)
+        gardens = db.query(Garden, **garden_kwargs)
         garden = None
         for db_garden in gardens:
             if db_garden.name == config.get("garden.name"):
@@ -160,6 +191,8 @@ def get_garden(garden_name: str, **kwargs) -> Garden:
                     )
                 )
             ]
+
+            enrich_garden_systems(db_garden, **kwargs)
 
         if garden:
             enrich_garden_systems(garden, **kwargs)
@@ -611,61 +644,63 @@ def update_associated_systems(garden: Garden):
         )
     ]
 
-    for new_system in garden.systems:
-        triple = _get_system_triple(new_system)
+    if hasattr(garden, "systems"):
+        for new_system in garden.systems:
+            triple = _get_system_triple(new_system)
 
-        # Check is System is a Local System
-        if triple not in local_systems:
-            if triple in child_systems_already_known:
-                system_id_to_remove = child_systems_already_known.pop(triple)
+            # Check is System is a Local System
+            if triple not in local_systems:
+                if triple in child_systems_already_known:
+                    system_id_to_remove = child_systems_already_known.pop(triple)
 
-                # system_id_to_remove and system.id are ObjectIds
-                if system_id_to_remove != new_system.id:
-                    # remove the system from before this update with the same triple
+                    # system_id_to_remove and system.id are ObjectIds
+                    if system_id_to_remove != new_system.id:
+                        # remove the system from before this update with the same triple
+                        logger.error(
+                            f"Removing System <{triple[0]}"
+                            f", {triple[1]}"
+                            f", {triple[2]}> with ID={system_id_to_remove}"
+                            f"; doesn't match ID={new_system.id}"
+                            " for known system with same attributes"
+                        )
+                        remove_system(system_id=system_id_to_remove)
+                elif (
+                    new_system.id
+                    and new_system.id in child_systems_already_known.values()
+                ):
+                    for matching_tuple in [
+                        k
+                        for k, v in child_systems_already_known.items()
+                        if v == new_system.id
+                    ]:
+                        logger.error(
+                            f"Removing System <{matching_tuple[0]}"
+                            f", {matching_tuple[1]}"
+                            f", {matching_tuple[2]}> with ID={new_system.id}"
+                            f"; doesn't match Tuple <{triple[0]}"
+                            f", {triple[1]}"
+                            f", {triple[2]}>"
+                            " for known system with same ID"
+                        )
+                    child_systems_already_known = {
+                        k: v
+                        for k, v in child_systems_already_known.items()
+                        if v != new_system.id
+                    }
+                    remove_system(system_id=new_system.id)
+
+                try:
+                    new_system.garden_name = garden.name
+                    new_system.local = False
+                    upsert_system(new_system)
+
+                except Exception as ex:
                     logger.error(
-                        f"Removing System <{triple[0]}"
-                        f", {triple[1]}"
-                        f", {triple[2]}> with ID={system_id_to_remove}"
-                        f"; doesn't match ID={new_system.id}"
-                        " for known system with same attributes"
+                        f"Error saving system {str(new_system)} in garden {garden.name}: {ex}"
                     )
-                    remove_system(system_id=system_id_to_remove)
-            elif (
-                new_system.id and new_system.id in child_systems_already_known.values()
-            ):
-                for matching_tuple in [
-                    k
-                    for k, v in child_systems_already_known.items()
-                    if v == new_system.id
-                ]:
-                    logger.error(
-                        f"Removing System <{matching_tuple[0]}"
-                        f", {matching_tuple[1]}"
-                        f", {matching_tuple[2]}> with ID={new_system.id}"
-                        f"; doesn't match Tuple <{triple[0]}"
-                        f", {triple[1]}"
-                        f", {triple[2]}>"
-                        " for known system with same ID"
-                    )
-                child_systems_already_known = {
-                    k: v
-                    for k, v in child_systems_already_known.items()
-                    if v != new_system.id
-                }
-                remove_system(system_id=new_system.id)
 
-            try:
-                new_system.garden_name = garden.name
-                new_system.local = False
-                upsert_system(new_system)
-
-            except Exception as ex:
-                logger.error(
-                    f"Error saving system {str(new_system)} in garden {garden.name}: {ex}"
-                )
-
-        else:
-            remove_system(system=new_system)
+            else:
+                remove_system(system=new_system)
 
     # if there's anything left over, delete those too; this could occur, e.g.,
     # if a child system deleted a particular version of a plugin and installed

@@ -350,7 +350,9 @@ def create_system(system: System) -> System:
 def update_system(
     system_id: str = None,
     system: System = None,
+    commands: Sequence[Command] = None,
     new_commands: Sequence[Command] = None,
+    instances: Sequence[Instance] = None,
     add_instances: Sequence[Instance] = None,
     description: str = None,
     display_name: str = None,
@@ -383,6 +385,14 @@ def update_system(
     """
     updates = {}
     system = system or db.query_unique(System, id=system_id)
+
+    if commands is not None:
+        for command in commands:
+            clean_command(command)
+
+        mongo_commands = [db.from_brewtils(command) for command in commands]
+
+        updates["commands"] = mongo_commands
 
     if new_commands is not None:
         for command in new_commands:
@@ -432,6 +442,18 @@ def update_system(
         metadata_update.update(metadata)
 
         updates["metadata"] = metadata_update
+
+    if instances is not None:
+        if -1 < system.max_instances < len(instances):
+            raise ModelValidationError(
+                f"Unable to add instance(s) to {system} - would exceed "
+                f"the system instance limit of {system.max_instances}"
+            )
+
+        new_instances = []
+        for instance in instances:
+            new_instances.append(db.from_brewtils(instance))
+        updates["instances"] = new_instances
 
     if add_instances:
         if -1 < system.max_instances < len(system.instances) + len(add_instances):
@@ -483,8 +505,8 @@ def upsert_system(system: System) -> System:
 
         return update_system(
             system=existing,
-            new_commands=system.commands,
-            add_instances=system.instances,
+            commands=system.commands,
+            instances=system.instances,
             description=system.description,
             display_name=system.display_name,
             icon_name=system.icon_name,
