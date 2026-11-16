@@ -80,52 +80,6 @@ class TestChoices(object):
         assert "select" in repr(choices)
         assert "[1]" in repr(choices)
 
-    @pytest.mark.parametrize(
-        "choice_obj",
-        [
-            Choices(type="static", value="SHOULD_BE_A_LIST"),
-            Choices(type="url", value=[1, 2]),
-            Choices(type="command", value=[1, 2]),
-            Choices(type="command", value={"command": "foo"}),
-        ],
-    )
-    def test_clean_value_types(self, choice_obj):
-        with pytest.raises(ModelValidationError):
-            choice_obj.clean()
-
-    def test_clean_static(self):
-        choice = Choices(type="static", value=["a", "b", "c"])
-        choice.clean()
-        assert choice.details == {}
-
-    def test_clean_parse(self):
-        choice = Choices(type="command", value="foo")
-        choice.clean()
-        assert choice.details == {"name": "foo", "args": []}
-
-    def test_clean_with_details(self):
-        choice = Choices(type="command", value="foo", details={"non": "empty"})
-        choice.clean()
-
-        assert choice.details == {"non": "empty"}
-
-    @pytest.mark.parametrize(
-        "value",
-        [
-            "foo${arg",
-            "http://foo?arg=${val",
-            {
-                "command": "foo${arg",
-                "system": "foo",
-                "version": "1.0.0",
-                "instance_name": "default",
-            },
-        ],
-    )
-    def test_clean_bad_parse(self, value):
-        with pytest.raises(ModelValidationError):
-            Choices(type="command", value=value).clean()
-
 
 class TestParameter(object):
     def test_str(self):

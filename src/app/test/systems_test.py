@@ -6,7 +6,7 @@ from brewtils.models import Instance as BrewtilsInstance
 from brewtils.models import System as BrewtilsSystem
 
 from beer_garden import config
-from beer_garden.db.mongo.models import Garden, System, Topic
+from beer_garden.db.mongo.models import Choices, Garden, System, Topic
 from beer_garden.systems import (
     clean_command,
     clean_parameter,
@@ -515,3 +515,49 @@ class TestSystem:
 
         with pytest.raises(ModelValidationError):
             clean_parameter(bg_parameter)
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "foo${arg",
+            "http://foo?arg=${val",
+            {
+                "command": "foo${arg",
+                "system": "foo",
+                "version": "1.0.0",
+                "instance_name": "default",
+            },
+        ],
+    )
+    def test_clean_parameter_choices_clean_bad_parse(
+        self, bg_parameter, bg_choices, value
+    ):
+        bg_choices.value = value
+        bg_parameter.choices = bg_choices
+
+        with pytest.raises(ModelValidationError):
+            clean_parameter(bg_parameter)
+
+    @pytest.mark.parametrize(
+        "choice_obj",
+        [
+            Choices(type="static", value="SHOULD_BE_A_LIST"),
+            Choices(type="url", value=[1, 2]),
+            Choices(type="command", value=[1, 2]),
+            Choices(type="command", value={"command": "foo"}),
+        ],
+    )
+    def test_clean_parameter_choices_clean_value_types(self, bg_parameter, choice_obj):
+        bg_parameter.choices = choice_obj
+
+        with pytest.raises(ModelValidationError):
+            clean_parameter(bg_parameter)
+
+    def test_clean_parameter_choices_clean_with_details(self, bg_parameter):
+        bg_parameter.choices = Choices(
+            type="command", value="foo", details={"non": "empty"}
+        )
+
+        clean_parameter(bg_parameter)
+
+        assert bg_parameter.choices.details == {"non": "empty"}
