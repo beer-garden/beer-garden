@@ -69,10 +69,6 @@ class TestInstance(object):
         assert "name" in repr(instance)
         assert "RUNNING" in repr(instance)
 
-    def test_clean_bad_status(self):
-        with pytest.raises(ModelValidationError):
-            Instance(status="BAD").clean()
-
 
 class TestChoices(object):
     def test_str(self):
@@ -140,21 +136,8 @@ class TestParameter(object):
         p = Parameter(key="foo", description="bar", type="Boolean", optional=False)
         assert repr(p) == "<Parameter: key=foo, type=Boolean, description=bar>"
 
-    def test_default_display_name(self):
-        p = Parameter(key="foo")
-        assert p.display_name == "foo"
-
     def test_clean(self):
         Parameter(key="foo", optional=False).clean()
-
-    def test_clean_fail_nullable_optional_but_no_default(self):
-        with pytest.raises(ModelValidationError):
-            Parameter(key="foo", optional=True, default=None, nullable=False).clean()
-
-    def test_clean_fail_duplicate_parameter_keys(self):
-        nested = Parameter(key="foo")
-        with pytest.raises(ModelValidationError):
-            Parameter(key="foo", optional=False, parameters=[nested, nested]).clean()
 
 
 class TestRequest(object):

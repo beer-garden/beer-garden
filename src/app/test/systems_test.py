@@ -455,3 +455,63 @@ class TestSystem:
 
         with pytest.raises(ModelValidationError):
             clean_parameter(bg_parameter)
+
+    def test_clean_parameter_choices_command_dict_details(
+        self, bg_parameter, bg_choices
+    ):
+        bg_choices.type = "command"
+        bg_choices.value = {
+            "command": "get_choices",
+            "system": "system",
+            "version": "version",
+        }
+        bg_parameter.choices = bg_choices
+
+        clean_parameter(bg_parameter)
+
+        assert bg_parameter.choices.details["name"] == "get_choices"
+        assert bg_parameter.choices.details["args"] == []
+
+    def test_clean_parameter_choices_command_func_details(
+        self, bg_parameter, bg_choices
+    ):
+        bg_choices.type = "command"
+        bg_choices.value = "get_choices()"
+        bg_parameter.choices = bg_choices
+
+        clean_parameter(bg_parameter)
+
+        assert bg_parameter.choices.details["name"] == "get_choices"
+        assert bg_parameter.choices.details["args"] == []
+
+    def test_clean_parameter_choices_fail_command_func_details(
+        self, bg_parameter, bg_choices
+    ):
+        bg_choices.type = "command"
+        bg_choices.value = "get_choices("
+        bg_parameter.choices = bg_choices
+
+        with pytest.raises(ModelValidationError):
+            clean_parameter(bg_parameter)
+
+    def test_clean_parameter_choices_command_url_details(
+        self, bg_parameter, bg_choices
+    ):
+        bg_choices.type = "url"
+        bg_choices.value = "https://test.com/p1.json"
+        bg_parameter.choices = bg_choices
+
+        clean_parameter(bg_parameter)
+
+        assert bg_parameter.choices.details["address"] == "https://test.com/p1.json"
+        assert bg_parameter.choices.details["args"] == []
+
+    def test_clean_parameter_choices_fail_command_url_details(
+        self, bg_parameter, bg_choices
+    ):
+        bg_choices.type = "url"
+        bg_choices.value = ""
+        bg_parameter.choices = bg_choices
+
+        with pytest.raises(ModelValidationError):
+            clean_parameter(bg_parameter)
