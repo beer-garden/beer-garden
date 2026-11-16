@@ -312,11 +312,6 @@ class TestSystem:
         """Return none if no matching systems"""
         assert determine_latest([]) is None
 
-    def test_clean_system_fail_name(self, system):
-        system.name = ""
-        with pytest.raises(ModelValidationError):
-            clean_system(system)
-
     def test_clean_system_fail_max_instances(self, system):
         system.max_instances = 1
         system.instances.append(BrewtilsInstance(name="default1", status="RUNNING"))
@@ -363,6 +358,12 @@ class TestSystem:
 
     def test_clean_command_fail_name(self, bg_command):
         bg_command.name = None
+
+        with pytest.raises(ModelValidationError):
+            clean_command(bg_command)
+
+    def test_clean_command_fail_name_empty(self, bg_command):
+        bg_command.name = ""
 
         with pytest.raises(ModelValidationError):
             clean_command(bg_command)
