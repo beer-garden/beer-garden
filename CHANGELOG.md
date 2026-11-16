@@ -7,14 +7,14 @@ TBD
 - Migrated to React Based UI (#2257)
 - RPM install of Beer Garden adds new prefixes to support /prefix and /legacy. In a future release 
   the base URL will be updated to the new React UI
-  http://localhost/ # Legacy UI
-  http://localhost/legacy # Legacy UI
-  http://localhost/preview # New React UI
+  - http://localhost/ # Legacy UI
+  - http://localhost/legacy # Legacy UI
+  - http://localhost/preview # New React UI
 - UI Docker image supports new tag for React UI. In a future release the base docker image will
   be updated to the new React UI
-  bgio/ui:latest # Legacy UI
-  bgio/ui:latest-legacy # Legacy UI
-  bgio/ui:latest-preview # New React UI
+  - bgio/ui:latest # Legacy UI
+  - bgio/ui:latest-legacy # Legacy UI
+  - bgio/ui:latest-preview # New React UI
 
 ## Authentication Updates
 - Changes from 3.32.0rc0
