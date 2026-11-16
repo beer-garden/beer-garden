@@ -202,7 +202,7 @@ def clean_system(system: System) -> System:
 
 
 def clean_command(command: Command) -> Command:
-    if not command.name:
+    if not command.name or command.name == "":
         raise ModelValidationError("Can not save a Command with an empty name")
 
     if command.command_type is None:
