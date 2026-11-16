@@ -3,7 +3,11 @@
 # 3.36.0
 TBD
 
-## New React User Interface
+## New User Interface
+
+Future development will focus on supporting the new User Interface and the legacy User Interface
+will only be updated to support critical bugs.
+
 - Migrated to React Based UI (#2257)
 - RPM install of Beer Garden adds new prefixes to support /prefix and /legacy. In a future release 
   the base URL will be updated to the new React UI
