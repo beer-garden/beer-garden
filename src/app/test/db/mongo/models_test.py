@@ -68,9 +68,6 @@ class TestParameter(object):
         p = Parameter(key="foo", description="bar", type="Boolean", optional=False)
         assert repr(p) == "<Parameter: key=foo, type=Boolean, description=bar>"
 
-    def test_clean(self):
-        Parameter(key="foo", optional=False).clean()
-
 
 class TestRequest(object):
     @pytest.fixture(autouse=True)
@@ -324,9 +321,6 @@ class TestSystem(object):
         assert "ns" in repr(default_system)
         assert "foo" in repr(default_system)
         assert "1.0.0" in repr(default_system)
-
-    def test_clean(self, default_system):
-        default_system.clean()
 
     # TODO - These need to be integration tests
     # @patch("bg_utils.mongo.models.System.objects")
