@@ -34,6 +34,7 @@ from beer_garden.errors import (
     NotUniqueException,
     RoutingException,
     RoutingRequestException,
+    ValidationException,
 )
 
 
@@ -71,6 +72,7 @@ class BaseHandler(RequestHandler):
         ModelValidationError: {"status_code": 400},
         ValueError: {"status_code": 400},
         AuthorizationRequired: {"status_code": 401},
+        ValidationException: {"status_code": 403},
         RequestForbidden: {"status_code": 403},
         DoesNotExist: {"status_code": 404, "message": "Resource does not exist"},
         NotFoundError: {"status_code": 404},
