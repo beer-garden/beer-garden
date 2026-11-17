@@ -81,7 +81,8 @@ class QueueListAPI(AuthorizationHandler):
                 kwargs={
                     "q_filter": permitted_objects_filter,
                 },
-            )
+            ),
+            filter_results=False,
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
