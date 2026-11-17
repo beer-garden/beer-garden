@@ -147,7 +147,8 @@ jobs:
       matrix:
         python-version: ["3.12"]
         os: ["ubuntu-latest"]
-        mongodb-version: ["4.2", "5.0", "6.0", "7.0","8.0", "8.0.4", "8.2", "latest"]
+        # 8.0 was removed due to kernel issues with 7.x
+        mongodb-version: ["4.2", "5.0", "6.0", "7.0", "8.0.4", "8.2", "9.0", "latest"]
 
     name: PyTests Python ${{ matrix.python-version }} - Mongodb ${{ matrix.mongodb-version }}
     steps:
