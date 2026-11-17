@@ -129,7 +129,7 @@ jobs:
 
   PyTest-Mongodb:
     runs-on: ${{ matrix.os }}
-    needs: PyTest
+    # needs: PyTest
 
     env:
       brewtils: "develop"
@@ -143,7 +143,7 @@ jobs:
       matrix:
         python-version: ["3.12"]
         os: ["ubuntu-latest"]
-        mongodb-version: ["4.2", "5.0", "6.0", "7.0","8.0", "8.2", "latest"]
+        mongodb-version: ["4.2", "5.0", "6.0", "7.0","8.0", "8.1", "8.2", "latest"]
 
     name: PyTests Python ${{ matrix.python-version }} - Mongodb ${{ matrix.mongodb-version }}
     steps:
