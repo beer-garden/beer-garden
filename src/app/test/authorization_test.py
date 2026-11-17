@@ -55,11 +55,6 @@ def user_for_read_scope(role_for_read_scope):
     return User(username="read", roles=["read"], local_roles=[role_for_read_scope])
 
 
-# @pytest.fixture()
-# def query_filter():
-#     return QueryFilterBuilder()
-
-
 @pytest.fixture()
 def model_filter():
     return ModelFilter()
