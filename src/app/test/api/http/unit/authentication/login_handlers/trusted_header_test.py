@@ -221,8 +221,9 @@ class TestTrustedHeaderLoginHandler:
         )
         request = HTTPServerRequest(headers=headers)
 
-        with pytest.raises(ValidationError):
-            handler.get_user(request)
+        user = handler.get_user(request)
+        assert len(user.local_roles) == 0
+        assert user.metadata["last_authentication_headers_local_roles"] == ["[user]"]
 
     def test_get_user_returns_existing_user_alias_mapping_malformed(self, user):
         handler = TrustedHeaderLoginHandler()
