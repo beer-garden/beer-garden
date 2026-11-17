@@ -183,13 +183,13 @@ def unassign_files():
         {
             "$match": {
                 "owner_type": "JOB",
-                "job": {"$ne": None},
+                "owner_id": {"$ne": None},
             }
         },
         {
             "$lookup": {
                 "from": "job",
-                "localField": "job",
+                "localField": "owner_id",
                 "foreignField": "_id",
                 "as": "lookup_result",
             }

@@ -2,6 +2,7 @@
 import json
 
 import pytest
+from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import Role, User
 from tornado.httpclient import HTTPError, HTTPRequest
 
@@ -142,7 +143,8 @@ def local_garden(local_system, remote_garden):
 
 @pytest.fixture(autouse=True)
 def request_permitted(remote_system):
-    request = Request(
+
+    request = BrewtilsRequest(
         system=remote_system.name,
         system_version=remote_system.version,
         namespace=remote_system.namespace,
@@ -150,15 +152,13 @@ def request_permitted(remote_system):
         instance_name="default",
         parameters={"this": "doesntmatter"},
     )
-    request.save()
 
-    yield request
-    request.delete()
+    return beer_garden.requests.save_request(request)
 
 
 @pytest.fixture(autouse=True)
 def request_not_permitted(local_system):
-    request = Request(
+    request = BrewtilsRequest(
         system=local_system.name,
         system_version=local_system.version,
         namespace=local_system.namespace,
@@ -166,15 +166,12 @@ def request_not_permitted(local_system):
         instance_name="default",
         parameters={"this": "doesntmatter"},
     )
-    request.save()
-
-    yield request
-    request.delete()
+    return beer_garden.requests.save_request(request)
 
 
 @pytest.fixture
 def request_permitted_child(remote_system, request_permitted):
-    request = Request(
+    request = BrewtilsRequest(
         system=remote_system.name,
         system_version=remote_system.version,
         namespace=remote_system.namespace,
@@ -183,10 +180,7 @@ def request_permitted_child(remote_system, request_permitted):
         parameters={"im": "thechild"},
         parent_id=str(request_permitted.id),
     )
-    request.save()
-
-    yield request
-    request.delete()
+    return beer_garden.requests.save_request(request)
 
 
 def _gridfs_output():
@@ -195,9 +189,9 @@ def _gridfs_output():
 
 @pytest.fixture
 def request_with_gridfs_output(monkeypatch, local_system):
-    monkeypatch.setattr(beer_garden.db.mongo.models, "REQUEST_MAX_PARAM_SIZE", 0)
+    monkeypatch.setattr(beer_garden.requests, "REQUEST_MAX_PARAM_SIZE", 0)
 
-    request = Request(
+    request = BrewtilsRequest(
         system=local_system.name,
         system_version=local_system.version,
         namespace=local_system.namespace,
@@ -207,10 +201,9 @@ def request_with_gridfs_output(monkeypatch, local_system):
         status="SUCCESS",
         output=_gridfs_output(),
     )
-    request.save()
+    request = beer_garden.requests.save_request(request)
 
     yield request
-    request.delete()
 
 
 @pytest.fixture
@@ -367,7 +360,6 @@ class TestRequestAPI:
 
         # Verify data is setup correctly (output got stored in gridfs)
         assert request_with_gridfs_output.output is None
-        assert request_with_gridfs_output.output_gridfs is not None
 
         assert response.code == 200
         assert response_body["output"] == _gridfs_output()

@@ -104,6 +104,7 @@ def update_request_ttl_indexes(command_type, ttl, previous_ttl):
                 name=file_index,
                 expireAfterSeconds=ttl * 60,
                 partialFilterExpression={
+                    "owner_type": "REQUEST",
                     "root_command_type": command_type,
                     "status": {"$in": Request.COMPLETED_STATUSES},
                 },
@@ -116,6 +117,7 @@ def update_request_ttl_indexes(command_type, ttl, previous_ttl):
                 name=file_chunk_index,
                 expireAfterSeconds=ttl * 60,
                 partialFilterExpression={
+                    "owner_type": "REQUEST",
                     "root_command_type": command_type,
                     "status": {"$in": Request.COMPLETED_STATUSES},
                 },
