@@ -133,7 +133,7 @@ jobs:
 
   PyTest-Mongodb:
     runs-on: ${{ matrix.os }}
-    # needs: PyTest
+    needs: PyTest
 
     env:
       brewtils: "develop"
