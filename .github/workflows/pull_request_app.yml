@@ -1,9 +1,10 @@
 name: Pull Request -- App
 
-# on: 
-#   pull_request:
-#     paths:
-#       - 'src/app/**'
+on: 
+  pull_request:
+    paths:
+      - 'src/app/**'
+      - '.github/workflows/pull_request_app.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
