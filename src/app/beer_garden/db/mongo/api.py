@@ -443,9 +443,6 @@ def count(
         The number of items
 
     """
-    # for k, v in kwargs.items():
-    #     if isinstance(v, BaseModel):
-    #         kwargs[k] = from_brewtils(v)
 
     if raw_query or kwargs:
         query_set = _model_map[model_class].objects(
