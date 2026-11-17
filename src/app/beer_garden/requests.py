@@ -745,25 +745,6 @@ def determine_latest_system_version(request: Request):
     return request
 
 
-@publish_event(Events.REQUEST_DELETED)
-def delete_request(request: Request = None, request_id: str = None) -> dict:
-    """Delete Request
-
-    Args:
-        request (Request, optional): Request to delete. Defaults to None.
-        request_id (str, optional): Request Id of Request to delete. Defaults to None.
-
-    Returns:
-        Request: Deleted Request
-
-    """
-    if not request:
-        request = db.query_unique(Request, id=request_id, raise_missing=True)
-
-    db.delete(request)
-    return request
-
-
 def delete_requests(**kwargs) -> dict:
     """Delete Requests
 
@@ -783,6 +764,7 @@ def delete_requests(**kwargs) -> dict:
     return kwargs
 
 
+@publish_event(Events.REQUEST_DELETED)
 def delete_request(
     request: Request = None, request_id: str = None, force_delete: bool = False
 ):
@@ -812,6 +794,8 @@ def delete_request(
 
     # Delete Request
     db.delete(request)
+
+    return request
 
 
 def _publish_request(request: Request, is_admin: bool, priority: int):
