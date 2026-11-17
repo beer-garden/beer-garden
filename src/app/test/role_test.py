@@ -167,3 +167,15 @@ class TestRole:
         db_plugin_admin = get_role(role_id=plugin_admin.id)
         assert plugin_admin != db_plugin_admin
         assert len(db_plugin_admin.scope_systems) == 0
+
+    def test_rescan_roles_remove_missing(self, app_config_roles_file):
+        create_role(
+            Role(name="to_be_removed", permission="READ_ONLY", file_generated=True)
+        )
+
+        assert get_role(role_name="to_be_removed") is not None
+
+        rescan()
+
+        with pytest.raises(DoesNotExist):
+            get_role(role_name="to_be_removed")

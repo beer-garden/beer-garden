@@ -336,6 +336,7 @@ def process_publish_event(
                         event_request.command_type = command.command_type
                         event_request.has_parent = True
                         event_request.is_event = True
+                        event_request.metadata["bg_topic_id"] = topic.id
 
                         request_hash = (
                             f"{garden_name}.{system.namespace}."

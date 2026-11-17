@@ -425,7 +425,8 @@ class SystemListAPI(AuthorizationHandler):
                     "filter_latest": filter_latest,
                     "filter_running": filter_running,
                 },
-            )
+            ),
+            filter_results=False,
         )
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
