@@ -2,6 +2,7 @@ import logging
 import os
 from copy import deepcopy
 
+from brewtils.errors import ModelValidationError
 from brewtils.models import (
     AliasUserMap,
     Event,
@@ -28,7 +29,7 @@ from beer_garden.errors import (
     RoutingRequestException,
 )
 from beer_garden.garden import get_garden, get_gardens
-from beer_garden.role import get_role
+from beer_garden.role import get_role, get_roles
 
 logger = logging.getLogger(__name__)
 
@@ -220,8 +221,26 @@ def load_users_config() -> list:
     return []
 
 
+def validate_user_roles():
+
+    users = db.query(User)
+    roles = get_roles()
+
+    role_names = [role.name for role in roles]
+
+    for user in users:
+        if not set(user.roles).issubset(role_names):
+            # Missing Roles, need to update
+            user.roles = list(set(role_names).intersection(user.roles))
+            update_user(user)
+
+
 def rescan():
     """Recan the users config"""
+
+    # Validate current roles before scanning
+    validate_user_roles()
+
     users_config = load_users_config()
     for user in users_config:
         kwargs = {
@@ -263,6 +282,7 @@ def create_user(user: User) -> User:
     if user.password:
         set_password(user)
 
+    clean_user(user)
     user = db.create(user)
     user.local_roles = []
     for role in user.roles:
@@ -288,6 +308,7 @@ def delete_user(username: str = None, user: User = None) -> User:
     if not user:
         user = db.query_unique(User, username=username, raise_missing=True)
 
+    revoke_tokens(username=user.username)
     db.delete(user)
 
     # Sync child gardens
@@ -379,10 +400,44 @@ def update_user(
 
         setattr(user, key, value)
 
+    clean_user(user)
     user = db.update(user)
 
     # Sync child gardens
     initiate_user_sync()
+
+    return user
+
+
+def clean_user(user: User) -> User:
+
+    # Ensure Local Roles List
+    if user.local_roles:
+        for local_role in user.local_roles:
+            if local_role.name not in user.roles:
+                user.roles.append(local_role.name)
+
+    if user.roles:
+        for role in user.roles:
+            try:
+                get_role(role_name=role)
+            except DoesNotExist:
+                raise ModelValidationError(f"Local Role '{role}' does not exist")
+
+    try:
+        db_user = get_user(username=user.username)
+        if db_user and (
+            db_user.roles != user.roles or db_user.upstream_roles != user.upstream_roles
+        ):
+            revoke_tokens(username=user.username)
+    except DoesNotExist:
+        pass
+
+    for upstream_role in user.upstream_roles:
+        if upstream_role.permission not in Role.PERMISSION_TYPES:
+            raise ModelValidationError(
+                f"Cannot save Role. No permission type {upstream_role.permission}"
+            )
 
     return user
 
@@ -820,7 +875,6 @@ def remove_local_role_assignments_for_role(role: Role) -> int:
     Returns:
         int: The number of users role was removed from
     """
-    # Avoid circular import
 
     impacted_users = db.query(User, filter_params={"roles__match": role.name})
 

@@ -1109,23 +1109,6 @@ class Role(MongoModel, Document):
     def __str__(self) -> str:
         return self.name
 
-    def clean(self):
-        """Validate before saving to the database"""
-
-        if self.permission not in brewtils.models.Role.PERMISSION_TYPES:
-            raise ModelValidationError(
-                f"Cannot save Role. No permission type {self.permission}"
-            )
-
-    def delete(self, *args, **kwargs):
-        try:
-            for user in User.objects.filter(roles__contains=self.name):
-                user.roles.remove(self.name)
-                user.save()
-        except DoesNotExist:
-            pass
-        return super().delete(*args, **kwargs)
-
 
 class UpstreamRole(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.UpstreamRole
@@ -1145,14 +1128,6 @@ class UpstreamRole(MongoModel, EmbeddedDocument):
 
     def __str__(self) -> str:
         return self.name
-
-    def clean(self):
-        """Validate before saving to the database"""
-
-        if self.permission not in brewtils.models.Role.PERMISSION_TYPES:
-            raise ModelValidationError(
-                f"Cannot save Role. No permission type {self.permission}"
-            )
 
 
 class AliasUserMap(MongoModel, EmbeddedDocument):
@@ -1183,39 +1158,8 @@ class User(MongoModel, Document):
 
     # _permissions_cache: Optional[dict] = None
 
-    def save(self, *args, **kwargs):
-        if self.local_roles:
-            for local_role in self.local_roles:
-                if local_role.name not in self.roles:
-                    self.roles.append(local_role.name)
-
-        if self.roles:
-            for role in self.roles:
-                try:
-                    Role.objects.get(name=role)
-                except DoesNotExist:
-                    raise ModelValidationError(f"Local Role '{role}' does not exist")
-
-        db_user = User.objects(username=self.username).first()
-        if db_user and (
-            db_user.roles != self.roles or db_user.upstream_roles != self.upstream_roles
-        ):
-            try:
-                UserToken.objects.get(username=self.username).delete()
-            except DoesNotExist:
-                pass
-
-        return super().save(*args, **kwargs)
-
     def __str__(self) -> str:
         return self.username
-
-    def delete(self, *args, **kwargs):
-        try:
-            UserToken.objects.get(username=self.username).delete()
-        except DoesNotExist:
-            pass
-        return super().delete(*args, **kwargs)
 
 
 class UserToken(MongoModel, Document):
