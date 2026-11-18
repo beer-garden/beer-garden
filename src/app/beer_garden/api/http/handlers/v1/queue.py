@@ -73,13 +73,13 @@ class QueueListAPI(AuthorizationHandler):
           - Queues
         """
         self.minimum_permission = Permissions.PLUGIN_ADMIN.name
-        permitted_objects_filter = self.permitted_objects_filter(System)
+        permitted_objects_raw_query = self.permitted_objects_raw_query(System)
 
         response = await self.process_operation(
             Operation(
                 operation_type="QUEUE_READ",
                 kwargs={
-                    "q_filter": permitted_objects_filter,
+                    "raw_query": permitted_objects_raw_query,
                 },
             ),
             filter_results=False,
