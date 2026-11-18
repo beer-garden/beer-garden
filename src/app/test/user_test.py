@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 from box import Box
-from brewtils.error import ModelValidationError
+from brewtils.errors import ModelValidationError
 from brewtils.models import (
     AliasUserMap,
     Command,
