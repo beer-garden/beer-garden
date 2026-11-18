@@ -184,7 +184,10 @@ def get_user(username: str = None, id: str = None, include_roles: bool = True) -
         user = db.query_unique(User, id=id, raise_missing=True)
     if include_roles:
         for role in user.roles:
-            user.local_roles.append(get_role(role))
+            try:
+                user.local_roles.append(get_role(role))
+            except DoesNotExist:
+                logger.error(f"Unable to find Role: {role}")
 
     return user
 

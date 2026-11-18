@@ -26,7 +26,7 @@ from beer_garden.db.mongo.models import Role as DB_Role
 from beer_garden.db.mongo.models import User as DB_User
 from beer_garden.db.mongo.models import UserToken as DB_UserToken
 from beer_garden.errors import ConfigurationError, InvalidPasswordException
-from beer_garden.role import create_role, get_role
+from beer_garden.role import create_role, delete_role, get_role
 from beer_garden.role import rescan as role_rescan
 from beer_garden.user import (
     clean_user,
@@ -47,6 +47,7 @@ from beer_garden.user import (
     update_user,
     upstream_role_match_garden,
     upstream_user_sync,
+    validate_user_roles,
     validated_token_ttl,
     verify_password,
 )
@@ -268,10 +269,12 @@ class TestUser:
     def test_get_users(self, user):
         assert len(get_users()) == 1
 
-    def test_delete_user(self, user):
+    def test_delete_user(self, user, user_token):
         delete_user(user=user)
         with pytest.raises(DoesNotExist):
             get_user(username=user.username)
+        with pytest.raises(DoesNotExist):
+            get_token(user_token.uuid)
 
     def test_update_user(self, user, monkeypatch, roles_loaded):
         revoke_mock = Mock()
@@ -735,3 +738,17 @@ class TestCleanUser:
         clean_user(user)
 
         assert len(user.roles) == 1
+
+
+class TestValidateUserRoles:
+
+    def test_validate_roles(self, user):
+
+        delete_role(role=user.local_roles[0])
+        db_user = get_user(username=user.username)
+        assert len(db_user.roles) == 1
+
+        validate_user_roles()
+
+        db_user = get_user(username=user.username)
+        assert len(db_user.roles) == 0
