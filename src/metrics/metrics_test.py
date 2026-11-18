@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-s
 from functools import partial
 
+import beer_garden.db.api as db
 import pytest
+from beer_garden import config
 from brewtils.models import Garden
 from mock import Mock
 
-import beer_garden.db.api as db
 from . import metrics
-from beer_garden import config
 
 
 @pytest.fixture

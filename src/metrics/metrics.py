@@ -13,34 +13,25 @@ from functools import partial
 from http.server import ThreadingHTTPServer
 from threading import Lock
 
-from brewtils.models import Garden, Request
-from brewtils.stoppable_thread import StoppableThread
-from prometheus_client import start_http_server
-from prometheus_client.core import REGISTRY, GaugeMetricFamily, SummaryMetricFamily
-from prometheus_client.exposition import MetricsHandler
-from prometheus_client.registry import Collector
-
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.db.mongo as db_mongo
-from beer_garden.db.mongo.api import check_connection, create_connection
+from beer_garden.db.mongo.api import create_connection
+from brewtils.models import Garden, Request
+from brewtils.stoppable_thread import StoppableThread
+from prometheus_client import start_http_server
+from prometheus_client.core import (REGISTRY, GaugeMetricFamily,
+                                    SummaryMetricFamily)
+from prometheus_client.exposition import MetricsHandler
+from prometheus_client.registry import Collector
+from pymongo.errors import ServerSelectionTimeoutError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-db_config = {
-    "connection": {
-        "host": "mongodb",
-        "port": 27017,
-        "username": None,
-        "password": None,
-    },
-    "name": "beer_garden",
-}
-
-# Make connection to mongo and verify it works
-create_connection(db_config=db_config)
-check_connection(db_config)
+# Make connection to mongo
+config.load(["-c", "config.yaml"])
+create_connection(db_config=config.get("db"))
 
 _model_map = {}
 for model_name in db_mongo.models.__all__:
@@ -241,7 +232,10 @@ def request_garden_totals():
         },
     ]
 
-    result = db.aggregation(Request, pipeline=pipeline)
+    try:
+        result = db.aggregation(Request, pipeline=pipeline)
+    except ServerSelectionTimeoutError:
+            return []
 
     return result
 
@@ -282,7 +276,10 @@ def request_garden_completed_totals():
         },
     ]
 
-    result = db.aggregation(Request, pipeline=pipeline)
+    try:
+        result = db.aggregation(Request, pipeline=pipeline)
+    except ServerSelectionTimeoutError:
+            return []
 
     return result
 
@@ -328,7 +325,10 @@ def request_garden_status_metrics(statusList: list[str], time_window: int = 900)
     ]
 
     # Expect list and empty list ok
-    result = db.aggregation(Request, pipeline=pipeline)
+    try:
+        result = db.aggregation(Request, pipeline=pipeline)
+    except ServerSelectionTimeoutError:
+        return []
 
     return result
 
@@ -386,7 +386,11 @@ def request_garden_plugin_command_latency_metrics(interval: int = 15):
             }
         },
     ]
-    result = db.aggregation(Request, pipeline=pipeline)
+
+    try:
+        result = db.aggregation(Request, pipeline=pipeline)
+    except ServerSelectionTimeoutError:
+        return []
 
     if result is not None:
         return result
@@ -399,9 +403,12 @@ def request_garden_send_latency_metrics(interval: int = 15):
     # Calculated the average trip down to a Target Garden from this Garden in seconds
 
     local_garden = config.get("garden.name")
-    gardens = db.query(
-        Garden, include_fields=["name"], filter_params={"name__ne": local_garden}
-    )
+    try:
+        gardens = db.query(
+            Garden, include_fields=["name"], filter_params={"name__ne": local_garden}
+        )
+    except:
+        gardens = []
 
     total = []
     for garden in gardens:
@@ -447,7 +454,11 @@ def request_garden_send_latency_metrics(interval: int = 15):
                 }
             },
         ]
-        result = db.aggregation(Request, pipeline=pipeline)
+
+        try:
+            result = db.aggregation(Request, pipeline=pipeline)
+        except ServerSelectionTimeoutError:
+            return []
 
         if result is not None and len(result) > 0:
             total.append(
@@ -465,9 +476,12 @@ def request_garden_return_latency_metrics(interval: int = 15):
     # Calculates the average trip from a Target Garden to this Garden in seconds
 
     local_garden = config.get("garden.name")
-    gardens = db.query(
-        Garden, include_fields=["name"], filter_params={"name__ne": local_garden}
-    )
+    try:
+        gardens = db.query(
+            Garden, include_fields=["name"], filter_params={"name__ne": local_garden}
+        )
+    except:
+        gardens = []
 
     total = []
     for garden in gardens:
@@ -511,7 +525,10 @@ def request_garden_return_latency_metrics(interval: int = 15):
                 }
             },
         ]
-        result = db.aggregation(Request, pipeline=pipeline)
+        try:
+            result = db.aggregation(Request, pipeline=pipeline)
+        except ServerSelectionTimeoutError:
+            return []
 
         if result is not None and len(result) > 0:
             total.append(
@@ -697,6 +714,6 @@ if __name__ == "__main__":
 
     try:
         while True:
-            time.sleep(1)
+            time.sleep(15)
     except KeyboardInterrupt:
         logger.info("Shutting down")
