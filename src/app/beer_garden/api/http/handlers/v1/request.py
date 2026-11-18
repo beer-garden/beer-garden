@@ -9,7 +9,6 @@ from typing import Sequence
 from brewtils.errors import ModelValidationError
 from brewtils.models import Operation, Permissions, Request, System
 from brewtils.schema_parser import SchemaParser
-from mongoengine import Q
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -473,15 +472,7 @@ class RequestListAPI(AuthorizationHandler):
         query_args = self._parse_datatables_parameters()
 
         # Add the filter for only requests the user is permitted to see
-        q_filter = self.permitted_objects_filter(Request)
-        q_filtered = None
-
-        if query_args.get("q_filter"):
-            query_args_q_filter = query_args["q_filter"]
-            q_filtered = q_filter & query_args_q_filter
-            query_args["q_filter"] = q_filtered
-        else:
-            query_args["q_filter"] = q_filter
+        permitted_objects_raw_query = self.permitted_objects_raw_query(Request)
 
         if query_args.get("raw_query"):
             query_args["raw_query"] = self._add_raw_query(
@@ -489,6 +480,11 @@ class RequestListAPI(AuthorizationHandler):
             )
         else:
             query_args["raw_query"] = self._parse_query_object()
+
+        if permitted_objects_raw_query:
+            query_args["raw_query"] = self._add_raw_query(
+                query_args["raw_query"], permitted_objects_raw_query
+            )
 
         if query_args.get("include_fields"):
             query_args["include_fields"].extend(self.get_arguments("include"))
@@ -525,13 +521,12 @@ class RequestListAPI(AuthorizationHandler):
             # And these are required by datatables
             "recordsFiltered": db.count(
                 Request,
-                q_filter=q_filtered if q_filtered else q_filter,
                 raw_query=(
                     query_args["raw_query"] if "raw_query" in query_args else None
                 ),
                 **query_args["filter_params"],
             ),
-            "recordsTotal": db.count(Request, q_filter=q_filter),
+            "recordsTotal": db.count(Request, raw_query=permitted_objects_raw_query),
             "draw": self.get_argument("draw", ""),
         }
 
@@ -1090,7 +1085,6 @@ class RequestListAPI(AuthorizationHandler):
         # These are what this function is populating
         filter_params = {}
         raw_query = None
-        q_filter = Q()
         include_fields = []
         order_by = None
         text_search = None
@@ -1228,7 +1222,6 @@ class RequestListAPI(AuthorizationHandler):
             "text_search": text_search,
             "order_by": order_by,
             "hint": self._determine_hint(hint_helper, include_children, include_hidden),
-            "q_filter": q_filter,
             "raw_query": raw_query,
         }
 
