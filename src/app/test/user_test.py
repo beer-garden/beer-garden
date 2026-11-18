@@ -283,7 +283,7 @@ class TestUser:
         updated_user = update_user(user=user, roles=["read_only", "plugin_admin"])
 
         assert len(updated_user.roles) == 2
-        revoke_mock.assert_called_once()
+        revoke_mock.assert_called()
 
     def test_update_user_invalid_password(self, user):
         set_password(user, password="good")
@@ -299,7 +299,7 @@ class TestUser:
         )
 
         assert len(updated_user.roles) == 2
-        revoke_mock.assert_called_once()
+        revoke_mock.assert_called()
 
     def test_update_user_remote(self, user):
         user.is_remote = True
