@@ -1,3 +1,14 @@
+import {
+  faArrowDown,
+  faArrowUp,
+  faClockRotateLeft,
+  faPlay,
+  faServer,
+  faSquare,
+  faStop,
+  faTriangleExclamation,
+  faXmarkCircle,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Alert,
@@ -5,6 +16,7 @@ import {
   Chip,
   Divider,
   Skeleton,
+  Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -12,7 +24,7 @@ import { RefObject, useEffect, useState } from "react";
 
 import EnhancedTable from "../components/EnhancedTable/components/EnhancedTable";
 import { Connection, Garden, Runner, System } from "../models/brewtils-types";
-import { Config } from "../models/models";
+import { Config, SeverityGroup } from "../models/models";
 import { TourStepProps } from "../models/models";
 import { useSnackbar } from "../providers/SnackbarProvider";
 import {
@@ -36,6 +48,7 @@ import {
 } from "../services/util_service";
 import AccessButton from "./AccessButton";
 import { ColumnField } from "./EnhancedTable/models/EnhancedTableModels";
+import GardenStatusHistoryDialog from "./GardenStatusHistoryDialog";
 
 interface GardenConnection {
   garden: string;
@@ -64,6 +77,12 @@ function GardenSummary({
   const showSnackbar = useSnackbar();
   const tourUuid = selectedGarden?.id;
   const tourPrefix = "garden_summary";
+  const [statusHistoryVisible, setStatusHistoryVisible] = useState(false);
+  const closeStatusHistoryDialog = () => setStatusHistoryVisible(false);
+  const [downstreamConnectionType, setDownstreamConnectionType] =
+    useState<string>("RECEIVING");
+  const [downstreamAPIType, setDownstreamAPIType] = useState<string>("HTTP");
+  const [downstreamGardenName, setDownstreamGardenName] = useState<string>("");
 
   const getSystemCounts = () => {
     if (selectedGarden) {
@@ -75,7 +94,7 @@ function GardenSummary({
       );
     }
 
-    return new Map();
+    return [];
   };
 
   const getDownstreamConnections = () => {
@@ -149,7 +168,7 @@ function GardenSummary({
 
   const [invalidRouting, setInvalidRouting] = useState(false);
   const [systemCounts, setSystemCounts] =
-    useState<Map<string, number>>(getSystemCounts());
+    useState<Array<SeverityGroup>>(getSystemCounts());
 
   const [downstreamConnections, setDownstreamConnections] = useState(
     getDownstreamConnections(),
@@ -381,7 +400,7 @@ function GardenSummary({
         {connection.api}
         {url.length > 0 && (
           <Tooltip title={url}>
-            <FAIcon icon="server" id={targetId} sx={{ ml: 1 }} />
+            <FAIcon icon={faServer} id={targetId} sx={{ ml: 1 }} />
           </Tooltip>
         )}
       </>
@@ -392,21 +411,36 @@ function GardenSummary({
     const severity = GetSeverity(row.status);
 
     return (
-      <Tooltip
-        title={
-          row.type === "RECEIVING"
-            ? row.direction === "DOWNSTREAM"
-              ? `Status ${row.status} over ${row.api} for accepting events from ${row.garden} to ${selectedGarden?.name}`
-              : `Status ${row.status} over ${row.api} for accepting operations from ${row.garden} to ${selectedGarden?.name}`
-            : row.direction === "DOWNSTREAM"
-              ? `Status ${row.status} over ${row.api} for sending operations from ${row.garden} to ${selectedGarden?.name}`
-              : `Status ${row.status} over ${row.api} for sending events from ${row.garden} to ${selectedGarden?.name}`
-        }
-      >
-        <Box component="span" aria-label={undefined}>
-          <Chip label={row.status} color={severity} />
-        </Box>
-      </Tooltip>
+      <Box component="span" aria-label={undefined}>
+        <Stack direction="row" spacing={1}>
+          <Tooltip
+            title={
+              row.type === "RECEIVING"
+                ? row.direction === "DOWNSTREAM"
+                  ? `Status ${row.status} over ${row.api} for accepting events from ${row.garden} to ${selectedGarden?.name}`
+                  : `Status ${row.status} over ${row.api} for accepting operations from ${row.garden} to ${selectedGarden?.name}`
+                : row.direction === "DOWNSTREAM"
+                  ? `Status ${row.status} over ${row.api} for sending operations from ${row.garden} to ${selectedGarden?.name}`
+                  : `Status ${row.status} over ${row.api} for sending events from ${row.garden} to ${selectedGarden?.name}`
+            }
+          >
+            <Chip label={row.status} color={severity} />
+          </Tooltip>
+          <AccessButton
+            size="small"
+            onClick={() => {
+              setDownstreamGardenName(row.garden);
+              setDownstreamConnectionType(row.type);
+              setDownstreamAPIType(row.api);
+              setStatusHistoryVisible(true);
+            }}
+            aria-label={`Show Status History for ${row.garden} over ${row.api}`}
+            icon
+          >
+            <FAIcon icon={faClockRotateLeft} />
+          </AccessButton>
+        </Stack>
+      </Box>
     );
   };
 
@@ -430,7 +464,7 @@ function GardenSummary({
               <span>
                 <FAIcon
                   icon={
-                    row.direction === "DOWNSTREAM" ? "arrow-down" : "arrow-up"
+                    row.direction === "DOWNSTREAM" ? faArrowDown : faArrowUp
                   }
                   sx={{ mr: 2 }}
                 />
@@ -515,7 +549,7 @@ function GardenSummary({
           permission="GARDEN_ADMIN"
           hasGardenName={selectedGarden?.name}
         >
-          <FontAwesomeIcon icon="play" />
+          <FontAwesomeIcon icon={faPlay} />
         </AccessButton>
         <AccessButton
           color="warning"
@@ -560,7 +594,7 @@ function GardenSummary({
           permission="GARDEN_ADMIN"
           hasGardenName={selectedGarden?.name}
         >
-          <FontAwesomeIcon icon="stop" />
+          <FontAwesomeIcon icon={faStop} />
         </AccessButton>
       </Box>
     );
@@ -600,19 +634,49 @@ function GardenSummary({
                 Systems:
               </Typography>
               <Box sx={{ display: "flex", alignItems: "center" }}>
-                {Array.from(systemCounts, ([status, count]) => {
-                  if (count && count > 0) {
-                    const statusSeverity = GetSeverity(status);
+                {Array.from(systemCounts, (statusGroup) => {
+                  if (statusGroup.count && statusGroup.count > 0) {
                     return (
-                      <div key={`${status}_Summary`}>
-                        <Tooltip title={`${status} Count ${count}`}>
+                      <div key={`${statusGroup.severity}_Summary`}>
+                        <Tooltip
+                          title={
+                            <Stack spacing={1}>
+                              {Array.from(statusGroup.summary, (summary) => {
+                                if (summary.count && summary.count > 0) {
+                                  return (
+                                    <div>{`${summary.status} Count ${summary.count}`}</div>
+                                  );
+                                }
+                              })}
+                            </Stack>
+                          }
+                        >
                           <Box component="span" aria-label={undefined}>
                             <Chip
-                              data-testid={`${status}_severity_system_summary`}
-                              id={`${status}_${selectedGarden?.id}_severity_system_summary`}
-                              label={count}
-                              color={statusSeverity}
-                              key={status}
+                              data-testid={`${statusGroup.severity}_group_system_summary`}
+                              id={`${statusGroup.severity}_${selectedGarden?.id}_group_system_summary`}
+                              label={
+                                <div>
+                                  {statusGroup.count}
+                                  {statusGroup.severity ===
+                                  "success" ? undefined : statusGroup.severity ===
+                                    "info" ? (
+                                    <FAIcon sx={{ ml: 0.5 }} icon={faSquare} />
+                                  ) : statusGroup.severity === "warning" ? (
+                                    <FAIcon
+                                      sx={{ ml: 0.5 }}
+                                      icon={faTriangleExclamation}
+                                    />
+                                  ) : (
+                                    <FAIcon
+                                      sx={{ ml: 0.5 }}
+                                      icon={faXmarkCircle}
+                                    />
+                                  )}
+                                </div>
+                              }
+                              color={statusGroup.severity}
+                              key={statusGroup.severity}
                             />
                           </Box>
                         </Tooltip>
@@ -898,7 +962,7 @@ function GardenSummary({
               severity="warning"
               icon={
                 <FAIcon
-                  icon="triangle-exclamation"
+                  icon={faTriangleExclamation}
                   role="img"
                   aria-label="Warning alert icon"
                 />
@@ -908,6 +972,13 @@ function GardenSummary({
               interrupted or missed. Please contact your Garden Admin
             </Alert>
           )}
+          <GardenStatusHistoryDialog
+            gardenName={downstreamGardenName}
+            connection_type={downstreamConnectionType}
+            api_type={downstreamAPIType}
+            isVisible={statusHistoryVisible}
+            onClose={closeStatusHistoryDialog}
+          />
           <Box sx={{ mt: 2 }}>
             {downstreamConnections && downstreamConnections.length > 0 && (
               <EnhancedTable

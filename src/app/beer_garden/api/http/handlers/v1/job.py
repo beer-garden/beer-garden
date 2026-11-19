@@ -221,7 +221,7 @@ class JobListAPI(AuthorizationHandler):
           - Jobs
         """
 
-        permitted_objects_raw_filter = self.permitted_objects_raw_filter(Job)
+        permitted_objects_raw_query = self.permitted_objects_raw_query(Job)
 
         filter_params = {}
         for key in self.request.arguments.keys():
@@ -232,7 +232,7 @@ class JobListAPI(AuthorizationHandler):
             Operation(
                 operation_type="JOB_READ_ALL",
                 kwargs={
-                    "raw_query": permitted_objects_raw_filter,
+                    "raw_query": permitted_objects_raw_query,
                     "filter_params": filter_params,
                 },
             ),
@@ -404,7 +404,7 @@ class JobExportAPI(AuthorizationHandler):
           - Jobs
         """
         filter_params_dict = {}
-        permitted_objects_raw_filter = self.permitted_objects_raw_filter(Job)
+        permitted_objects_raw_query = self.permitted_objects_raw_query(Job)
 
         # self.request_body is designed to return a 400 on a completely absent body
         # but we want to return all jobs if that's the case
@@ -420,7 +420,7 @@ class JobExportAPI(AuthorizationHandler):
             Operation(
                 operation_type="JOB_READ_ALL",
                 kwargs={
-                    "raw_query": permitted_objects_raw_filter,
+                    "raw_query": permitted_objects_raw_query,
                     "filter_params": filter_params_dict,
                 },
             ),

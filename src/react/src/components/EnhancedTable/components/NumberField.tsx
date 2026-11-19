@@ -1,4 +1,5 @@
 import { NumberField as BaseNumberField } from "@base-ui/react/number-field";
+import { faAngleDown, faAngleUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Box } from "@mui/material";
 import FormControl from "@mui/material/FormControl";
@@ -173,7 +174,7 @@ export default React.forwardRef(function NumberField(
                       />
                     }
                   >
-                    <FontAwesomeIcon icon="angle-up" />
+                    <FontAwesomeIcon icon={faAngleUp} />
                   </BaseNumberField.Increment>
                 </Tooltip>
                 <Tooltip title={`Decrease ${title}`}>
@@ -185,7 +186,7 @@ export default React.forwardRef(function NumberField(
                       />
                     }
                   >
-                    <FontAwesomeIcon icon="angle-down" />
+                    <FontAwesomeIcon icon={faAngleDown} />
                   </BaseNumberField.Decrement>
                 </Tooltip>
               </InputAdornment>

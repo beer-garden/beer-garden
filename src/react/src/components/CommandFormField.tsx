@@ -1,3 +1,8 @@
+import {
+  faTriangleExclamation,
+  faUpload,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Box,
@@ -220,7 +225,7 @@ function CommandFormField({
             )}
           {parameter.error && (
             <FontAwesomeIcon
-              icon="triangle-exclamation"
+              icon={faTriangleExclamation}
               title={parameter.errorMsg ?? "ERROR"}
               aria-label={parameter.errorMsg ?? "ERROR"}
               role="img"
@@ -291,7 +296,7 @@ function CommandFormField({
           )}
         {parameter.error && (
           <FontAwesomeIcon
-            icon="triangle-exclamation"
+            icon={faTriangleExclamation}
             title={parameter.errorMsg ?? "ERROR"}
             aria-label={parameter.errorMsg ?? "ERROR"}
             role="img"
@@ -368,7 +373,7 @@ function CommandFormField({
           )}
         {parameter.error && (
           <FontAwesomeIcon
-            icon="triangle-exclamation"
+            icon={faTriangleExclamation}
             title={parameter.errorMsg ?? "ERROR"}
             aria-label={parameter.errorMsg ?? "ERROR"}
             role="img"
@@ -670,7 +675,7 @@ function CommandFormField({
                     disabled={disabled}
                     aria-label={removeInputAriaLabel}
                   >
-                    <FAIcon icon="xmark" />
+                    <FAIcon icon={faXmark} />
                   </IconButton>
                 </Box>
               </Tooltip>
@@ -722,7 +727,7 @@ function CommandFormField({
               <Typography variant="caption">
                 {parameter?.value?.name}
               </Typography>
-              <FAIcon icon="xmark" sx={{ ml: 1 }} />
+              <FAIcon icon={faXmark} sx={{ ml: 1 }} />
             </IconButton>
           )}
 
@@ -734,7 +739,7 @@ function CommandFormField({
               <Typography variant="caption">
                 {parameter?.value?.details?.file_name}
               </Typography>
-              <FAIcon icon="xmark" sx={{ ml: 1 }} />
+              <FAIcon icon={faXmark} sx={{ ml: 1 }} />
             </IconButton>
           )}
           <Tooltip
@@ -916,7 +921,7 @@ function CommandFormField({
                   role={undefined}
                   disabled={disabled || parameter?.value?.name !== undefined}
                   tabIndex={-1}
-                  startIcon={<FAIcon icon="upload" />}
+                  startIcon={<FAIcon icon={faUpload} />}
                   aria-describedby={`${parameter.key}-helper-text`}
                 >
                   Upload Bytes
@@ -933,7 +938,7 @@ function CommandFormField({
                   role={undefined}
                   disabled={disabled || uploadPercentage > 0}
                   tabIndex={-1}
-                  startIcon={<FAIcon icon="upload" />}
+                  startIcon={<FAIcon icon={faUpload} />}
                   aria-describedby={`${parameter.key}-helper-text`}
                 >
                   <VisuallyHiddenInput

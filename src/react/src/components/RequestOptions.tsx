@@ -1,4 +1,10 @@
 import {
+  faCaretDown,
+  faDownload,
+  faPlus,
+  faUpRightFromSquare,
+} from "@fortawesome/free-solid-svg-icons";
+import {
   Box,
   ButtonGroup,
   ClickAwayListener,
@@ -273,9 +279,9 @@ function RequestOptions({
               >
                 <Box sx={{ display: "flex" }}>
                   {isCard ? (
-                    <FAIcon icon="up-right-from-square" sx={{ mr: 2 }} />
+                    <FAIcon icon={faUpRightFromSquare} sx={{ mr: 2 }} />
                   ) : (
-                    <FAIcon icon="plus" sx={{ mr: 2 }} />
+                    <FAIcon icon={faPlus} sx={{ mr: 2 }} />
                   )}
                   {isCard ? "Open Request" : "Pour Again"}
                 </Box>
@@ -288,7 +294,7 @@ function RequestOptions({
                 onClick={handleToggle}
                 sx={{ bgcolor: "success.dark" }}
               >
-                <FAIcon icon="caret-down" />
+                <FAIcon icon={faCaretDown} />
               </AccessButton>
             </ButtonGroup>
             <Popper
@@ -337,7 +343,7 @@ function RequestOptions({
             onClick={() => handleDownload(request)}
           >
             <Box sx={{ display: "flex" }}>
-              <FAIcon icon="download" sx={{ mx: 2 }} />
+              <FAIcon icon={faDownload} sx={{ mx: 2 }} />
               Download Output
             </Box>
           </AccessButton>

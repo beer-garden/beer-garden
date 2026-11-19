@@ -1,3 +1,8 @@
+import {
+  faArrowUpRightFromSquare,
+  faCircleExclamation,
+  faRefresh,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Box, DialogContent, Grid, Stack, Typography } from "@mui/material";
 import { Dayjs } from "dayjs";
@@ -268,7 +273,7 @@ function TopicCard({
           }
           sx={{ mr: 2 }}
         >
-          <FontAwesomeIcon icon="arrow-up-right-from-square" />
+          <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
         </AccessButton>
         {request.command_display_name ?? request.command ?? request.id}
       </div>
@@ -289,8 +294,8 @@ function TopicCard({
           tooltip={recordsUpdated ? "New updates available" : "Refresh"}
           sx={{ alignItems: "flex-end" }}
         >
-          {recordsUpdated && <FontAwesomeIcon icon={"circle-exclamation"} />}
-          <FontAwesomeIcon icon="refresh" />
+          {recordsUpdated && <FontAwesomeIcon icon={faCircleExclamation} />}
+          <FontAwesomeIcon icon={faRefresh} />
         </AccessButton>
       </Grid>
     </Grid>

@@ -1,4 +1,12 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import {
+  faBars,
+  faGears,
+  faPlay,
+  faRefresh,
+  faStop,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Box,
@@ -31,6 +39,7 @@ import {
   GenerateTourProps,
 } from "../services/tour_service";
 import { GetSeverity } from "../services/util_service";
+import InstanceStatusHistoryDialog from "./InstanceStatusHistoryDialog";
 import SystemForceDeleteDialog from "./SystemForceDeleteDialog";
 
 interface SystemCardProps {
@@ -76,6 +85,8 @@ function SystemCard({
   const closeQueueDialog = () => setQueueVisible(false);
   const [cancelDeleteVisible, setCancelDeleteVisible] = useState(false);
   const closeCancelDeleteDialog = () => setCancelDeleteVisible(false);
+  const [statusHistoryVisible, setStatusHistoryVisible] = useState(false);
+  const closeStatusHistoryDialog = () => setStatusHistoryVisible(false);
 
   const tourUuid = system.id;
   const tourPrefix = "system_summary";
@@ -155,7 +166,7 @@ function SystemCard({
     return system.instances?.sort((a, b) =>
       (a.name ?? "").localeCompare(b.name ?? ""),
     );
-  }, [system]);
+  }, [system.instances]);
 
   useEffect(() => {
     if (tourStepsRef === undefined) {
@@ -440,7 +451,7 @@ function SystemCard({
             basic
             permission="PLUGIN_ADMIN"
           >
-            <FontAwesomeIcon icon="play" />
+            <FontAwesomeIcon icon={faPlay} />
           </AccessButton>
           <AccessButton
             size="small"
@@ -451,7 +462,7 @@ function SystemCard({
             basic
             permission="PLUGIN_ADMIN"
           >
-            <FontAwesomeIcon icon="stop" />
+            <FontAwesomeIcon icon={faStop} />
           </AccessButton>
 
           <Menu
@@ -508,6 +519,14 @@ function SystemCard({
                 >
                   Cancel/Delete Requests
                 </MenuItem>
+                <MenuItem
+                  onClick={() => {
+                    handleInstanceMenuClose();
+                    setStatusHistoryVisible(true);
+                  }}
+                >
+                  Show Status History
+                </MenuItem>
               </>
             )}
           </Menu>
@@ -529,6 +548,12 @@ function SystemCard({
             isVisible={cancelDeleteVisible}
             onClose={closeCancelDeleteDialog}
           />
+          <InstanceStatusHistoryDialog
+            instance={instance}
+            system={system}
+            isVisible={statusHistoryVisible}
+            onClose={closeStatusHistoryDialog}
+          />
           <AccessButton
             size="small"
             title={`Admin Tools for ${instance.name} in ${system.namespace}.${system.name}.${system.version}`}
@@ -537,7 +562,7 @@ function SystemCard({
             permission="OPERATOR"
             basic
           >
-            <FontAwesomeIcon icon="bars" />
+            <FontAwesomeIcon icon={faBars} />
           </AccessButton>
         </ButtonGroup>
       </div>
@@ -571,7 +596,7 @@ function SystemCard({
         <Box sx={{ bgcolor: "primary.main" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 2 }}>
             <FontAwesomeIcon
-              icon={system.icon_name ? (system.icon_name as IconProp) : "gears"}
+              icon={system.icon_name ? (system.icon_name as IconProp) : faGears}
               aria-hidden="true"
             />
             <Box component="span" sx={{ maxWidth: "20rem", fontWeight: 600 }}>
@@ -596,7 +621,7 @@ function SystemCard({
                   permission="PLUGIN_ADMIN"
                   basic
                 >
-                  <FontAwesomeIcon icon="play" />
+                  <FontAwesomeIcon icon={faPlay} />
                 </AccessButton>
                 <AccessButton
                   size="small"
@@ -608,7 +633,7 @@ function SystemCard({
                   permission="PLUGIN_ADMIN"
                   basic
                 >
-                  <FontAwesomeIcon icon="stop" />
+                  <FontAwesomeIcon icon={faStop} />
                 </AccessButton>
               </ButtonGroup>
               <ButtonGroup>
@@ -621,7 +646,7 @@ function SystemCard({
                   permission="PLUGIN_ADMIN"
                   basic
                 >
-                  <FontAwesomeIcon icon="refresh" />
+                  <FontAwesomeIcon icon={faRefresh} />
                 </AccessButton>
 
                 <AccessButton
@@ -633,7 +658,7 @@ function SystemCard({
                   permission="PLUGIN_ADMIN"
                   basic
                 >
-                  <FontAwesomeIcon icon="trash" />
+                  <FontAwesomeIcon icon={faTrash} />
                 </AccessButton>
               </ButtonGroup>
             </Box>
@@ -642,7 +667,7 @@ function SystemCard({
             <Divider sx={{ my: 2, clear: "right" }} />
           </Box>
           <Stack divider={<Divider />} spacing={2}>
-            {sortedInstances.map((instance: Instance) => (
+            {sortedInstances?.map((instance: Instance) => (
               <div key={JSON.stringify(instance)}>
                 <Stack
                   direction="row"

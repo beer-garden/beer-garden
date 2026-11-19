@@ -1,5 +1,19 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 import {
+  faBars,
+  faBeerMugEmpty,
+  faBriefcase,
+  faCircleInfo,
+  faClock,
+  faCompass,
+  faEnvelope,
+  faFileLines,
+  faPencil,
+  faUser,
+  faUserGear,
+  faUsers,
+} from "@fortawesome/free-solid-svg-icons";
+import {
   AppBar,
   Avatar,
   Box,
@@ -66,7 +80,7 @@ function NavigationMenu({
   const showSnackbar = useSnackbar();
   const navbarRef = useRef<HTMLElement>(null);
   const [iconDefault, setIconDefault] = useState<string>(
-    config?.icon_default ?? "beer-mug-empty",
+    config?.icon_default ?? faBeerMugEmpty,
   );
   const [applicationName, setApplicationName] = useState<string | undefined>(
     config?.application_name,
@@ -228,7 +242,7 @@ function NavigationMenu({
             {...GenerateTourProps(createRequestTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon icon="pencil" />
+              <FAIcon icon={faPencil} />
               <Box component="span">Create Request</Box>
             </Stack>
           </Button>
@@ -246,7 +260,7 @@ function NavigationMenu({
             }}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon icon="pencil" />
+              <FAIcon icon={faPencil} />
               <Box component="span">Create Request</Box>
             </Stack>
           </Link>
@@ -266,7 +280,7 @@ function NavigationMenu({
             {...GenerateTourProps(requestTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon icon="file-lines" />
+              <FAIcon icon={faFileLines} />
               <Box component="span">Requests</Box>
             </Stack>
           </Button>
@@ -281,7 +295,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon icon="file-lines" />
+              <FAIcon icon={faFileLines} />
               <Box component="span">Requests</Box>
             </Stack>
           </Link>
@@ -300,7 +314,7 @@ function NavigationMenu({
             {...GenerateTourProps(schedulerTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon icon="briefcase" />
+              <FAIcon icon={faBriefcase} />
               <Box component="span">Scheduler</Box>
             </Stack>
           </Button>
@@ -315,7 +329,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon icon="clock" />
+              <FAIcon icon={faClock} />
               <Box component="span">Scheduler</Box>
             </Stack>
           </Link>
@@ -334,7 +348,7 @@ function NavigationMenu({
             {...GenerateTourProps(topicTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon icon="envelope" />
+              <FAIcon icon={faEnvelope} />
               <Box component="span">Topics</Box>
             </Stack>
           </Button>
@@ -349,7 +363,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon icon="envelope" />
+              <FAIcon icon={faEnvelope} />
               <Box component="span">Topics</Box>
             </Stack>
           </Link>
@@ -369,7 +383,7 @@ function NavigationMenu({
             {...GenerateTourProps(userTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon icon="users" />
+              <FAIcon icon={faUsers} />
               <Box component="span">Users</Box>
             </Stack>
           </Button>
@@ -384,7 +398,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon icon="users" />
+              <FAIcon icon={faUsers} />
               <Box component="span">Users</Box>
             </Stack>
           </Link>
@@ -404,7 +418,7 @@ function NavigationMenu({
             {...GenerateTourProps(rolesTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon icon="user-gear" />
+              <FAIcon icon={faUserGear} />
               <Box component="span">Roles</Box>
             </Stack>
           </Button>
@@ -419,7 +433,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon icon="user-gear" />
+              <FAIcon icon={faUserGear} />
               <Box component="span">Roles</Box>
             </Stack>
           </Link>
@@ -439,7 +453,7 @@ function NavigationMenu({
             {...GenerateTourProps(aboutTourStep)}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon icon="circle-info" />
+              <FAIcon icon={faCircleInfo} />
               <Box component="span">About</Box>
             </Stack>
           </Button>
@@ -454,7 +468,7 @@ function NavigationMenu({
             onKeyDown={handleKeyDown}
           >
             <Stack direction="row" spacing={1}>
-              <FAIcon icon="circle-info" />
+              <FAIcon icon={faCircleInfo} />
               <Box component="span">About</Box>
             </Stack>
           </Link>
@@ -618,7 +632,7 @@ function NavigationMenu({
               },
             }}
           >
-            <FAIcon icon="bars" sx={{ fontSize: 16, px: "4px" }} />
+            <FAIcon icon={faBars} sx={{ fontSize: 16, px: "4px" }} />
           </IconButton>
           <Menu
             id="instance_menu"
@@ -677,7 +691,7 @@ function NavigationMenu({
               data-testid="start-tour"
               basic
             >
-              <FAIcon sx={{ fontSize: 24 }} icon="compass" />
+              <FAIcon sx={{ fontSize: 24 }} icon={faCompass} />
             </AccessButton>
             <CurrentRequestsTemplate listeners={listeners} config={config} />
             <AccessButton
@@ -693,7 +707,7 @@ function NavigationMenu({
                   {username.charAt(0).toUpperCase()}
                 </Avatar>
               ) : (
-                <FAIcon icon="user" />
+                <FAIcon icon={faUser} />
               )}
             </AccessButton>
             <Popper

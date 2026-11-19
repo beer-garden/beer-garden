@@ -1,3 +1,4 @@
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import {
   Alert,
   Dialog,
@@ -87,7 +88,7 @@ function SystemForceDeleteDialog({
               aria-label="Close system force delete dialog"
               onClick={onClose}
             >
-              <FAIcon icon="xmark" />
+              <FAIcon icon={faXmark} />
             </AccessButton>
           </Grid>
         </Grid>

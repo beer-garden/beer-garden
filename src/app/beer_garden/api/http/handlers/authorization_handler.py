@@ -3,7 +3,7 @@ from typing import Type
 
 from brewtils.models import BaseModel as BrewtilsModel
 from brewtils.models import Operation, Permissions, Queue, Role, System, User
-from mongoengine import Document, QuerySet
+from mongoengine import Document
 
 import beer_garden.config as config
 import beer_garden.db.api as db
@@ -20,7 +20,7 @@ from beer_garden.api.http.exceptions import (
 )
 from beer_garden.authorization import (
     ModelFilter,
-    RawQueryFilterBuilder,
+    RawFilterBuilder,
     check_global_roles,
 )
 
@@ -28,6 +28,7 @@ from beer_garden.authorization import (
 from beer_garden.errors import (
     ExpiredTokenException,
     InvalidTokenException,
+    ValidationException,
 )
 
 
@@ -35,7 +36,7 @@ class AuthorizationHandler(BaseHandler):
     """Handler that builds on BaseHandler and adds support for authorizing requests
     via a jwt access token supplied in the Authorization header"""
 
-    queryRawFilter = RawQueryFilterBuilder()
+    rawFilter = RawFilterBuilder()
     modelFilter = ModelFilter()
 
     minimum_permission = Permissions.READ_ONLY.name
@@ -122,20 +123,21 @@ class AuthorizationHandler(BaseHandler):
                 raise NotFound
         else:
             # Change to brewtils query
-            provided_raw_filter = self.queryRawFilter.build_filter(
+
+            raw_query = self.rawFilter.build_filter(
                 self.current_user, self.minimum_permission, model
             )
 
             requested_objects = db.query(
-                model, raw_filter=provided_raw_filter, filter_params=kwargs
+                model, raw_query=raw_query, filter_params=kwargs
             )
             if len(requested_objects) > 1:
                 raise NotFound(
                     "Multiple records returned for schema query: "
-                    f"{model.schema}, {provided_raw_filter}"
+                    f"{model.schema}, {kwargs}, {raw_query}"
                 )
             elif len(requested_objects) == 0:
-                if len(db.query(model, filter_params=kwargs)) > 0:
+                if len(db.query(model, **kwargs)) > 0:
                     raise RequestForbidden
                 else:
                     raise NotFound
@@ -144,8 +146,8 @@ class AuthorizationHandler(BaseHandler):
 
         return requested_objects[0]
 
-    def permissioned_queryset(self, model: Type[Document]) -> QuerySet:  # Updated
-        """Returns a QuerySet for the provided Document model filtered down to only
+    def permissioned_raw_query(self, model: Type[Document]) -> dict:  # Updated
+        """Returns a Raw Query for the provided Document model filtered down to only
         the objects for which the requesting user has the given permission
 
         Args:
@@ -153,16 +155,16 @@ class AuthorizationHandler(BaseHandler):
             permission: The required permission that will be used to filter objects
 
         Returns:
-            QuerySet: A QuerySet for model filtered down to objects the requesting user
-              has access to.
+            dict: A RawQuery for model filtered down to objects the requesting user
+                has access to.
         """
 
-        return self.queryFilter.build_filter(
+        return self.rawFilter.build_filter(
             self.current_user, self.minimum_permission, model
         )
 
-    def permitted_objects_raw_filter(self, model: Type[Document]) -> dict:  # Updated
-        """Returns a QCombination that can be used to filter a QuerySet down to the
+    def permitted_objects_raw_query(self, model: Type[Document]) -> dict:  # Updated
+        """Returns a dict that can be used to filter a Raw Query down to the
         objects for which the requesting user has the given permission.
 
         Args:
@@ -171,16 +173,21 @@ class AuthorizationHandler(BaseHandler):
                 access to the object
 
         Returns:
-            dict: A pymongo raw filter object
+            dict: A mongoengine Raw Query
 
         Raises:
             RequestForbidden: The requesting user has access to no objects of the given
                 model type
         """
 
-        return self.queryRawFilter.build_filter(
-            self.current_user, self.minimum_permission, model
-        )
+        try:
+            raw_query = self.rawFilter.build_filter(
+                self.current_user, self.minimum_permission, model
+            )
+        except ValidationException:
+            raise RequestForbidden
+
+        return raw_query
 
     def prepare(self) -> None:
         """Called before each verb handler"""

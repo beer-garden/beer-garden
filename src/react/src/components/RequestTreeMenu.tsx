@@ -1,3 +1,10 @@
+import {
+  faA,
+  faClock,
+  faEnvelope,
+  faHourglass,
+  faI,
+} from "@fortawesome/free-solid-svg-icons";
 import { Box, Chip, Typography } from "@mui/material";
 import Stack from "@mui/material/Stack";
 import Tooltip from "@mui/material/Tooltip";
@@ -132,7 +139,7 @@ function RequestTreeMenu({
             <Tooltip title={node.data?.topic}>
               <span>
                 <FAIcon
-                  icon="envelope"
+                  icon={faEnvelope}
                   sx={{ mr: 2 }}
                   role="img"
                   aria-label={`Topic: ${node.data?.topic}`}
@@ -148,7 +155,7 @@ function RequestTreeMenu({
               node.data?.command_type.length === 0 ||
               node.data?.command_type === "ACTION") && (
               <FAIcon
-                icon="a"
+                icon={faA}
                 sx={{ mr: 2 }}
                 role="img"
                 title="Action Command"
@@ -157,7 +164,7 @@ function RequestTreeMenu({
             )}
             {node.data?.command_type === "INFO" && (
               <FAIcon
-                icon="i"
+                icon={faI}
                 sx={{ mr: 2 }}
                 role="img"
                 title="Info Command"
@@ -166,7 +173,7 @@ function RequestTreeMenu({
             )}
             {node.data?.command_type === "TEMP" && (
               <FAIcon
-                icon="hourglass"
+                icon={faHourglass}
                 sx={{ mr: 2 }}
                 role="img"
                 title="Temp Command"
@@ -235,7 +242,7 @@ function RequestTreeMenu({
               }
             >
               <FAIcon
-                icon="clock"
+                icon={faClock}
                 sx={{ ml: 1 }}
                 role="img"
                 aria-label="Request timing information"

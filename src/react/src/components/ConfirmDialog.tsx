@@ -1,3 +1,8 @@
+import {
+  faCheck,
+  faTriangleExclamation,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
 import { Box, DialogActions, DialogContent, Grid } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -55,13 +60,13 @@ function ConfirmDialog({
               }}
               tooltip="Close"
             >
-              <FAIcon icon="xmark" sx={{ mx: 1 }} />
+              <FAIcon icon={faXmark} sx={{ mx: 1 }} />
             </AccessButton>
           </Grid>
         </Grid>
       </DialogTitle>
       <DialogContent sx={{ mx: 3, my: 1 }}>
-        <FAIcon icon="triangle-exclamation" sx={{ mr: 1 }} /> {message}
+        <FAIcon icon={faTriangleExclamation} sx={{ mr: 1 }} /> {message}
       </DialogContent>
       <DialogActions sx={{ justifyContent: "space-between" }}>
         <AccessButton
@@ -74,7 +79,7 @@ function ConfirmDialog({
               closeDialog();
             }
           }}
-          startIcon={<FAIcon icon="check" />}
+          startIcon={<FAIcon icon={faCheck} />}
           sx={{ m: 1 }}
           tooltip="Accept"
         >
@@ -93,7 +98,7 @@ function ConfirmDialog({
               closeDialog();
             }
           }}
-          startIcon={<FAIcon icon="xmark" />}
+          startIcon={<FAIcon icon={faXmark} />}
           sx={{ m: 1 }}
           tooltip="Cancel"
         >

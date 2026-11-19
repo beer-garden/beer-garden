@@ -1,3 +1,4 @@
+import { faCopy, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Box,
@@ -151,7 +152,7 @@ print(request)
           text
           tooltip={`Copy ${codeType} to clipboard`}
         >
-          <FontAwesomeIcon icon="copy" />
+          <FontAwesomeIcon icon={faCopy} />
         </AccessButton>
         <Box
           component="pre"
@@ -189,7 +190,7 @@ print(request)
                 setVisibleCodeExample(false);
               }}
             >
-              <FontAwesomeIcon icon="xmark" />
+              <FontAwesomeIcon icon={faXmark} />
             </AccessButton>
           </Grid>
         </Grid>

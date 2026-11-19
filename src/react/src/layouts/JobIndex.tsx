@@ -1,3 +1,14 @@
+import {
+  faArrowUpRightFromSquare,
+  faEdit,
+  faFileExport,
+  faPause,
+  faPencil,
+  faPlay,
+  faRocket,
+  faTrash,
+  faUpload,
+} from "@fortawesome/free-solid-svg-icons";
 import { Box, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { RefObject, useEffect, useState } from "react";
@@ -212,7 +223,7 @@ function JobIndex({
           sx={buttonStyle}
           {...GenerateTourProps(viewJobTourStep)}
         >
-          <FAIcon icon="arrow-up-right-from-square" />
+          <FAIcon icon={faArrowUpRightFromSquare} />
         </AccessButton>
         <>
           <AccessButton
@@ -236,7 +247,7 @@ function JobIndex({
             {...permissions}
             permission="OPERATOR"
           >
-            <FAIcon icon="rocket" />
+            <FAIcon icon={faRocket} />
           </AccessButton>
 
           <AccessButton
@@ -253,7 +264,7 @@ function JobIndex({
             {...permissions}
             permission="OPERATOR"
           >
-            <FAIcon icon="edit" />
+            <FAIcon icon={faEdit} />
           </AccessButton>
           {job.status === "RUNNING" && (
             <AccessButton
@@ -283,7 +294,7 @@ function JobIndex({
               {...permissions}
               permission="OPERATOR"
             >
-              <FAIcon icon="pause" />
+              <FAIcon icon={faPause} />
             </AccessButton>
           )}
           {job.status === "PAUSED" && (
@@ -314,7 +325,7 @@ function JobIndex({
               {...permissions}
               permission="OPERATOR"
             >
-              <FAIcon icon="play" />
+              <FAIcon icon={faPlay} />
             </AccessButton>
           )}
           <AccessButton
@@ -350,7 +361,7 @@ function JobIndex({
             {...permissions}
             permission="OPERATOR"
           >
-            <FAIcon icon="trash" />
+            <FAIcon icon={faTrash} />
           </AccessButton>
         </>
       </div>
@@ -454,7 +465,7 @@ function JobIndex({
         <AccessButton
           sx={buttonStyle}
           onClick={createJob}
-          startIcon={<FAIcon icon="pencil" />}
+          startIcon={<FAIcon icon={faPencil} />}
           {...GenerateTourProps(createJobTourStep)}
           config={config}
           permission="OPERATOR"
@@ -467,7 +478,7 @@ function JobIndex({
           htmlFor="import_job_input"
           role={undefined}
           tabIndex={-1}
-          startIcon={<FAIcon icon="upload" />}
+          startIcon={<FAIcon icon={faUpload} />}
           sx={buttonStyle}
           {...GenerateTourProps(importJobTourStep)}
         >
@@ -492,7 +503,7 @@ function JobIndex({
               }),
             )
           }
-          startIcon={<FAIcon icon="file-export" />}
+          startIcon={<FAIcon icon={faFileExport} />}
           {...GenerateTourProps(exportJobTourStep)}
           config={config}
           permission="OPERATOR"

@@ -57,6 +57,11 @@ describe("user_service", () => {
       expect(GetCurrentUser()).toBeUndefined();
     });
 
+    it("returns undefined when token is null", () => {
+      vi.mocked(tokenService.GetToken).mockReturnValue("tok");
+      expect(GetCurrentUser()).toBeUndefined();
+    });
+
     it("returns undefined when token has no username", () => {
       const tokenNoUser = createMockJWT({});
       vi.mocked(tokenService.GetToken).mockReturnValue(tokenNoUser);
@@ -76,6 +81,11 @@ describe("user_service", () => {
 
     it("returns undefined when token is null", () => {
       vi.mocked(tokenService.GetToken).mockReturnValue(null);
+      expect(GetCurrentRoles()).toBeUndefined();
+    });
+
+    it("returns undefined when token is invalid", () => {
+      vi.mocked(tokenService.GetToken).mockReturnValue("tok");
       expect(GetCurrentRoles()).toBeUndefined();
     });
 

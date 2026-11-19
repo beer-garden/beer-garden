@@ -1,3 +1,8 @@
+import {
+  faArrowUpRightFromSquare,
+  faEnvelope,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Badge,
@@ -261,7 +266,7 @@ function CurrentRequestsTemplate({
             tooltip={`Open Request ${request.id}`}
             sx={{ mr: 2 }}
           >
-            <FontAwesomeIcon icon="arrow-up-right-from-square" />
+            <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
           </AccessButton>
         </Link>
 
@@ -296,7 +301,7 @@ function CurrentRequestsTemplate({
           hasSystemVersion={request?.system_version}
           hasCommandName={request?.command}
         >
-          <FontAwesomeIcon icon="xmark" />
+          <FontAwesomeIcon icon={faXmark} />
         </AccessButton>
       </div>
     );
@@ -326,7 +331,7 @@ function CurrentRequestsTemplate({
         text
         basic
       >
-        <FontAwesomeIcon icon="envelope" />
+        <FontAwesomeIcon icon={faEnvelope} />
         {currentRequests.filter(
           (request) =>
             request.status &&

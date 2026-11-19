@@ -51,7 +51,7 @@ describe("garden_service", () => {
         json: () => ({}),
       });
 
-      await gardenService.GetGarden("test", { "Target-Garden": "test" });
+      await gardenService.GetGarden("test", false, { "Target-Garden": "test" });
 
       const [, options] = (globalThis.fetch as any).mock.calls[0];
       expect(options.headers.get("Target-Garden")).toBe("test");

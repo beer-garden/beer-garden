@@ -564,18 +564,18 @@ describe("GardenSummary", () => {
   });
 
   it.each([
-    { status: "INITIALIZING" },
-    { status: "RUNNING" },
-    { status: "PAUSED" },
-    { status: "STOPPED" },
-    { status: "DEAD" },
-    { status: "UNRESPONSIVE" },
-    { status: "STARTING" },
-    { status: "STOPPING" },
-    { status: "UNKNOWN" },
-    { status: "AWAITING_SYSTEM" },
-    { status: "ERROR" },
-  ])(`system severity" $status`, ({ status }) => {
+    { status: "RUNNING", severity: "success" },
+    { status: "PAUSED", severity: "info" },
+    { status: "STOPPED", severity: "info" },
+    { status: "INITIALIZING", severity: "warning" },
+    { status: "STARTING", severity: "warning" },
+    { status: "STOPPING", severity: "warning" },
+    { status: "AWAITING_SYSTEM", severity: "warning" },
+    { status: "UNKNOWN", severity: "error" },
+    { status: "DEAD", severity: "error" },
+    { status: "UNRESPONSIVE", severity: "error" },
+    { status: "ERROR", severity: "error" },
+  ])(`system severity" $status $severity`, ({ status, severity }) => {
     const mockGarden = getRootGarden();
 
     mockGarden.systems = [
@@ -601,7 +601,7 @@ describe("GardenSummary", () => {
       </SnackbarProvider>,
     );
 
-    const summary = screen.queryByTestId(`${status}_severity_system_summary`);
+    const summary = screen.queryByTestId(`${severity}_group_system_summary`);
     expect(summary).toBeInTheDocument();
     expect(summary).toHaveTextContent(`1`);
   });

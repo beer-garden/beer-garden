@@ -1,3 +1,8 @@
+import {
+  faMaximize,
+  faMinimize,
+  faXmark,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Box, CssBaseline, Grid, Skeleton, Toolbar } from "@mui/material";
 import Dialog from "@mui/material/Dialog";
@@ -672,7 +677,7 @@ function App() {
                                 aria-label="Enter full screen"
                                 onClick={() => setFullScreenDialog(true)}
                               >
-                                <FontAwesomeIcon icon="maximize" />
+                                <FontAwesomeIcon icon={faMaximize} />
                               </AccessButton>
                             )}
                             {fullScreenDialog === true && (
@@ -681,7 +686,7 @@ function App() {
                                 aria-label="Exit full screen"
                                 onClick={() => setFullScreenDialog(false)}
                               >
-                                <FontAwesomeIcon icon="minimize" />
+                                <FontAwesomeIcon icon={faMinimize} />
                               </AccessButton>
                             )}
                             <AccessButton
@@ -693,7 +698,7 @@ function App() {
                                 clearSearchParams();
                               }}
                             >
-                              <FontAwesomeIcon icon="xmark" />
+                              <FontAwesomeIcon icon={faXmark} />
                             </AccessButton>
                           </Grid>
                         </Grid>

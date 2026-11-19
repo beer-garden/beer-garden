@@ -1,3 +1,8 @@
+import {
+  faArrowRightToBracket,
+  faCode,
+  faRefresh,
+} from "@fortawesome/free-solid-svg-icons";
 import { DialogActions, DialogContent, Grid } from "@mui/material";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
@@ -362,7 +367,7 @@ function RequestCreateCard({
                 <Typography variant="button" sx={{ display: "block" }}>
                   Reset Form
                 </Typography>
-                <FAIcon icon="refresh" sx={{ ml: 2 }} />
+                <FAIcon icon={faRefresh} sx={{ ml: 2 }} />
               </AccessButton>
 
               <CodeExample
@@ -379,7 +384,7 @@ function RequestCreateCard({
                 <Typography variant="button" sx={{ display: "block" }}>
                   Code Examples
                 </Typography>
-                <FAIcon icon="code" sx={{ ml: 2 }} />
+                <FAIcon icon={faCode} sx={{ ml: 2 }} />
               </AccessButton>
             </Grid>
 
@@ -400,7 +405,7 @@ function RequestCreateCard({
                   <Typography variant="button" sx={{ display: "block" }}>
                     Submit
                   </Typography>
-                  <FAIcon icon="arrow-right-to-bracket" sx={{ ml: 2 }} />
+                  <FAIcon icon={faArrowRightToBracket} sx={{ ml: 2 }} />
                 </AccessButton>
               )}
               {showCreateRequest &&
@@ -417,7 +422,7 @@ function RequestCreateCard({
                     <Typography variant="button" sx={{ display: "block" }}>
                       Submit Job
                     </Typography>
-                    <FAIcon icon="arrow-right-to-bracket" sx={{ ml: 2 }} />
+                    <FAIcon icon={faArrowRightToBracket} sx={{ ml: 2 }} />
                   </AccessButton>
                 )}
               {showCreateRequest && toggleScheduleJob && requestItem?.jobId && (
@@ -432,7 +437,7 @@ function RequestCreateCard({
                   <Typography variant="button" sx={{ display: "block" }}>
                     Update Job
                   </Typography>
-                  <FAIcon icon="arrow-right-to-bracket" sx={{ ml: 2 }} />
+                  <FAIcon icon={faArrowRightToBracket} sx={{ ml: 2 }} />
                 </AccessButton>
               )}
             </Grid>

@@ -1,3 +1,4 @@
+import { faCheck, faXmark } from "@fortawesome/free-solid-svg-icons";
 import {
   Alert,
   Dialog,
@@ -82,11 +83,11 @@ const LoginDialog = ({
           sx={{ mr: 1 }}
           text
         >
-          <FAIcon icon="xmark" sx={{ mr: 1 }} />
+          <FAIcon icon={faXmark} sx={{ mr: 1 }} />
           Cancel
         </AccessButton>
         <AccessButton label="Login" onClick={handleLogin} sx={{ mr: 1 }}>
-          <FAIcon icon="check" sx={{ mr: 1 }} />
+          <FAIcon icon={faCheck} sx={{ mr: 1 }} />
           Login
         </AccessButton>
       </DialogActions>

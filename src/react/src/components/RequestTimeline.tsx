@@ -1,3 +1,4 @@
+import { faClockRotateLeft, faXmark } from "@fortawesome/free-solid-svg-icons";
 import {
   Box,
   Chip,
@@ -185,7 +186,7 @@ function RequestTimeline({ request }: { request: Request }) {
         aria-label={`Show Request Status Timeline for ${request.id}`}
         icon
       >
-        <FAIcon icon="clock-rotate-left" />
+        <FAIcon icon={faClockRotateLeft} />
       </AccessButton>
       <Dialog
         open={showTimeline}
@@ -210,7 +211,7 @@ function RequestTimeline({ request }: { request: Request }) {
                   setShowTimeline(false);
                 }}
               >
-                <FAIcon icon="xmark" />
+                <FAIcon icon={faXmark} />
               </AccessButton>
             </Grid>
           </Grid>

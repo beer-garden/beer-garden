@@ -1,3 +1,10 @@
+import {
+  faEye,
+  faSquarePlus,
+  faTrash,
+  faTrashCan,
+  faXmarkSquare,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Alert,
@@ -352,7 +359,7 @@ function TopicIndex({
                 permission="PLUGIN_ADMIN"
                 sx={{ ml: 1 }}
               >
-                <FontAwesomeIcon icon="trash-can" />
+                <FontAwesomeIcon icon={faTrashCan} />
               </AccessButton>
             </Grid>
           )}
@@ -504,7 +511,7 @@ function TopicIndex({
                   permission="PLUGIN_ADMIN"
                   sx={{ ml: 1 }}
                 >
-                  <FontAwesomeIcon icon="trash-can" />
+                  <FontAwesomeIcon icon={faTrashCan} />
                 </AccessButton>
               </Grid>
             )}
@@ -539,7 +546,7 @@ function TopicIndex({
                   permission="PLUGIN_ADMIN"
                   sx={{ ml: 1 }}
                 >
-                  <FontAwesomeIcon icon="xmark-square" />
+                  <FontAwesomeIcon icon={faXmarkSquare} />
                 </AccessButton>
               </Grid>
             )}
@@ -576,7 +583,7 @@ function TopicIndex({
                 config={config}
                 permission="PLUGIN_ADMIN"
               >
-                <FontAwesomeIcon icon="eye" />
+                <FontAwesomeIcon icon={faEye} />
               </AccessButton>
               <AccessButton
                 basic
@@ -588,7 +595,7 @@ function TopicIndex({
                 permission="PLUGIN_ADMIN"
                 sx={{ ml: 1 }}
               >
-                <FontAwesomeIcon icon="square-plus" />
+                <FontAwesomeIcon icon={faSquarePlus} />
               </AccessButton>
               <AccessButton
                 basic
@@ -601,7 +608,7 @@ function TopicIndex({
                 permission="PLUGIN_ADMIN"
                 sx={{ ml: 1 }}
               >
-                <FontAwesomeIcon icon="trash" />
+                <FontAwesomeIcon icon={faTrash} />
               </AccessButton>
             </ButtonGroup>
           </Box>

@@ -362,7 +362,7 @@ class SystemListAPI(AuthorizationHandler):
           - Systems
         """
 
-        permitted_objects_raw_filter = self.permitted_objects_raw_filter(System)
+        permitted_objects_raw_query = self.permitted_objects_raw_query(System)
 
         order_by = self.get_query_argument("order_by", None)
 
@@ -416,7 +416,7 @@ class SystemListAPI(AuthorizationHandler):
                 operation_type="SYSTEM_READ_ALL",
                 kwargs={
                     "serialize_kwargs": serialize_kwargs,
-                    "raw_query": permitted_objects_raw_filter,
+                    "raw_query": permitted_objects_raw_query,
                     "filter_params": filter_params,
                     "order_by": order_by,
                     "include_fields": include_fields,

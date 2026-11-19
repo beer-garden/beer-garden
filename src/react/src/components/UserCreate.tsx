@@ -1,3 +1,4 @@
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import {
   Dialog,
   DialogActions,
@@ -108,7 +109,7 @@ function UserCreate({
                 handleUserCreateDialogClose();
               }}
             >
-              <FAIcon icon="xmark" />
+              <FAIcon icon={faXmark} />
             </AccessButton>
           </Grid>
         </Grid>

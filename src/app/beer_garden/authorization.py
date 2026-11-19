@@ -17,7 +17,7 @@ from brewtils.models import User as BrewtilsUser
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.errors import InvalidAuthorizationException
+from beer_garden.errors import InvalidAuthorizationException, ValidationException
 
 logger = logging.getLogger(__name__)
 
@@ -99,9 +99,9 @@ def _has_empty_scopes(
     return True
 
 
-class RawQueryFilterBuilder:
+class RawFilterBuilder:
     def _get_garden_filter(self, user: BrewtilsUser, permission_levels: list) -> dict:
-        """Returns a Q filter object for filtering a queryset for gardens"""
+        """Returns a raw query filter object for filtering a queryset for gardens"""
 
         if check_global_roles(user, permission_levels=permission_levels):
             return None
@@ -216,7 +216,8 @@ class RawQueryFilterBuilder:
                             filter,
                             {"request_template.command": {"$in": role.scope_commands}},
                         )
-                    if len(filter) > 0:
+
+                    if filter:
                         filters.append(filter)
 
         if len(filters) == 0:
@@ -233,7 +234,7 @@ class RawQueryFilterBuilder:
         for roles in [user.local_roles, user.upstream_roles]:
             for role in roles:
                 if role.permission in permission_levels:
-                    filter = None
+                    filter = {}
                     if len(role.scope_gardens) > 0:
                         filter = db.combine_raw_query(
                             filter, {"garden_name": {"$in": role.scope_gardens}}
@@ -255,9 +256,9 @@ class RawQueryFilterBuilder:
                             filter,
                             {
                                 "$or": [
-                                    {"commands.command": {"$in": role.scope_commands}},
+                                    {"commands.name": {"$in": role.scope_commands}},
                                     {
-                                        "commands.command_display_name": {
+                                        "commands.display_name": {
                                             "$in": role.scope_commands
                                         }
                                     },
@@ -286,7 +287,7 @@ class RawQueryFilterBuilder:
         for roles in [user.local_roles, user.upstream_roles]:
             for role in roles:
                 if role.permission in permission_levels:
-                    filter = {}
+                    filter = None
                     if len(role.scope_instances) > 0:
                         filter = db.combine_raw_query(
                             filter, {"name": {"$in": role.scope_instances}}
@@ -306,10 +307,10 @@ class RawQueryFilterBuilder:
         permission_levels = generate_permission_levels(permission)
 
         if len(user.local_roles) == 0 and len(user.upstream_roles) == 0:
-            raise InvalidAuthorizationException("No Local or Upstream Roles")
+            raise ValidationException("User does not have any assigned Roles")
 
         if model is None:
-            raise InvalidAuthorizationException("No Model to authorize against")
+            return None
 
         if model is BrewtilsGarden:
             return self._get_garden_filter(user, permission_levels)

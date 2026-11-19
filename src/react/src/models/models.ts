@@ -86,6 +86,14 @@ export interface InstanceDialogProps {
   onClose: any;
 }
 
+export interface GardenDialogProps {
+  gardenName: string;
+  connection_type: string;
+  api_type: string;
+  isVisible: boolean;
+  onClose: any;
+}
+
 export interface PermissionCheck {
   global?: boolean;
   gardenName?: string;
@@ -144,4 +152,10 @@ export interface CustomJwtPayload extends JwtPayload {
     dark_mode: boolean;
     power_user: boolean;
   };
+}
+
+export interface SeverityGroup {
+  severity: "success" | "info" | "warning" | "error";
+  count: number;
+  summary: { status: string; count: number }[];
 }

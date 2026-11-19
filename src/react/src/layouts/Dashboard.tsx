@@ -1,4 +1,13 @@
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import {
+  faBeerMugEmpty,
+  faCircle,
+  faCircleExclamation,
+  faPlay,
+  faSquare,
+  faTriangleExclamation,
+  faXmarkCircle,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Box,
@@ -10,6 +19,7 @@ import {
   Select,
   SelectChangeEvent,
   Skeleton,
+  Stack,
   Tooltip,
 } from "@mui/material";
 import { grey } from "@mui/material/colors";
@@ -348,12 +358,12 @@ function GardenDashboard({
               id={`GARDEN_MENU_${garden.id}`}
             >
               <FAIcon
-                icon="play"
+                icon={faPlay}
                 sx={{ color: "warning.contrast" }}
                 rotation={270}
               />
               <FAIcon
-                icon="triangle-exclamation"
+                icon={faTriangleExclamation}
                 sx={{
                   color: "warning.main",
                 }}
@@ -367,7 +377,7 @@ function GardenDashboard({
       // don't currently have access to the downstream icons
       return (
         <FontAwesomeIcon
-          icon={(config?.icon_default as IconProp) ?? "beer-mug-empty"}
+          icon={(config?.icon_default as IconProp) ?? faBeerMugEmpty}
         />
       );
     } else if (!publishing && !receiving) {
@@ -380,9 +390,9 @@ function GardenDashboard({
               className="fa-layers"
               id={`GARDEN_MENU_${garden.id}`}
             >
-              <FAIcon icon="circle" sx={{ color: "error.contrast" }} />
+              <FAIcon icon={faCircle} sx={{ color: "error.contrast" }} />
               <FAIcon
-                icon="circle-exclamation"
+                icon={faCircleExclamation}
                 sx={{
                   color: "error.main",
                 }}
@@ -401,9 +411,9 @@ function GardenDashboard({
               className="fa-layers"
               id={`GARDEN_MENU_${garden.id}`}
             >
-              <FAIcon icon="circle" sx={{ color: "error.contrast" }} />
+              <FAIcon icon={faCircle} sx={{ color: "error.contrast" }} />
               <FAIcon
-                icon="circle-exclamation"
+                icon={faCircleExclamation}
                 sx={{
                   color: "error.main",
                 }}
@@ -422,9 +432,9 @@ function GardenDashboard({
               className="fa-layers"
               id={`GARDEN_MENU_${garden.id}`}
             >
-              <FAIcon icon="circle" sx={{ color: "error.contrast" }} />
+              <FAIcon icon={faCircle} sx={{ color: "error.contrast" }} />
               <FAIcon
-                icon="circle-exclamation"
+                icon={faCircleExclamation}
                 sx={{
                   color: "error.main",
                 }}
@@ -440,25 +450,49 @@ function GardenDashboard({
     garden: Garden,
     systems: System[] | undefined,
   ) => {
-    const statusCounts = GenerateStatusCounts(
+    const statusGroupCounts = GenerateStatusCounts(
       gardenRef,
       associatedRunnersRef,
       garden,
       systems,
     );
 
-    return Array.from(statusCounts, ([status, count]) => {
-      if (count && count > 0) {
-        const statusSeverity = GetSeverity(status);
+    return Array.from(statusGroupCounts, (statusGroup) => {
+      if (statusGroup.count && statusGroup.count > 0) {
         return (
-          <div key={`${status}_${garden?.name}_count`}>
-            <Tooltip title={`${status} Count ${count} for ${garden?.name}`}>
+          <div key={`${statusGroup.severity}_${garden?.name}_count`}>
+            <Tooltip
+              title={
+                <Stack spacing={1}>
+                  {Array.from(statusGroup.summary, (summary) => {
+                    if (summary.count && summary.count > 0) {
+                      return (
+                        <div>{`${summary.status} Count ${summary.count}`}</div>
+                      );
+                    }
+                  })}
+                </Stack>
+              }
+            >
               <Box component="span" aria-label={undefined}>
                 <Chip
-                  label={count}
-                  id={`${status}_${garden?.id}_menu_severity_system_summary`}
-                  color={statusSeverity}
-                  key={`${status}_${garden?.name}`}
+                  label={
+                    <div>
+                      {statusGroup.count}
+                      {statusGroup.severity ===
+                      "success" ? undefined : statusGroup.severity ===
+                        "info" ? (
+                        <FAIcon sx={{ ml: 0.5 }} icon={faSquare} />
+                      ) : statusGroup.severity === "warning" ? (
+                        <FAIcon sx={{ ml: 0.5 }} icon={faTriangleExclamation} />
+                      ) : (
+                        <FAIcon sx={{ ml: 0.5 }} icon={faXmarkCircle} />
+                      )}
+                    </div>
+                  }
+                  id={`${statusGroup.severity}_${garden?.id}_menu_group_system_summary`}
+                  color={statusGroup.severity}
+                  key={`${statusGroup.severity}_${garden?.name}`}
                 />
               </Box>
             </Tooltip>
@@ -689,7 +723,11 @@ function GardenDashboard({
               </FormControl>
               <Grid container spacing={1}>
                 {unassociatedRunners?.map((runnerGroup: RunnerGroup) => (
-                  <Grid size={4} sx={{ minWidth: "250px" }}>
+                  <Grid
+                    key={runnerGroup.path}
+                    size={4}
+                    sx={{ minWidth: "250px" }}
+                  >
                     <UnassociatedRunnerCard
                       runnerGroup={runnerGroup}
                       config={config}

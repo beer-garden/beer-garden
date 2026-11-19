@@ -29,3 +29,9 @@ update_direct = beer_garden.db.mongo.api.update_direct
 combine_raw_query = beer_garden.db.mongo.api.combine_raw_query
 
 prune_topics = beer_garden.db.mongo.util.prune_topics
+
+gridfs_create = beer_garden.db.mongo.api.gridfs_create
+gridfs_update_metadata = beer_garden.db.mongo.api.gridfs_update_metadata
+gridfs_delete = beer_garden.db.mongo.api.gridfs_delete
+gridfs_read = beer_garden.db.mongo.api.gridfs_read
+gridfs_exists = beer_garden.db.mongo.api.gridfs_exists

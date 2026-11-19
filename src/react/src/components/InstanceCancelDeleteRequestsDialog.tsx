@@ -1,3 +1,4 @@
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import {
   Alert,
   Box,
@@ -430,7 +431,7 @@ function InstanceCancelDeleteRequestsDialog({
               aria-label="Close cancel/delete requests dialog"
               onClick={onClose}
             >
-              <FAIcon icon="xmark" />
+              <FAIcon icon={faXmark} />
             </AccessButton>
           </Grid>
         </Grid>
