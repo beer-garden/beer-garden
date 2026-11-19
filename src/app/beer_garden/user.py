@@ -183,11 +183,7 @@ def get_user(username: str = None, id: str = None, include_roles: bool = True) -
     else:
         user = db.query_unique(User, id=id, raise_missing=True)
     if include_roles:
-        for role in user.roles:
-            try:
-                user.local_roles.append(get_role(role))
-            except DoesNotExist:
-                logger.error(f"Unable to find Role: {role}")
+        load_local_roles(user)
 
     return user
 
@@ -200,8 +196,7 @@ def get_users() -> list:
     """
     users = db.query(User)
     for user in users:
-        for role in user.roles:
-            user.local_roles.append(get_role(role))
+        load_local_roles(user)
 
         user.metadata["has_token"] = has_token(user.username)
     return users
@@ -271,6 +266,28 @@ def rescan():
             create_user(user)
 
 
+def load_local_roles(user: User) -> User:
+
+    if len(user.local_roles) == len(user.roles):
+        return user
+
+    user.local_roles = []
+    updated_roles = []
+    missing_roles = []
+    for role in user.roles:
+        try:
+            user.local_roles.append(get_role(role))
+            updated_roles.append(role)
+        except DoesNotExist:
+            missing_roles.append(role)
+
+    if len(missing_roles) > 0:
+        user.roles = updated_roles
+        logger.error(f"Missing Roles {missing_roles} for {user.username}")
+
+    return user
+
+
 def create_user(user: User) -> User:
     """Creates a User using the provided kwargs. The created user is saved to the
     database and returned.
@@ -287,9 +304,7 @@ def create_user(user: User) -> User:
 
     clean_user(user)
     user = db.create(user)
-    user.local_roles = []
-    for role in user.roles:
-        user.local_roles.append(get_role(role))
+    load_local_roles(user)
 
     # Sync child gardens
     initiate_user_sync()
