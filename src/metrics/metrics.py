@@ -6,8 +6,10 @@ The metrics service manages:
 * Creating default summary views in Prometheus
 * Publishing `Request` metrics
 """
+import argparse
 import datetime
 import logging
+import sys
 import time
 from functools import partial
 from http.server import ThreadingHTTPServer
@@ -16,6 +18,7 @@ from threading import Lock
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.db.mongo as db_mongo
+from beer_garden.config import _DB_SPEC
 from beer_garden.db.mongo.api import create_connection
 from brewtils.models import Garden, Request
 from brewtils.stoppable_thread import StoppableThread
@@ -25,12 +28,25 @@ from prometheus_client.core import (REGISTRY, GaugeMetricFamily,
 from prometheus_client.exposition import MetricsHandler
 from prometheus_client.registry import Collector
 from pymongo.errors import ServerSelectionTimeoutError
+from yapconf import YapconfSpec
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Add yapconf spec
+my_spec = YapconfSpec({"db": _DB_SPEC}, env_prefix="BG_")
+
+# Support CLI args via argparse
+parser = argparse.ArgumentParser()
+my_spec.add_arguments(parser)
+cli_args = vars(parser.parse_args(sys.argv[1:]))
+
+# Add sources
+my_spec.add_source("cli_args", "dict", data=cli_args)
+my_spec.add_source("ENVIRONMENT", "environment")
+config = my_spec.load_config(cli_args, "ENVIRONMENT")
+
 # Make connection to mongo
-config.load(["-c", "config.yaml"])
 create_connection(db_config=config.get("db"))
 
 _model_map = {}
@@ -235,7 +251,7 @@ def request_garden_totals():
     try:
         result = db.aggregation(Request, pipeline=pipeline)
     except ServerSelectionTimeoutError:
-            return []
+        return []
 
     return result
 
@@ -279,7 +295,7 @@ def request_garden_completed_totals():
     try:
         result = db.aggregation(Request, pipeline=pipeline)
     except ServerSelectionTimeoutError:
-            return []
+        return []
 
     return result
 
