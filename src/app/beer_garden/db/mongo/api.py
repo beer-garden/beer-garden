@@ -321,6 +321,13 @@ def kwargs_raw_query(**kwargs):
                 query,
                 {raw_field: {"$elemMatch": match_query}},
             )
+        elif raw_field.endswith(".nin"):
+            raw_field, raw_value = update_key_value(raw_field, kwargs[key], ".nin")
+
+            query = combine_raw_query(
+                query,
+                {raw_field: {"$not": {"$in": raw_value}}},
+            )
         elif raw_field.endswith(".in"):
             raw_field, raw_value = update_key_value(raw_field, kwargs[key], ".in")
 
