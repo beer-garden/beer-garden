@@ -11,8 +11,7 @@ services:
     ports:
       - "8001:8001"
     environment:
-      BG_DB_CONNECTION_HOST: "localhost"
-      BG_DB_CONNECTION_PORT: "27017"
+      BG_DB_HOST: mongodb
     restart: unless-stopped
 
 networks:
