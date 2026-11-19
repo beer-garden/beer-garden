@@ -21,6 +21,7 @@ from mock import Mock
 from mongoengine import DoesNotExist
 
 import beer_garden
+import beer_garden.db.api as db
 from beer_garden import config
 from beer_garden.db.mongo.models import Role as DB_Role
 from beer_garden.db.mongo.models import User as DB_User
@@ -745,10 +746,10 @@ class TestValidateUserRoles:
     def test_validate_roles(self, user):
 
         delete_role(role=user.local_roles[0])
-        db_user = get_user(username=user.username)
+        db_user = db.query_unique(User, username=user.username)
         assert len(db_user.roles) == 1
 
         validate_user_roles()
 
-        db_user = get_user(username=user.username)
+        db_user = db.query_unique(User, username=user.username)
         assert len(db_user.roles) == 0
