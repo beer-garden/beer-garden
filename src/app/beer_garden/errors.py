@@ -113,9 +113,3 @@ class InvalidAuthorizationException(Exception):
     """Authorization for User is invalid"""
 
     pass
-
-
-class ValidationException(Exception):
-    """User Access is invalid"""
-
-    pass

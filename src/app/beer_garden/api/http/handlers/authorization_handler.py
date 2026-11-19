@@ -27,8 +27,8 @@ from beer_garden.authorization import (
 # from beer_garden.db.mongo.models import User
 from beer_garden.errors import (
     ExpiredTokenException,
+    InvalidAuthorizationException,
     InvalidTokenException,
-    ValidationException,
 )
 
 
@@ -184,7 +184,7 @@ class AuthorizationHandler(BaseHandler):
             raw_query = self.rawFilter.build_filter(
                 self.current_user, self.minimum_permission, model
             )
-        except ValidationException:
+        except InvalidAuthorizationException:
             raise RequestForbidden
 
         return raw_query

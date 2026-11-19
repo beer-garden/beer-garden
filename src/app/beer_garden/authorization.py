@@ -17,7 +17,7 @@ from brewtils.models import User as BrewtilsUser
 
 import beer_garden.config as config
 import beer_garden.db.api as db
-from beer_garden.errors import InvalidAuthorizationException, ValidationException
+from beer_garden.errors import InvalidAuthorizationException
 
 logger = logging.getLogger(__name__)
 
@@ -307,7 +307,7 @@ class RawFilterBuilder:
         permission_levels = generate_permission_levels(permission)
 
         if len(user.local_roles) == 0 and len(user.upstream_roles) == 0:
-            raise ValidationException("User does not have any assigned Roles")
+            raise InvalidAuthorizationException("User does not have any assigned Roles")
 
         if model is None:
             return None
