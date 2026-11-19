@@ -16,8 +16,8 @@ lint: ## check style with flake8, black and isort
 	isort --check-only --diff --thirdparty brewtils .
 
 # Docker
-docker-build: package ## build docker image
-	docker build --pull -t $(DOCKER_NAME):latest-metrics . --build-arg VERSION=$(VERSION)
+docker-build: ## build docker image
+	docker build -t $(DOCKER_NAME):latest-metrics . --build-arg VERSION=$(VERSION)
 	docker tag $(DOCKER_NAME):latest-metrics $(DOCKER_NAME):$(VERSION)-metrics
 	docker tag $(DOCKER_NAME):latest-metrics $(DOCKER_NAME):$(SHORT_VERSION)-metrics
 
