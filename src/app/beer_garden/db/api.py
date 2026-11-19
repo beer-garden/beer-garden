@@ -16,6 +16,7 @@ query_unique = beer_garden.db.mongo.api.query_unique
 query = beer_garden.db.mongo.api.query
 reload = beer_garden.db.mongo.api.reload
 distinct = beer_garden.db.mongo.api.distinct
+aggregation = beer_garden.db.mongo.api.aggregation
 
 create = beer_garden.db.mongo.api.create
 update = beer_garden.db.mongo.api.update

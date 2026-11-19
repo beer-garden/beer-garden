@@ -42,6 +42,11 @@ export default defineConfig(({mode}) => {
         changeOrigin: true,
         rewrite: (path) => path.replace(new RegExp(`^${baseURL}`), '')
       },
+      [`${baseURL}/metrics`]: {
+        target: 'http://localhost:2337',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(new RegExp(`^${baseURL}`), '')
+      },
     }
   },
   build: {

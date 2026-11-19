@@ -37,7 +37,10 @@ from beer_garden.events.processors import (
 )
 from beer_garden.local_plugins.manager import PluginManager
 from beer_garden.log import load_plugin_log_config
-from beer_garden.metrics import PrometheusServer, initialize_elastic_client
+from beer_garden.metrics import (
+    PrometheusServer,
+    initialize_elastic_client,
+)
 from beer_garden.monitor import MonitorFile
 from beer_garden.plugin import StatusMonitor
 from beer_garden.scheduler import MixedScheduler
