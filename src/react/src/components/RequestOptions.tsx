@@ -1,0 +1,406 @@
+import {
+  faCaretDown,
+  faDownload,
+  faPlus,
+  faUpRightFromSquare,
+} from "@fortawesome/free-solid-svg-icons";
+import {
+  Box,
+  ButtonGroup,
+  ClickAwayListener,
+  Grow,
+  ListItemIcon,
+  ListItemText,
+  MenuItem,
+  MenuList,
+  Paper,
+  Popper,
+  Select,
+} from "@mui/material";
+import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import AccessButton from "../components/AccessButton";
+import { Request } from "../models/brewtils-types";
+import {
+  Config,
+  PermissionCheck,
+  RequestCommand,
+  RequestItem,
+} from "../models/models";
+import { useSnackbar } from "../providers/SnackbarProvider";
+import { checkPermission } from "../services/permission_service";
+import { CancelRequest, DeleteRequest } from "../services/request_service";
+import { FAIcon, GetBaseURL } from "../services/util_service";
+import ConfirmDialog from "./ConfirmDialog";
+
+function RequestOptions({
+  request,
+  setRequest,
+  requestProjections,
+  requestProjectionSelectedRef,
+  addRequestItem,
+  config,
+  isCard,
+  openRequest,
+  closeRequest,
+}: {
+  request: Request;
+  setRequest: (request: Request | undefined) => void;
+  requestProjections?: RequestCommand[];
+  requestProjectionSelectedRef: React.RefObject<RequestCommand | undefined>;
+  addRequestItem: (itemParams?: Partial<RequestItem>) => void;
+  config: Config;
+  isCard: boolean;
+  openRequest?: () => void;
+  closeRequest?: () => void;
+}) {
+  const navigate = useNavigate();
+  const items: any[] = [];
+  const showSnackbar = useSnackbar();
+
+  const [requestProjectionSelectedIndex, setRequestProjectionSelectedIndex] =
+    useState(0);
+
+  const splitButtonAnchorRef = useRef<HTMLDivElement>(null);
+  const [openSplitMenu, setOpenSplitMenu] = useState(false);
+
+  const [showDeletRequest, setShowDeletRequest] = useState(false);
+
+  const viewJob =
+    request?.metadata?.bg_job_id &&
+    typeof request.metadata.bg_job_id === "string" &&
+    request?.source_garden === config?.garden_name;
+
+  const handleToggle = () => {
+    setOpenSplitMenu((prevOpen) => !prevOpen);
+  };
+  const handleClose = (event: Event) => {
+    if (
+      splitButtonAnchorRef.current &&
+      splitButtonAnchorRef.current.contains(event.target as HTMLElement)
+    ) {
+      return;
+    }
+
+    setOpenSplitMenu(false);
+  };
+
+  const handleDownload = (request: Request) => {
+    // Example: fetch a file from a URL
+    const fileUrl = `${GetBaseURL()}/api/v1/requests/output/${request.id}`;
+    let filename = `${request.id}.txt`;
+    if (request.output_type == "HTML") {
+      filename = `${request.id}.html`;
+    } else if (request.output_type == "JSON") {
+      filename = `${request.id}.json`;
+    }
+
+    fetch(fileUrl)
+      .then((response) => response.blob())
+      .then((blob) => {
+        // Create blob link to download
+        const url = window.URL.createObjectURL(new Blob([blob]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", filename); // Set the custom download name
+        document.body.appendChild(link);
+        link.click(); // Trigger the download
+        link?.parentNode?.removeChild(link); // Clean up the link
+        window.URL.revokeObjectURL(url); // Free up the memory
+      })
+      .catch((error) => {
+        console.error("Error fetching the file:", error);
+        showSnackbar({
+          severity: "error",
+          summary: "Error",
+          detail: `Error fetching the file: ${error}`,
+          life: 3000,
+        });
+      });
+  };
+
+  const execute_authority = checkPermission(config, "OPERATOR", {
+    gardenName: request?.target_garden,
+  } as PermissionCheck);
+
+  if (execute_authority) {
+    if (
+      request.status &&
+      ["CREATED", "RECEIVED", "IN_PROGRESS"].includes(request.status)
+    ) {
+      items.push({
+        label: "Cancel Request",
+        icon: "xmark",
+        command: () => {
+          CancelRequest(request).catch((error) => {
+            console.error("Error canceling request:", error);
+            showSnackbar({
+              severity: "error",
+              summary: "Error",
+              detail: `Error canceling request: ${error}`,
+              life: 3000,
+            });
+          });
+        },
+      });
+    } else {
+      if (isCard) {
+        items.push({
+          label: "Pour Again",
+          icon: "plus",
+          command: () => {
+            pourAgain(request);
+          },
+        });
+      }
+      if (viewJob) {
+        items.push({
+          label: "View Job",
+          icon: "briefcase",
+          command: () => {
+            if (
+              request?.metadata?.bg_job_id &&
+              typeof request.metadata.bg_job_id === "string"
+            ) {
+              addRequestItem({
+                jobId: request.metadata.bg_job_id,
+                type: "VIEW_JOB",
+              });
+            }
+          },
+        });
+      }
+      items.push({
+        label: "Download Output",
+        icon: "download",
+        command: () => {
+          handleDownload(request);
+        },
+      });
+
+      if (
+        checkPermission(config, "GARDEN_ADMIN", {
+          gardenName: request?.target_garden,
+        } as PermissionCheck)
+      ) {
+        items.push({
+          label: "Delete Request",
+          icon: "xmark",
+          command: () => setShowDeletRequest(true),
+        });
+      }
+    }
+    items.push({
+      label: "Reload Request",
+      icon: "arrows-rotate",
+      command: () => {
+        setRequest(undefined);
+      },
+    });
+
+    if (
+      request?.metadata?.bg_job_id !== undefined &&
+      request.source_garden === config.garden_name
+    ) {
+      items.push({
+        label: "View Job",
+        icon: "briefcase",
+        command: () => {
+          if (
+            request?.metadata?.bg_job_id &&
+            typeof request.metadata.bg_job_id === "string"
+          ) {
+            addRequestItem({
+              jobId: request.metadata.bg_job_id,
+              type: "VIEW_JOB",
+            });
+          }
+        },
+      });
+    }
+  }
+
+  const pourAgain = (request: Request) => {
+    addRequestItem({ requestId: request.id, type: "REQUEST" });
+  };
+
+  const commandTemplate = (requestCommand: RequestCommand) => {
+    return `${requestCommand?.namespace === request.namespace ? "" : `${requestCommand?.namespace} / `}${requestCommand?.systemName} / ${requestCommand?.version} / ${requestCommand?.instance} / ${requestCommand?.command}`;
+  };
+
+  return (
+    <Box sx={{ alignItems: "center" }}>
+      <ConfirmDialog
+        open={showDeletRequest}
+        setOpen={() => setShowDeletRequest(false)}
+        accept={() => {
+          DeleteRequest(request)
+            .then(() => {
+              if (closeRequest) {
+                closeRequest();
+              } else {
+                void navigate(`/requests`);
+              }
+            })
+            .catch((error) => {
+              console.error("Error deleting request:", error);
+              showSnackbar({
+                severity: "error",
+                summary: "Error",
+                detail: `Error deleting request: ${error}`,
+                life: 3000,
+              });
+            });
+        }}
+        message={"Are you sure you want to delete this request?"}
+        header={`Confirm Delete ${request.id}`}
+      />
+      <Box sx={{ textAlign: "right" }}>
+        {execute_authority && (
+          <>
+            <ButtonGroup
+              color="success"
+              ref={splitButtonAnchorRef}
+              aria-label="Button group with a nested menu"
+              sx={{ ml: 2, mb: 2 }}
+            >
+              <AccessButton
+                color="success"
+                onClick={() => {
+                  if (isCard) {
+                    if (openRequest) {
+                      openRequest();
+                    }
+                  } else {
+                    pourAgain(request);
+                  }
+                }}
+              >
+                <Box sx={{ display: "flex" }}>
+                  {isCard ? (
+                    <FAIcon icon={faUpRightFromSquare} sx={{ mr: 2 }} />
+                  ) : (
+                    <FAIcon icon={faPlus} sx={{ mr: 2 }} />
+                  )}
+                  {isCard ? "Open Request" : "Pour Again"}
+                </Box>
+              </AccessButton>
+              <AccessButton
+                aria-controls={openSplitMenu ? "split-button-menu" : undefined}
+                aria-expanded={openSplitMenu ? "true" : undefined}
+                aria-haspopup="menu"
+                aria-label="Open Request Options"
+                onClick={handleToggle}
+                sx={{ bgcolor: "success.dark" }}
+              >
+                <FAIcon icon={faCaretDown} />
+              </AccessButton>
+            </ButtonGroup>
+            <Popper
+              sx={{ zIndex: 1300 }}
+              open={openSplitMenu}
+              anchorEl={splitButtonAnchorRef.current}
+              role={undefined}
+              transition
+            >
+              {({ TransitionProps, placement }) => (
+                <Grow
+                  {...TransitionProps}
+                  style={{
+                    transformOrigin:
+                      placement === "bottom" ? "center top" : "center bottom",
+                  }}
+                >
+                  <Paper>
+                    <ClickAwayListener onClickAway={handleClose}>
+                      <MenuList id="split-button-menu" autoFocusItem>
+                        {items.map((option) => (
+                          <MenuItem key={option.label} onClick={option.command}>
+                            <ListItemIcon sx={{ minWidth: "auto", mr: 1 }}>
+                              <FAIcon
+                                icon={option.icon}
+                                sx={{ color: "text.primary" }}
+                              />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={option.label}
+                              sx={{ textAlign: "right" }}
+                            />
+                          </MenuItem>
+                        ))}
+                      </MenuList>
+                    </ClickAwayListener>
+                  </Paper>
+                </Grow>
+              )}
+            </Popper>
+          </>
+        )}
+        {!execute_authority && (
+          <AccessButton
+            label="Download Output"
+            onClick={() => handleDownload(request)}
+          >
+            <Box sx={{ display: "flex" }}>
+              <FAIcon icon={faDownload} sx={{ mx: 2 }} />
+              Download Output
+            </Box>
+          </AccessButton>
+        )}
+      </Box>
+      <Box sx={{ textAlign: "right" }}>
+        {execute_authority &&
+          requestProjections &&
+          requestProjections.length > 0 && (
+            <Box sx={{ mb: 2, ml: 2 }}>
+              <Select
+                value={requestProjectionSelectedIndex}
+                sx={{ mr: 1 }}
+                aria-label="Select next command to run"
+                autoComplete="off"
+                SelectDisplayProps={{
+                  "aria-controls": "request-select-menu",
+                }}
+                slotProps={{
+                  root: {
+                    "aria-haspopup": "listbox",
+                    id: "request-select-menu",
+                  },
+                }}
+              >
+                {requestProjections.map((requestProjection, index) => (
+                  <MenuItem
+                    value={index}
+                    onClick={() => {
+                      requestProjectionSelectedRef.current = requestProjection;
+                      setRequestProjectionSelectedIndex(index);
+                    }}
+                    aria-label={`Select Request Projection ${commandTemplate(requestProjection)}`}
+                  >
+                    <span>{commandTemplate(requestProjection)}</span>
+                  </MenuItem>
+                ))}
+              </Select>
+              <AccessButton
+                label="Run Next"
+                basic
+                onClick={() => {
+                  if (requestProjectionSelectedRef.current) {
+                    addRequestItem({
+                      type: "REQUEST",
+                      requestCommandInput: requestProjectionSelectedRef.current,
+                    });
+                  }
+                }}
+              >
+                Run Next
+              </AccessButton>
+            </Box>
+          )}
+      </Box>
+    </Box>
+  );
+}
+
+export default RequestOptions;

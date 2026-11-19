@@ -736,8 +736,25 @@ def determine_latest_system_version(request: Request):
     return request
 
 
-# TODO: Add support for Request Delete event type
-# @publish_event(Events.REQUEST_DELETED)
+@publish_event(Events.REQUEST_DELETED)
+def delete_request(request: Request = None, request_id: str = None) -> dict:
+    """Delete Request
+
+    Args:
+        request (Request, optional): Request to delete. Defaults to None.
+        request_id (str, optional): Request Id of Request to delete. Defaults to None.
+
+    Returns:
+        Request: Deleted Request
+
+    """
+    if not request:
+        request = db.query_unique(Request, id=request_id, raise_missing=True)
+
+    db.delete(request)
+    return request
+
+
 def delete_requests(**kwargs) -> dict:
     """Delete Requests
 
@@ -751,7 +768,7 @@ def delete_requests(**kwargs) -> dict:
     requests = db.query(Request, filter_params=kwargs)
 
     for request in requests:
-        db.delete(request, force_delete=True)
+        delete_request(request)
 
     logger.info(f"Deleted {len(requests)} requests")
     return kwargs
@@ -1337,10 +1354,19 @@ def handle_event_create(event):
 
 
 def handle_event(event):
-    # TODO: Add support for Request Delete event type
-    # if event.name == Events.REQUEST_DELETED.name
-    #   and event.garden != config.get("garden.name"):
-    #     delete_requests(**event.payload)
+    if event.name == Events.REQUEST_DELETED.name and event.garden != config.get(
+        "garden.name"
+    ):
+        if (
+            event.payload.status
+            in [
+                "IN_PROGRESS",
+                "CREATED",
+                "RECEIVED",
+            ]
+            and event.payload.target_garden == event.garden
+        ):
+            cancel_request(event.payload)
 
     if event.garden == config.get("garden.name"):
 

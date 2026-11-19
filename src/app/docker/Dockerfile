@@ -24,3 +24,16 @@ ADD docker/docker-entrypoint.sh /usr/local/bin/
 
 EXPOSE 2337/tcp
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+
+# Using standard OCI (Open Container Initiative)
+LABEL version="$VERSION" \
+      description="Beer Garden" \
+      source="https://github.com/beer-garden/beer-garden" \
+      maintainer="Beer Garden Maintainers" \
+      org.opencontainers.image.title="Beer Garden" \
+      org.opencontainers.image.source="https://github.com/beer-garden/beer-garden" \
+      org.opencontainers.image.version="$VERSION" \
+      org.opencontainers.image.authors="Beer Garden Maintainers" \ 
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.url="https://beer-garden.io/" \
+      org.opencontainers.image.documentation="https://beer-garden.io/"
