@@ -282,7 +282,7 @@ def update_key_value(key: str, value, suffix: str = None):
 
 def update_value(key: str, value):
 
-    if key.endswith("_id"):
+    if key == "_id" or key.endswith("__id"):
         if isinstance(value, list):
             updated_values = []
             for key_value in value:
