@@ -10,6 +10,9 @@ services:
       - bg-network
     ports:
       - "8001:8001"
+    environment:
+      BG_DB_CONNECTION_HOST: "localhost"
+      BG_DB_CONNECTION_PORT: "27017"
     restart: unless-stopped
 
 networks:
