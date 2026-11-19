@@ -132,7 +132,7 @@ class QueryFilterBuilder:
         if check_global_roles(user, permission_levels=permission_levels):
             return Q()
 
-        filters = []
+        filters = [Q(command_type__ne="GARDEN")]
 
         for roles in [user.local_roles, user.upstream_roles]:
             for role in roles:
@@ -152,9 +152,6 @@ class QueryFilterBuilder:
                     q_filter = combine_filters(filter, or_filter)
                     if q_filter:
                         filters.append(q_filter)
-
-        if len(filters) == 0:
-            return Q()
 
         output = None
 
@@ -532,7 +529,12 @@ class ModelFilter:
         if getattr(request, "requester", None) == user.username:
             return request
 
-        if self._checks(
+        if request.command_type == "GARDEN":
+            if check_global_roles(
+                user, permission_levels=Permissions.GARDEN_ADMIN.name
+            ):
+                return request
+        elif self._checks(
             user,
             permission_levels=permission_levels,
             garden_name=source_garden,

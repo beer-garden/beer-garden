@@ -317,11 +317,11 @@ class Request(MongoModel, Document):
     # These fields are duplicated for job types, changes to this field
     # necessitate a change to the RequestTemplateSchema in brewtils.
     TEMPLATE_FIELDS = {
-        "system": {"field": StringField, "kwargs": {"required": True}},
-        "system_version": {"field": StringField, "kwargs": {"required": True}},
-        "instance_name": {"field": StringField, "kwargs": {"required": True}},
+        "system": {"field": StringField, "kwargs": {"required": False}},
+        "system_version": {"field": StringField, "kwargs": {"required": False}},
+        "instance_name": {"field": StringField, "kwargs": {"required": False}},
         "namespace": {"field": StringField, "kwargs": {"required": False}},
-        "command": {"field": StringField, "kwargs": {"required": True}},
+        "command": {"field": StringField, "kwargs": {"required": False}},
         "command_display_name": {"field": StringField, "kwargs": {"required": False}},
         "command_type": {"field": StringField, "kwargs": {}},
         "parameters": {"field": DictField, "kwargs": {}},
@@ -334,7 +334,7 @@ class Request(MongoModel, Document):
         locals()[field_name] = field_info["field"](**field_info["kwargs"])
 
     # Shared field with RequestTemplate, but it is required when saving Request
-    namespace = StringField(required=True)
+    namespace = StringField(required=False)
 
     parent = DummyField(required=False)
     parent_id = StringField()

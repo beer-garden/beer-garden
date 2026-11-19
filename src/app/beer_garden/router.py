@@ -13,7 +13,6 @@ The router service is responsible for:
 * Managing Downstream Garden connections
 * Caching `Garden`/`System` information for quick routing decisions
 """
-
 import asyncio
 import logging
 import threading
@@ -26,6 +25,7 @@ import brewtils.models
 from brewtils import EasyClient
 from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import Events, Garden, Operation, System
+from brewtils.schema_parser import SchemaParser
 from mongoengine import DoesNotExist
 from packaging.version import InvalidVersion, parse
 
@@ -55,7 +55,7 @@ from beer_garden.errors import (
     UnknownGardenException,
 )
 from beer_garden.garden import get_garden, get_gardens, update_garden
-from beer_garden.requests import complete_request, create_request
+from beer_garden.requests import complete_request, create_request, update_request
 
 logger = logging.getLogger(__name__)
 
@@ -211,8 +211,6 @@ def route(operation: Operation):
 
     """
 
-    logger.debug(f"Routing {operation!r}")
-
     if not operation.operation_type:
         raise RoutingRequestException("Missing operation type")
 
@@ -235,7 +233,38 @@ def route(operation: Operation):
 
     # If it's targeted at THIS garden, execute
     if operation.target_garden_name == config.get("garden.name"):
-        result = execute_local(operation)
+        # Check if this is a Garden Operation Request
+        if (
+            operation.operation_type == "REQUEST_CREATE"
+            and hasattr(operation.model, "command_type")
+            and operation.model.command_type == "GARDEN"
+        ):
+
+            operation.model.target_garden = operation.target_garden_name
+            local_request = create_request(operation.model)
+
+            if type(operation.model.parameters["operation"]) is str:
+                garden_operation = SchemaParser.parse_operation(
+                    operation.model.parameters["operation"], from_string=True
+                )
+            else:
+                garden_operation = SchemaParser.parse_operation(
+                    operation.model.parameters["operation"], from_string=False
+                )
+
+            try:
+                local_request.output = route(garden_operation)
+                local_request.status = "SUCCESS"
+            except Exception as exc:
+                local_request.status = "ERROR"
+                local_request.output = str(exc)
+                local_request.error_class = type(exc).__name__
+
+            local_request = update_request(local_request)
+            result = local_request
+
+        else:
+            result = execute_local(operation)
     else:
         loop = None
         try:
@@ -528,6 +557,9 @@ def forward(operation: Operation):
         UnknownGardenException: The specified target garden is unknown
     """
     target_garden = gardens.get(operation.target_garden_name)
+    garden_operation_wait = operation.kwargs.pop("garden_operation_wait", None)
+    if garden_operation_wait:
+        beer_garden.requests.request_map[operation.model.id] = garden_operation_wait
 
     if not target_garden:
         try:
@@ -589,6 +621,29 @@ def forward(operation: Operation):
             )
 
         raise
+
+    if garden_operation_wait:
+        loop = None
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            raise RoutingRequestException(
+                f"Failed to wait for Forwarding Operation '{operation.operation_type}'"
+            )
+        if loop:
+            loop.run_in_executor(
+                t_pool,
+                partial(
+                    asyncio.wait,
+                    [garden_operation_wait],
+                ),
+            )
+            if not garden_operation_wait.done():
+                raise RoutingRequestException(
+                    f"Failed to wait for Forwarding Operation '{operation.operation_type}'"
+                )
+
+            return garden_operation_wait.result().output
 
 
 def setup_routing():
@@ -960,6 +1015,9 @@ def _target_from_type(operation: Operation) -> str:
             return _instance_id_lookup(operation.args[0])
 
     if operation.operation_type in ["REQUEST_CREATE"]:
+        if operation.model.command_type == "GARDEN":
+            return config.get("garden.name")
+
         operation.model = beer_garden.requests.determine_latest_system_version(
             operation.model
         )
