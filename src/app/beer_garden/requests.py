@@ -1173,10 +1173,16 @@ def handle_wait_event_filter(event):
 
 def handle_wait_events(event):
     # Whenever a request is completed check to see if this process is waiting for it
-    if not event.error and event.name in [
-        Events.REQUEST_COMPLETED.name,
-        Events.REQUEST_CANCELED.name,
-    ]:
+    if (
+        not event.error
+        and event.name
+        in [
+            Events.REQUEST_COMPLETED.name,
+            Events.REQUEST_CANCELED.name,
+            Events.REQUEST_UPDATED,
+        ]
+        and event.payload.status in Request.COMPLETED_STATUSES
+    ):
         completion_event = request_map.pop(event.payload.id, None)
         if completion_event:
             # Async events return the result object
@@ -1261,6 +1267,7 @@ def handle_event_rebroadcast(event_name, request):
                         if request.parent_id is not None
                         else None
                     ),
+                    status=request.status,
                 ),
                 payload_type="Request",
                 metadata={"API_ONLY": True, "UI_RELOAD": True},
