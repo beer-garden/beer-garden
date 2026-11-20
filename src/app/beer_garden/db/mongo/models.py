@@ -25,7 +25,6 @@ from mongoengine import (
     ObjectIdField,
     StringField,
 )
-from mongoengine.errors import DoesNotExist
 
 from beer_garden.db.mongo.querysets import FileFieldHandlingQuerySet
 

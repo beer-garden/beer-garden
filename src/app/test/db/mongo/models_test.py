@@ -19,7 +19,6 @@ from beer_garden.db.mongo.models import (
     Parameter,
     Request,
     System,
-    System,
 )
 
 
