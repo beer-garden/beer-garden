@@ -1,4 +1,4 @@
-DOCKER_NAME     = bgio/beer-garden
+DOCKER_NAME     = bgio/metrics
 VERSION         ?= $(shell python -c "import os; import sys; sys.path.insert(1, './metrics/'); from __version__ import __version__; print(__version__);")
 SHORT_VERSION   = $(shell echo $(VERSION) | head -c 1)
 DATE            ?= $(shell date +%Y-%m-%d)
@@ -17,22 +17,22 @@ lint: ## check style with flake8, black and isort
 
 # Docker
 docker-build: ## build docker image
-	docker build -t $(DOCKER_NAME):latest-metrics . --build-arg VERSION=$(VERSION)
-	docker tag $(DOCKER_NAME):latest-metrics $(DOCKER_NAME):$(VERSION)-metrics
-	docker tag $(DOCKER_NAME):latest-metrics $(DOCKER_NAME):$(SHORT_VERSION)-metrics
+	docker build -t $(DOCKER_NAME):latest . --build-arg VERSION=$(VERSION)
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)
 
 docker-build-unstable: package ## build nightly docker image
-	docker build --pull -t $(DOCKER_NAME):unstable-metrics . --build-arg VERSION="unstable"
+	docker build --pull -t $(DOCKER_NAME):unstable . --build-arg VERSION="unstable"
 
 # Publishing
 publish-docker: docker-build ## push the docker image
-	docker push $(DOCKER_NAME):latest-metrics
-	docker push $(DOCKER_NAME):$(VERSION)-metrics
-	docker push $(DOCKER_NAME):$(SHORT_VERSION)-metrics
+	docker push $(DOCKER_NAME):latest
+	docker push $(DOCKER_NAME):$(VERSION)
+	docker push $(DOCKER_NAME):$(SHORT_VERSION)
 
 publish-docker-unstable: docker-build-unstable ## push the unstable docker image
-	docker push $(DOCKER_NAME):unstable-metrics
+	docker push $(DOCKER_NAME):unstable
 
 publish-branch-docker-unstable: package
-	docker build -t $(DOCKER_NAME):branch-unstable-metrics-${DATE} .
-	docker push $(DOCKER_NAME):branch-unstable-metrics-${DATE}
+	docker build -t $(DOCKER_NAME):branch-unstable-${DATE} .
+	docker push $(DOCKER_NAME):branch-unstable-${DATE}
