@@ -1,6 +1,7 @@
 import logging
 import os
 
+from brewtils.errors import ModelValidationError
 from brewtils.models import Event, Events, Permissions, Role
 from mongoengine import DoesNotExist
 from mongoengine.errors import FieldDoesNotExist
@@ -22,6 +23,7 @@ def create_role(role: Role) -> Role:
     Returns:
         Role: Created Role
     """
+    clean_role(role)
     return db.create(role)
 
 
@@ -39,6 +41,16 @@ def get_role(role_name: str = None, role_id: str = None) -> Role:
         return db.query_unique(Role, name=role_name, raise_missing=True)
 
     return db.query_unique(Role, id=role_id, raise_missing=True)
+
+
+def clean_role(role: Role) -> Role:
+
+    if role.permission not in Role.PERMISSION_TYPES:
+        raise ModelValidationError(
+            f"Cannot save Role. No permission type {role.permission}"
+        )
+
+    return role
 
 
 def get_roles():
@@ -72,6 +84,8 @@ def update_role(
 
     for key, value in kwargs.items():
         setattr(role, key, value)
+
+    clean_role(role)
 
     return db.update(role)
 

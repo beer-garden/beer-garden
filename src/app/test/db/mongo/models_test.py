@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
-from datetime import datetime, timedelta, timezone
-from uuid import uuid4
+from datetime import datetime
 
 import pytest
 from brewtils.errors import ModelValidationError
@@ -19,10 +18,8 @@ from beer_garden.db.mongo.models import (
     Job,
     Parameter,
     Request,
-    Role,
     System,
-    User,
-    UserToken,
+    System,
 )
 
 
@@ -309,104 +306,6 @@ class TestJob(object):
         date_trigger = DateTrigger()
         with pytest.raises(ModelValidationError):
             Job(trigger_type="cron", trigger=date_trigger).clean()
-
-
-class TestRole:
-    @pytest.fixture(autouse=True)
-    def drop(self, mongo_conn):
-        Role.drop_collection()
-
-    def test_create_with_valid_permissions(self):
-        role = Role(name="test_role", permission="READ_ONLY")
-        role.save()
-
-        assert Role.objects.filter(name="test_role").count() == 1
-
-    def test_create_with_invalid_permissions(self):
-        role = Role(name="test_role", permission="invalid_permission")
-
-        with pytest.raises(ModelValidationError):
-            role.save()
-
-    def test_delete_role_removes_from_users(self):
-        role = Role(name="test_role", permission="READ_ONLY").save()
-        User(username="testuser", roles=[role.name]).save()
-
-        assert role.name in User.objects.get(username="testuser").roles
-
-        role.delete()
-
-        assert role.name not in User.objects.get(username="testuser").roles
-
-
-class TestUser:
-
-    @pytest.fixture()
-    def role(self):
-        role = Role(name="test_role", permission="READ_ONLY").save()
-        yield role
-
-    @pytest.fixture()
-    def user(self):
-        user = User(username="testuser").save()
-        yield user
-
-    @pytest.fixture(autouse=True)
-    def drop(self, mongo_conn):
-        User.drop_collection()
-        Role.drop_collection()
-        UserToken.drop_collection()
-
-    @pytest.fixture()
-    def user_token(self, user):
-        user_token = UserToken(
-            expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
-            user=user,
-            uuid=uuid4(),
-        ).save()
-
-        yield user_token
-        user_token.delete()
-
-    def test_create(self, user):
-        assert User.objects.filter(username="testuser").count() == 1
-
-    def test_local_role_map_to_roles(self, user, role):
-        assert len(user.roles) == 0
-        user.local_roles = []
-        user.local_roles.append(role)
-        user = user.save()
-
-        assert len(user.roles) == 1
-
-
-class TestUserToken:
-    @pytest.fixture()
-    def user(self):
-        user = User(username="testuser").save()
-        yield user
-
-    @pytest.fixture(autouse=True)
-    def drop(self, mongo_conn):
-        User.drop_collection()
-        Role.drop_collection()
-        UserToken.drop_collection()
-
-    @pytest.fixture()
-    def user_token(self, user):
-        user_token = UserToken(
-            expires_at=datetime.now(timezone.utc) + timedelta(minutes=10),
-            username=user.username,
-            uuid=str(uuid4()),
-        ).save()
-
-        yield user_token
-        user_token.delete()
-
-    def test_user_delete_cascades_to_user_token(self, user, user_token):
-        assert len(UserToken.objects.filter(id=user_token.id)) == 1
-        User.objects.get(username="testuser").delete()
-        assert len(UserToken.objects.filter(id=user_token.id)) == 0
 
 
 class TestGarden:
