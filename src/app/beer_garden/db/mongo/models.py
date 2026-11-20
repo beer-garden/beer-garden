@@ -843,21 +843,6 @@ class Job(MongoModel, Document):
     max_instances = IntField(default=3, min_value=1)
     timeout = IntField()
 
-    def clean(self):
-        """Validate before saving to the database"""
-
-        if self.trigger_type not in self.TRIGGER_MODEL_MAPPING:
-            raise ModelValidationError(
-                f"Cannot save job. No mongo model for trigger type {self.trigger_type}"
-            )
-
-        trigger_class = self.TRIGGER_MODEL_MAPPING.get(self.trigger_type)
-        if not isinstance(self.trigger, trigger_class):
-            raise ModelValidationError(
-                f"Cannot save job. Expected trigger type {self.trigger_type} but "
-                f"actual type was {type(self.trigger)}"
-            )
-
 
 class Connection(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.Connection
