@@ -153,18 +153,6 @@ def get_garden(garden_name: str, **kwargs) -> Garden:
 
                 if query_values:
                     garden_kwargs[filter] = query_values
-            elif values and isinstance(values, dict) and filter not in garden_kwargs:
-                garden_kwargs[filter] = values
-
-                # TODO: Handle Raw Query Logic
-                # query_values = {}
-
-                # for value_key, value_value in value.items():
-                #     if not value_key.startswith("systems"):
-                #         query_values[value_key] = value_value
-
-                # if query_values:
-                #     garden_kwargs[filter] = query_values
             else:
                 garden_kwargs[filter] = values
 
