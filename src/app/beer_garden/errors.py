@@ -109,7 +109,7 @@ class InvalidPasswordException(Exception):
     pass
 
 
-class ValidationException(Exception):
-    """User Access is invalid"""
+class InvalidAuthorizationException(Exception):
+    """Authorization for User is invalid"""
 
     pass
