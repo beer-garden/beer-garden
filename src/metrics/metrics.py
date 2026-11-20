@@ -15,26 +15,25 @@ from functools import partial
 from http.server import ThreadingHTTPServer
 from threading import Lock
 
-import beer_garden.config as config
-import beer_garden.db.api as db
-import beer_garden.db.mongo as db_mongo
-from beer_garden.config import _DB_SPEC
-from beer_garden.db.mongo.api import create_connection
 from brewtils.models import Garden, Request
 from brewtils.stoppable_thread import StoppableThread
 from prometheus_client import start_http_server
-from prometheus_client.core import (REGISTRY, GaugeMetricFamily,
-                                    SummaryMetricFamily)
+from prometheus_client.core import REGISTRY, GaugeMetricFamily, SummaryMetricFamily
 from prometheus_client.exposition import MetricsHandler
 from prometheus_client.registry import Collector
 from pymongo.errors import ServerSelectionTimeoutError
 from yapconf import YapconfSpec
 
+import beer_garden.db.api as db
+import beer_garden.db.mongo as db_mongo
+from beer_garden.config import _DB_SPEC, _GARDEN_SPEC
+from beer_garden.db.mongo.api import create_connection
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Add yapconf spec
-my_spec = YapconfSpec({"db": _DB_SPEC}, env_prefix="BG_")
+my_spec = YapconfSpec({"db": _DB_SPEC, "garden": _GARDEN_SPEC}, env_prefix="BG_")
 
 # Support CLI args via argparse
 parser = argparse.ArgumentParser()
@@ -423,7 +422,7 @@ def request_garden_send_latency_metrics(interval: int = 15):
         gardens = db.query(
             Garden, include_fields=["name"], filter_params={"name__ne": local_garden}
         )
-    except:
+    except Exception:
         gardens = []
 
     total = []
@@ -496,7 +495,7 @@ def request_garden_return_latency_metrics(interval: int = 15):
         gardens = db.query(
             Garden, include_fields=["name"], filter_params={"name__ne": local_garden}
         )
-    except:
+    except Exception:
         gardens = []
 
     total = []

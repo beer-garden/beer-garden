@@ -11,7 +11,7 @@ format: ## Run black formatter in-line
 
 # Linting
 lint: ## check style with flake8, black and isort
-	flake8 --ignore=F824 .
+	flake8 --ignore=F824,W503 .
 	black -t py311 -t py312 -t py313 --check --diff .
 	isort --check-only --diff --thirdparty brewtils .
 
