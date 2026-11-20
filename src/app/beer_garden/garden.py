@@ -124,6 +124,8 @@ def get_children_garden(garden: Garden, **kwargs) -> Garden:
 def get_garden(garden_name: str, **kwargs) -> Garden:
     """Retrieve an individual Garden
 
+    Notes: Raw filters do not support filtering systems
+
     Args:
         garden_name: The name of Garden
 
