@@ -1,6 +1,38 @@
+from typing import Type, Union
+
 import brewtils.models
 import brewtils.schemas
 from brewtils.models import BaseModel
+from brewtils.schema_parser import SchemaParser
+from bson import ObjectId
+
+ModelType = Union[
+    Type[brewtils.models.Command],
+    Type[brewtils.models.Instance],
+    Type[brewtils.models.Job],
+    Type[brewtils.models.Request],
+    Type[brewtils.models.RequestTemplate],
+    Type[brewtils.models.System],
+    Type[brewtils.models.Garden],
+    Type[brewtils.models.File],
+    Type[brewtils.models.FileChunk],
+    Type[brewtils.models.Topic],
+    Type[brewtils.models.Subscriber],
+]
+
+ModelItem = Union[
+    brewtils.models.Command,
+    brewtils.models.Instance,
+    brewtils.models.Job,
+    brewtils.models.Request,
+    brewtils.models.RequestTemplate,
+    brewtils.models.System,
+    brewtils.models.Garden,
+    brewtils.models.File,
+    brewtils.models.FileChunk,
+    brewtils.models.Topic,
+    brewtils.models.Subscriber,
+]
 
 
 class MongoSchema:
@@ -268,3 +300,49 @@ def get_collection_schema(model: BaseModel) -> MongoSchema:
             return schema
 
     return None
+
+
+def clean_id(doc, to_mongo=False):
+    if to_mongo:
+        if "id" in doc:
+            doc["_id"] = ObjectId(doc["id"])
+            del doc["id"]
+    else:
+        if "_id" in doc:
+            doc["id"] = str(doc["_id"])
+            del doc["_id"]
+
+    return doc
+
+
+def to_brewtils(doc: dict | list, mongoSchema: MongoSchema):
+
+    if isinstance(doc, list):
+        return [to_brewtils(value, mongoSchema) for value in doc]
+
+    if mongoSchema.brewtils_model:
+
+        clean_model = clean_id(doc)
+
+        model = SchemaParser().parse(
+            clean_model, mongoSchema.brewtils_model, from_string=False
+        )
+        return model
+
+    return doc
+
+
+def from_brewtils(model: ModelItem | list, mongoSchema: MongoSchema = None):
+
+    if mongoSchema is None:
+        mongoSchema = get_collection_schema(model)
+
+    if isinstance(model, list):
+        return [from_brewtils(value, mongoSchema) for value in model]
+
+    if mongoSchema and mongoSchema.mongo_schema:
+        raw_dict = mongoSchema.mongo_schema().dump(model)
+        return clean_id(raw_dict, to_mongo=True)
+
+    else:
+        return clean_id(raw_dict, to_mongo=True)
