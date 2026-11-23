@@ -60,6 +60,7 @@ from beer_garden.api.http.schemas.v1.token import (
     TokenResponseSchema,
 )
 from beer_garden.api.http.schemas.v1.user import UserPasswordChangeSchema
+from beer_garden.db.mongo.schema_api import async_create_connection
 from beer_garden.events import publish
 from beer_garden.metrics import initialize_elastic_client
 
@@ -260,6 +261,7 @@ def _setup_application():
 
     # Set up async connection
     async_api.create_connection(db_config=beer_garden.config.get("db"))
+    async_create_connection(db_config=beer_garden.config.get("db"))
 
     auth_config = config.get("auth")
     if not auth_config.token_secret:

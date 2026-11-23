@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import beer_garden.db.mongo.api
+import beer_garden.db.mongo.schema_api
 import beer_garden.db.mongo.util
 
 from_brewtils = beer_garden.db.mongo.api.from_brewtils
@@ -16,6 +17,10 @@ query_unique = beer_garden.db.mongo.api.query_unique
 query = beer_garden.db.mongo.api.query
 reload = beer_garden.db.mongo.api.reload
 distinct = beer_garden.db.mongo.api.distinct
+
+async_create_connection = beer_garden.db.mongo.schema_api.async_create_connection
+async_query = beer_garden.db.mongo.schema_api.query
+async_gridfs_read = beer_garden.db.mongo.schema_api.gridfs_read
 
 create = beer_garden.db.mongo.api.create
 update = beer_garden.db.mongo.api.update
