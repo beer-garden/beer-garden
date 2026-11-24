@@ -45,10 +45,10 @@ from requests import Session
 import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.queue.api as queue
-from beer_garden.db.mongo.models import RawFile
 from beer_garden.errors import NotUniqueException, ShutdownError
 from beer_garden.events import publish, publish_event
 from beer_garden.metrics import request_completed, request_created, request_started
+from beer_garden.raw_file import create_raw_file
 
 logger = logging.getLogger(__name__)
 
@@ -786,9 +786,6 @@ def delete_request(
                 child.parent = None
                 db.update_direct(child)
 
-    # Delete all Raw Files
-    RawFile.objects(request_id=request.id).delete()
-
     # Delete all FS Chunks
     db.gridfs_delete(filter={"request_id": request.id})
 
@@ -1159,12 +1156,6 @@ def save_request(
     else:
         request = db.update_direct(request)
 
-        for raw_file in RawFile.objects(request_id=request.id):
-            raw_file.status = request.status
-            raw_file.updated_at = request.updated_at
-            raw_file.root_command_type = request.root_command_type
-            raw_file.save()
-
     if large_output:
         db.gridfs_create(model=large_output, request_id=request.id, output=True)
     if large_parameters:
@@ -1191,30 +1182,17 @@ def _update_raw_file_references(request: Request):
                 and param_value.get("type") == "bytes"
                 and param_value.get("id") is not None
             ):
-                try:
-                    raw_file = RawFile.objects.get(id=param_value["id"])
-                    raw_file.request_id = request.id
-                    raw_file.status = request.status
-                    raw_file.updated_at = request.updated_at
-                    raw_file.root_command_type = request.root_command_type
 
-                    db.gridfs_update_metadata(
-                        {"id": raw_file.file.grid_id},
-                        {
-                            "status": request.status,
-                            "updated_at": request.updated_at,
-                            "root_command_type": request.root_command_type,
-                            "file_type": "parameter",
-                            "request_id": request.id,
-                        },
-                    )
-
-                    raw_file.save()
-                except RawFile.DoesNotExist:
-                    logger.debug(
-                        f"Error locating RawFile with id {param_value['id']} "
-                        "while saving Request {self.id}"
-                    )
+                db.gridfs_update_metadata(
+                    {"id": param_value["id"]},
+                    {
+                        "status": request.status,
+                        "updated_at": request.updated_at,
+                        "root_command_type": request.root_command_type,
+                        "file_type": "parameter",
+                        "request_id": request.id,
+                    },
+                )
 
 
 def load_request_parameter_and_output(request: Request, **kwargs):
@@ -1276,9 +1254,9 @@ def remove_bytes_parameter_base64(
 
             if bytes_base64 is not None:
                 if replace_with_raw_file:
-                    raw_file = RawFile(
-                        file=gzip.decompress(base64.b64decode(bytes_base64))
-                    ).save()
+                    raw_file = create_raw_file(
+                        gzip.decompress(base64.b64decode(bytes_base64))
+                    )
                     request_param["id"] = str(raw_file.id)
 
                 del request_param["base64"]

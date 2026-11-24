@@ -42,6 +42,7 @@ import beer_garden.local_plugins.manager
 import beer_garden.log
 import beer_garden.plugin
 import beer_garden.queues
+import beer_garden.raw_file
 import beer_garden.requests
 import beer_garden.role
 import beer_garden.scheduler
@@ -171,6 +172,9 @@ route_functions = {
     "TOPIC_RESET_COUNT": beer_garden.topic.reset_count,
     "TOPIC_SYNC": beer_garden.topic.sync_topics,
     "TOKEN_USER_DELETE": beer_garden.user.revoke_tokens,
+    "RAW_FILE_READ": beer_garden.raw_file.read_raw_file,
+    "RAW_FILE_CREATE": beer_garden.raw_file.create_raw_file,
+    "RAW_FILE_DELETE": beer_garden.raw_file.delete_raw_file,
     "ROLE_CREATE": beer_garden.role.create_role,
     "ROLE_UPDATE": beer_garden.role.update_role,
     "ROLE_DELETE": beer_garden.role.delete_role,

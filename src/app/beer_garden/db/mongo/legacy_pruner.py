@@ -7,7 +7,7 @@ from mongoengine.connection import get_db
 from mongoengine.errors import DoesNotExist
 
 import beer_garden.config as config
-from beer_garden.db.mongo.models import File, Job, RawFile, Request
+from beer_garden.db.mongo.models import File, Job, Request
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +160,6 @@ def prune_files():
     if ttl_length > -1:
 
         file_ids = []
-        raw_file_ids = []
         gridfs_ids = []
 
         delete_older_than = datetime.now(timezone.utc) - timedelta(minutes=ttl_length)
@@ -172,24 +171,13 @@ def prune_files():
             ).only("id"):
                 file_ids.append(file.id)
                 if batch_size > 0 and len(file_ids) > batch_size:
-                    delete_files(
-                        batch_size, file_ids, raw_file_ids, gridfs_ids, "Expired"
-                    )
-
-            for raw_file in RawFile.objects(Q(created_at__lt=delete_older_than)):
-                raw_file_ids.append(raw_file.id)
-                gridfs_ids.append(raw_file.file.grid_id)
-                if batch_size > 0 and len(raw_file_ids) > batch_size:
-                    delete_files(
-                        batch_size, file_ids, raw_file_ids, gridfs_ids, "Expired"
-                    )
-
+                    delete_files(batch_size, file_ids, gridfs_ids, "Expired")
         finally:
-            if len(file_ids) > 0 or len(raw_file_ids) > 0:
-                delete_files(batch_size, file_ids, raw_file_ids, gridfs_ids, "Expired")
+            if len(file_ids) > 0:
+                delete_files(batch_size, file_ids, gridfs_ids, "Expired")
 
 
-def delete_files(batch_size, file_ids, raw_file_ids, gridfs_ids, label):
+def delete_files(batch_size, file_ids, gridfs_ids, label):
     db = get_db()
 
     if batch_size > 0:
@@ -199,23 +187,10 @@ def delete_files(batch_size, file_ids, raw_file_ids, gridfs_ids, label):
             db["file_chunks"].delete_many({"files_id": {"$in": batch}})
             db["file"].delete_many({"_id": {"$in": batch}})
 
-        for batch in [
-            raw_file_ids[i : i + batch_size]
-            for i in range(0, len(raw_file_ids), batch_size)
-        ]:
-            db["raw_files"].delete_many({"_id": {"$in": batch}})
-
-        for batch in [
-            gridfs_ids[i : i + batch_size]
-            for i in range(0, len(raw_file_ids), batch_size)
-        ]:
-            db["fs.chunks"].delete_many({"files_id": {"$in": batch}})
-            db["fs.files"].delete_many({"_id": {"$in": batch}})
     else:
         db["file_chunks"].delete_many({"files_id": {"$in": file_ids}})
         db["file"].delete_many({"_id": {"$in": file_ids}})
 
-        db["raw_files"].delete_many({"_id": {"$in": raw_file_ids}})
         db["fs.chunks"].delete_many({"files_id": {"$in": gridfs_ids}})
         db["fs.files"].delete_many({"_id": {"$in": gridfs_ids}})
 
@@ -223,9 +198,6 @@ def delete_files(batch_size, file_ids, raw_file_ids, gridfs_ids, label):
 
     if len(gridfs_ids) > 0:
         logger.debug(f"{len(gridfs_ids)} GridFS files deleted " f"for {label} Files")
-
-    if len(raw_file_ids) > 0:
-        logger.debug(f"{len(raw_file_ids)} Raw files deleted for {label} Files")
 
 
 def prune_orphan_files():
@@ -388,7 +360,6 @@ def prune_grid_fs_files(db, files, outstanding_files):
     for outstanding_file in outstanding_files:
         if "request_id" not in outstanding_file or (
             Request.objects(id=outstanding_file["request_id"]).only("id").count() == 0
-            and RawFile.objects(Q(file=outstanding_file["_id"])).only("id").count() == 0
         ):
             outstanding_ids.append(outstanding_file["_id"])
 
