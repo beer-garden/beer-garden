@@ -41,8 +41,9 @@ def async_create_connection(db_config: Box = None) -> None:
     )
     async_db = async_conn[config.get("name", db_config)]
 
-
-async def update(update: ModelType) -> Optional[ModelItem]:
+async def update_one(
+    collection: str | ModelType = None, raw_query: dict = None, update: dict = None
+) -> None:
     """Update a single document
 
     Args:
@@ -55,13 +56,25 @@ async def update(update: ModelType) -> Optional[ModelItem]:
 
     """
 
+    if not isinstance(collection, str):
+        schema = get_collection_schema(collection)
+        collection = schema.collection
+    logger.error(f"Update One :: Type = {type(collection)} == {collection} :: filter = {raw_query} :: update = {update}")
+    return await async_db[collection].update_one(filter=raw_query, update=update)
+
+async def update(update: ModelType) -> Optional[ModelItem]:
+    """Update a single document
+
+    Returns:
+        None
+
+    """
+
     schema = get_collection_schema(update)
 
     update_dict = from_brewtils(update, schema)
 
-    updated_model = await async_db[schema.collection].update_one(
-        {"_id": update_dict["_id"]}, {"$set": update_dict}
-    )
+    updated_model = await update_one(collection=schema.collection, raw_query={"_id": update_dict["_id"]}, update={"$set": update_dict})
 
     return to_brewtils(updated_model, schema)
 
@@ -114,12 +127,12 @@ async def query(model: ModelType, **kwargs):
 async def query_unique(model: ModelType, **kwargs):
     schema = get_collection_schema(model)
 
-    query = kwargs.get("raw_query", None)
+    filter = kwargs.get("raw_query", None)
 
     include_fields = kwargs.get("include_fields", None)
     exclude_fields = kwargs.get("exclude_fields", None)
 
-    find_fields = None
+    find_fields = kwargs.get("projection", None)
 
     if include_fields:
         if find_fields is None:
@@ -134,9 +147,10 @@ async def query_unique(model: ModelType, **kwargs):
         for exclude_field in exclude_fields:
             find_fields[exclude_field] = 0
 
+    logger.error(f"Unique Query {schema.collection}: Filter = {filter}, projection={find_fields}")
     doc = await async_db[schema.collection].find_one(
-        query,
-        find_fields,
+        filter=filter,
+        projection=find_fields,
     )
 
     return to_brewtils(doc, schema)

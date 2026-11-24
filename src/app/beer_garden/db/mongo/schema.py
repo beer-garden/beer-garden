@@ -36,13 +36,12 @@ ModelItem = Union[
 
 
 class MongoSchema:
-    brewtils_schema = None
-    brewtils_model = None
+    brewtils_model: BaseModel = None
 
     # Add schema if fields are excluded
-    mongo_schema = None
+    mongo_schema: brewtils.schemas.BaseSchema = None
 
-    collection = None
+    collection: str = None
 
     indexes = []
 
@@ -152,7 +151,7 @@ class Topic(MongoSchema):
 
 
 class System(MongoSchema):
-    collection = "topic"
+    collection = "system"
     brewtils_model = brewtils.models.System
     indexes = [
         {
@@ -303,19 +302,32 @@ def get_collection_schema(model: BaseModel) -> MongoSchema:
 
 
 def clean_id(doc, to_mongo=False):
+
+    if doc is None:
+        return None
+    
     if to_mongo:
         if "id" in doc:
             doc["_id"] = ObjectId(doc["id"])
             del doc["id"]
     else:
-        if "_id" in doc:
+        if "_id" in doc and isinstance(doc["_id"], ObjectId):
             doc["id"] = str(doc["_id"])
             del doc["_id"]
+
+    for key, value in doc.items():
+        if isinstance(value, dict):
+            doc[key] = clean_id(value, to_mongo=to_mongo)
+        elif isinstance(value, list):
+            doc[key] = [clean_id(item, to_mongo=to_mongo) for item in value]
 
     return doc
 
 
 def to_brewtils(doc: dict | list, mongoSchema: MongoSchema):
+
+    if doc is None:
+        return None
 
     if isinstance(doc, list):
         return [to_brewtils(value, mongoSchema) for value in doc]
@@ -334,6 +346,9 @@ def to_brewtils(doc: dict | list, mongoSchema: MongoSchema):
 
 def from_brewtils(model: ModelItem | list, mongoSchema: MongoSchema = None):
 
+    if model is None:
+        return None
+    
     if mongoSchema is None:
         mongoSchema = get_collection_schema(model)
 

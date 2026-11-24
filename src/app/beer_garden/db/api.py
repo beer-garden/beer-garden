@@ -20,7 +20,9 @@ distinct = beer_garden.db.mongo.api.distinct
 
 async_create_connection = beer_garden.db.mongo.schema_api.async_create_connection
 async_query = beer_garden.db.mongo.schema_api.query
+async_query_unique = beer_garden.db.mongo.schema_api.query_unique
 async_gridfs_read = beer_garden.db.mongo.schema_api.gridfs_read
+async_update_one = beer_garden.db.mongo.schema_api.update_one
 
 create = beer_garden.db.mongo.api.create
 update = beer_garden.db.mongo.api.update
