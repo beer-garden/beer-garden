@@ -28,8 +28,8 @@ from brewtils.models import (
     Operation,
     Request,
     RequestTemplate,
+    StatusHistory,
     System,
-    StatusHistory
 )
 from brewtils.schema_parser import SchemaParser
 from brewtils.stoppable_thread import StoppableThread
@@ -454,6 +454,7 @@ async def update_async(
     Returns:
         The updated Instance
     """
+
     query = {"instances._id": ObjectIdField().to_mongo(instance_id)}
     projection = {"instances.$": 1, "_id": 0}
     update = {}
@@ -479,10 +480,13 @@ async def update_async(
     )
 
     if new_status:
-        system = await db.async_query_unique(System, raw_query={
+        system = await db.async_query_unique(
+            System,
+            raw_query={
                 "instances._id": ObjectIdField().to_mongo(instance.id),
                 "local": True,
-            })
+            },
+        )
         if system:
             publish_status_update(system, instance)
 
@@ -496,28 +500,23 @@ async def heartbeat_async(
     projection = {"instances.$": 1, "_id": 0}
 
     system = await db.async_query_unique(System, raw_query=query, projection=projection)
-    logger.error(f"Loading System {system}")
     if system is None:
         logger.error("Missing System")
-        return 
-    
+        return
+
     if len(system.instances) != 1:
         logger.error("Missing Instance for heartbeat sync")
         return
     instance = system.instances[0]
-    logger.error(f"Loading Instance {instance}")
-
 
     update_time = datetime.now(timezone.utc)
     history = StatusHistory(
-        status= "RUNNING",
-        heartbeat= update_time,
+        status="RUNNING",
+        heartbeat=update_time,
     )
     instance.status_info.heartbeat = update_time
 
     instance.status_info.history.append(history)
-
-    logger.error(f"Added Status History {instance}")
 
     if config.get("plugin.status_history") > 0 and len(
         instance.status_info.history
@@ -527,18 +526,22 @@ async def heartbeat_async(
         update = {
             "$set": {
                 "instances.$.status_info.heartbeat": update_time,
-                "instances.$.status_info.history": SchemaParser.serialize_status_history(instance.status_info.history, to_string=False, many=True),
+                "instances.$.status_info.history": SchemaParser.serialize_status_history(
+                    instance.status_info.history, to_string=False, many=True
+                ),
             },
         }
     else:
         update = {
             "$set": {"instances.$.status_info.heartbeat": update_time},
-            "$push": {"instances.$.status_info.history": SchemaParser.serialize_status_history(history, to_string=False)},
+            "$push": {
+                "instances.$.status_info.history": SchemaParser.serialize_status_history(
+                    history, to_string=False
+                )
+            },
         }
 
     await db.async_update_one(System, raw_query=query, update=update)
-
-    logger.error(f"Instance Updated {instance}")
 
     return instance
 
@@ -546,15 +549,18 @@ async def heartbeat_async(
 async def _get_instance_async(filter, projection) -> dict:
     """Helper to get an instance async-style"""
 
-    system = await db.async_query_unique(System, raw_query=filter, projection=projection)
+    system = await db.async_query_unique(
+        System, raw_query=filter, projection=projection
+    )
 
     if system is None:
         logger.error("Instance Async System is None")
         return
-    # TODO - This is not the best
+
     if len(system.instances) != 1:
         logger.error("Missing Instance for instance async")
         return
+
     instance = system.instances[0]
 
     if config.get("plugin.status_history") > 0 and len(
@@ -565,9 +571,13 @@ async def _get_instance_async(filter, projection) -> dict:
             projection,
             {
                 "$set": {
-                    "instances.$.status_info.history": SchemaParser.serialize_status_history(instance["status_info"][
-                        "history"
-                    ][-1 * config.get("plugin.status_history") :], to_string=False, many=True)
+                    "instances.$.status_info.history": SchemaParser.serialize_status_history(
+                        instance.status_info.history[
+                            -1 * config.get("plugin.status_history") :
+                        ],
+                        to_string=False,
+                        many=True,
+                    )
                 }
             },
         )
@@ -577,9 +587,10 @@ async def _get_instance_async(filter, projection) -> dict:
 
 async def _update_instance_async(filter, projection, update) -> dict:
     """Helper to update an instance async-style"""
-    await db.async_update_one(System, raw_query=filter, update=update )
+    await db.async_update_one(System, raw_query=filter, update=update)
 
-    return await _get_instance_async(filter, projection)
+    instance = await _get_instance_async(filter, projection)
+    return instance
 
 
 def _from_kwargs(

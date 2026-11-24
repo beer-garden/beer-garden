@@ -305,7 +305,7 @@ def clean_id(doc, to_mongo=False):
 
     if doc is None:
         return None
-    
+
     if to_mongo:
         if "id" in doc:
             doc["_id"] = ObjectId(doc["id"])
@@ -348,7 +348,7 @@ def from_brewtils(model: ModelItem | list, mongoSchema: MongoSchema = None):
 
     if model is None:
         return None
-    
+
     if mongoSchema is None:
         mongoSchema = get_collection_schema(model)
 

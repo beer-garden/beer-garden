@@ -8,9 +8,7 @@ from brewtils.schema_parser import SchemaParser
 
 from beer_garden.api.http.base_handler import future_wait
 from beer_garden.api.http.handlers import AuthorizationHandler
-import logging
 
-logger = logging.getLogger(__name__)
 
 class InstanceAPI(AuthorizationHandler):
 
@@ -203,13 +201,9 @@ class InstanceAPI(AuthorizationHandler):
                 )
 
             elif operation == "heartbeat":
-                response_object = await self.process_operation(
+                response = await self.process_operation(
                     Operation(operation_type="INSTANCE_HEARTBEAT", args=[instance_id])
                 )
-
-                logger.error(f"Response Object: {response_object}")
-
-                response = json.dumps(response_object)
 
             elif operation == "replace":
                 if op.path.lower() == "/status":
@@ -239,13 +233,7 @@ class InstanceAPI(AuthorizationHandler):
                 raise ModelValidationError(f"Unsupported operation '{op.operation}'")
 
         self.set_header("Content-Type", "application/json; charset=UTF-8")
-        logger.error(f"Patch: {patch} :: Response: {response}")
-
-        if isinstance(response, dict):
-            response = json.dumps(response)
-            logger.error("Converting dict to str")
         self.write(response)
-        
 
 
 class InstanceLogAPI(AuthorizationHandler):
