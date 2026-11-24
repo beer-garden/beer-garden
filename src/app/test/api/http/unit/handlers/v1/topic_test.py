@@ -14,6 +14,12 @@ from beer_garden.topic import create_topic
 
 
 @pytest.fixture(autouse=True)
+def drop():
+    yield
+    Topic.drop_collection()
+
+
+@pytest.fixture(autouse=True)
 def topic_permitted():
     topic = Topic(name="sometopic").save()
 

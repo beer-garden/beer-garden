@@ -7,6 +7,7 @@ import pytest
 from brewtils.models import Connection as BrewtilsConnection
 from brewtils.models import Event, Events
 from brewtils.models import Garden as BrewtilsGarden
+from brewtils.models import StatusHistory
 from brewtils.models import System as BrewtilsSystem
 from mock import Mock
 from mongoengine import DoesNotExist
@@ -552,6 +553,108 @@ stomp:
         # Changed
         assert updated_garden.metadata == {"alt": "alt"}
         assert updated_garden.version == "2.0.0"
+
+    def test_upsert_garden_update_system_values(self, bg_garden):
+        """If the systems of a child garden are updated such that their names,
+        namespaces, or versions are changed, the original systems are removed and
+        replaced with the new systems when the garden is saved."""
+
+        garden = create_garden(bg_garden)
+
+        assert len(garden.systems) == 1
+
+        garden.systems[0].version = "v2"
+
+        updated_garden = upsert_garden(garden)
+
+        # Not changed
+        assert len(updated_garden.systems) == 1
+
+        # Changed
+        assert garden.systems[0].version == "v2"
+
+    def test_child_garden_system_id_update(self, bg_garden, bg_system):
+        """If the systems of a child garden are updated such that the names, namespaces
+        and versions remain constant, but the IDs are different, the original systms
+        are removed and replaced with the new systems when the garden is saved."""
+
+        garden = create_garden(bg_garden)
+
+        old_system_id = garden.systems[0].id
+
+        bg_system.id = "111111111111111111111111"
+
+        assert old_system_id is not bg_system.id
+
+        garden.systems = [bg_system]
+
+        updated_garden = upsert_garden(garden)
+
+        assert len(updated_garden.systems) == 1
+        assert updated_garden.systems[0].id is not old_system_id
+
+    def test_child_garden_save_history(self, bg_garden):
+        """Verifies that instance.status_info.history is updated to local
+        plugin.status_history length and extra history removed"""
+
+        config._CONFIG = {"garden": {"status_history": 3}}
+
+        for _ in range(6):
+            for connection in bg_garden.publishing_connections:
+                if connection.api == "HTTP":
+                    connection.status_info.history.append(
+                        StatusHistory(
+                            heartbeat=datetime(2025, 7, 1, 12, 30), status="PUBLISHING"
+                        )
+                    )
+            for connection in bg_garden.receiving_connections:
+                if connection.api == "HTTP":
+                    connection.status_info.history.append(
+                        StatusHistory(
+                            heartbeat=datetime(2025, 7, 1, 12, 30), status="RECEIVING"
+                        )
+                    )
+
+        for connection in bg_garden.publishing_connections:
+            if connection.api == "HTTP":
+                assert len(connection.status_info.history) > 3
+        for connection in bg_garden.receiving_connections:
+            if connection.api == "HTTP":
+                assert len(connection.status_info.history) > 3
+
+        garden = create_garden(bg_garden)
+
+        for connection in garden.publishing_connections:
+            if connection.api == "HTTP":
+                assert len(connection.status_info.history) == 3
+        for connection in garden.receiving_connections:
+            if connection.api == "HTTP":
+                assert len(connection.status_info.history) == 3
+
+    def test_child_garden_system_save_history(self, bg_garden):
+        """Verifies that instance.status_info.history is updated to local
+        plugin.status_history length and extra history removed"""
+
+        config._CONFIG = {"plugin": {"status_history": 3}}
+
+        for system in bg_garden.systems:
+            for instance in system.instances:
+                for _ in range(6):
+                    instance.status_info.history.append(
+                        StatusHistory(
+                            status="RUNNING", heartbeat=datetime(2025, 7, 1, 12, 30)
+                        )
+                    )
+
+        for system in bg_garden.systems:
+            for instance in system.instances:
+                assert len(instance.status_info.history) > 3
+
+        garden = create_garden(bg_garden)
+
+        for system in garden.systems:
+            for instance in system.instances:
+                assert len(instance.status_info.history) == 3
 
     def test_garden_unresponsive_trigger_send_sync(self, monkeypatch, bg_garden):
         bg_garden.systems = []
