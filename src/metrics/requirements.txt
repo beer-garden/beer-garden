@@ -1,6 +1,6 @@
-prometheus_client
-beer-garden
-brewtils
+prometheus_client>=0.26.0
+beer-garden>=3.35.0
+brewtils>=3.35.0
 black
 flake8
 isort
