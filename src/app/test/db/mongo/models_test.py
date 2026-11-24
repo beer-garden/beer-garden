@@ -12,10 +12,8 @@ from mongoengine import NotUniqueError
 from beer_garden.db.mongo.models import (
     Choices,
     Command,
-    DateTrigger,
     Garden,
     Instance,
-    Job,
     Parameter,
     Request,
     System,
@@ -290,21 +288,6 @@ class TestSystem(object):
     #     System.ensure_indexes()
     #     self.default_system.save()
     #     assert self.default_system.instances == []
-
-
-class TestJob(object):
-    @pytest.fixture(autouse=True)
-    def drop(self, mongo_conn):
-        Job.drop_collection()
-
-    def test_invalid_trigger_type(self):
-        with pytest.raises(ModelValidationError):
-            Job(trigger_type="INVALID_TRIGGER_TYPE").clean()
-
-    def test_trigger_mismatch(self):
-        date_trigger = DateTrigger()
-        with pytest.raises(ModelValidationError):
-            Job(trigger_type="cron", trigger=date_trigger).clean()
 
 
 class TestGarden:
