@@ -37,6 +37,7 @@ def system_permitted():
         version="0.0.1",
         namespace="somegarden",
         commands=[Command(name="icandoit")],
+        garden_name="somegarden",
     ).save()
 
     yield system
@@ -50,6 +51,7 @@ def system_not_permitted():
         version="0.0.1",
         namespace="somegarden",
         commands=[Command(name="notallowed")],
+        garden_name="somegarden",
     ).save()
 
     yield system
@@ -154,8 +156,10 @@ def brewtils_system_with_instance():
                 name="instance1",
                 queue_type="rabbit",
                 queue_info={"supersecret": "shhh"},
+                status="RUNNING",
             )
         ],
+        garden_name="doesntmatter",
     )
 
 

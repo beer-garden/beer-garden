@@ -41,7 +41,6 @@ import beer_garden.db.mongo.async_api as async_api
 import beer_garden.local_plugins.manager as lpm
 import beer_garden.queue.api as queue
 import beer_garden.requests as requests
-from beer_garden.db.mongo.models import DoesNotExist as ModelDoesNotExist
 from beer_garden.errors import NotFoundException
 from beer_garden.events import publish, publish_event, publish_event_async
 
@@ -630,7 +629,7 @@ def handle_event(event: Event) -> None:
                     new_status=event.payload.status,
                     metadata=event.payload.metadata,
                 )
-            except (DoesNotExist, ModelDoesNotExist):
+            except DoesNotExist:
                 logger.error(
                     (
                         "Unable to find system matching instance "

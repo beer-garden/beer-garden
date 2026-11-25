@@ -11,6 +11,7 @@ from beer_garden import config
 from beer_garden.db.mongo.models import Role as DB_Role
 from beer_garden.db.mongo.models import User as DB_User
 from beer_garden.role import (
+    clean_role,
     configure_plugin_role,
     configure_superuser_role,
     create_role,
@@ -179,3 +180,14 @@ class TestRole:
 
         with pytest.raises(DoesNotExist):
             get_role(role_name="to_be_removed")
+
+    def test_clean_role(self, role):
+        try:
+            clean_role(role)
+        except ModelValidationError as exc:
+            pytest.fail(f"Unexpected ValueError raised: {exc}")
+
+    def test_fail_clean_role(self, role):
+        role.permission = "BAD_PERMISSION"
+        with pytest.raises(ModelValidationError):
+            clean_role(role)

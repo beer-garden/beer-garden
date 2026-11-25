@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import pytest
 from box import Box
+from brewtils.errors import ModelValidationError
 from brewtils.models import (
     AliasUserMap,
     Command,
@@ -20,14 +21,16 @@ from mock import Mock
 from mongoengine import DoesNotExist
 
 import beer_garden
+import beer_garden.db.api as db
 from beer_garden import config
 from beer_garden.db.mongo.models import Role as DB_Role
 from beer_garden.db.mongo.models import User as DB_User
 from beer_garden.db.mongo.models import UserToken as DB_UserToken
 from beer_garden.errors import ConfigurationError, InvalidPasswordException
-from beer_garden.role import create_role, get_role
+from beer_garden.role import create_role, delete_role, get_role
 from beer_garden.role import rescan as role_rescan
 from beer_garden.user import (
+    clean_user,
     create_token,
     create_user,
     delete_token,
@@ -45,6 +48,7 @@ from beer_garden.user import (
     update_user,
     upstream_role_match_garden,
     upstream_user_sync,
+    validate_user_roles,
     validated_token_ttl,
     verify_password,
 )
@@ -266,10 +270,12 @@ class TestUser:
     def test_get_users(self, user):
         assert len(get_users()) == 1
 
-    def test_delete_user(self, user):
+    def test_delete_user(self, user, user_token):
         delete_user(user=user)
         with pytest.raises(DoesNotExist):
             get_user(username=user.username)
+        with pytest.raises(DoesNotExist):
+            get_token(user_token.uuid)
 
     def test_update_user(self, user, monkeypatch, roles_loaded):
         revoke_mock = Mock()
@@ -278,7 +284,7 @@ class TestUser:
         updated_user = update_user(user=user, roles=["read_only", "plugin_admin"])
 
         assert len(updated_user.roles) == 2
-        revoke_mock.assert_called_once()
+        revoke_mock.assert_called()
 
     def test_update_user_invalid_password(self, user):
         set_password(user, password="good")
@@ -294,7 +300,7 @@ class TestUser:
         )
 
         assert len(updated_user.roles) == 2
-        revoke_mock.assert_called_once()
+        revoke_mock.assert_called()
 
     def test_update_user_remote(self, user):
         user.is_remote = True
@@ -690,3 +696,60 @@ class TestUpstreamSync:
         assert len(db_user.upstream_roles) == 1
         assert len(db_user.roles) == 0
         assert db_user.is_remote
+
+
+class TestCleanUser:
+
+    def test_clean_user(self, user):
+        try:
+            clean_user(user)
+        except ModelValidationError as exc:
+            pytest.fail(f"Unexpected ValueError raised: {exc}")
+
+    def test_fail_missing_role(self, user):
+
+        user.roles = ["missing_role_name"]
+
+        with pytest.raises(ModelValidationError):
+            clean_user(user)
+
+    def test_fail_bad_upstream(self, user):
+        user.upstream_roles = [Role(permission="bad_permission", name="bad")]
+
+        with pytest.raises(ModelValidationError):
+            clean_user(user)
+
+    def test_revoke_token(self, user, user_token):
+        user.roles = []
+        user.local_roles = []
+
+        assert get_token(user_token.uuid) is not None
+
+        clean_user(user)
+
+        with pytest.raises(DoesNotExist):
+            get_token(user_token.uuid)
+
+    def test_append_roles(self, user):
+
+        user.roles = []
+
+        assert len(user.roles) == 0
+
+        clean_user(user)
+
+        assert len(user.roles) == 1
+
+
+class TestValidateUserRoles:
+
+    def test_validate_roles(self, user):
+
+        delete_role(role=user.local_roles[0])
+        db_user = db.query_unique(User, username=user.username)
+        assert len(db_user.roles) == 1
+
+        validate_user_roles()
+
+        db_user = db.query_unique(User, username=user.username)
+        assert len(db_user.roles) == 0

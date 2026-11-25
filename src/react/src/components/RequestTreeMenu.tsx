@@ -12,7 +12,7 @@ import { useEffect, useState } from "react";
 
 import { Request } from "../models/brewtils-types";
 import { FAIcon, GetSeverity } from "../services/util_service";
-import TreeMenu, { ExtendedTreeItemProps } from "./TreeMenu";
+import TreeMenu, { TreeMenuItemProps } from "./TreeMenu";
 
 function timeDelta(createdDate: Date, statusUpdated: Date) {
   if (!createdDate || !statusUpdated) {
@@ -49,7 +49,7 @@ function timeDelta(createdDate: Date, statusUpdated: Date) {
   return "<1s";
 }
 
-function parseRequest(request: Request): ExtendedTreeItemProps {
+function parseRequest(request: Request): TreeMenuItemProps {
   const item = {
     id: request.id,
     label: request.command,
@@ -75,7 +75,7 @@ function parseRequest(request: Request): ExtendedTreeItemProps {
       ),
       raw_request: request,
     },
-    children: [] as Array<ExtendedTreeItemProps>,
+    children: [] as Array<TreeMenuItemProps>,
   };
 
   if (

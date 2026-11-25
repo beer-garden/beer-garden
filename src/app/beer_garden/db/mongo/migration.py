@@ -275,6 +275,11 @@ def ensure_v3_XX_model_migration():
     db = get_db()
     batch_size = config.get("db.prune.batch_size", default=-1)
 
+    if contains_fields("garden", ["systems"]):
+        garden_collection = db.get_collection("garden")
+        result = garden_collection.update_many({}, {"$unset": {"systems": ""}})
+        logger.info(f"Migrating {result.modified_count} Gardens to remove Systems Ref.")
+
     request_updates = []
     gridfs_updates = []
     gridfs_chunks_updates = []
@@ -1200,4 +1205,10 @@ def ensure_model_migration():
         ):
             ensure_v3_35_model_migration()
 
+        # if not previous_config or Version(previous_config.get("version")) < Version(
+        #     "3.XX.0"
+        # ):
+        #     ensure_v3_XX_model_migration()
+
+    # TODO Update Version Logic Above to migrate properly
     ensure_v3_XX_model_migration()
