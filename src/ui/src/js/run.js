@@ -460,7 +460,7 @@ export default function appRun(
         }
       }
     }
-    // Check children
+    // Check downstream gardens
     if ($rootScope.garden.children !== undefined && $rootScope.garden.children !== null) {
       for (let i = 0; i < $rootScope.garden.children.length; i++){
         if ($rootScope.isRemoteSystemRoutable(system, $rootScope.garden.children[i])){
@@ -504,24 +504,24 @@ export default function appRun(
     return false;
   }
 
-  $rootScope.extractGardenChildren = function(gardens) {
+  $rootScope.extractGardenDownstream = function(gardens) {
     let results = []
     if (gardens !== undefined && gardens !== null) {
       for (let i = 0; i < gardens.length; i++){
         if (gardens[i]["connection_type"] == "LOCAL"){
           results.push(gardens[i]);
-          $rootScope.extractGardenChildrenLoop(results, gardens[i], true);
+          $rootScope.extractGardenDownstreamLoop(results, gardens[i], true);
         }
       }
     }
     return results;
   }
 
-  $rootScope.extractGardenChildrenLoop = function(gardens, garden, include_systems) {
+  $rootScope.extractGardenDownstreamLoop = function(gardens, garden, include_systems) {
     if (garden.children !== undefined && garden.children !== null){
       for (let i = 0; i < garden.children.length; i++){
         gardens.push(garden.children[i]);
-        $rootScope.extractGardenChildrenLoop(gardens, garden.children[i], true);
+        $rootScope.extractGardenDownstreamLoop(gardens, garden.children[i], true);
       }
     }
     return gardens;
@@ -592,7 +592,7 @@ export default function appRun(
     }
   }
 
-  function updateGardenChildren(srcGarden, newGarden) {
+  function updateGardenDownstream(srcGarden, newGarden) {
 
     let matched = false;
     if (srcGarden.children !== undefined && srcGarden.children !== null){
@@ -611,7 +611,7 @@ export default function appRun(
     if (!matched){
       if (srcGarden.children !== undefined && srcGarden.children !== null){
         for (let i = 0; i < srcGarden.children.length; i++){
-          srcGarden.children[i] = updateGardenChildren(srcGarden.children[i], newGarden);
+          srcGarden.children[i] = updateGardenDownstream(srcGarden.children[i], newGarden);
         }
       }
     }
@@ -624,7 +624,7 @@ export default function appRun(
       if ($rootScope.garden.name== event.payload.name){
         $rootScope.garden = event.payload;
       } else {
-        $rootScope.garden = updateGardenChildren($rootScope.garden, event.payload);
+        $rootScope.garden = updateGardenDownstream($rootScope.garden, event.payload);
       }
       updateGardenSystems();
     }

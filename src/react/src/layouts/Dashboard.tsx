@@ -201,8 +201,8 @@ function GardenDashboard({
           return garden;
         }
         if (garden?.children && garden.children.length > 0) {
-          for (const child of garden.children) {
-            const foundGarden = findSelectedGarden(garden_id, child);
+          for (const downstreamGarden of garden.children) {
+            const foundGarden = findSelectedGarden(garden_id, downstreamGarden);
             if (foundGarden) {
               return foundGarden;
             }
@@ -292,9 +292,9 @@ function GardenDashboard({
       expanded: true,
       children:
         garden?.children && garden.children.length > 0
-          ? garden.children.map((child: Garden) =>
+          ? garden.children.map((downstreamGarden: Garden) =>
               generateMenu(
-                child,
+                downstreamGarden,
                 systems,
                 upstreamRouting && receiving && publishing,
               ),
@@ -345,9 +345,9 @@ function GardenDashboard({
     garden: Garden,
     receiving: boolean,
     publishing: boolean,
-    parentRouting: boolean = true,
+    upstreamRouting: boolean = true,
   ) => {
-    if (!parentRouting) {
+    if (!upstreamRouting) {
       return (
         <>
           <Tooltip title="Upstream Routing Error">

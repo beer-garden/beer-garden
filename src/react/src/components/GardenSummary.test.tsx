@@ -32,7 +32,7 @@ describe("GardenSummary", () => {
       id: "1",
       name: "Root",
       version: "1.0.0",
-      children: [getChildGardenOne(), getChildGardenTwo()],
+      children: [getDownstreamGardenOne(), getDownstreamGardenTwo()],
       receiving_connections: [
         { status: "RECEIVING", api: "HTTP" } as Connection,
       ],
@@ -42,10 +42,10 @@ describe("GardenSummary", () => {
     } as Garden;
   };
 
-  const getChildGardenOne = () => {
+  const getDownstreamGardenOne = () => {
     return {
       id: "11",
-      name: "child_one",
+      name: "downstream_one",
       version: "1.0.0",
       has_parent: true,
       parent: "Root",
@@ -58,10 +58,10 @@ describe("GardenSummary", () => {
     } as Garden;
   };
 
-  const getChildGardenTwo = () => {
+  const getDownstreamGardenTwo = () => {
     return {
       id: "12",
-      name: "child_two",
+      name: "downstream_two",
       version: "2.0.0",
       has_parent: true,
       parent: "Root",
@@ -95,13 +95,13 @@ describe("GardenSummary", () => {
         screen.getByText(`Garden Summary: ${refGarden?.name}`),
       ).toBeVisible();
       expect(screen.getByText("1.0.0")).toBeInTheDocument();
-      expect(screen.getByText("child_one")).toBeInTheDocument();
-      expect(screen.getByText("child_two")).toBeInTheDocument();
+      expect(screen.getByText("downstream_one")).toBeInTheDocument();
+      expect(screen.getByText("downstream_two")).toBeInTheDocument();
     });
   });
 
-  test("renders child one garden summary", async () => {
-    const mockGarden = getChildGardenOne();
+  test("renders downstream one garden summary", async () => {
+    const mockGarden = getDownstreamGardenOne();
     const refGarden = getRootGarden();
 
     render(
@@ -125,8 +125,8 @@ describe("GardenSummary", () => {
     });
   });
 
-  test("renders child two garden summary", async () => {
-    const mockGarden = getChildGardenTwo();
+  test("renders downstream two garden summary", async () => {
+    const mockGarden = getDownstreamGardenTwo();
     const refGarden = getRootGarden();
 
     render(
@@ -152,8 +152,8 @@ describe("GardenSummary", () => {
 
   it.each([
     { mockGarden: getRootGarden() },
-    { mockGarden: getChildGardenOne() },
-    { mockGarden: getChildGardenTwo() },
+    { mockGarden: getDownstreamGardenOne() },
+    { mockGarden: getDownstreamGardenTwo() },
   ])("Button Visibility $mockGarden.name", async ({ mockGarden }) => {
     const refGarden = getRootGarden();
 
@@ -323,7 +323,7 @@ describe("GardenSummary", () => {
   });
 
   test("Sync Garden", async () => {
-    const mockGarden = getChildGardenOne();
+    const mockGarden = getDownstreamGardenOne();
     const refGarden = getRootGarden();
 
     vi.mocked(gardenService.SyncGarden);
@@ -353,7 +353,7 @@ describe("GardenSummary", () => {
   });
 
   test("Sync Users", async () => {
-    const mockGarden = getChildGardenOne();
+    const mockGarden = getDownstreamGardenOne();
     const refGarden = getRootGarden();
 
     vi.mocked(gardenService.SyncUsersGarden);
@@ -385,7 +385,7 @@ describe("GardenSummary", () => {
   });
 
   test("Delete Garden", async () => {
-    const mockGarden = getChildGardenOne();
+    const mockGarden = getDownstreamGardenOne();
     const refGarden = getRootGarden();
 
     vi.mocked(gardenService.DeleteGarden);
@@ -415,7 +415,7 @@ describe("GardenSummary", () => {
   });
 
   test("Receiving Start", async () => {
-    const mockGarden = getChildGardenOne();
+    const mockGarden = getDownstreamGardenOne();
     const refGarden = getRootGarden();
 
     vi.mocked(gardenService.UpdateApiGarden);
@@ -453,7 +453,7 @@ describe("GardenSummary", () => {
   });
 
   test("Receiving Stop", async () => {
-    const mockGarden = getChildGardenOne();
+    const mockGarden = getDownstreamGardenOne();
     const refGarden = getRootGarden();
 
     vi.mocked(gardenService.UpdateApiGarden);
@@ -490,7 +490,7 @@ describe("GardenSummary", () => {
   });
 
   test("Publishing Start", async () => {
-    const mockGarden = getChildGardenOne();
+    const mockGarden = getDownstreamGardenOne();
     const refGarden = getRootGarden();
 
     vi.mocked(gardenService.UpdateApiGarden);
@@ -527,7 +527,7 @@ describe("GardenSummary", () => {
   });
 
   test("Publishing Stop", async () => {
-    const mockGarden = getChildGardenOne();
+    const mockGarden = getDownstreamGardenOne();
     const refGarden = getRootGarden();
 
     vi.mocked(gardenService.UpdateApiGarden);

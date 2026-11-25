@@ -36,7 +36,7 @@ export default function adminGardenController(
   $scope.gardenCreateForm = GardenService.CreateFORM;
 
   $scope.successCallback = function() {
-    $scope.data = $scope.extractGardenChildren([$rootScope.gardensResponse.data]);
+    $scope.data = $scope.extractGardenDownstream([$rootScope.gardensResponse.data]);
     $scope.response = $rootScope.gardensResponse;
   };
   
@@ -215,7 +215,7 @@ export default function adminGardenController(
     return true;
   };
 
-  $scope.isChild = function(garden) {
+  $scope.isDownstream = function(garden) {
     if (garden.has_parent){
       return garden.parent == $scope.config.gardenName;
     }
@@ -314,12 +314,12 @@ export default function adminGardenController(
     $rootScope.getLocalGarden($scope.successCallback);
   };
 
-  $scope.removeGardenEventChildren = function(garden) {
+  $scope.removeGardenEventDownstream = function(garden) {
 
-    // Remove children
+    // Remove downstream
     if (garden.children !== undefined && garden.children !== null){
       for (let i = 0; i < garden.children.length; i++) {
-        $scope.removeGardenEventChildren(garden.children[i])
+        $scope.removeGardenEventDownsteam(garden.children[i])
       }
     }
 
@@ -329,7 +329,7 @@ export default function adminGardenController(
         if ($scope.data[i].id == garden.id) {
           $scope.data.splice(i, 1);
         } else if ($scope.data[i].parent == garden.name){
-          // Clean up any missing children
+          // Clean up any missing downstream
           $scope.data.splice(i, 1);
         }
       }
@@ -369,7 +369,7 @@ export default function adminGardenController(
             $scope.data[i][updateValues[x]] = garden[updateValues[x]]
           }
 
-          // Not all events include children, only update when children are provided or added
+          // Not all events include downstream, only update when downstream are provided or added
           if (
             garden.children !== undefined &&
             garden.children != null &&
@@ -516,7 +516,7 @@ export default function adminGardenController(
   EventService.addCallback('admin_garden', (event) => {
     switch (event.name) {
       case 'GARDEN_REMOVED':
-        $scope.removeGardenEventChildren(event.payload)
+        $scope.removeGardenEventDownstream(event.payload)
         $scope.$digest();
         break;
       case 'GARDEN_CREATED':
