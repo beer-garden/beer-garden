@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import copy
+import io
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 
@@ -12,13 +13,15 @@ from brewtils.models import Instance, Parameter
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System
 from mock import Mock, call, patch
+from mongoengine.connection import get_db
 
 import beer_garden
 import beer_garden.config
 import beer_garden.requests
 from beer_garden.db.mongo.api import gridfs_exists, to_brewtils
-from beer_garden.db.mongo.models import Garden, RawFile, Request
+from beer_garden.db.mongo.models import Garden, Request
 from beer_garden.garden import create_garden
+from beer_garden.raw_file import create_raw_file, delete_raw_file, read_raw_file
 from beer_garden.requests import (
     RequestValidator,
     cancel_request_children,
@@ -1554,10 +1557,10 @@ class TestSaveRequest(object):
 
     @pytest.fixture()
     def raw_file(self):
-        rawfile = RawFile().save()
 
+        rawfile = create_raw_file(io.BytesIO("hello".encode("utf-8")))
         yield rawfile
-        rawfile.delete()
+        delete_raw_file(rawfile.id)
 
     def test_save_stores_output_in_gridfs_after_maxsize(self, max_size, request_model):
 
@@ -1664,7 +1667,9 @@ class TestSaveRequest(object):
         }
         request_model = save_request(request_model)
 
-        assert len(RawFile.objects.filter(request_id=request_model.id)) == 1
+        db = get_db()
+
+        assert len(db["fs.file"].find_one({"request_id": request_model.id})) == 1
 
     def test_parent_orphan(self, request_model):
         parent = deepcopy(request_model)
@@ -1768,10 +1773,9 @@ class TestDeleteRequest(object):
 
     @pytest.fixture()
     def raw_file(self):
-        rawfile = RawFile().save()
-
+        rawfile = create_raw_file(io.BytesIO("hello".encode("utf-8")))
         yield rawfile
-        rawfile.delete()
+        delete_raw_file(rawfile.id)
 
     def test_delete(self, request_model):
 
@@ -1833,9 +1837,11 @@ class TestDeleteRequest(object):
         }
         request_model = save_request(request_model)
 
+        assert read_raw_file(str(raw_file.id)) is not None
+
         delete_request(request=request_model)
 
-        assert len(RawFile.objects.filter(request_id=request_model.id)) == 0
+        assert read_raw_file(str(raw_file.id)) is None
 
     def test_delete_cascade_output_in_gridfs(self, max_size, request_model):
 

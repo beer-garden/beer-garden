@@ -38,6 +38,7 @@ from brewtils.models import (
     System,
 )
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
+from bson import ObjectId
 from mongoengine.errors import DoesNotExist, OperationError
 from pymongo.errors import BulkWriteError, DocumentTooLarge
 from requests import Session
@@ -1184,7 +1185,7 @@ def _update_raw_file_references(request: Request):
             ):
 
                 db.gridfs_update_metadata(
-                    {"id": param_value["id"]},
+                    {"_id": ObjectId(param_value["id"])},
                     {
                         "status": request.status,
                         "updated_at": request.updated_at,
