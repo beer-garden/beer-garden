@@ -27,7 +27,7 @@ from beer_garden.db.mongo.models import (
     Request,
     RequestTemplate,
 )
-from beer_garden.raw_file import create_raw_file, delete_raw_file
+from beer_garden.gridfs import create_raw_file, delete_raw_file
 
 FAKE_TIME = datetime.datetime.now(timezone.utc) + timedelta(minutes=60)
 

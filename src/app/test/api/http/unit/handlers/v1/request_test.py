@@ -13,7 +13,7 @@ import beer_garden.requests
 import beer_garden.router
 from beer_garden.api.http.authentication import issue_token_pair
 from beer_garden.db.mongo.models import Garden, Request, System
-from beer_garden.raw_file import read_raw_file
+from beer_garden.gridfs import read_raw_file
 from beer_garden.role import create_role, delete_role
 from beer_garden.user import create_user, delete_user
 

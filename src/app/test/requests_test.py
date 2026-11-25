@@ -22,7 +22,7 @@ import beer_garden.requests
 from beer_garden.db.mongo.api import gridfs_exists, to_brewtils
 from beer_garden.db.mongo.models import Garden, Request
 from beer_garden.garden import create_garden
-from beer_garden.raw_file import create_raw_file, delete_raw_file, read_raw_file
+from beer_garden.gridfs import create_raw_file, delete_raw_file, read_raw_file
 from beer_garden.requests import (
     RequestValidator,
     cancel_request_children,

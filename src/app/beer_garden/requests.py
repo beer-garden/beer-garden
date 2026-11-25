@@ -38,7 +38,6 @@ from brewtils.models import (
     System,
 )
 from brewtils.pika import PERSISTENT_DELIVERY_MODE
-from bson import ObjectId
 from mongoengine.errors import DoesNotExist, OperationError
 from pymongo.errors import BulkWriteError, DocumentTooLarge
 from requests import Session
@@ -48,8 +47,16 @@ import beer_garden.db.api as db
 import beer_garden.queue.api as queue
 from beer_garden.errors import NotUniqueException, ShutdownError
 from beer_garden.events import publish, publish_event
+from beer_garden.gridfs import (
+    create_gridfs,
+    create_raw_file,
+    delete_gridfs_request,
+    exists_gridfs,
+    read_gridfs,
+    update_associated_gridfs,
+    update_associated_raw_file,
+)
 from beer_garden.metrics import request_completed, request_created, request_started
-from beer_garden.raw_file import create_raw_file
 
 logger = logging.getLogger(__name__)
 
@@ -788,7 +795,7 @@ def delete_request(
                 db.update_direct(child)
 
     # Delete all FS Chunks
-    db.gridfs_delete(filter={"request_id": request.id})
+    delete_gridfs_request(request)
 
     # Delete Request
     db.delete(request)
@@ -1136,7 +1143,7 @@ def save_request(
     if (
         request.output
         and sys.getsizeof(request.output) > REQUEST_MAX_PARAM_SIZE
-        and not db.gridfs_exists({"request_id": request.id, "output": True})
+        and not exists_gridfs({"request_id": request.id, "output": True})
     ):
         large_output = deepcopy(request.output)
         request.output = None
@@ -1158,18 +1165,11 @@ def save_request(
         request = db.update_direct(request)
 
     if large_output:
-        db.gridfs_create(model=large_output, request_id=request.id, output=True)
+        create_gridfs(large_output, request_id=request.id, output=True)
     if large_parameters:
-        db.gridfs_create(model=large_parameters, request_id=request.id, parameters=True)
+        create_gridfs(large_parameters, request_id=request.id, parameters=True)
 
-    db.gridfs_update_metadata(
-        {"request_id": request.id},
-        {
-            "status": request.status,
-            "updated_at": request.updated_at,
-            "root_command_type": request.root_command_type,
-        },
-    )
+    update_associated_gridfs(request)
 
     return request
 
@@ -1184,16 +1184,7 @@ def _update_raw_file_references(request: Request):
                 and param_value.get("id") is not None
             ):
 
-                db.gridfs_update_metadata(
-                    {"_id": ObjectId(param_value["id"])},
-                    {
-                        "status": request.status,
-                        "updated_at": request.updated_at,
-                        "root_command_type": request.root_command_type,
-                        "file_type": "parameter",
-                        "request_id": request.id,
-                    },
-                )
+                update_associated_raw_file(param_value["id"], request)
 
 
 def load_request_parameter_and_output(request: Request, **kwargs):
@@ -1214,12 +1205,12 @@ def load_request_parameter_and_output(request: Request, **kwargs):
         skip_output = skip_output or "output" in kwargs["exclude_fields"]
 
     if not skip_parameters:
-        parameters = db.gridfs_read({"request_id": request.id, "parameters": True})
+        parameters = read_gridfs({"request_id": request.id, "parameters": True})
         if parameters is not None:
             request.parameters = parameters
 
     if not skip_output:
-        output = db.gridfs_read({"request_id": request.id, "output": True})
+        output = read_gridfs({"request_id": request.id, "output": True})
         if output is not None:
             request.output = output
 
