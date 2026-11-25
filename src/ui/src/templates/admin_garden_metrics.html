@@ -25,7 +25,7 @@
     <div ng-if="selectedGarden.children.length > 0">
         <h4>Downstream</h4>
         <ul>
-            <li ng-repeat="child in selectedGarden.children">{{child.name}}</li>
+            <li ng-repeat="downstreamGarden in selectedGarden.children">{{downstreamGarden.name}}</li>
         </ul>
     </div>
     <div ng-if="selectedGarden.default_user.length > 0">

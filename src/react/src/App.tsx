@@ -110,8 +110,8 @@ function App() {
     if (garden) {
       const removeSystems = (garden: Garden) => {
         if (garden.children) {
-          garden.children = garden.children.map((child: Garden) => {
-            return removeSystems(child);
+          garden.children = garden.children.map((downstreamGarden: Garden) => {
+            return removeSystems(downstreamGarden);
           });
         }
         const updated = { ...garden };
@@ -236,9 +236,9 @@ function App() {
             return undefined;
           } else {
             compareGarden.children = compareGarden.children
-              .map((child: Garden) => removeGarden(gardenId, child))
+              .map((downstreamGarden: Garden) => removeGarden(gardenId, downstreamGarden))
               .filter(
-                (child: Garden | undefined) => child !== undefined,
+                (downstreamGarden: Garden | undefined) => downstreamGarden !== undefined,
               ) as Array<Garden>;
           }
           return compareGarden;
@@ -280,7 +280,7 @@ function App() {
             };
           } else {
             compareGarden.children = compareGarden.children.map(
-              (child: Garden) => upsertGarden(updatedGarden, child),
+              (downstreamGarden: Garden) => upsertGarden(updatedGarden, downstreamGarden),
             );
             // New one hop Garden
             if (
@@ -290,7 +290,7 @@ function App() {
             ) {
               if (
                 !compareGarden.children.some(
-                  (child: Garden) => child.id === updatedGarden.id,
+                  (downstreamGarden: Garden) => downstreamGarden.id === updatedGarden.id,
                 )
               ) {
                 compareGarden.children.push(updatedGarden);

@@ -639,7 +639,7 @@ function CommandForm({
       : undefined;
 
     if (rootGarden && rootGarden.name !== garden_name) {
-      const validateChildren = (
+      const validateDownstreamGardens = (
         garden: Garden,
         gardenName: string,
       ): boolean => {
@@ -664,8 +664,8 @@ function CommandForm({
         }
         if (
           garden.children &&
-          garden.children.some((child: Garden) =>
-            validateChildren(child, gardenName),
+          garden.children.some((downstreamGarden: Garden) =>
+            validateDownstreamGardens(downstreamGarden, gardenName),
           )
         ) {
           return true;
@@ -673,7 +673,7 @@ function CommandForm({
         return false;
       };
 
-      if (!validateChildren(rootGarden, garden_name)) {
+      if (!validateDownstreamGardens(rootGarden, garden_name)) {
         clearMessages();
         addMessage({
           severity: "error",

@@ -211,8 +211,8 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
     }
 
     if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
-      for (const child of garden.children) {
-        if ($scope.gardenValidation(value, child)) {
+      for (const downstreamGarden of garden.children) {
+        if ($scope.gardenValidation(value, downstreamGarden)) {
           return true;
         }
       }
@@ -256,8 +256,8 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
     }
 
     if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
-      for (const child of garden.children) {
-        if ($scope.namespaceValidation(value, child)) {
+      for (const downstreamGarden of garden.children) {
+        if ($scope.namespaceValidation(value, downstreamGarden)) {
           return true;
         }
       }
@@ -303,8 +303,8 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
     }
 
     if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
-      for (const child of garden.children) {
-        if ($scope.systemValidation(value, child)) {
+      for (const downstreamGarden of garden.children) {
+        if ($scope.systemValidation(value, downstreamGarden)) {
           return true;
         }
       }
@@ -350,8 +350,8 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
     }
 
     if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
-      for (const child of garden.children) {
-        if ($scope.versionValidation(value, child)) {
+      for (const downstreamGarden of garden.children) {
+        if ($scope.versionValidation(value, downstreamGarden)) {
           return true;
         }
       }
@@ -399,8 +399,8 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
     }
 
     if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
-      for (const child of garden.children) {
-        if ($scope.instanceValidation(value, child)) {
+      for (const downstreamGarden of garden.children) {
+        if ($scope.instanceValidation(value, downstreamGarden)) {
           return true;
         }
       }
@@ -453,8 +453,8 @@ export function newRoleController($rootScope, $scope, $uibModalInstance, isNew, 
     }
 
     if (garden.children !== undefined && garden.children != null && garden.children.length > 0) {
-      for (const child of garden.children) {
-        if ($scope.commandValidation(value, child)) {
+      for (const downstreamGarden of garden.children) {
+        if ($scope.commandValidation(value, downstreamGarden)) {
           return true;
         }
       }

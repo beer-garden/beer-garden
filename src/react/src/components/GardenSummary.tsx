@@ -132,12 +132,12 @@ function GardenSummary({
       }
     }
     if (selectedGarden?.children) {
-      for (const child of selectedGarden.children) {
-        if (child?.receiving_connections) {
-          for (const connection of child.receiving_connections) {
+      for (const downstreamGarden of selectedGarden.children) {
+        if (downstreamGarden?.receiving_connections) {
+          for (const connection of downstreamGarden.receiving_connections) {
             if (connection.status !== "NOT_CONFIGURED") {
               connections.push({
-                garden: child.name,
+                garden: downstreamGarden.name,
                 api: connection.api,
                 status: connection.status,
                 type: "RECEIVING",
@@ -147,11 +147,11 @@ function GardenSummary({
             }
           }
         }
-        if (child?.publishing_connections) {
-          for (const connection of child.publishing_connections) {
+        if (downstreamGarden?.publishing_connections) {
+          for (const connection of downstreamGarden.publishing_connections) {
             if (connection.status !== "NOT_CONFIGURED") {
               connections.push({
-                garden: child.name,
+                garden: downstreamGarden.name,
                 api: connection.api,
                 status: connection.status,
                 type: "PUBLISHING",
@@ -236,9 +236,9 @@ function GardenSummary({
     pos: 6,
   };
 
-  const parentRoutingCheck = (
+  const upstreamRoutingCheck = (
     garden: Garden,
-    targetParent: string,
+    targetUpstreamGardenName: string,
     upstreamRouting: boolean,
   ) => {
     let isValid = true;
@@ -260,13 +260,13 @@ function GardenSummary({
             ),
         );
     }
-    if (garden.name === targetParent) {
+    if (garden.name === targetUpstreamGardenName) {
       setInvalidRouting(!(isValid && upstreamRouting));
       return;
     }
     if (garden?.children) {
-      for (const child of garden.children) {
-        parentRoutingCheck(child, targetParent, isValid && upstreamRouting);
+      for (const downstreamGarden of garden.children) {
+        upstreamRoutingCheck(downstreamGarden, targetUpstreamGardenName, isValid && upstreamRouting);
       }
     }
   };
@@ -276,7 +276,7 @@ function GardenSummary({
     setDownstreamConnections(getDownstreamConnections());
 
     if (gardenRef.current && selectedGarden?.parent) {
-      parentRoutingCheck(gardenRef.current, selectedGarden?.parent, true);
+      upstreamRoutingCheck(gardenRef.current, selectedGarden?.parent, true);
     } else {
       setInvalidRouting(false);
     }
