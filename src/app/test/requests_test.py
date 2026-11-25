@@ -12,10 +12,10 @@ from brewtils.models import Garden as BrewtilsGarden
 from brewtils.models import Instance, Parameter
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import System
+from bson import ObjectId
 from mock import Mock, call, patch
 from mongoengine.connection import get_db
 
-from bson import ObjectId
 import beer_garden
 import beer_garden.config
 import beer_garden.requests
