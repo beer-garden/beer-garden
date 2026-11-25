@@ -79,8 +79,13 @@ docker-build: package ## build docker image
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)
 	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)
 
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):latest-legacy
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(VERSION)-legacy
+	docker tag $(DOCKER_NAME):latest $(DOCKER_NAME):$(SHORT_VERSION)-legacy
+
 docker-build-unstable: package ## build nightly docker image
 	docker build -t $(DOCKER_NAME):unstable . --build-arg VERSION="unstable"
+	docker tag $(DOCKER_NAME):unstable $(DOCKER_NAME):unstable-legacy
 
 
 # Publishing
@@ -89,8 +94,13 @@ publish-docker: docker-build ## push the docker image
 	docker push $(DOCKER_NAME):$(VERSION)
 	docker push $(DOCKER_NAME):$(SHORT_VERSION)
 
+	docker push $(DOCKER_NAME):latest-legacy
+	docker push $(DOCKER_NAME):$(VERSION)-legacy
+	docker push $(DOCKER_NAME):$(SHORT_VERSION)-legacy
+
 publish-docker-unstable: docker-build-unstable ## push the unstable docker image
 	docker push $(DOCKER_NAME):unstable
+	docker push $(DOCKER_NAME):unstable-legacy
 
 publish-branch-docker-unstable: package
 	docker build -t $(DOCKER_NAME):branch-unstable-${DATE} .
