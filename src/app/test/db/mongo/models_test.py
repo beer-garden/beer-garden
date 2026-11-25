@@ -3,7 +3,6 @@ import copy
 from datetime import datetime
 
 import pytest
-from brewtils.errors import ModelValidationError
 from brewtils.schemas import RequestTemplateSchema
 from bson.objectid import ObjectId
 from mock import Mock
