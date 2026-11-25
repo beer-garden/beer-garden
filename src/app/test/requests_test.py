@@ -1669,7 +1669,7 @@ class TestSaveRequest(object):
 
         db = get_db()
 
-        assert len(db["fs.file"].find_one({"request_id": request_model.id})) == 1
+        assert db["fs.file"].count_documents({"request_id": request_model.id}) == 1
 
     def test_parent_orphan(self, request_model):
         parent = deepcopy(request_model)
