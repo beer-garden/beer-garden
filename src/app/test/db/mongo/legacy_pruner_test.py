@@ -27,7 +27,7 @@ from beer_garden.db.mongo.models import (
     Request,
     RequestTemplate,
 )
-from beer_garden.gridfs import create_raw_file, delete_raw_file
+from beer_garden.gridfs import create_raw_file, delete_gridfs_raw_file
 
 FAKE_TIME = datetime.datetime.now(timezone.utc) + timedelta(minutes=60)
 
@@ -138,7 +138,7 @@ def file():
 def raw_file():
     rawfile = create_raw_file(io.BytesIO("hello".encode("utf-8")))
     yield rawfile
-    delete_raw_file(rawfile.id)
+    delete_gridfs_raw_file(rawfile.id)
 
 
 @pytest.fixture

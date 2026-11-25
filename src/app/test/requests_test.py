@@ -22,7 +22,7 @@ import beer_garden.requests
 from beer_garden.db.mongo.api import gridfs_exists, to_brewtils
 from beer_garden.db.mongo.models import Garden, Request
 from beer_garden.garden import create_garden
-from beer_garden.gridfs import create_raw_file, delete_raw_file, read_raw_file
+from beer_garden.gridfs import create_raw_file, delete_gridfs_raw_file, read_raw_file
 from beer_garden.requests import (
     RequestValidator,
     cancel_request_children,
@@ -1561,7 +1561,7 @@ class TestSaveRequest(object):
 
         rawfile = create_raw_file(io.BytesIO("hello".encode("utf-8")))
         yield rawfile
-        delete_raw_file(rawfile.id)
+        delete_gridfs_raw_file(rawfile.id)
 
     def test_save_stores_output_in_gridfs_after_maxsize(self, max_size, request_model):
 
@@ -1777,7 +1777,7 @@ class TestDeleteRequest(object):
     def raw_file(self):
         rawfile = create_raw_file(io.BytesIO("hello".encode("utf-8")))
         yield rawfile
-        delete_raw_file(rawfile.id)
+        delete_gridfs_raw_file(rawfile.id)
 
     def test_delete(self, request_model):
 
