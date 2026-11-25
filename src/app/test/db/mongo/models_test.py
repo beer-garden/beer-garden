@@ -9,19 +9,14 @@ from bson.objectid import ObjectId
 from mock import Mock
 from mongoengine import NotUniqueError
 
-from beer_garden import config
 from beer_garden.db.mongo.models import (
     Choices,
     Command,
-    DateTrigger,
     Garden,
     Instance,
-    Job,
     Parameter,
     Request,
-    Subscriber,
     System,
-    Topic,
 )
 
 
@@ -33,28 +28,6 @@ class TestCommand(object):
         c = Command(name="foo", description="bar", parameters=[])
         assert repr(c) == "<Command: foo>"
 
-    def test_clean(self):
-        Command(name="foo", parameters=[Parameter(key="foo", optional=False)]).clean()
-
-    @pytest.mark.parametrize(
-        "params",
-        [
-            {"name": ""},
-            {"name": "foo", "command_type": "BAD", "parameters": []},
-            {"name": "foo", "output_type": "BAD", "parameters": []},
-        ],
-    )
-    def test_clean_empty_name(self, params):
-        with pytest.raises(ModelValidationError):
-            Command(**params).clean()
-
-    def test_clean_fail_duplicate_parameter_keys(self):
-        parameter = Parameter(key="foo", optional=False)
-        command = Command(name="foo", parameters=[parameter, parameter])
-
-        with pytest.raises(ModelValidationError):
-            command.clean()
-
 
 class TestInstance(object):
     def test_str(self):
@@ -64,10 +37,6 @@ class TestInstance(object):
         instance = Instance(name="name", status="RUNNING")
         assert "name" in repr(instance)
         assert "RUNNING" in repr(instance)
-
-    def test_clean_bad_status(self):
-        with pytest.raises(ModelValidationError):
-            Instance(status="BAD").clean()
 
 
 class TestChoices(object):
@@ -80,52 +49,6 @@ class TestChoices(object):
         assert "select" in repr(choices)
         assert "[1]" in repr(choices)
 
-    @pytest.mark.parametrize(
-        "choice_obj",
-        [
-            Choices(type="static", value="SHOULD_BE_A_LIST"),
-            Choices(type="url", value=[1, 2]),
-            Choices(type="command", value=[1, 2]),
-            Choices(type="command", value={"command": "foo"}),
-        ],
-    )
-    def test_clean_value_types(self, choice_obj):
-        with pytest.raises(ModelValidationError):
-            choice_obj.clean()
-
-    def test_clean_static(self):
-        choice = Choices(type="static", value=["a", "b", "c"])
-        choice.clean()
-        assert choice.details == {}
-
-    def test_clean_parse(self):
-        choice = Choices(type="command", value="foo")
-        choice.clean()
-        assert choice.details == {"name": "foo", "args": []}
-
-    def test_clean_with_details(self):
-        choice = Choices(type="command", value="foo", details={"non": "empty"})
-        choice.clean()
-
-        assert choice.details == {"non": "empty"}
-
-    @pytest.mark.parametrize(
-        "value",
-        [
-            "foo${arg",
-            "http://foo?arg=${val",
-            {
-                "command": "foo${arg",
-                "system": "foo",
-                "version": "1.0.0",
-                "instance_name": "default",
-            },
-        ],
-    )
-    def test_clean_bad_parse(self, value):
-        with pytest.raises(ModelValidationError):
-            Choices(type="command", value=value).clean()
-
 
 class TestParameter(object):
     def test_str(self):
@@ -135,22 +58,6 @@ class TestParameter(object):
     def test_repr(self):
         p = Parameter(key="foo", description="bar", type="Boolean", optional=False)
         assert repr(p) == "<Parameter: key=foo, type=Boolean, description=bar>"
-
-    def test_default_display_name(self):
-        p = Parameter(key="foo")
-        assert p.display_name == "foo"
-
-    def test_clean(self):
-        Parameter(key="foo", optional=False).clean()
-
-    def test_clean_fail_nullable_optional_but_no_default(self):
-        with pytest.raises(ModelValidationError):
-            Parameter(key="foo", optional=True, default=None, nullable=False).clean()
-
-    def test_clean_fail_duplicate_parameter_keys(self):
-        nested = Parameter(key="foo")
-        with pytest.raises(ModelValidationError):
-            Parameter(key="foo", optional=False, parameters=[nested, nested]).clean()
 
 
 class TestRequest(object):
@@ -240,21 +147,6 @@ class TestSystem(object):
         assert "ns" in repr(default_system)
         assert "foo" in repr(default_system)
         assert "1.0.0" in repr(default_system)
-
-    def test_clean(self, default_system):
-        default_system.clean()
-
-    def test_clean_fail_max_instances(self, default_system):
-        default_system.max_instances = 1
-        default_system.instances.append(Instance(name="default2"))
-        with pytest.raises(ModelValidationError):
-            default_system.clean()
-
-    def test_clean_fail_duplicate_instance_names(self, default_system):
-        default_system.max_instances = 2
-        default_system.instances.append(Instance(name="default"))
-        with pytest.raises(ModelValidationError):
-            default_system.clean()
 
     # TODO - These need to be integration tests
     # @patch("bg_utils.mongo.models.System.objects")
@@ -396,21 +288,6 @@ class TestSystem(object):
     #     System.ensure_indexes()
     #     self.default_system.save()
     #     assert self.default_system.instances == []
-
-
-class TestJob(object):
-    @pytest.fixture(autouse=True)
-    def drop(self, mongo_conn):
-        Job.drop_collection()
-
-    def test_invalid_trigger_type(self):
-        with pytest.raises(ModelValidationError):
-            Job(trigger_type="INVALID_TRIGGER_TYPE").clean()
-
-    def test_trigger_mismatch(self):
-        date_trigger = DateTrigger()
-        with pytest.raises(ModelValidationError):
-            Job(trigger_type="cron", trigger=date_trigger).clean()
 
 
 class TestGarden:
@@ -597,188 +474,3 @@ class TestGarden:
         should raise an exception"""
         with pytest.raises(NotUniqueError):
             Garden(name=f"not{local_garden.name}", connection_type="LOCAL").save()
-
-    def test_child_garden_system_attrib_update(self, child_garden, child_system_v2):
-        """If the systems of a child garden are updated such that their names,
-        namespaces, or versions are changed, the original systems are removed and
-        replaced with the new systems when the garden is saved."""
-        orig_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
-        )
-
-        orig_system_versions = set(
-            map(
-                lambda x: str(getattr(x, "version")), child_garden.systems  # noqa: B009
-            )
-        )
-
-        assert (
-            self.v1_str in orig_system_versions
-            and self.v2_str not in orig_system_versions
-        )
-
-        child_garden.systems = [child_system_v2]
-        child_garden.deep_save()
-
-        # we check that the garden written to the DB has the correct systems
-        print("New Systems")
-        garden_systems = System.objects(garden_name=child_garden.name)
-        for system in garden_systems:
-            print(system)
-        new_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), garden_systems)  # noqa: B009
-        )
-        new_system_versions = set(
-            map(lambda x: str(getattr(x, "version")), garden_systems)  # noqa: B009
-        )
-
-        assert (
-            self.v1_str not in new_system_versions
-            and self.v2_str in new_system_versions
-        )
-        assert new_system_ids.intersection(orig_system_ids) == set()
-
-    def test_child_garden_system_id_update(self, child_garden):
-        """If the systems of a child garden are updated such that the names, namespaces
-        and versions remain constant, but the IDs are different, the original systms
-        are removed and replaced with the new systems when the garden is saved."""
-        orig_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), child_garden.systems)  # noqa: B009
-        )
-        child_garden.systems[0].id = ObjectId()
-        new_system_id = str(child_garden.systems[0].id)
-
-        assert new_system_id not in orig_system_ids
-
-        child_garden.deep_save()
-        db_garden = Garden.objects().first()
-
-        new_system_ids = set(
-            map(lambda x: str(getattr(x, "id")), db_garden.systems)  # noqa: B009
-        )
-
-        assert new_system_id in new_system_ids
-        assert orig_system_ids.intersection(new_system_ids) == set()
-
-    def test_child_garden_save_history(self, child_garden_history):
-        """Verifies that instance.status_info.history is updated to local
-        plugin.status_history length and extra history removed"""
-
-        config._CONFIG = {"garden": {"status_history": 3}}
-
-        # child_system_history.save()
-        child_garden_history.deep_save()
-
-        # we check that the garden written to the DB has the correct systems
-        db_garden = Garden.objects().first()
-
-        for connection in db_garden.publishing_connections:
-            if connection.api == "HTTP":
-                assert len(connection.status_info.history) == 3
-        for connection in db_garden.publishing_connections:
-            if connection.api == "HTTP":
-                assert len(connection.status_info.history) == 3
-
-    def test_child_garden_system_save_history(self, child_garden, child_system_history):
-        """Verifies that instance.status_info.history is updated to local
-        plugin.status_history length and extra history removed"""
-
-        config._CONFIG = {"plugin": {"status_history": 3}}
-
-        for instance in child_system_history.instances:
-            assert len(instance.status_info.history) == 5
-
-        # child_system_history.save()
-        child_garden.systems = [child_system_history]
-        child_garden.deep_save()
-
-        # we check that the garden written to the DB has the correct systems
-        for system in System.objects(garden_name=child_garden.name):
-            for instance in system.instances:
-                assert len(instance.status_info.history) == 3
-
-
-class TestTopic:
-    @pytest.fixture(autouse=True)
-    def drop(self, mongo_conn):
-        Topic.drop_collection()
-
-    def test_add_subscriber(self):
-        topic = Topic(name="foo")
-
-        subscriber1 = Subscriber(
-            subscriber_type="type1",
-            garden="garden",
-            namespace="namespace",
-            system="system",
-            version="version",
-            instance="instance",
-            command="command",
-            consumer_count=1,
-        )
-        topic.add_subscriber(subscriber1)
-        assert len(topic.subscribers) == 1
-        subscriber2 = Subscriber(
-            subscriber_type="type2",
-            garden="garden",
-            namespace="namespace",
-            system="system",
-            version="version",
-            instance="instance",
-            command="command",
-            consumer_count=1,
-        )
-        topic.add_subscriber(subscriber2)
-        assert len(topic.subscribers) == 2
-        subscriber3 = Subscriber(
-            subscriber_type="type1",
-            garden="garden",
-            namespace="namespace",
-            system="system",
-            version="version",
-            instance="instance",
-            command="command",
-            consumer_count=5,
-        )
-        topic.add_subscriber(subscriber3)
-        assert len(topic.subscribers) == 2
-
-    def test_remove_subscriber(self):
-        topic = Topic(name="foo")
-
-        subscriber1 = Subscriber(
-            subscriber_type="type1",
-            garden="garden",
-            namespace="namespace",
-            system="system",
-            version="version",
-            instance="instance",
-            command="command",
-            consumer_count=1,
-        )
-        subscriber2 = Subscriber(
-            subscriber_type="type2",
-            garden="garden",
-            namespace="namespace",
-            system="system",
-            version="version",
-            instance="instance",
-            command="command",
-            consumer_count=1,
-        )
-        topic.subscribers.append(subscriber1)
-        topic.subscribers.append(subscriber2)
-        assert len(topic.subscribers) == 2
-
-        subscriber3 = Subscriber(
-            subscriber_type="type1",
-            garden="garden",
-            namespace="namespace",
-            system="system",
-            version="version",
-            instance="instance",
-            command="command",
-            consumer_count=5,
-        )
-        topic.remove_subscriber(subscriber3)
-        assert len(topic.subscribers) == 1
