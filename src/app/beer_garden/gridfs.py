@@ -21,7 +21,6 @@ def read_raw_file(file_id: str):
 
 
 def read_gridfs(filter, **kwargs):
-
     return db.gridfs_read(filter, **kwargs)
 
 
