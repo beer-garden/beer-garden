@@ -255,6 +255,9 @@ def update_key_value(key: str, value, suffix: str = None):
         key = f"{key.removesuffix('.id')}._id"
         is_id = True
 
+    if isinstance(value, BaseModel):
+        value = SchemaParser.serialize(value, to_string=False)
+
     if isinstance(value, dict) or isinstance(value, BaseModel):
 
         if hasattr(value, "id"):
@@ -315,12 +318,21 @@ def kwargs_raw_query(**kwargs):
         raw_field = key.replace("__", ".")
 
         if raw_field.endswith(".match"):
-            match_query = kwargs_raw_query(**kwargs[key])
-            raw_field, raw_value = update_key_value(raw_field, match_query, ".match")
-            query = combine_raw_query(
-                query,
-                {raw_field: {"$elemMatch": match_query}},
-            )
+            if isinstance(kwargs[key], dict) or isinstance(kwargs[key], BaseModel):
+                match_query = kwargs_raw_query(**kwargs[key])
+                raw_field, raw_value = update_key_value(
+                    raw_field, match_query, ".match"
+                )
+                query = combine_raw_query(
+                    query,
+                    {raw_field: {"$elemMatch": raw_value}},
+                )
+            else:
+                raw_field, raw_value = update_key_value(raw_field, kwargs[key])
+                query = combine_raw_query(
+                    query,
+                    {raw_field: raw_value},
+                )
         elif raw_field.endswith(".nin"):
             raw_field, raw_value = update_key_value(raw_field, kwargs[key], ".nin")
 
@@ -411,19 +423,11 @@ def kwargs_raw_query(**kwargs):
                 query,
                 {raw_field: {"$ne": raw_value}},
             )
-        elif isinstance(raw_field, dict):
+        elif isinstance(raw_field, dict) or isinstance(raw_field, BaseModel):
+            raw_field, raw_value = update_key_value(raw_field, kwargs[key])
             query = combine_raw_query(
                 query,
                 {raw_field: {"$elemMatch": raw_value}},
-            )
-        elif isinstance(raw_field, BaseModel):
-            query = combine_raw_query(
-                query,
-                {
-                    raw_field: {
-                        "$elemMatch": SchemaParser.serialize(raw_value, to_string=False)
-                    }
-                },
             )
         else:
             raw_field, raw_value = update_key_value(raw_field, kwargs[key])

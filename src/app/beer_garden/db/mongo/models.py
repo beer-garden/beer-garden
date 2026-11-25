@@ -4,7 +4,6 @@ import logging
 import zoneinfo
 
 import brewtils.models
-from brewtils.errors import ModelValidationError
 from brewtils.models import Command as BrewtilsCommand
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Parameter as BrewtilsParameter
