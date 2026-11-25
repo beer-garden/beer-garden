@@ -15,6 +15,7 @@ from brewtils.models import System
 from mock import Mock, call, patch
 from mongoengine.connection import get_db
 
+from bson import ObjectId
 import beer_garden
 import beer_garden.config
 import beer_garden.requests
@@ -1669,7 +1670,8 @@ class TestSaveRequest(object):
 
         db = get_db()
 
-        assert db["fs.file"].count_documents({"request_id": request_model.id}) == 1
+        assert db["fs.files"].count_documents({"_id": ObjectId(str(raw_file.id))}) == 1
+        assert db["fs.files"].count_documents({"request_id": request_model.id}) == 1
 
     def test_parent_orphan(self, request_model):
         parent = deepcopy(request_model)
