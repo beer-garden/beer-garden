@@ -27,8 +27,8 @@ from beer_garden.authorization import (
 # from beer_garden.db.mongo.models import User
 from beer_garden.errors import (
     ExpiredTokenException,
+    InvalidAuthorizationException,
     InvalidTokenException,
-    ValidationException,
 )
 
 
@@ -107,13 +107,13 @@ class AuthorizationHandler(BaseHandler):
                 system = db.query_unique(
                     System,
                     raise_missing=False,
-                    instances__queue_info__request__name=kwargs["name"],
+                    raw_query={"instances.queue_info.request.name": kwargs["name"]},
                 )
                 if not system:
                     system = db.query_unique(
                         System,
                         raise_missing=False,
-                        instances__queue_info__admin__name=kwargs["name"],
+                        raw_query={"instances.queue_info.admin.name": kwargs["name"]},
                     )
                 if not system:
                     raise NotFound
@@ -184,7 +184,7 @@ class AuthorizationHandler(BaseHandler):
             raw_query = self.rawFilter.build_filter(
                 self.current_user, self.minimum_permission, model
             )
-        except ValidationException:
+        except InvalidAuthorizationException:
             raise RequestForbidden
 
         return raw_query
