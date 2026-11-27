@@ -38,6 +38,7 @@ import beer_garden.config as config
 import beer_garden.db.api as db
 import beer_garden.files
 import beer_garden.garden
+import beer_garden.gridfs
 import beer_garden.local_plugins.manager
 import beer_garden.log
 import beer_garden.plugin
@@ -172,6 +173,9 @@ route_functions = {
     "TOPIC_RESET_COUNT": beer_garden.topic.reset_count,
     "TOPIC_SYNC": beer_garden.topic.sync_topics,
     "TOKEN_USER_DELETE": beer_garden.user.revoke_tokens,
+    "RAW_FILE_READ": beer_garden.gridfs.read_raw_file,
+    "RAW_FILE_CREATE": beer_garden.gridfs.create_raw_file,
+    "RAW_FILE_DELETE": beer_garden.gridfs.delete_gridfs_raw_file,
     "ROLE_CREATE": beer_garden.role.create_role,
     "ROLE_UPDATE": beer_garden.role.update_role,
     "ROLE_DELETE": beer_garden.role.delete_role,

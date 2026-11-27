@@ -678,6 +678,10 @@ def ensure_v3_XX_model_migration():
         )
         raw_file_collection.bulk_write(raw_file_updates, ordered=False)
 
+    if "raw_file" in db.list_collection_names():
+        logger.info(f"{target_version} Model Migration: Delete Raw Files Collection ")
+        db.drop_collection("raw_file")
+
 
 def find_root_command_type(request):
     command_type = getattr(request, "command_type", "ACTION")

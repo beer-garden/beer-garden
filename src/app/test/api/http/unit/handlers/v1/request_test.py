@@ -4,6 +4,7 @@ import json
 import pytest
 from brewtils.models import Request as BrewtilsRequest
 from brewtils.models import Role, User
+from mongoengine.connection import get_db
 from tornado.httpclient import HTTPError, HTTPRequest
 
 import beer_garden.db.mongo.models
@@ -11,7 +12,8 @@ import beer_garden.events
 import beer_garden.requests
 import beer_garden.router
 from beer_garden.api.http.authentication import issue_token_pair
-from beer_garden.db.mongo.models import Garden, RawFile, Request, System
+from beer_garden.db.mongo.models import Garden, Request, System
+from beer_garden.gridfs import read_raw_file
 from beer_garden.role import create_role, delete_role
 from beer_garden.user import create_user, delete_user
 
@@ -83,7 +85,6 @@ def common_mocks(monkeypatch, local_system):
 @pytest.fixture(autouse=True)
 def db_cleanup():
     yield
-    RawFile.drop_collection()
     Request.drop_collection()
 
 
@@ -386,7 +387,7 @@ class TestRequestListAPI:
 
         assert response.code == 201
         assert file_id is not None
-        assert RawFile.objects.get(id=file_id) is not None
+        assert read_raw_file(file_id) is not None
 
     @pytest.mark.gen_test
     def test_post_file_parameter_removes_base64_for_remote_garden(
@@ -410,7 +411,10 @@ class TestRequestListAPI:
         assert response.code == 201
         assert response_body["parameters"]["myfile"].get("id") is None
         assert response_body["parameters"]["myfile"].get("base64") is None
-        assert len(RawFile.objects.all()) == 0
+
+        db = get_db()
+
+        assert db["fs.files"].count_documents({}) == 0
 
     @pytest.mark.gen_test
     def test_auth_disabled_returns_all_requests(self, http_client, base_url):
