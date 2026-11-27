@@ -19,10 +19,10 @@ reload = beer_garden.db.mongo.api.reload
 distinct = beer_garden.db.mongo.api.distinct
 
 async_create_connection = beer_garden.db.mongo.async_api.async_create_connection
-async_query = beer_garden.db.mongo.async_api.query
-async_query_unique = beer_garden.db.mongo.async_api.query_unique
-async_gridfs_read = beer_garden.db.mongo.async_api.gridfs_read
-async_update_one = beer_garden.db.mongo.async_api.update_one
+async_query = beer_garden.db.mongo.async_api.async_query
+async_query_unique = beer_garden.db.mongo.async_api.async_query_unique
+async_gridfs_read = beer_garden.db.mongo.async_api.async_gridfs_read
+async_update_one = beer_garden.db.mongo.async_api.async_update_one
 
 create = beer_garden.db.mongo.api.create
 update = beer_garden.db.mongo.api.update
