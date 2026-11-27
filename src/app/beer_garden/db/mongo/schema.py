@@ -227,23 +227,6 @@ class FileChunk(MongoSchema):
     mongo_schema = brewtils.schemas.FileChunkSchema(exclude=["owner"])
 
 
-class RawFile(MongoSchema):
-    collection = "raw_file"
-
-    # TODO: Fix Raw Files before converting over
-
-    # file = FileField()
-    # created_at = DateTimeField(default=get_current_time, required=True)
-    # request_id = StringField()
-
-    # # TTL Fields
-    # status = StringField()
-    # updated_at = DateTimeField(default=get_current_time, required=True)
-    # root_command_type = StringField()
-
-    # meta = {"queryset_class": FileFieldHandlingQuerySet}
-
-
 class Role(MongoSchema):
     collection = "role"
     brewtils_model = brewtils.models.Role
@@ -289,7 +272,6 @@ def get_collection_schema(model: BaseModel) -> MongoSchema:
         Garden,
         File,
         FileChunk,
-        RawFile,
         Role,
         User,
         UserToken,
