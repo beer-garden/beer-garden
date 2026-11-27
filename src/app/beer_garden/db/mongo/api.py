@@ -820,10 +820,14 @@ def distinct(brewtils_clazz: ModelItem, field: str) -> List:
 
 
 def gridfs_create(model: dict, **kwargs) -> str:
+    return gridfs_put(json.dumps(model), encoding="utf-8", **kwargs)
+
+
+def gridfs_put(obj, **kwargs):
     db = get_db()
     fs = gridfs.GridFS(db)
 
-    file_id = fs.put(json.dumps(model), encoding="utf-8", **kwargs)
+    file_id = fs.put(obj, **kwargs)
 
     return file_id
 
@@ -845,13 +849,14 @@ def gridfs_delete(filter: dict):
     get_db()["fs.chunks"].delete_many(filter)
 
 
-def gridfs_read(filter: dict):
+def gridfs_read(filter: dict, load_json=True):
     db = get_db()
     fs = gridfs.GridFS(db)
     file_doc = fs.find_one(filter)
-
     if file_doc:
-        return json.loads(file_doc.read().decode("utf-8"))
+        if load_json:
+            return json.loads(file_doc.read().decode("utf-8"))
+        return file_doc.read()
 
     return None
 

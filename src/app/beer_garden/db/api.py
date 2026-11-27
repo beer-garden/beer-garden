@@ -31,6 +31,7 @@ combine_raw_query = beer_garden.db.mongo.api.combine_raw_query
 prune_topics = beer_garden.db.mongo.util.prune_topics
 
 gridfs_create = beer_garden.db.mongo.api.gridfs_create
+gridfs_put = beer_garden.db.mongo.api.gridfs_put
 gridfs_update_metadata = beer_garden.db.mongo.api.gridfs_update_metadata
 gridfs_delete = beer_garden.db.mongo.api.gridfs_delete
 gridfs_read = beer_garden.db.mongo.api.gridfs_read

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
+import io
 from datetime import timedelta, timezone
 from unittest.mock import MagicMock, Mock, patch
 
@@ -23,10 +24,10 @@ from beer_garden.db.mongo.models import (
     DateTrigger,
     File,
     Job,
-    RawFile,
     Request,
     RequestTemplate,
 )
+from beer_garden.gridfs import create_raw_file, delete_gridfs_raw_file
 
 FAKE_TIME = datetime.datetime.now(timezone.utc) + timedelta(minutes=60)
 
@@ -135,11 +136,9 @@ def file():
 
 @pytest.fixture()
 def raw_file():
-    rawfile = RawFile()
-    rawfile.file.put(b"test", filename="test.txt")
-    rawfile.save()
+    rawfile = create_raw_file(io.BytesIO("hello".encode("utf-8")))
     yield rawfile
-    rawfile.delete()
+    delete_gridfs_raw_file(rawfile.id)
 
 
 @pytest.fixture
@@ -410,11 +409,8 @@ class TestMongoPruner(object):
 
         monkeypatch.setattr(beer_garden.db.mongo.legacy_pruner, "datetime", mydatetime)
 
-        rawfile = RawFile()
-        rawfile.file.put(b"test", filename="test.txt")
-        rawfile.save()
+        create_raw_file(io.BytesIO("hello".encode("utf-8")))
 
-        db["raw_file"].delete_one({})
         # Orphaned Gridfs files
         assert db["fs.files"].count_documents({}) == 1
         assert db["fs.chunks"].count_documents({}) == 1
