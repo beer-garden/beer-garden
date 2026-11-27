@@ -1,0 +1,24 @@
+name: Release Metrics
+
+on: workflow_dispatch
+
+jobs:
+  docker-publish-metrics:
+    name: Docker Publish Metrics
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./src/metrics
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and Publish Images
+        run: make deps publish-docker VERSION=${GITHUB_REF#refs/tags/}
