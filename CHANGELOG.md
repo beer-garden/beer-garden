@@ -32,6 +32,7 @@ will only be updated to support critical bugs.
 - Fixed Global Admin permission check in UI (#1982)
 - Fixed Role Rescan to remove missing roles from database (#1982)
 - Fixed Role Delete to removes role from Users and forces Token refresh (#1982)
+- Fixed Garden API include_fields set append error (#2502)
 
 # 3.35.1
 9/9/2026
