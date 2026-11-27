@@ -94,7 +94,7 @@ def local_garden_system():
             version="1.2.3",
             namespace="local_garden",
             local=True,
-            instances=[BrewtilsInstance(name="1")],
+            instances=[BrewtilsInstance(name="1", status="RUNNING")],
             commands=[BrewtilsCommand(name="command")],
         )
     )
@@ -182,6 +182,13 @@ class TestTopic:
         topic_add_subscriber(subscriber, topic2.id)
         topic_remove_subscriber(subscriber, topic2.id)
         assert len(get_topic(topic2.id).subscribers) == 0
+
+    def test_remove_subscriber_delete_topic(self, topic2, subscriber):
+        """remove subscriber from existing topic causing it to delete"""
+        subscriber.subscriber_type = "GENERATED"
+        topic_add_subscriber(subscriber, topic2.id)
+        topic_remove_subscriber(subscriber, topic2.id)
+        assert get_topic(topic2.id) is None
 
     def test_subscriber_match(self, subscriber, subscriber1, subscriber2, subscriber3):
         """subscriber comparison"""

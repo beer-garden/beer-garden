@@ -17,7 +17,19 @@ from apscheduler.executors.pool import ThreadPoolExecutor as APThreadPoolExecuto
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger as APInterval
 from brewtils.errors import ModelValidationError
-from brewtils.models import DateTrigger, Event, Events, Job, Operation, Request
+from brewtils.models import (
+    CronTrigger,
+    DateTrigger,
+    Event,
+    Events,
+    FileTrigger,
+)
+from brewtils.models import IntervalTrigger as BrewtilsIntervalTrigger
+from brewtils.models import (
+    Job,
+    Operation,
+    Request,
+)
 from brewtils.schema_parser import SchemaParser
 from mongoengine import DoesNotExist, ValidationError
 
@@ -33,6 +45,13 @@ from beer_garden.requests import get_request
 logger = logging.getLogger(__name__)
 
 observer_threads = dict()
+
+TRIGGER_MODEL_MAPPING = {
+    "date": DateTrigger,
+    "cron": CronTrigger,
+    "interval": BrewtilsIntervalTrigger,
+    "file": FileTrigger,
+}
 
 
 class Monitor(object):
@@ -633,6 +652,22 @@ def get_jobs(filter_params: Optional[Dict] = None, **kwargs) -> List[Job]:
     return db.query(Job, filter_params=filter_params, **kwargs)
 
 
+def clean_job(job: Job) -> Job:
+
+    if job.trigger_type not in TRIGGER_MODEL_MAPPING:
+        raise ModelValidationError(
+            f"Cannot save job. No mongo model for trigger type {job.trigger_type}"
+        )
+
+    trigger_class = TRIGGER_MODEL_MAPPING.get(job.trigger_type)
+    if not isinstance(job.trigger, trigger_class):
+        raise ModelValidationError(
+            f"Cannot save job. Expected trigger type {job.trigger_type} but "
+            f"actual type was {type(job.trigger)}"
+        )
+    return job
+
+
 @publish_event(Events.JOB_CREATED)
 def create_job(job: Job) -> Job:
     """Create a new Job and add it to the scheduler
@@ -644,6 +679,7 @@ def create_job(job: Job) -> Job:
         The added Job
     """
     # Save first so we have an ID to pass to the scheduler
+    clean_job(job)
     job = db.create(job)
 
     return job
@@ -668,6 +704,7 @@ def create_jobs(jobs: List[Job]) -> dict:
 
     for job in jobs:
         try:
+            clean_job(job)
             if job.id and db.query(Job, filter_params={"id": job.id}):
                 updated.append(update_job(job))
                 logger.info(f"Scheduler job updated: {job}")

@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
+import json
 import logging
 from typing import List, Optional, Type, Union
 
 import brewtils.models
+import gridfs
 from box import Box
 from brewtils.models import BaseModel
 from brewtils.schema_parser import SchemaParser
@@ -14,6 +16,7 @@ from mongoengine import (
     connect,
     register_connection,
 )
+from mongoengine.connection import get_db
 from mongoengine.queryset.visitor import Q, QCombination
 from pymongo import InsertOne, ReplaceOne, UpdateOne
 
@@ -215,7 +218,10 @@ def get_job_store():
 
 
 def count(
-    model_class: ModelType, q_filter: Union[Q, QCombination, None] = None, **kwargs
+    model_class: ModelType,
+    q_filter: Union[Q, QCombination, None] = None,
+    raw_query: dict = None,
+    **kwargs,
 ) -> int:
     """Count the number of items matching a query
 
@@ -232,7 +238,12 @@ def count(
         if isinstance(v, BaseModel):
             kwargs[k] = from_brewtils(v)
 
-    query_set = _model_map[model_class].objects(**kwargs)
+    if raw_query:
+        query_set = _model_map[model_class].objects(__raw__=raw_query)
+    else:
+        query_set = _model_map[model_class].objects
+
+    query_set = query_set(**kwargs)
 
     if q_filter:
         query_set = query_set.filter(q_filter)
@@ -593,3 +604,56 @@ def reload(obj: ModelItem) -> ModelItem:
 
 def distinct(brewtils_clazz: ModelItem, field: str) -> List:
     return _model_map[brewtils_clazz].objects.distinct(field)
+
+
+def gridfs_create(model: dict, **kwargs) -> str:
+    return gridfs_put(json.dumps(model), encoding="utf-8", **kwargs)
+
+
+def gridfs_put(obj, **kwargs):
+    db = get_db()
+    fs = gridfs.GridFS(db)
+
+    file_id = fs.put(obj, **kwargs)
+
+    return file_id
+
+
+def gridfs_update_metadata(filter: dict, metadata_updates: dict):
+
+    get_db()["fs.files"].update_one(
+        filter,
+        {"$set": metadata_updates},
+    )
+    get_db()["fs.chunks"].update_many(
+        filter,
+        {"$set": metadata_updates},
+    )
+
+
+def gridfs_delete(filter: dict):
+    get_db()["fs.files"].delete_many(filter)
+    get_db()["fs.chunks"].delete_many(filter)
+
+
+def gridfs_read(filter: dict, load_json=True):
+    db = get_db()
+    fs = gridfs.GridFS(db)
+    file_doc = fs.find_one(filter)
+    if file_doc:
+        if load_json:
+            return json.loads(file_doc.read().decode("utf-8"))
+        return file_doc.read()
+
+    return None
+
+
+def gridfs_exists(filter: dict) -> bool:
+    db = get_db()
+    fs = gridfs.GridFS(db)
+    file_doc = fs.find_one(filter)
+
+    if file_doc:
+        return True
+
+    return False

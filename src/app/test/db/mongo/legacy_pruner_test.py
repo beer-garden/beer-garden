@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
+import io
 from datetime import timedelta, timezone
 from unittest.mock import MagicMock, Mock, patch
 
@@ -8,6 +9,7 @@ from mongoengine.connection import get_db
 
 import beer_garden
 from beer_garden import config
+from beer_garden.db.mongo.api import gridfs_create
 from beer_garden.db.mongo.legacy_pruner import (
     prune_action_requests,
     prune_admin_requests,
@@ -22,10 +24,10 @@ from beer_garden.db.mongo.models import (
     DateTrigger,
     File,
     Job,
-    RawFile,
     Request,
     RequestTemplate,
 )
+from beer_garden.gridfs import create_raw_file, delete_gridfs_raw_file
 
 FAKE_TIME = datetime.datetime.now(timezone.utc) + timedelta(minutes=60)
 
@@ -55,6 +57,7 @@ def action_request():
         namespace="T",
         command="T",
         created_at=datetime.datetime(2024, 1, 17),
+        updated_at=datetime.datetime(2024, 1, 17),
         status="SUCCESS",
         command_type="ACTION",
     )
@@ -72,6 +75,7 @@ def info_request():
         namespace="T",
         command="T",
         created_at=datetime.datetime(2024, 1, 17),
+        updated_at=datetime.datetime(2024, 1, 17),
         status="SUCCESS",
         command_type="INFO",
     )
@@ -89,6 +93,7 @@ def admin_request():
         namespace="T",
         command="T",
         created_at=datetime.datetime(2024, 1, 17),
+        updated_at=datetime.datetime(2024, 1, 17),
         status="SUCCESS",
         command_type="ADMIN",
     )
@@ -106,6 +111,7 @@ def temp_request():
         namespace="T",
         command="T",
         created_at=datetime.datetime(2024, 1, 17),
+        updated_at=datetime.datetime(2024, 1, 17),
         status="SUCCESS",
         command_type="TEMP",
     )
@@ -130,11 +136,9 @@ def file():
 
 @pytest.fixture()
 def raw_file():
-    rawfile = RawFile()
-    rawfile.file.put(b"test", filename="test.txt")
-    rawfile.save()
+    rawfile = create_raw_file(io.BytesIO("hello".encode("utf-8")))
     yield rawfile
-    rawfile.delete()
+    delete_gridfs_raw_file(rawfile.id)
 
 
 @pytest.fixture
@@ -146,6 +150,7 @@ def in_progress():
         namespace="T",
         command="T",
         created_at=datetime.datetime(2024, 1, 17),
+        updated_at=datetime.datetime(2024, 1, 17),
         status="IN_PROGRESS",
     )
     in_progress.save()
@@ -162,6 +167,7 @@ def created():
         namespace="T",
         command="T",
         created_at=datetime.datetime(2024, 1, 17),
+        updated_at=datetime.datetime(2024, 1, 17),
         status="CREATED",
     )
     created.save()
@@ -178,6 +184,7 @@ def canceled():
         namespace="T",
         command="T",
         created_at=datetime.datetime(2024, 1, 17),
+        updated_at=datetime.datetime(2024, 1, 17),
         status="CANCELED",
     )
     canceled.save()
@@ -312,9 +319,10 @@ class TestMongoPruner(object):
             status="SUCCESS",
             command_type="ACTION",
         )
-        request.output_gridfs.put(b"test", filename="test.txt")
-        request.parameters_gridfs.put(b"test", filename="test.txt")
+
         request.save()
+        gridfs_create(model="test", request_id=request.id, output=True)
+        gridfs_create(model="test", request_id=request.id, parameters=True)
 
         # Orphaned Gridfs files
         assert db["fs.files"].count_documents({}) == 2
@@ -362,9 +370,10 @@ class TestMongoPruner(object):
             status="SUCCESS",
             command_type="ACTION",
         )
-        request.output_gridfs.put(b"test", filename="test.txt")
-        request.parameters_gridfs.put(b"test", filename="test.txt")
+
         request.save()
+        gridfs_create(model="test", request_id=request.id, output=True)
+        gridfs_create(model="test", request_id=request.id, parameters=True)
 
         db["request"].delete_one({})
         # Orphaned Gridfs files
@@ -400,11 +409,8 @@ class TestMongoPruner(object):
 
         monkeypatch.setattr(beer_garden.db.mongo.legacy_pruner, "datetime", mydatetime)
 
-        rawfile = RawFile()
-        rawfile.file.put(b"test", filename="test.txt")
-        rawfile.save()
+        create_raw_file(io.BytesIO("hello".encode("utf-8")))
 
-        db["raw_file"].delete_one({})
         # Orphaned Gridfs files
         assert db["fs.files"].count_documents({}) == 1
         assert db["fs.chunks"].count_documents({}) == 1
@@ -524,7 +530,6 @@ class TestOrphanFile(object):
             chunk_size=1,
             updated_at=datetime.datetime(2024, 1, 17),
             owner_type="REQUEST",
-            request=owner,
         )
 
         owner.delete()
@@ -553,7 +558,6 @@ class TestOrphanFile(object):
             chunk_size=1,
             updated_at=datetime.datetime(2024, 1, 17),
             owner_type="JOB",
-            job=owner,
         )
 
         owner.delete()
@@ -585,7 +589,6 @@ class TestOrphanFile(object):
             chunk_size=1,
             updated_at=datetime.datetime(2024, 1, 17),
             owner_type="REQUEST",
-            request=owner,
         )
 
         file.save()
@@ -614,7 +617,6 @@ class TestOrphanFile(object):
             chunk_size=1,
             updated_at=datetime.datetime(2024, 1, 17),
             owner_type="JOB",
-            job=owner,
         )
 
         file.save()
@@ -629,11 +631,11 @@ class TestOrphanFile(object):
         assert len(File.objects.all()) == 2
 
         prune_orphan_files()
-        assert len(File.objects.all()) == 1
+        assert len(File.objects.all()) == 0
 
     def test_orphan_job(self, orphan_job_file, deleted_job_file):
         config._CONFIG = {"db": {"prune": {"batch_size": -1, "interval": 1}}}
         assert len(File.objects.all()) == 2
 
         prune_orphan_files()
-        assert len(File.objects.all()) == 1
+        assert len(File.objects.all()) == 0

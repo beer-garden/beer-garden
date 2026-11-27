@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-from brewtils.models import IntervalTrigger
+from brewtils.errors import ModelValidationError
+from brewtils.models import DateTrigger, IntervalTrigger
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import RequestTemplate
 
 from beer_garden.db.mongo.models import Job
-from beer_garden.scheduler import create_jobs
+from beer_garden.scheduler import clean_job, create_jobs
 
 
 class TestScheduler:
@@ -34,3 +35,12 @@ class TestScheduler:
         assert len(results["created"]) == 1
         assert len(results["rejected"]) == 1
         assert len(Job.objects.all()) == 1
+
+    def test_invalid_trigger_type(self):
+        with pytest.raises(ModelValidationError):
+            clean_job(Job(trigger_type="INVALID_TRIGGER_TYPE"))
+
+    def test_trigger_mismatch(self):
+        date_trigger = DateTrigger()
+        with pytest.raises(ModelValidationError):
+            clean_job(Job(trigger_type="cron", trigger=date_trigger))

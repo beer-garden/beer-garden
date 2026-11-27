@@ -1,5 +1,11 @@
 # Beer Garden Changelog
 
+# TBD
+TBD
+
+- Migrating Request API filtering to utilize raw_query logic (#2496)
+
+# Auth
 # 3.36.0
 TBD
 
