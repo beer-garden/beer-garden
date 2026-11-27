@@ -711,6 +711,24 @@ def get_requests(**kwargs) -> List[Request]:
     return requests
 
 
+async def async_get_requests(**kwargs) -> List[Request]:
+    """Search for Requests
+
+    Args:
+        kwargs: Parameters to be passed to the DB query
+
+    Returns:
+        The list of Requests that matched the query
+
+    """
+
+    requests = await db.async_query(Request, **kwargs)
+    for request in requests:
+        request = await async_load_request_parameter_and_output(request, **kwargs)
+
+    return requests
+
+
 def determine_latest_system_version(request: Request):
     from beer_garden.systems import determine_latest
 
@@ -1185,6 +1203,38 @@ def _update_raw_file_references(request: Request):
             ):
 
                 update_associated_raw_file(param_value["id"], request)
+
+
+async def async_load_request_parameter_and_output(request: Request, **kwargs):
+
+    skip_parameters = request.parameters is not None and request.parameters is not {}
+    skip_output = (
+        request.status not in Request.COMPLETED_STATUSES or request.output is not None
+    )
+
+    if "include_fields" in kwargs:
+        skip_parameters = (
+            skip_parameters or "parameters" not in kwargs["include_fields"]
+        )
+        skip_output = skip_output or "output" not in kwargs["include_fields"]
+
+    if "exclude_fields" in kwargs:
+        skip_parameters = skip_parameters or "parameters" in kwargs["exclude_fields"]
+        skip_output = skip_output or "output" in kwargs["exclude_fields"]
+
+    if not skip_parameters:
+        parameters = await db.async_gridfs_read(
+            {"request_id": request.id, "parameters": True}
+        )
+        if parameters is not None:
+            request.parameters = parameters
+
+    if not skip_output:
+        output = await db.async_gridfs_read({"request_id": request.id, "output": True})
+        if output is not None:
+            request.output = output
+
+    return request
 
 
 def load_request_parameter_and_output(request: Request, **kwargs):

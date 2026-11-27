@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import beer_garden.db.mongo.api
+import beer_garden.db.mongo.async_api
 import beer_garden.db.mongo.util
 
 from_brewtils = beer_garden.db.mongo.api.from_brewtils
@@ -12,19 +13,39 @@ initial_setup = beer_garden.db.mongo.api.initial_setup
 get_job_store = beer_garden.db.mongo.api.get_job_store
 
 count = beer_garden.db.mongo.api.count
-query_unique = beer_garden.db.mongo.api.query_unique
-query = beer_garden.db.mongo.api.query
+count = beer_garden.db.mongo.async_api.async_count
+
+query_unique = beer_garden.db.mongo.async_api.query_unique
+async_query_unique = beer_garden.db.mongo.async_api.async_query_unique
+
+query = beer_garden.db.mongo.async_api.query
+async_query = beer_garden.db.mongo.async_api.async_query
+
 reload = beer_garden.db.mongo.api.reload
 distinct = beer_garden.db.mongo.api.distinct
 
-create = beer_garden.db.mongo.api.create
-update = beer_garden.db.mongo.api.update
-bulk_update = beer_garden.db.mongo.api.bulk_update
-modify = beer_garden.db.mongo.api.modify
+async_create_connection = beer_garden.db.mongo.async_api.async_create_connection
+async_query = beer_garden.db.mongo.async_api.async_query
+
+async_gridfs_read = beer_garden.db.mongo.async_api.async_gridfs_read
+async_update_one = beer_garden.db.mongo.async_api.async_update_one
+
+create = beer_garden.db.mongo.async_api.create
+async_create = beer_garden.db.mongo.async_api.async_create
+
+update = beer_garden.db.mongo.async_api.update
+async_update = beer_garden.db.mongo.async_api.async_update
+
+bulk_update = beer_garden.db.mongo.async_api.bulk_update
+async_bulk_update = beer_garden.db.mongo.async_api.async_bulk_update
+
+modify = beer_garden.db.mongo.async_api.modify
+async_modify = beer_garden.db.mongo.async_api.async_modify
+
 delete = beer_garden.db.mongo.api.delete
 
-create_direct = beer_garden.db.mongo.api.create_direct
-update_direct = beer_garden.db.mongo.api.update_direct
+# create_direct = beer_garden.db.mongo.api.create_direct
+# update_direct = beer_garden.db.mongo.api.update_direct
 
 combine_raw_query = beer_garden.db.mongo.api.combine_raw_query
 
