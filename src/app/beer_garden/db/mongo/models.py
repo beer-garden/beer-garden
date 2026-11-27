@@ -4,7 +4,6 @@ import logging
 import zoneinfo
 
 import brewtils.models
-from brewtils.errors import ModelValidationError
 from brewtils.models import Command as BrewtilsCommand
 from brewtils.models import Job as BrewtilsJob
 from brewtils.models import Parameter as BrewtilsParameter
@@ -18,7 +17,6 @@ from mongoengine import (
     EmbeddedDocument,
     EmbeddedDocumentField,
     EmbeddedDocumentListField,
-    FileField,
     GenericEmbeddedDocumentField,
     IntField,
     ListField,
@@ -629,19 +627,6 @@ class FileChunk(MongoModel, Document):
     created_at = DateTimeField(default=get_current_time, required=True)
     updated_at = DateTimeField(default=get_current_time, required=True)
     root_command_type = StringField()
-
-
-class RawFile(Document):
-    file = FileField()
-    created_at = DateTimeField(default=get_current_time, required=True)
-    request_id = StringField()
-
-    # TTL Fields
-    status = StringField()
-    updated_at = DateTimeField(default=get_current_time, required=True)
-    root_command_type = StringField()
-
-    meta = {"queryset_class": FileFieldHandlingQuerySet}
 
 
 class Role(MongoModel, Document):
