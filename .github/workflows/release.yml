@@ -121,6 +121,28 @@ jobs:
       - name: Build and Publish Images
         run: make deps publish-docker VERSION=${GITHUB_REF#refs/tags/}
 
+  docker-publish-ui-react:
+    name: Docker Publish UI
+    runs-on: ubuntu-latest
+    needs: pypi-verify
+    if: ${{always() && needs.pypi-verify.result == 'success'}}
+
+    defaults:
+      run:
+        working-directory: ./src/react
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and Publish Images
+        run: make deps publish-docker VERSION=${GITHUB_REF#refs/tags/}
+
   docker-publish-src:
     name: Docker Publish Src - Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}

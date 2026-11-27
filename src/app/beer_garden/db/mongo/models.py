@@ -1534,6 +1534,15 @@ class Role(MongoModel, Document):
                 f"Cannot save Role. No permission type {self.permission}"
             )
 
+    def delete(self, *args, **kwargs):
+        try:
+            for user in User.objects.filter(roles__contains=self.name):
+                user.roles.remove(self.name)
+                user.save()
+        except DoesNotExist:
+            pass
+        return super().delete(*args, **kwargs)
+
 
 class UpstreamRole(MongoModel, EmbeddedDocument):
     brewtils_model = brewtils.models.UpstreamRole
@@ -1583,6 +1592,7 @@ class User(MongoModel, Document):
     metadata = DictField()
     protected = BooleanField(required=True, default=False)
     file_generated = BooleanField(required=True, default=False)
+    preferences = DictField()
 
     meta = {
         "indexes": [{"name": "unique_index", "fields": ["username"], "unique": True}],
@@ -1602,6 +1612,15 @@ class User(MongoModel, Document):
                     Role.objects.get(name=role)
                 except DoesNotExist:
                     raise ModelValidationError(f"Local Role '{role}' does not exist")
+
+        db_user = User.objects(username=self.username).first()
+        if db_user and (
+            db_user.roles != self.roles or db_user.upstream_roles != self.upstream_roles
+        ):
+            try:
+                UserToken.objects.get(username=self.username).delete()
+            except DoesNotExist:
+                pass
 
         return super().save(*args, **kwargs)
 

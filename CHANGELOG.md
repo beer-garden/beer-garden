@@ -1,9 +1,38 @@
 # Beer Garden Changelog
 
-# TBD
+# 3.36.0
 TBD
 
-- Fixed Garden API include_fields set append error
+## New User Interface
+
+Future development will focus on supporting the new User Interface and the legacy User Interface
+will only be updated to support critical bugs.
+
+- Migrated to React Based UI (#2257)
+- RPM install of Beer Garden adds new prefixes to support /prefix and /legacy. In a future release 
+  the base URL will be updated to the new React UI
+  - http://localhost/ # Legacy UI
+  - http://localhost/legacy # Legacy UI
+  - http://localhost/preview # New React UI
+- UI Docker image supports new tag for React UI. In a future release the base docker image will
+  be updated to the new React UI
+  - bgio/ui:latest # Legacy UI
+  - bgio/ui:latest-legacy # Legacy UI
+  - bgio/ui:latest-preview # New React UI
+
+## Authentication Updates
+- Changes from 3.32.0rc0
+- Update API Token verification to only call database to verify Token, instead of User (#2029)
+- Fixed user login to first check for User Authorization Token, then login credentials
+- Fixed model filtering to include missing namespace properties (#1848)
+- Updated model filtering, if query filters are generated pre-query then skip filtering records when returning API models (#1848)
+- Updated User Model to support Preference tracking and reflect updates in the UI (#1955)
+- Fixed how array headers are parsed to support JSON and comma separated lists (#1982)
+- Fixed user mapping forwarding to downstream Gardens (#1982)
+- Fixed Global Admin permission check in UI (#1982)
+- Fixed Role Rescan to remove missing roles from database (#1982)
+- Fixed Role Delete to removes role from Users and forces Token refresh (#1982)
+- Fixed Garden API include_fields set append error (#2502)
 
 # 3.35.1
 9/9/2026
@@ -95,6 +124,21 @@ TBD
 - Fixed UI Request Create with unicode garden names not supported via headers (#2035) 
 - Fixed error comparing timezone-aware and timezone-naive datetimes. (#2038)
 - Fixed Migration script logic for MongoDB (#2034)
+
+# ~~3.32.0rc0~~ (Pushed to 3.36.0)
+
+12/17/2025
+
+- Update API Token verification to only call database to verify Token, instead of User (#2029)
+- Fixed user login to first check for User Authorization Token, then login credentials
+- Fixed model filtering to include missing namespace properties (#1848)
+- Updated model filtering, if query filters are generated pre-query then skip filtering records when returning API models (#1848)
+- Updated User Model to support Preference tracking and reflect updates in the UI (#1955)
+- Fixed how array headers are parsed to support JSON and comma separated lists (#1982)
+- Fixed user mapping forwarding to downstream Gardens (#1982)
+- Fixed Global Admin permission check in UI (#1982)
+- Fixed Role Rescan to remove missing roles from database (#1982)
+- Fixed Role Delete to removes role from Users and forces Token refresh (#1982)
 
 # 3.31.0
 
